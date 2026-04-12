@@ -100,9 +100,52 @@
           "option_id": "take_survey",
           "label": "Accept the dungeon survey contract.",
           "expected": true,
+          "requires": {"flags_absent": ["contract_dungeon_survey"]},
           "leads_to": "village_start",
           "leads_to_node": "survey_accepted",
           "triggers": ["flag:contract_dungeon_survey", "start_quest:dungeon_survey"]
+        },
+        {
+          "option_id": "survey_active",
+          "label": "Dungeon Survey — contract active.",
+          "expected": true,
+          "requires": {"flags": ["contract_dungeon_survey"], "flags_absent": ["submitted_dungeon_survey"]},
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "survey_done",
+          "label": "Dungeon Survey — completed.",
+          "expected": true,
+          "requires": {"flags": ["submitted_dungeon_survey"]},
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "take_wolf_pelts",
+          "label": "Accept: Wolf Pelts Wanted (5s per pelt, deliver to Maren).",
+          "expected": true,
+          "requires": {"flags_absent": ["contract_wolf_pelts"]},
+          "leads_to": "village_start",
+          "leads_to_node": "wolf_pelts_accepted",
+          "triggers": ["flag:contract_wolf_pelts"]
+        },
+        {
+          "option_id": "wolf_pelts_active",
+          "label": "Wolf Pelts contract — in progress.",
+          "expected": true,
+          "requires": {"flags": ["contract_wolf_pelts"], "flags_absent": ["wolf_pelts_delivered"]},
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "take_missing_person",
+          "label": "Accept: Missing Person — Aldric Fenn (Reward: 1g).",
+          "expected": true,
+          "requires": {"flags_absent": ["contract_missing_person"]},
+          "leads_to": "village_start",
+          "leads_to_node": "missing_person_accepted",
+          "triggers": ["flag:contract_missing_person", "start_quest:missing_person_search"]
         },
         {
           "option_id": "note_warning",
@@ -239,6 +282,30 @@
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root"
+        }
+      ]
+    },
+    "wolf_pelts_accepted": {
+      "text": "You note the contract details. OBJECTIVE ADDED: Collect wolf pelts from the old forest. Deliver to Maren the Tanner. 5s per pelt.",
+      "options": [
+        {
+          "option_id": "back_wolf",
+          "label": "Return to the board.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "board"
+        }
+      ]
+    },
+    "missing_person_accepted": {
+      "text": "You take the contract. OBJECTIVE ADDED: Find Aldric Fenn, last seen entering the old forest. Reward: 1g upon confirmed return or confirmed information on his fate.",
+      "options": [
+        {
+          "option_id": "back_missing",
+          "label": "Return to the board.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "board"
         }
       ]
     },

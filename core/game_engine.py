@@ -23,6 +23,7 @@ from persistence.save_manager import save_game, load_game, list_saves, new_game_
 from ui import renderer
 from ui.notifications import setup_notification_listeners
 from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, feature
+from entities.enums import SkillType
 
 if TYPE_CHECKING:
     pass
@@ -45,6 +46,7 @@ class GameEngine:
         self.state: GameState | None = None
         self.ai_generator = None
         self._bg_generator = None
+        self._world_director = None
         self._bot_manager = None
         self._running = False
 
@@ -121,6 +123,14 @@ class GameEngine:
                         from ai.background_generator import BackgroundGenerator
                         self._bg_generator = BackgroundGenerator(self.ai_generator)
                         self._bg_generator.start()
+                if self._bg_generator and self.ai_generator:
+                    from ai.world_director import WorldDirector
+                    self._world_director = WorldDirector(
+                        self._bg_generator,
+                        self.ai_generator.client,
+                        self.ai_generator.lore_data,
+                    )
+                    logger.info("WorldDirector initialized.")
                 renderer.print_success("AI system online. Ollama connected.")
             else:
                 renderer.console.print("  [dim_text]Ollama not available — AI features disabled.[/dim_text]")
@@ -203,6 +213,8 @@ class GameEngine:
                 # Poll and integrate background AI content
                 self._integrate_background_content()
                 self._maybe_submit_background_task()
+                if self._world_director and self.state:
+                    self._world_director.tick(self.state, self.state.player.turn_count)
                 self.state.advance_turn()
 
                 # Buff tick — decrement buff durations
@@ -415,10 +427,12 @@ class GameEngine:
         # AI-generated options: show narrative feedback, then remove the used option
         if option.option_id.startswith("ai_"):
             state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
+            narrative_text = ""
             if option.narrative:
                 renderer.print_divider()
                 renderer.print_scene_text([f"» {option.narrative}"])
                 renderer.print_divider()
+                narrative_text = option.narrative
             else:
                 renderer.print_system_message("Action taken.", style="dim_text")
             # Remove just this option so it can't be spammed; keep others
@@ -426,7 +440,37 @@ class GameEngine:
             self.state._dynamic_options[state_key] = [
                 o for o in dynamic if o.option_id != option.option_id
             ]
-            renderer.prompt_any_key()
+
+            # Check if narrative implies combat
+            combat_keywords = ("combat", "fight", "attack", "confrontation", "standoff", "strikes", "lunges", "draws weapon")
+            if narrative_text and any(kw in narrative_text.lower() for kw in combat_keywords):
+                renderer.prompt_any_key()
+                self._run_combat("street_thugs")
+            elif self.ai_generator and narrative_text:
+                # Generate 2-3 follow-up options from Ollama
+                followup_opts = self._generate_ai_followup(narrative_text)
+                if followup_opts:
+                    from scenes.scene_base import SceneOption
+                    new_followups = []
+                    for i, fo in enumerate(followup_opts[:3]):
+                        new_followups.append(SceneOption(
+                            option_id=f"ai_followup_{i}",
+                            label=f"[AI] {fo}",
+                            leads_to="__stay__",
+                            leads_to_node=self.state.current_node_id,
+                            expected=False,
+                            triggers=[],
+                            narrative="",
+                        ))
+                    # Prepend follow-ups so they appear at top of dynamic options
+                    existing = self.state._dynamic_options.get(state_key, [])
+                    self.state._dynamic_options[state_key] = new_followups + existing
+                    renderer.console.print("  [dim_text]New options available.[/dim_text]")
+                    renderer.prompt_any_key()
+                else:
+                    renderer.prompt_any_key()
+            else:
+                renderer.prompt_any_key()
 
         # Transition
         if option.leads_to and option.leads_to != "__stay__":
@@ -444,6 +488,47 @@ class GameEngine:
             self.state.current_node_id = option.leads_to_node or "root"
 
         self.state.mark_dirty()
+
+    def _generate_ai_followup(self, narrative_text: str) -> list[str]:
+        """
+        Ask the AI for 2-3 immediate follow-up options given a narrative outcome.
+        Returns a list of short option label strings, or empty list on failure.
+        """
+        if not self.ai_generator:
+            return []
+        try:
+            scene = self.scene_registry.get(self.state.current_scene_id)
+            scene_title = scene.title if scene else self.state.current_scene_id
+            prompt = (
+                f"Scene: {scene_title}\n"
+                f"What just happened: {narrative_text}\n\n"
+                "Given this outcome, list 2-3 immediate short options the player could choose next. "
+                "Each option must be a single short sentence (under 12 words). "
+                "Return ONLY a JSON array of strings, e.g.: "
+                '[\"Press the advantage.\", \"Step back and assess.\", \"Call out to the others.\"]'
+            )
+            system_prompt = (
+                "You write concise player action options for a fantasy LitRPG text game set in Aethoria. "
+                "Return ONLY a valid JSON array of 2-3 short option strings. No explanation."
+            )
+            with renderer.show_ai_thinking_spinner("Generating follow-up options..."):
+                result = self.ai_generator.client.generate_json(
+                    prompt=prompt,
+                    system_prompt=system_prompt,
+                    temperature=0.75,
+                    timeout=15,
+                    max_retries=1,
+                )
+            if isinstance(result, list):
+                return [str(r) for r in result if isinstance(r, str)]
+            # Some models return {"options": [...]}
+            if isinstance(result, dict):
+                for key in ("options", "choices", "actions"):
+                    if key in result and isinstance(result[key], list):
+                        return [str(r) for r in result[key] if isinstance(r, str)]
+        except Exception as e:
+            logger.warning("AI follow-up generation failed: %s", e)
+        return []
 
     def _apply_pending_species(self, player) -> None:
         """Apply _pending_species:<id> flag set by scene triggers."""
@@ -556,11 +641,19 @@ class GameEngine:
             renderer.console.print()
 
             # ── Choose action ─────────────────────────────────────────────────
-            skills_available = [sid for sid in player.skills if self.skill_registry.get(sid)]
+            # Only include ACTIVE and TRIGGERED skills — skip PASSIVE skills
+            skills_available = [
+                sid for sid in player.skills
+                if (sk := self.skill_registry.get(sid)) and sk.skill_type != SkillType.PASSIVE
+            ]
             action_choices = ["⚔ Basic Attack"] + [_skill_label(sid) for sid in skills_available] + ["🏃 Flee"]
             action = questionary.select("Your action:", choices=action_choices).ask()
 
-            if action is None or action == "🏃 Flee":
+            if action is None:
+                # Treat cancellation as re-prompt (loop continues naturally)
+                continue
+
+            if action == "🏃 Flee":
                 if combat_system.try_flee(player, alive_enemies[0]):
                     renderer.print_scene_text(["You flee from combat!"])
                     renderer.prompt_any_key()
@@ -1343,6 +1436,8 @@ class GameEngine:
 
             bg_status = "ON" if self._bg_generator and self._bg_generator._running else "OFF"
             ai_status = "online" if self.ai_generator else "offline"
+            director_status = "ON" if self._world_director else "OFF"
+            renderer.console.print(f"  Director AI      : {director_status}")
 
             bot_count = self._bot_manager.active_count() if self._bot_manager else 0
             choices = [

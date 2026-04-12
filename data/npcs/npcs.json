@@ -45,12 +45,24 @@
             "requires": {
               "stat_gates": [
                 {"stat": "INT", "threshold": 9, "gate_type": "soft", "soft_base_chance": 0.0, "soft_coefficient": 0.0, "fail_message": "You don't notice anything unusual."}
-              ]
+              ],
+              "flags_absent": ["torven_hammer_returned"]
             },
             "npc_response": "His jaw tightens. 'My journeyman hammer. I've had it fifteen years — I tracked the Goblin Looters that took it into the dungeon, but...' He looks at his hands. 'I'm a smith. Not an adventurer.'",
             "leads_to_node": "hammer_quest_offer",
             "memory_event_type": "noticed_hammer",
             "memory_summary": "Player noticed the missing hammer without being told."
+          },
+          {
+            "option_id": "return_hammer",
+            "label": "I found your journeyman hammer. Here.",
+            "requires": {"items": ["torven_hammer"], "flags_absent": ["torven_paid_reward"]},
+            "npc_response": "He goes very still. Then he takes it with both hands, turns it over, finds the double-lobe stamp. 'You actually...' He sets it back on its hook without another word. Then: 'Thank you. Name your price for the trouble.'",
+            "triggers": ["flag:torven_hammer_returned"],
+            "disposition_change": 25.0,
+            "leads_to_node": "hammer_reward",
+            "memory_event_type": "hammer_returned",
+            "memory_summary": "Player returned the journeyman hammer."
           },
           {
             "option_id": "show_void_shard",
@@ -199,12 +211,35 @@
             "option_id": "collect_reward",
             "label": "I think that's yours.",
             "requires": {"items": ["torven_hammer"]},
-            "npc_response": "'Forty Shards. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
+            "npc_response": "'40g. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
             "triggers": ["flag:torven_hammer_returned", "give_gold:40"],
             "disposition_change": 25.0,
             "leads_to_node": "__exit__",
             "memory_event_type": "quest_completed",
             "memory_summary": "Player returned the journeyman hammer. Deep gratitude."
+          }
+        ]
+      },
+      "hammer_reward": {
+        "node_id": "hammer_reward",
+        "npc_text": "'I said name your price. Don't be modest — I've had that hammer fifteen years and I intend to have it fifteen more.' He opens a small lockbox. 'Forty gold. And if you need work done, you come to me first.'",
+        "options": [
+          {
+            "option_id": "accept_reward",
+            "label": "Forty gold is fair. Thank you.",
+            "requires": {},
+            "npc_response": "'Smart. Come back when something needs fixing.'",
+            "triggers": ["give_gold:4000", "flag:torven_paid_reward"],
+            "leads_to_node": "__exit__"
+          },
+          {
+            "option_id": "decline_reward",
+            "label": "Keep it. Glad it's back where it belongs.",
+            "requires": {},
+            "npc_response": "A long pause. 'I won't argue. But you've got credit here whenever you need it.'",
+            "triggers": ["flag:torven_paid_reward", "flag:torven_owes_favour"],
+            "disposition_change": 15.0,
+            "leads_to_node": "__exit__"
           }
         ]
       },
@@ -316,13 +351,20 @@
           {
             "option_id": "submit_survey",
             "label": "I completed the dungeon survey contract.",
-            "requires": {"flags": ["goblins_defeated", "contract_dungeon_survey"]},
+            "requires": {"flags": ["goblins_defeated", "contract_dungeon_survey"], "flags_absent": ["submitted_dungeon_survey"]},
             "npc_response": "'Goblin patrol documented, crystal chamber located. This is clean work.' She marks the ledger and nods toward the door. 'Reward is being processed — check your System balance shortly.'",
             "triggers": ["flag:submitted_dungeon_survey"],
             "disposition_change": 10.0,
             "leads_to_node": "survey_complete",
             "memory_event_type": "contract_completed",
             "memory_summary": "Player completed and submitted the dungeon survey contract."
+          },
+          {
+            "option_id": "survey_already_done",
+            "label": "I already submitted the dungeon survey.",
+            "requires": {"flags": ["submitted_dungeon_survey"]},
+            "npc_response": "'I know. It's on record. Good work.'",
+            "leads_to_node": "root"
           },
           {
             "option_id": "ask_join_guild",
@@ -528,7 +570,7 @@
     "dialogue_nodes": {
       "root": {
         "node_id": "root",
-        "npc_text": "'Welcome to the Iron Compass. Room's five Shards a night, ale's two, and information varies by quality.'",
+        "npc_text": "'Welcome to the Iron Compass. Room's 5g a night, ale's 2s, and information varies by quality.'",
         "smart_observation": "She's watching the door with more attention than innkeepers usually give to foot traffic. She's looking for someone specific.",
         "smart_threshold": 8,
         "perception_reveal": "Two of the three patrons at the tables glanced at their belt pouches when you walked in. Something's been taken recently and they know it.",
@@ -661,7 +703,7 @@
       },
       "theft_reveal": {
         "node_id": "theft_reveal",
-        "npc_text": "'I can't go to the Guard — half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay twenty-five Shards to know who it is. Not for punishment. I just want them to stop.'",
+        "npc_text": "'I can't go to the Guard — half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay 25g to know who it is. Not for punishment. I just want them to stop.'",
         "options": [
           {
             "option_id": "accept_theft_quest",

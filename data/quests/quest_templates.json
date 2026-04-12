@@ -302,5 +302,30 @@
     "guild_rewards": {},
     "failure_conditions": [],
     "time_limit_turns": null
+  },
+  {
+    "template_id": "missing_person_search",
+    "title": "Missing Person: Aldric Fenn",
+    "description": "Aldric Fenn was last seen entering the old forest three days ago. He hasn't returned.",
+    "giver_npc_id": null,
+    "stages": [
+      {
+        "stage_id": "search_forest",
+        "description": "Search the old forest for signs of Aldric Fenn.",
+        "objective_text": "Search the old forest for Aldric Fenn.",
+        "completion_condition": {"has_flag": "aldric_fenn_found"},
+        "on_advance_triggers": [],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 100,
+    "reward_items": [],
+    "reward_flags": ["aldric_fenn_case_closed"],
+    "reward_xp": 80,
+    "alignment_reward": 5.0,
+    "faction_rewards": {},
+    "guild_rewards": {},
+    "failure_conditions": [],
+    "time_limit_turns": null
   }
 ]
