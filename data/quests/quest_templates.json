@@ -27,6 +27,8 @@
     "reward_flags": ["torven_owes_favour"],
     "reward_xp": 75,
     "alignment_reward": 5.0,
+    "faction_rewards": {},
+    "guild_rewards": {"iron_vanguard": 5.0},
     "failure_conditions": [],
     "time_limit_turns": null
   },
@@ -66,6 +68,8 @@
     "reward_flags": ["guild_registered"],
     "reward_xp": 60,
     "alignment_reward": 5.0,
+    "faction_rewards": {"iron_vanguard": 8.0},
+    "guild_rewards": {},
     "failure_conditions": [],
     "time_limit_turns": null
   },
@@ -105,7 +109,198 @@
     "reward_flags": ["mira_owes_favour"],
     "reward_xp": 50,
     "alignment_reward": 8.0,
+    "faction_rewards": {},
+    "guild_rewards": {},
     "failure_conditions": [{"has_flag": "tipped_off_thief"}],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "verath_courier",
+    "title": "The Captain's Letter",
+    "description": "Captain Aldis needs a sealed letter delivered to the Palace District without inspection.",
+    "giver_npc_id": "captain_aldis",
+    "stages": [
+      {
+        "stage_id": "deliver_letter",
+        "description": "Deliver the sealed letter to the Palace District.",
+        "objective_text": "Deliver the sealed letter to the Palace District without breaking the seal.",
+        "completion_condition": {"has_flag": "letter_delivered"},
+        "on_advance_triggers": [],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 80,
+    "reward_items": [],
+    "reward_flags": [],
+    "reward_xp": 150,
+    "alignment_reward": 2.0,
+    "faction_rewards": {"verath_crown": 10.0, "iron_vanguard_faction": 5.0},
+    "guild_rewards": {},
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "fracture_investigation",
+    "title": "The Fracture Inquiry",
+    "description": "The Mages Conclave wants someone to investigate the anomaly deep in the dungeon.",
+    "giver_npc_id": "sylara_guildmaster",
+    "stages": [
+      {
+        "stage_id": "reach_floor2",
+        "description": "Descend to the Crystal Caverns on Dungeon Floor 2.",
+        "objective_text": "Reach the Crystal Caverns (Dungeon Floor 2).",
+        "completion_condition": {"has_flag": "dungeon_floor2_cleared"},
+        "on_advance_triggers": [],
+        "next_stage_id": "examine_terminal"
+      },
+      {
+        "stage_id": "examine_terminal",
+        "description": "Find and access the System terminal in the Fracture Core.",
+        "objective_text": "Access the System terminal in the Fracture Core and record the data.",
+        "completion_condition": {"has_flag": "fracture_data_recorded"},
+        "on_advance_triggers": [],
+        "next_stage_id": "report_findings"
+      },
+      {
+        "stage_id": "report_findings",
+        "description": "Return your findings to the Mages Conclave.",
+        "objective_text": "Report your findings about the Fracture Core to the Conclave.",
+        "completion_condition": {"has_flag": "fracture_reported"},
+        "on_advance_triggers": ["flag:conclave_approval"],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 500,
+    "reward_items": [],
+    "reward_flags": ["fracture_investigation_complete"],
+    "reward_xp": 1000,
+    "alignment_reward": 0.0,
+    "faction_rewards": {"mages_conclave_faction": 20.0, "system_breakers": 10.0},
+    "guild_rewards": {},
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "shadow_errand",
+    "title": "A Simple Errand",
+    "description": "No details given. The Shadow Network doesn't explain jobs. You either do them or you don't.",
+    "giver_npc_id": null,
+    "stages": [
+      {
+        "stage_id": "complete_job",
+        "description": "Complete the Network's errand. Details are provided in the field.",
+        "objective_text": "Complete the Network's errand (details provided in-field).",
+        "completion_condition": {"has_flag": "shadow_job_done"},
+        "on_advance_triggers": [],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 120,
+    "reward_items": [],
+    "reward_flags": [],
+    "reward_xp": 200,
+    "alignment_reward": -5.0,
+    "faction_rewards": {"shadow_network_faction": 15.0, "iron_vanguard_faction": -8.0},
+    "guild_rewards": {},
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "crown_ascension",
+    "title": "The Throne Petition",
+    "description": "Four trials to prove yourself worthy of political ascension within the Verath Crown's inner circle.",
+    "giver_npc_id": null,
+    "stages": [
+      {
+        "stage_id": "noble_favor",
+        "description": "Earn the favor of a Verath noble.",
+        "objective_text": "Earn the favor of a Verath noble.",
+        "completion_condition": {"has_flag": "noble_favor_earned"},
+        "on_advance_triggers": [],
+        "next_stage_id": "military_endorsement"
+      },
+      {
+        "stage_id": "military_endorsement",
+        "description": "Secure the Iron Vanguard's military endorsement.",
+        "objective_text": "Secure the Iron Vanguard's military endorsement.",
+        "completion_condition": {"has_flag": "vanguard_endorsement"},
+        "on_advance_triggers": ["flag:iron_vanguard_command_flag"],
+        "next_stage_id": "conclave_approval"
+      },
+      {
+        "stage_id": "conclave_approval",
+        "description": "Gain the Mages Conclave's approval.",
+        "objective_text": "Gain the Mages Conclave's approval.",
+        "completion_condition": {"has_flag": "conclave_approval"},
+        "on_advance_triggers": [],
+        "next_stage_id": "throne_petition"
+      },
+      {
+        "stage_id": "throne_petition",
+        "description": "File the formal throne petition at the Palace District.",
+        "objective_text": "File the formal throne petition at the Palace.",
+        "completion_condition": {"has_flag": "throne_petition_filed"},
+        "on_advance_triggers": ["flag:crown_ruler_candidate_flag"],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 2000,
+    "reward_items": [],
+    "reward_flags": ["crown_ruler_candidate_flag", "rule_the_system_ready"],
+    "reward_xp": 5000,
+    "alignment_reward": 10.0,
+    "faction_rewards": {"verath_crown": 30.0},
+    "guild_rewards": {},
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "system_break_mission",
+    "title": "Break the Machine",
+    "description": "The System Breakers have a plan. It will change the world. It might end you.",
+    "giver_npc_id": null,
+    "stages": [
+      {
+        "stage_id": "gather_breakers",
+        "description": "Assemble the Breakers cell in the Undermarket.",
+        "objective_text": "Assemble the System Breakers cell in the Verath Undermarket.",
+        "completion_condition": {"has_flag": "breakers_assembled"},
+        "on_advance_triggers": [],
+        "next_stage_id": "infiltrate_core"
+      },
+      {
+        "stage_id": "infiltrate_core",
+        "description": "Infiltrate the Fracture Core antechamber.",
+        "objective_text": "Infiltrate the Fracture Core antechamber and observe the wound.",
+        "completion_condition": {"has_flag": "fracture_observed"},
+        "on_advance_triggers": [],
+        "next_stage_id": "plant_signal"
+      },
+      {
+        "stage_id": "plant_signal",
+        "description": "Access the System terminal and plant the break signal.",
+        "objective_text": "Access the System terminal and plant the break signal in the network.",
+        "completion_condition": {"has_flag": "system_override_attempted"},
+        "on_advance_triggers": [],
+        "next_stage_id": "trigger_break"
+      },
+      {
+        "stage_id": "trigger_break",
+        "description": "Trigger the break from the Core Chamber.",
+        "objective_text": "Trigger the break sequence from the Core Chamber.",
+        "completion_condition": {"has_flag": "destroy_the_system_ready"},
+        "on_advance_triggers": ["flag:destroy_system_path_flag"],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 0,
+    "reward_items": [],
+    "reward_flags": ["destroy_system_path_flag", "destroy_the_system_ready"],
+    "reward_xp": 5000,
+    "alignment_reward": -10.0,
+    "faction_rewards": {"system_breakers": 30.0, "verath_crown": -20.0, "iron_vanguard_faction": -15.0},
+    "guild_rewards": {},
+    "failure_conditions": [],
     "time_limit_turns": null
   }
 ]

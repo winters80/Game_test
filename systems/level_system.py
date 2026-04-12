@@ -44,4 +44,30 @@ def spend_stat_point(player: "Player", stat: str) -> bool:
     current = getattr(player.stats, stat)
     setattr(player.stats, stat, current + 1)
     player.stat_points -= 1
+    # Recalculate derived stats so HP/MP reflect the new values immediately
+    recalculate_derived_stats(player)
     return True
+
+
+def recalculate_derived_stats(player: "Player") -> None:
+    """Recompute max_hp and max_mp from current stats. Adjusts current values proportionally."""
+    new_max_hp = 20 + player.stats.VIT * 5 + player.stats.END * 3 + (player.level - 1) * (5 + player.stats.VIT + player.stats.END)
+    new_max_mp = 10 + player.stats.INT * 3 + player.stats.WIS * 2 + (player.level - 1) * (2 + player.stats.INT + player.stats.WIS)
+    hp_ratio = player.current_hp / player.max_hp if player.max_hp > 0 else 1.0
+    mp_ratio = player.current_mp / player.max_mp if player.max_mp > 0 else 1.0
+    player.max_hp = new_max_hp
+    player.max_mp = new_max_mp
+    player.current_hp = max(1, min(player.current_hp, int(hp_ratio * new_max_hp)))
+    player.current_mp = max(0, min(player.current_mp, int(mp_ratio * new_max_mp)))
+
+
+def auto_allocate_stat_points(player: "Player") -> None:
+    """
+    Auto-allocate all pending stat points based on the player's dominant stat.
+    Used when no interactive prompt is available (headless/agent play).
+    """
+    if player.stat_points <= 0:
+        return
+    dominant = player.stats.dominant_stat()
+    while player.stat_points > 0:
+        spend_stat_point(player, dominant)

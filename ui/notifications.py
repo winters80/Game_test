@@ -121,6 +121,57 @@ def notify_quest_failed(console: "Console", title: str) -> None:
     _system_notify(console, ["OBJECTIVE FAILED", title.upper()], style="system_warning", pause=1.0)
 
 
+def notify_guild_joined(console: "Console", guild_name: str, rank_name: str) -> None:
+    _system_notify(
+        console,
+        ["GUILD MEMBERSHIP GRANTED", f"[ {guild_name.upper()} ]", f"Rank: {rank_name}"],
+        style="system_msg", pause=1.0,
+    )
+
+
+def notify_guild_rank_changed(console: "Console", guild_name: str, old_rank: str, new_rank: str) -> None:
+    _system_notify(
+        console,
+        ["RANK ADVANCEMENT", f"{guild_name}", f"{old_rank} -> {new_rank}"],
+        style="system_msg", pause=1.0,
+    )
+
+
+def notify_faction_rank_changed(console: "Console", faction_name: str, new_rank_name: str) -> None:
+    _system_notify(
+        console,
+        ["FACTION STANDING UPDATED", faction_name.upper(), f"New standing: {new_rank_name}"],
+        style="system_msg", pause=0.8,
+    )
+
+
+def notify_player_died(console: "Console", lives_remaining: int, cause: str) -> None:
+    lines = ["YOU HAVE FALLEN"]
+    cause_clean = cause.replace("combat:", "Defeated in combat: ").replace("_", " ")
+    lines.append(cause_clean)
+    if lives_remaining > 0:
+        lines.append(f"{lives_remaining} {'life' if lives_remaining == 1 else 'lives'} remaining.")
+    else:
+        lines.append("ALL LIVES SPENT.")
+    _system_notify(console, lines, style="system_warning", pause=1.5)
+
+
+def notify_life_token_purchased(console: "Console", cost: int, lives_remaining: int) -> None:
+    _system_notify(
+        console,
+        ["LIFE TOKEN ACQUIRED", f"Cost: {cost:,} Shards", f"Lives: {lives_remaining}"],
+        style="system_msg", pause=1.0,
+    )
+
+
+def notify_game_over(console: "Console", cause: str, total_deaths: int) -> None:
+    _system_notify(
+        console,
+        ["GAME OVER", "ALL LIVES SPENT", f"Deaths: {total_deaths}", "Your story ends here."],
+        style="system_warning", pause=2.5,
+    )
+
+
 def notify_species_evolved(console: "Console", new_name: str, stage: int, description: str, flavor_text: str) -> None:
     lines = Text(justify="center")
     lines.append("EVOLUTION UNLOCKED\n", style="system_msg")
@@ -209,8 +260,57 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
     def on_quest_failed(event: Event) -> None:
         notify_quest_failed(console, event.data.get("title", "Unknown Quest"))
 
+    def on_guild_joined(event: Event) -> None:
+        notify_guild_joined(
+            console,
+            event.data.get("guild_name", "Unknown Guild"),
+            event.data.get("rank_name", event.data.get("rank_id", "Recruit")),
+        )
+
+    def on_guild_rank_changed(event: Event) -> None:
+        notify_guild_rank_changed(
+            console,
+            event.data.get("guild_name", "Unknown Guild"),
+            event.data.get("old_rank", "?"),
+            event.data.get("new_rank", "?"),
+        )
+
+    def on_faction_rank_changed(event: Event) -> None:
+        notify_faction_rank_changed(
+            console,
+            event.data.get("faction_name", "Unknown Faction"),
+            event.data.get("new_rank_name", event.data.get("new_rank", "?")),
+        )
+
+    def on_player_died(event: Event) -> None:
+        notify_player_died(
+            console,
+            event.data.get("lives_remaining", 0),
+            event.data.get("cause", "Unknown"),
+        )
+
+    def on_life_token_purchased(event: Event) -> None:
+        notify_life_token_purchased(
+            console,
+            event.data.get("cost", 0),
+            event.data.get("lives_remaining", 0),
+        )
+
+    def on_game_over(event: Event) -> None:
+        notify_game_over(
+            console,
+            event.data.get("cause", "Unknown"),
+            event.data.get("total_deaths", 0),
+        )
+
     bus.subscribe("ALIGNMENT_SHIFTED", on_alignment_shifted)
     bus.subscribe("SPECIES_EVOLVED", on_species_evolved)
     bus.subscribe("QUEST_STARTED", on_quest_started)
     bus.subscribe("QUEST_COMPLETED", on_quest_completed)
     bus.subscribe("QUEST_FAILED", on_quest_failed)
+    bus.subscribe("GUILD_JOINED", on_guild_joined)
+    bus.subscribe("GUILD_RANK_CHANGED", on_guild_rank_changed)
+    bus.subscribe("FACTION_RANK_CHANGED", on_faction_rank_changed)
+    bus.subscribe("PLAYER_DIED", on_player_died)
+    bus.subscribe("LIFE_TOKEN_PURCHASED", on_life_token_purchased)
+    bus.subscribe("GAME_OVER", on_game_over)

@@ -61,7 +61,7 @@ def apply_background(
             current = getattr(player.stats, stat)
             setattr(player.stats, stat, current + bonus)
 
-    player.gold += background_data.get("starting_gold_bonus", 0)
+    player.gold += background_data.get("starting_gold_bonus", 0) * 100  # background stores gold, player stores copper
 
     for item_id in background_data.get("starting_items", []):
         player.add_item(item_id)

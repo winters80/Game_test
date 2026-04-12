@@ -20,6 +20,31 @@ class OllamaClient:
         self.model = model
         self.base_url = base_url
         self._client = None
+        # Cumulative token counters for this session
+        self.tokens_prompt: int = 0
+        self.tokens_generated: int = 0
+        self.calls_made: int = 0
+
+    def token_summary(self) -> dict:
+        return {
+            "calls": self.calls_made,
+            "prompt_tokens": self.tokens_prompt,
+            "generated_tokens": self.tokens_generated,
+            "total_tokens": self.tokens_prompt + self.tokens_generated,
+        }
+
+    def _record_usage(self, response: object) -> None:
+        """Extract and accumulate token counts from an Ollama response."""
+        try:
+            if isinstance(response, dict):
+                self.tokens_prompt += response.get("prompt_eval_count", 0)
+                self.tokens_generated += response.get("eval_count", 0)
+            else:
+                self.tokens_prompt += getattr(response, "prompt_eval_count", 0) or 0
+                self.tokens_generated += getattr(response, "eval_count", 0) or 0
+            self.calls_made += 1
+        except Exception:
+            pass
 
     def _get_client(self):
         if self._client is None:
@@ -63,6 +88,7 @@ class OllamaClient:
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
                 data = json.loads(raw)
+                self._record_usage(response)
                 return data
             except json.JSONDecodeError as e:
                 last_error = OllamaParseError(f"JSON parse failed on attempt {attempt + 1}: {e}")
@@ -92,4 +118,5 @@ class OllamaClient:
             },
         )
         raw = response.get("response", "") if isinstance(response, dict) else response.response
+        self._record_usage(response)
         return raw.strip()

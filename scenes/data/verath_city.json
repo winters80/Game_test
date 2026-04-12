@@ -1,0 +1,361 @@
+{
+  "scene_id": "verath_city",
+  "title": "The City of Verath",
+  "entrance_text": [
+    "The city of Verath rises from the Aethorian plain like a fist of stone and glass.",
+    "Since the Fracture, the System's blue glow pulses from every window — status displays, class ratings, alignment scores.",
+    "Everyone is measured here. Everyone is watched."
+  ],
+  "nodes": {
+    "root": {
+      "text": "The main thoroughfare of Verath hums with measured purpose. Citizens with System tags floating above their heads move between districts, each one catalogued and ranked. To the north, guild banners hang above a row of large buildings — Guild Row. To the east, the noise and smell of the Market District. To the west, the Mages' Spire rises above the rooftops. North-west, the Palace District's ornate gates are visible. And if you know where to look, there's a way down to the Undermarket.",
+      "options": [
+        {
+          "option_id": "go_guild_row",
+          "label": "Head to Guild Row.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "guild_row"
+        },
+        {
+          "option_id": "go_market_district",
+          "label": "Visit the Market District.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "market_district"
+        },
+        {
+          "option_id": "go_mages_spire",
+          "label": "Approach the Mages' Spire.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "mages_spire"
+        },
+        {
+          "option_id": "go_palace_district",
+          "label": "Walk toward the Palace District.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "palace_district"
+        },
+        {
+          "option_id": "go_undermarket",
+          "label": "Find the way down to the Undermarket.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "requires": {
+            "alignment_max": 0
+          }
+        },
+        {
+          "option_id": "go_undermarket_known",
+          "label": "Head to the Undermarket. You know where to find it.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "requires": {
+            "flags": ["street_knowledge"]
+          }
+        },
+        {
+          "option_id": "leave_city",
+          "label": "Leave Verath. Back to the road.",
+          "expected": true,
+          "leads_to": null
+        }
+      ]
+    },
+    "guild_row": {
+      "text": "Guild Row is a wide street where the major guilds have claimed permanent headquarters. The Iron Vanguard's building is the largest — dark stone, military banners, the clang of training from behind its walls. Beside it, a smaller door with no marking that you somehow notice. Further down, the Mages' Conclave has a satellite office with their sigil above the door.",
+      "options": [
+        {
+          "option_id": "enter_iron_vanguard",
+          "label": "Enter the Iron Vanguard headquarters.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "iron_vanguard_hq"
+        },
+        {
+          "option_id": "approach_shadow_contact",
+          "label": "Approach the unmarked door. Something tells you it's not a coincidence that you noticed it.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "shadow_contact",
+          "requires": {
+            "flags": ["shadow_network_rumors"]
+          }
+        },
+        {
+          "option_id": "approach_shadow_contact_perception",
+          "label": "[You notice something wrong about that unmarked door — the angles are off, the shadow doesn't match the light.] Investigate it.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "shadow_contact",
+          "requires": {
+            "stat_gates": [
+              {
+                "stat": "PERCEPTION",
+                "threshold": 10,
+                "gate_type": "hidden",
+                "hidden_hint_threshold": 6,
+                "hint_text": "Something about one of the doors on Guild Row doesn't sit right."
+              }
+            ]
+          }
+        },
+        {
+          "option_id": "mages_conclave_door",
+          "label": "Check the Mages' Conclave office.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "mages_spire"
+        },
+        {
+          "option_id": "silver_fangs_rumor",
+          "label": "Ask around about the Silver Fangs guild.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "guild_row",
+          "triggers": ["flag:silver_fangs_heard"]
+        },
+        {
+          "option_id": "back_to_root_from_guild",
+          "label": "Return to the main thoroughfare.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "iron_vanguard_hq": {
+      "text": "The Iron Vanguard headquarters smells of weapon oil and discipline. Recruits drill in the courtyard. At a heavy desk near the entrance, Captain Aldis reviews a stack of field reports with the focused expression of someone who has stopped being surprised by anything.",
+      "options": [
+        {
+          "option_id": "talk_to_aldis_vanguard",
+          "label": "Speak with Captain Aldis.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "iron_vanguard_hq",
+          "triggers": ["talk_npc:captain_aldis"]
+        },
+        {
+          "option_id": "apply_iron_vanguard",
+          "label": "Express interest in joining the Iron Vanguard.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "iron_vanguard_hq",
+          "triggers": ["flag:applied_iron_vanguard", "start_quest:verath_courier"]
+        },
+        {
+          "option_id": "leave_vanguard_hq",
+          "label": "Leave the headquarters.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "guild_row"
+        }
+      ]
+    },
+    "shadow_contact": {
+      "text": "Behind the door is a narrow staircase leading down to a basement room that officially doesn't exist. A figure sits at a table with two cups of tea — one for them, one already poured for you.\n\n'We've been watching your choices,' they say. 'The System has a file on you. So do we. Ours is more interesting.'\n\nThey slide a folded piece of paper across the table. No words on it except a symbol you've seen before, somewhere you can't quite place.",
+      "options": [
+        {
+          "option_id": "accept_shadow_errand",
+          "label": "Pick up the paper. Accept the errand.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "root",
+          "triggers": ["start_quest:shadow_errand", "flag:shadow_network_rumors", "flag:shadow_network_contact_made"]
+        },
+        {
+          "option_id": "decline_shadow",
+          "label": "Leave the paper on the table. Walk out without a word.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ],
+      "requires": {
+        "flags_any": ["explored_unmapped_passage", "shadow_network_rumors"]
+      }
+    },
+    "mages_spire": {
+      "text": "The Mages' Spire is the most beautiful building in Verath — white stone that seems to generate its own light, arcane formulae carved in spiraling patterns up every surface. The foyer is quiet in the way libraries are quiet: a productive silence, not an empty one.\n\nAt the reception desk, Sylara — silver hair, Guild insignia on her shoulder — looks up. If you've met her before, recognition crosses her face. Here, she's not the local guild contact. She's the Guildmaster.",
+      "options": [
+        {
+          "option_id": "talk_sylara_guildmaster",
+          "label": "Speak with Sylara.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "mages_spire",
+          "triggers": ["talk_npc:sylara_guildmaster"]
+        },
+        {
+          "option_id": "read_research_board",
+          "label": "Study the research board on the wall.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "mages_spire",
+          "triggers": ["flag:conclave_research_seen"],
+          "requires": {
+            "min_stats": {"INT": 12}
+          }
+        },
+        {
+          "option_id": "leave_spire",
+          "label": "Leave the Spire.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "palace_district": {
+      "text": "The Palace District is separated from the rest of Verath by a wide boulevard and an iron fence that manages to look decorative while also looking absolutely impassable. Crown Guards stand at the gate. Their System tags read AUTHORIZED PERSONNEL and nothing else.",
+      "options": [
+        {
+          "option_id": "admire_architecture",
+          "label": "Stand on the boulevard and admire the architecture.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "palace_district"
+        },
+        {
+          "option_id": "attempt_entry",
+          "label": "Approach the gate and request entry.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "palace_entry_locked",
+          "requires": {
+            "alignment_min": 20
+          }
+        },
+        {
+          "option_id": "attempt_entry_passage",
+          "label": "Present your safe passage credentials at the gate.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "palace_entry_locked",
+          "requires": {
+            "flags": ["crown_safe_passage_all_zones"]
+          }
+        },
+        {
+          "option_id": "leave_palace_district",
+          "label": "Return to the thoroughfare.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "palace_entry_locked": {
+      "text": "The Crown Guard reviews your credentials — alignment rating, class designation, any guild affiliations. They check something on a list.\n\n'You don't have standing to enter the Palace District,' the guard says, not unkindly. 'Come back with an endorsement from one of the recognized factions, or when your alignment rating clears the civic threshold.'\n\nThey step back into position. The conversation is over.",
+      "options": [
+        {
+          "option_id": "back_from_palace_gate",
+          "label": "Accept the refusal and return to the boulevard.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "palace_district"
+        }
+      ]
+    },
+    "market_district": {
+      "text": "The Market District is loud and alive — vendors calling from stalls, System tags flickering above goods displaying certified quality ratings. The smell of spice and fresh-cut wood. Citizens comparing their status screens.\n\nAt the far end of the market, a building with golden scales above the door: the Golden Scales Auction House.",
+      "options": [
+        {
+          "option_id": "browse_market_goods",
+          "label": "Browse the market stalls.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "market_district",
+          "triggers": ["give_gold:20"]
+        },
+        {
+          "option_id": "visit_auction_house",
+          "label": "Enter the Golden Scales Auction House.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "auction_house"
+        },
+        {
+          "option_id": "leave_market",
+          "label": "Return to the main thoroughfare.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "auction_house": {
+      "text": "The Golden Scales Auction House is larger inside than outside — a deep hall lined with display cases and System-certified appraisal terminals. Licensed auctioneers move between lots. At the back, behind heavy glass, life tokens are on display. Their price tags make your eyes water.\n\nA notice board near the entrance lists current featured lots: rare crafting materials, a contested land title, something sealed in a black box with no description at all.",
+      "options": [
+        {
+          "option_id": "browse_auction_listings",
+          "label": "Browse the current auction listings.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "auction_house",
+          "triggers": ["flag:visited_auction_house", "start_quest:fracture_investigation"],
+          "requires": {
+            "flags": ["fracture_data_recorded"]
+          }
+        },
+        {
+          "option_id": "browse_auction_listings_basic",
+          "label": "Browse the current auction listings.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "auction_house",
+          "triggers": ["flag:visited_auction_house"]
+        },
+        {
+          "option_id": "check_life_token_prices",
+          "label": "Inquire about the life token prices.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "auction_house",
+          "triggers": ["flag:checked_life_token_prices"]
+        },
+        {
+          "option_id": "leave_auction_house",
+          "label": "Leave the auction house.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "market_district"
+        }
+      ]
+    },
+    "undermarket": {
+      "text": "Below Verath is a different city. Accessed through a grate behind a spice stall, the Undermarket is built into the old drainage system — low ceilings, torchlight, the smell of river water and something chemical. Stalls line the tunnel walls. Nobody's System tag is visible down here. That's the point.\n\nThe Iron Hammer Exchange occupies the largest space — three connected chambers doing business that the Crown officially doesn't know about.",
+      "options": [
+        {
+          "option_id": "browse_black_market",
+          "label": "Browse the Iron Hammer Exchange stalls.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "triggers": ["flag:visited_undermarket"]
+        },
+        {
+          "option_id": "find_shadow_contact",
+          "label": "Ask about the Shadow Network. Carefully.",
+          "expected": false,
+          "leads_to": "verath_city",
+          "leads_to_node": "shadow_contact",
+          "requires": {
+            "flags": ["shadow_network_rumors"]
+          }
+        },
+        {
+          "option_id": "leave_undermarket",
+          "label": "Climb back up to the surface.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    }
+  }
+}

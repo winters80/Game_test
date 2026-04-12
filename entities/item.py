@@ -24,6 +24,10 @@ class Item(BaseModel):
     weight: float = 1.0
     stackable: bool = False
     quantity: int = 1
+    effect_type:  str = ""          # "heal_hp" | "heal_mp" | "" for non-consumables
+    effect_value: int = 0           # amount restored
+    effect_duration: int = 0        # turns this buff lasts (for consumable buffs)
+    unidentified_name: str = ""     # shown before player has Inspect or has used the item
 
 
 class ItemRegistry:

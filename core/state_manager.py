@@ -21,6 +21,8 @@ class GameState:
         self.generated_content_cache: dict[str, Any] = {}
         self._dirty: bool = False
         self._entrance_shown: set[str] = set()  # scene_ids whose entrance_text has been displayed
+        self._dynamic_options: dict[str, list] = {}
+        # key = "scene_id:node_id", value = list of SceneOption objects
 
     # ── Dirty tracking ────────────────────────────────────────────────────────
 

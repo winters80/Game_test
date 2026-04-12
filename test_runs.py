@@ -297,7 +297,7 @@ try:
     check("R5 species applied", p.species_id == "stone_dwarf")
     check("R5 END (5+4+0=9)", p.stats.END == 9, f"END={p.stats.END}")
     check("R5 VIT (5+2+0=7)", p.stats.VIT == 7, f"VIT={p.stats.VIT}")
-    check("R5 gold +50 base +75 bg = 125", p.gold == 125, f"gold={p.gold}")
+    check("R5 gold 5000 base + 7500 bg = 12500 copper", p.gold == 12500, f"gold={p.gold}")
     check("R5 alignment (0+5=5.0)", p.alignment == 5.0, f"align={p.alignment}")
 
     assign_base_class(p, "warrior", engine.class_registry, engine.skill_registry)

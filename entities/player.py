@@ -86,7 +86,9 @@ class Player(BaseModel):
     # ── Inventory ─────────────────────────────────────────────────────────────
     inventory: list[InventorySlot] = Field(default_factory=list)
     equipped: EquipmentSlots = Field(default_factory=EquipmentSlots)
-    gold: int = 50
+    gold: int = 5000
+    identified_items: dict[str, int] = Field(default_factory=dict)
+    # key = item_id, value = known effect_value (0 = name-only known, positive = full value known)
 
     # ── Alignment ─────────────────────────────────────────────────────────────
     # Float -100.0 (Harbinger of Ruin) to +100.0 (Paragon of Light)
@@ -117,6 +119,7 @@ class Player(BaseModel):
     flags: dict[str, Any] = Field(default_factory=dict)
     choice_history: list[str] = Field(default_factory=list)
     turn_count: int = 0
+    active_buffs: list[dict] = Field(default_factory=list)
     created_at: datetime = Field(default_factory=datetime.now)
     play_time_seconds: int = 0
     last_safe_zone_id: str = "village_start"

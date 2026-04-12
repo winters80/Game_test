@@ -39,6 +39,8 @@ class QuestTemplate(BaseModel):
     reward_flags: list[str] = Field(default_factory=list)
     reward_xp: int = 0
     alignment_reward: float = 0.0
+    faction_rewards: dict[str, float] = Field(default_factory=dict)   # {faction_id: delta}
+    guild_rewards: dict[str, float] = Field(default_factory=dict)     # {guild_id: delta}
     # Each dict has same shape as completion_condition; if ANY is met, quest fails
     failure_conditions: list[dict[str, Any]] = Field(default_factory=list)
     time_limit_turns: int | None = None
@@ -69,3 +71,7 @@ class QuestRegistry:
 
     def all(self) -> list[QuestTemplate]:
         return list(self._quests.values())
+
+    def register(self, template: "QuestTemplate") -> None:
+        """Register a dynamically generated quest template at runtime."""
+        self._quests[template.template_id] = template

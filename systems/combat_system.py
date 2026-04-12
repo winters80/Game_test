@@ -38,7 +38,7 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "name": "Goblin Scout",
         "max_hp": 15, "current_hp": 15,
         "attack": 4, "defense": 1,
-        "xp_reward": 10, "gold_reward": 3,
+        "xp_reward": 10, "gold_reward": 300,
         "rank": "F",
     },
     "goblin_looter": {
@@ -46,7 +46,7 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "name": "Goblin Looter",
         "max_hp": 20, "current_hp": 20,
         "attack": 5, "defense": 2,
-        "xp_reward": 15, "gold_reward": 8,
+        "xp_reward": 15, "gold_reward": 800,
         "rank": "F",
     },
     "dungeon_slime": {
@@ -54,7 +54,7 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "name": "Dungeon Slime",
         "max_hp": 25, "current_hp": 25,
         "attack": 3, "defense": 0,
-        "xp_reward": 12, "gold_reward": 2,
+        "xp_reward": 12, "gold_reward": 200,
         "rank": "F",
     },
     "unknown_creature": {

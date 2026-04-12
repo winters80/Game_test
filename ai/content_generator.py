@@ -70,6 +70,99 @@ class ContentGenerator:
             logger.error(f"AI narrative generation failed: {e}")
             return None
 
+    def generate_quest(
+        self,
+        player: "Player",
+        giver_npc_id: str,
+        npc_name: str,
+        npc_role: str,
+    ) -> "QuestTemplate | None":
+        """Generate a dynamic quest tailored to the player's profile. Returns None on failure."""
+        from ai.prompt_builder import build_quest_generation_prompt
+        from ai.response_validator import AIQuestResponse
+        from entities.quest import QuestTemplate, QuestStage
+
+        prompt = build_quest_generation_prompt(
+            player, giver_npc_id, npc_name, npc_role, self.lore_data
+        )
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt,
+                system_prompt=self.system_prompt,
+                temperature=0.75,
+            )
+            ai_response = AIQuestResponse.model_validate(raw)
+
+            stages = []
+            for s in ai_response.stages:
+                stages.append(QuestStage(
+                    stage_id=s.stage_id,
+                    description=s.objective_text,
+                    objective_text=s.objective_text,
+                    completion_condition=s.completion_condition,
+                    next_stage_id=s.next_stage_id,
+                ))
+
+            return QuestTemplate(
+                template_id=ai_response.template_id,
+                title=ai_response.title,
+                description=ai_response.description,
+                giver_npc_id=giver_npc_id,
+                stages=stages,
+                reward_gold=ai_response.reward_gold,
+                reward_xp=ai_response.reward_xp,
+                reward_items=ai_response.reward_items,
+                alignment_reward=ai_response.alignment_reward,
+                reward_flags=[],
+                failure_conditions=[],
+                faction_rewards=ai_response.faction_rewards,
+                guild_rewards=ai_response.guild_rewards,
+            )
+        except Exception as e:
+            logger.error(f"AI quest generation failed: {e}")
+            return None
+
+    def generate_dynamic_options(
+        self,
+        question: str,
+        scene_title: str,
+        scene_text: str,
+        current_options: list[str],
+        player: "Player",
+    ) -> "AIDynamicOptionsResponse | None":
+        """
+        Generate situational options based on a player's natural-language question.
+        Returns None on failure.
+        """
+        from ai.prompt_builder import build_dynamic_options_prompt
+        from ai.response_validator import AIDynamicOptionsResponse
+
+        player_stats = player.stats.model_dump()
+        player_stats["level"] = player.level
+        player_stats["perception"] = player.perception
+        player_flags = [k for k in player.flags.keys() if not k.startswith("_")][:15]
+
+        prompt = build_dynamic_options_prompt(
+            question=question,
+            scene_title=scene_title,
+            scene_text=scene_text,
+            current_options=current_options,
+            player_stats=player_stats,
+            player_flags=player_flags,
+            lore_data=self.lore_data,
+        )
+
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt,
+                system_prompt=self.system_prompt,
+                temperature=0.8,
+            )
+            return AIDynamicOptionsResponse.model_validate(raw)
+        except Exception as e:
+            logger.warning(f"Dynamic options generation failed: {e}")
+            return None
+
     def _get_standard_combo_names(self, player: "Player", class_registry: "ClassRegistry") -> list[str]:
         player_classes = {c for c in [player.base_class, player.secondary_class] if c}
         names = []

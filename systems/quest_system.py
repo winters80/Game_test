@@ -206,7 +206,7 @@ def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
     player = state.player
 
     if template.reward_gold:
-        player.gold += template.reward_gold
+        player.gold += template.reward_gold * 100   # template stores gold, player stores copper
 
     if template.reward_xp:
         leveled_up = level_system.add_experience(player, template.reward_xp)
@@ -225,6 +225,20 @@ def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
 
     if template.alignment_reward:
         apply_alignment_shift(player, template.alignment_reward, reason=f"quest:{template.template_id}")
+
+    # Faction standing rewards
+    if template.faction_rewards and state.world_db:
+        for faction_id, delta in template.faction_rewards.items():
+            state.world_db.update_faction_standing(faction_id, delta)
+            # Cache on player for fast reads
+            player.faction_standing_cache[faction_id] = player.faction_standing_cache.get(faction_id, 0.0) + delta
+
+    # Guild standing rewards (stored as faction_standing with guild_ prefix for simplicity)
+    if template.guild_rewards and state.world_db:
+        from config import feature
+        if feature("guild_system"):
+            for guild_id, delta in template.guild_rewards.items():
+                state.world_db.update_faction_standing(f"guild_{guild_id}", delta)
 
 
 def fail_quest(
@@ -287,6 +301,52 @@ def _tick_single(
 
 
 # ── Quest log for UI ──────────────────────────────────────────────────────────
+
+def generate_ai_quest(
+    giver_npc_id: str,
+    npc_name: str,
+    npc_role: str,
+    state: "GameState",
+    ai_generator: object,
+) -> str | None:
+    """
+    Use AI to generate a dynamic quest and start it. Returns instance_id or None.
+    Falls back gracefully if AI is unavailable.
+    """
+    if ai_generator is None:
+        return None
+
+    template = ai_generator.generate_quest(
+        state.player, giver_npc_id, npc_name, npc_role
+    )
+    if not template:
+        return None
+
+    # Store AI quest definition in world_db
+    instance_id = str(uuid.uuid4())[:8]
+    initial_stage = template.initial_stage_id
+
+    if state.world_db:
+        state.world_db.add_quest(
+            instance_id=instance_id,
+            template_id=template.template_id,
+            initial_state=initial_stage,
+            giver_npc_id=giver_npc_id,
+            turn_number=state.turn_number,
+            ai_context={"ai_generated": True},
+        )
+        state.world_db.store_ai_quest(instance_id, template.model_dump())
+
+    state.player.add_quest(instance_id)
+
+    bus.publish(Event("QUEST_STARTED", {
+        "quest_id": instance_id,
+        "template_id": template.template_id,
+        "title": template.title,
+    }))
+
+    return instance_id
+
 
 def get_active_quest_summaries(
     state: "GameState",

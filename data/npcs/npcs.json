@@ -73,7 +73,7 @@
       },
       "shop": {
         "node_id": "shop",
-        "npc_text": "'Iron Sword is fifty gold — proper balance, forged it myself. Leather Armor is forty, Health Potion twenty-five, Mana Potion thirty. What'll it be?'",
+        "npc_text": "'Iron Sword is fifty Shards — proper balance, forged it myself. Leather Armor is forty Shards, Health Potion twenty-five Shards, Mana Potion thirty Shards. What'll it be?'",
         "options": [
           {
             "option_id": "buy_sword",
@@ -199,7 +199,7 @@
             "option_id": "collect_reward",
             "label": "I think that's yours.",
             "requires": {"items": ["torven_hammer"]},
-            "npc_response": "'Forty gold. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
+            "npc_response": "'Forty Shards. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
             "triggers": ["flag:torven_hammer_returned", "give_gold:40"],
             "disposition_change": 25.0,
             "leads_to_node": "__exit__",
@@ -317,7 +317,7 @@
             "option_id": "submit_survey",
             "label": "I completed the dungeon survey contract.",
             "requires": {"flags": ["surveyed_goblins", "contract_dungeon_survey"]},
-            "npc_response": "'Goblin patrol documented, slime colony noted, layout mapped. This is clean work.' She pulls out a ledger. 'Thirty gold, as contracted.'",
+            "npc_response": "'Goblin patrol documented, slime colony noted, layout mapped. This is clean work.' She pulls out a ledger. 'Thirty Shards, as contracted.'",
             "triggers": ["flag:submitted_dungeon_survey", "give_gold:30"],
             "disposition_change": 10.0,
             "leads_to_node": "survey_complete",
@@ -528,7 +528,7 @@
     "dialogue_nodes": {
       "root": {
         "node_id": "root",
-        "npc_text": "'Welcome to the Iron Compass. Room's five gold a night, ale's two, and information varies by quality.'",
+        "npc_text": "'Welcome to the Iron Compass. Room's five Shards a night, ale's two, and information varies by quality.'",
         "smart_observation": "She's watching the door with more attention than innkeepers usually give to foot traffic. She's looking for someone specific.",
         "smart_threshold": 8,
         "perception_reveal": "Two of the three patrons at the tables glanced at their belt pouches when you walked in. Something's been taken recently and they know it.",
@@ -661,7 +661,7 @@
       },
       "theft_reveal": {
         "node_id": "theft_reveal",
-        "npc_text": "'I can't go to the Guard — half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay twenty-five gold to know who it is. Not for punishment. I just want them to stop.'",
+        "npc_text": "'I can't go to the Guard — half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay twenty-five Shards to know who it is. Not for punishment. I just want them to stop.'",
         "options": [
           {
             "option_id": "accept_theft_quest",
@@ -1093,7 +1093,7 @@
       },
       "city_talk": {
         "node_id": "city_talk",
-        "npc_text": "'Rank C citizens make more gold, live in better districts, get first access to Guild contracts. Rank F citizens work the dungeon's first floor and hope their classification improves. The System didn't say that's how it would be. But that's how it is.' He pauses. 'I'm not sure that was an accident.'",
+        "npc_text": "'Rank C citizens earn more Shards, live in better districts, get first access to Guild contracts. Rank F citizens work the dungeon's first floor and hope their classification improves. The System didn't say that's how it would be. But that's how it is.' He pauses. 'I'm not sure that was an accident.'",
         "smart_observation": "He has political opinions well above a guard captain's usual scope. He's either unusually thoughtful or was something different before the Fracture.",
         "smart_threshold": 9,
         "options": [

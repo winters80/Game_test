@@ -13,6 +13,7 @@ from rich.text import Text
 from rich.live import Live
 
 from ui.themes import GAME_THEME
+from config import format_currency
 
 if TYPE_CHECKING:
     from entities.player import Player
@@ -67,17 +68,28 @@ def print_options(options: list["SceneOption"]) -> None:
     console.print()
 
 
-def print_status_bar(player: "Player") -> None:
-    from ui.panels import build_status_panel, build_stats_panel
-    columns = Columns([build_status_panel(player), build_stats_panel(player)], equal=False)
-    console.print(columns)
+def print_status_bar(player: "Player", item_registry: Any = None) -> None:
+    from ui.panels import build_status_panel, build_stats_panel, build_compact_inventory_panel, build_equipment_panel
+    panels: list = [build_status_panel(player), build_stats_panel(player)]
+    if item_registry is not None:
+        panels.append(build_compact_inventory_panel(player, item_registry))
+        panels.append(build_equipment_panel(player, item_registry))
+    console.print(Columns(panels, equal=False))
 
 
 def print_full_status(player: "Player", item_registry: Any, skill_registry: Any) -> None:
-    from ui.panels import build_status_panel, build_stats_panel, build_inventory_panel, build_skills_panel
+    from ui.panels import (
+        build_status_panel, build_stats_panel,
+        build_inventory_panel, build_skills_panel,
+        build_guild_panel, build_faction_panel,
+    )
     console.print(Columns([build_status_panel(player), build_stats_panel(player)]))
     console.print(build_inventory_panel(player, item_registry))
     console.print(build_skills_panel(player, skill_registry))
+    if player.guild_memberships:
+        console.print(build_guild_panel(player))
+    if player.faction_standing_cache:
+        console.print(build_faction_panel(player))
 
 
 def print_class_reveal(class_def: "ClassDefinition") -> None:
@@ -130,9 +142,9 @@ def print_success(message: str) -> None:
 
 def print_gold_change(amount: int, gained: bool = True) -> None:
     if gained:
-        console.print(f"  [gold]+ {amount} gold[/gold]")
+        console.print(f"  [gold]+ {format_currency(amount)}[/gold]")
     else:
-        console.print(f"  [damage]- {amount} gold[/damage]")
+        console.print(f"  [damage]- {format_currency(amount)}[/damage]")
 
 
 def print_npc_dialogue(npc_name: str, npc_description: str, text: str) -> None:

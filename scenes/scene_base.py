@@ -194,6 +194,31 @@ class Scene:
                 # Handled in game_engine for full registry access
                 state.player.set_flag(f"_pending_background:{trigger[15:]}")
 
+            elif trigger.startswith("rest_inn:"):
+                # rest_inn:COST_COPPER — pay copper, full HP/MP restore + well-rested buff
+                try:
+                    cost = int(trigger[9:])
+                except ValueError:
+                    cost = 0
+                if state.player.gold >= cost:
+                    state.player.gold -= cost
+                    state.player.current_hp = state.player.max_hp
+                    state.player.current_mp = state.player.max_mp
+                    state.player.set_flag("well_rested")
+                    from systems.buff_system import apply_buff
+                    for stat in ("STR", "INT", "AGI", "VIT", "END"):
+                        apply_buff(state.player, stat, 1, 30, "well_rested")
+                    bus.publish(Event("SYSTEM_MSG", {
+                        "message": "You rest through the night. HP and MP fully restored. Well-rested buff applied (+1 all combat stats, 30 turns)."
+                    }))
+                else:
+                    bus.publish(Event("WARNING", {"message": "Not enough gold to pay for the room."}))
+
+            elif trigger.startswith("give_food:"):
+                item_id = trigger[10:]
+                state.player.add_item(item_id, 1)
+                bus.publish(Event("ITEM_FOUND", {"item_id": item_id, "item_name": item_id, "rarity": "COMMON"}))
+
             # ── Engine-delegated triggers (no-op here) ────────────────────────
             elif trigger.startswith("set_base_class:"):
                 pass
