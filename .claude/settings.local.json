@@ -26,7 +26,13 @@
       "Bash(git fetch:*)",
       "Bash(git merge:*)",
       "Bash(python -c \"from core.game_engine import GameEngine; e = GameEngine\\(\\); e.bootstrap\\(\\); print\\('OK'\\)\")",
-      "Bash(python -c \"import json; json.load\\(open\\('scenes/data/dungeon_floor1.json'\\)\\)\")"
+      "Bash(python -c \"import json; json.load\\(open\\('scenes/data/dungeon_floor1.json'\\)\\)\")",
+      "Bash(python -c \"import core.game_engine; print\\('OK'\\)\")",
+      "Bash(python3 -c ':*)",
+      "Bash(python -c \"import core.game_engine; import persistence.world_db; import ai.background_generator; print\\('OK'\\)\")",
+      "Bash(python D:/Stuff/Game_Test/test_runs.py)",
+      "Bash(python -c \"import core.game_engine; import ai.world_director; print\\('OK'\\)\")",
+      "Bash(python -c \"import core.game_engine; import ai.world_director; import ai.background_generator; import systems.combat_system; print\\('OK'\\)\")"
     ]
   }
 }

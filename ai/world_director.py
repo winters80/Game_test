@@ -35,15 +35,32 @@ class WorldDirector:
         self._lore = lore_data
         self._plan: list[dict] = []   # queued director targets
         self._last_directed_turn: int = -1
+        self._wall_clock_interval: float = 1200.0
+        self._last_wall_clock_run: float = 0.0
 
     def tick(self, state: "GameState", turn: int) -> None:
-        """Called each game loop. Directs generation every DIRECTOR_INTERVAL turns."""
+        """Called each game loop. Directs on wall-clock timer (20 min) regardless of turns."""
+        import time as _time
         from config import DIRECTOR_INTERVAL
-        if turn < 1:
+
+        # Update the bg generator's context on every tick (cheap)
+        if self._bg:
+            flags = [k for k in state.player.flags if not k.startswith("_")][:10]
+            zone_name = state.current_scene_id.replace("_", " ").title()
+            self._bg.update_context(
+                zone_id=state.current_scene_id,
+                zone_name=zone_name,
+                player_level=state.player.level,
+                flags=flags,
+            )
+
+        # Wall-clock director analysis every 20 minutes
+        now = _time.monotonic()
+        if now - self._last_wall_clock_run < self._wall_clock_interval:
             return
-        if turn - self._last_directed_turn < DIRECTOR_INTERVAL:
-            return
-        self._last_directed_turn = turn
+        self._last_wall_clock_run = now
+
+        logger.info(f"WorldDirector firing at turn {turn} (wall-clock interval)")
         self._analyze_and_direct(state)
 
     def _analyze_and_direct(self, state: "GameState") -> None:

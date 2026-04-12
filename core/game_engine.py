@@ -1828,6 +1828,19 @@ class GameEngine:
         """Submit background generation tasks at configured intervals."""
         if not self._bg_generator or not self.state:
             return
+
+        # Always update autonomous context so worker thread has current state
+        zone_id   = self.state.current_scene_id
+        scene     = self.scene_registry.get(zone_id)
+        zone_name = scene.title if scene else zone_id.replace("_", " ").title()
+        context_flags = [k for k in self.state.player.flags if not k.startswith("_")][:10]
+        self._bg_generator.update_context(
+            zone_id=zone_id,
+            zone_name=zone_name,
+            player_level=self.state.player.level,
+            flags=context_flags,
+        )
+
         from config import BG_GEN_INTERVAL
 
         player = self.state.player

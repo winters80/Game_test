@@ -1,0 +1,36 @@
+{
+  "public_belief": "The System appeared spontaneously during the Fracture three years ago, a divine or natural emergence that began classifying humans to help them survive the chaos.",
+  "fragments": [
+    {
+      "fragment_id": "sys_lore_1",
+      "requires_flag": "found_void_shard",
+      "title": "Fragment: The Precursor Signal",
+      "text": "The void shard predates the Fracture by centuries. Its crystalline structure contains layered information — not random, not natural. Someone encoded it. The System cannot read it. The System was not the first."
+    },
+    {
+      "fragment_id": "sys_lore_2",
+      "requires_flag": "noticed_alcove_carvings",
+      "title": "Fragment: The Alcove",
+      "text": "The tool marks in the alcove match a construction technique that predates the city of Verath by at least four hundred years. Someone placed that shard there deliberately. The alcove was made to hold it. The dungeon was built around it, not the other way around."
+    },
+    {
+      "fragment_id": "sys_lore_3",
+      "requires_flag": "found_ancient_tome",
+      "title": "Fragment: The Silent Record",
+      "text": "The pages of the blank book respond to specific questions — not spoken, but thought with intent. The responses are not answers. They are coordinates. Numerical. Geometric. The last page shows a symbol identical to the System's classification seal, but inverted, and dated to an era before the Fracture by three centuries."
+    },
+    {
+      "fragment_id": "sys_lore_4",
+      "requires_flag": "descended_to_floor2",
+      "title": "Fragment: The Floor 2 Irregularity",
+      "text": "The creatures on Floor 2 are not aggressive. They are organized. They patrol a central chamber containing what appears to be a terminal — older than the System's current interface, different architecture, same underlying logic. The System's silence about Floor 2 is not a gap. It is a decision."
+    },
+    {
+      "fragment_id": "sys_lore_5",
+      "requires_flag": "knows_system_chose_blind",
+      "title": "Fragment: The Deliberate Blindness",
+      "text": "The System did not fail to see Floor 2. It chose not to see it. The same pattern appears in seventeen other registered zones across Aethoria — all of them contain structures that predate the Fracture, all classified as 'sensor anomaly'. The System was built to maintain a specific kind of ignorance."
+    }
+  ],
+  "true_origin_hint": "The System was not created by the Fracture. It was waiting for the Fracture. The question is not what the System is — it is what it was built to do when the world broke."
+}

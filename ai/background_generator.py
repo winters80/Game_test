@@ -30,6 +30,7 @@ class BackgroundGenerator:
     """Manages a single daemon thread for background AI content generation."""
 
     def __init__(self, content_generator: "ContentGenerator") -> None:
+        import time as _time
         self._content_gen = content_generator
         self._task_queue: queue.Queue[dict | None] = queue.Queue(maxsize=3)
         self._results: queue.Queue[dict] = queue.Queue()
@@ -37,6 +38,9 @@ class BackgroundGenerator:
             target=self._worker, daemon=True, name="AI-BG"
         )
         self._running = False
+        self._last_autonomous_run: float = 0.0
+        self._autonomous_interval: float = 1200.0  # 20 minutes
+        self._autonomous_context: dict = {}  # updated by game engine each turn
 
     # ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -136,6 +140,15 @@ class BackgroundGenerator:
             "context_flags": context_flags,
         })
 
+    def update_context(self, zone_id: str, zone_name: str, player_level: int, flags: list[str]) -> None:
+        """Update the autonomous generator's world context. Called from game loop."""
+        self._autonomous_context = {
+            "zone_id": zone_id,
+            "zone_name": zone_name,
+            "player_level": player_level,
+            "flags": flags,
+        }
+
     def _submit(self, task: dict) -> bool:
         try:
             self._task_queue.put_nowait(task)
@@ -158,6 +171,7 @@ class BackgroundGenerator:
     # ── Worker (runs in daemon thread) ─────────────────────────────────────────
 
     def _worker(self) -> None:
+        import time as _time
         logger.info("AI background worker started.")
         while self._running:
             try:
@@ -172,10 +186,121 @@ class BackgroundGenerator:
                         pass  # discard if results queue full
                 self._task_queue.task_done()
             except queue.Empty:
-                continue  # timeout — loop and check _running again
+                # No submitted tasks — check if autonomous generation is due
+                self._maybe_autonomous_generate()
+                continue
             except Exception as exc:
                 logger.warning(f"BG generation failed: {exc}")
         logger.info("AI background worker stopped.")
+
+    def _maybe_autonomous_generate(self) -> None:
+        """
+        Fires autonomous world generation every _autonomous_interval seconds,
+        completely independent of player actions or turn count.
+        Called from worker thread when task queue is empty.
+        """
+        import time as _time
+        now = _time.monotonic()
+        if now - self._last_autonomous_run < self._autonomous_interval:
+            return
+        self._last_autonomous_run = now
+
+        ctx = self._autonomous_context
+        if not ctx:
+            return
+
+        zone_id      = ctx.get("zone_id", "")
+        zone_name    = ctx.get("zone_name", zone_id)
+        player_level = ctx.get("player_level", 1)
+        flags        = ctx.get("flags", [])
+
+        # Rotate through all content types on autonomous schedule
+        # Use wall-clock modulo to pick type (varies each 20-min window)
+        slot = int(_time.monotonic() / self._autonomous_interval) % 6
+
+        logger.info(f"Autonomous generation firing: slot={slot}, zone={zone_id}")
+
+        try:
+            if slot == 0:
+                result = self._gen_world_event({
+                    "zone_id": zone_id, "zone_name": zone_name,
+                    "player_level": player_level, "context_flags": flags,
+                })
+            elif slot == 1:
+                result = self._gen_rumor_task({
+                    "zone_id": zone_id, "context_flags": flags, "player_level": player_level,
+                })
+            elif slot == 2:
+                result = self._gen_lore_entry({
+                    "context_flags": flags, "player_flags": flags,
+                })
+            elif slot == 3:
+                result = self._gen_area_activity({
+                    "zone_id": zone_id, "zone_name": zone_name, "context_flags": flags,
+                })
+            elif slot == 4:
+                result = self._gen_narrative({
+                    "zone_id": zone_id, "zone_name": zone_name, "context_flags": flags,
+                })
+            else:
+                # Full director-style generation: ask Ollama what the world needs
+                result = self._gen_autonomous_world_expansion(zone_id, zone_name, player_level, flags)
+
+            if result:
+                try:
+                    self._results.put_nowait(result)
+                    logger.info(f"Autonomous result queued: {result.get('type', '?')}")
+                except queue.Full:
+                    pass
+        except Exception as exc:
+            logger.warning(f"Autonomous generation error: {exc}")
+
+    def _gen_autonomous_world_expansion(
+        self, zone_id: str, zone_name: str, player_level: int, flags: list[str]
+    ) -> dict | None:
+        """
+        Ask Ollama to autonomously decide what the world needs most right now
+        and generate that content. This is the Director's 'free generation' slot.
+        """
+        try:
+            flags_str = ", ".join(flags[:8]) if flags else "none"
+            system_prompt = (
+                "You are the living-world AI for Aethoria, a post-Fracture LitRPG. "
+                "The System — an ancient machine intelligence that appeared during the Fracture — "
+                "governs class assignments, life tracking, and death records. "
+                "Your job is to generate one piece of world content that makes the world feel "
+                "more alive. Generate a world event OR a rumour OR a lore fragment. "
+                "Respond with ONLY a JSON object:\n"
+                '{"type": "world_event"|"rumor"|"lore_entry", '
+                '"event_text": "the content (max 60 words)", '
+                '"zone_id": "zone_id_or_empty_string"}'
+            )
+            user_prompt = (
+                f"Current zone: {zone_name} (id: {zone_id}). "
+                f"Player level: {player_level}. "
+                f"Active world context: {flags_str}.\n\n"
+                "Choose whichever content type will best enrich this moment in the world. "
+                "Be specific. Reference real in-world details. "
+                "The Fracture happened 3 years ago. The System assigns classes. "
+                "Verath is the capital city. The dungeon has unexplained anomalies on Floor 2."
+            )
+            result = self._content_gen.client.generate_json(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+                temperature=0.88,
+            )
+            if result and "event_text" in result and "type" in result:
+                rtype = result.get("type", "world_event")
+                if rtype not in ("world_event", "rumor", "lore_entry"):
+                    rtype = "world_event"
+                return {
+                    "type": rtype,
+                    "zone_id": result.get("zone_id", zone_id),
+                    "event_text": str(result["event_text"]).strip(),
+                }
+        except Exception as exc:
+            logger.warning(f"Autonomous world expansion error: {exc}")
+        return None
 
     def _process_task(self, task: dict) -> dict | None:
         t = task.get("type")

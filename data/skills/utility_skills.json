@@ -10,5 +10,96 @@
     "cooldown_turns": 0,
     "effects": [],
     "combo_skills": []
+  },
+  {
+    "skill_id": "foraging",
+    "name": "Foraging",
+    "rarity": "COMMON",
+    "skill_type": "PASSIVE",
+    "description": "You can gather herbs and plants from the wilderness.",
+    "effects": []
+  },
+  {
+    "skill_id": "first_aid",
+    "name": "First Aid",
+    "rarity": "COMMON",
+    "skill_type": "ACTIVE",
+    "description": "Use basic medical knowledge to restore 10 HP without a potion.",
+    "effects": [{"effect_type": "heal", "base_value": 10.0, "scaling_stat": "WIS", "scaling_coefficient": 0.5}]
+  },
+  {
+    "skill_id": "tracking",
+    "name": "Tracking",
+    "rarity": "COMMON",
+    "skill_type": "PASSIVE",
+    "description": "You can identify creature signs and paths in the wild.",
+    "effects": []
+  },
+  {
+    "skill_id": "persuasion",
+    "name": "Persuasion",
+    "rarity": "COMMON",
+    "skill_type": "PASSIVE",
+    "description": "Your words carry more weight. Unlocks dialogue options requiring social skill.",
+    "effects": []
+  },
+  {
+    "skill_id": "intimidation",
+    "name": "Intimidation",
+    "rarity": "UNCOMMON",
+    "skill_type": "PASSIVE",
+    "description": "Fear is a tool. Some enemies hesitate on first contact.",
+    "effects": []
+  },
+  {
+    "skill_id": "lockpicking",
+    "name": "Lockpicking",
+    "rarity": "UNCOMMON",
+    "skill_type": "ACTIVE",
+    "description": "Open locked containers and doors without a key.",
+    "effects": []
+  },
+  {
+    "skill_id": "trap_detection",
+    "name": "Trap Detection",
+    "rarity": "UNCOMMON",
+    "skill_type": "PASSIVE",
+    "description": "You notice tripwires and pressure plates before they notice you.",
+    "effects": []
+  },
+  {
+    "skill_id": "backstab",
+    "name": "Backstab",
+    "rarity": "UNCOMMON",
+    "skill_type": "ACTIVE",
+    "description": "Attack from stealth for double damage. Requires AGI >= 10.",
+    "spell_type": "physical",
+    "effects": [{"effect_type": "damage", "base_value": 20.0, "scaling_stat": "AGI", "scaling_coefficient": 2.0}]
+  },
+  {
+    "skill_id": "weapon_mastery",
+    "name": "Weapon Mastery",
+    "rarity": "COMMON",
+    "skill_type": "PASSIVE",
+    "description": "Passive +2 damage with your equipped weapon.",
+    "effects": [{"effect_type": "buff", "base_value": 2.0, "scaling_stat": "STR", "scaling_coefficient": 0.2}]
+  },
+  {
+    "skill_id": "shield_block",
+    "name": "Shield Block",
+    "rarity": "COMMON",
+    "skill_type": "ACTIVE",
+    "description": "Actively block the next incoming attack, reducing damage by 50%.",
+    "spell_type": "physical",
+    "effects": [{"effect_type": "buff", "base_value": 5.0, "scaling_stat": "END", "scaling_coefficient": 0.5}]
+  },
+  {
+    "skill_id": "berserker_rage",
+    "name": "Berserker Rage",
+    "rarity": "RARE",
+    "skill_type": "ACTIVE",
+    "description": "Enter a rage state: +20% damage, -10% defense for 5 turns.",
+    "spell_type": "physical",
+    "effects": [{"effect_type": "damage", "base_value": 15.0, "scaling_stat": "STR", "scaling_coefficient": 2.5}]
   }
 ]
