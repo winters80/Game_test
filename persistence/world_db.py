@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 3
+DB_SCHEMA_VERSION = 4
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -167,6 +167,18 @@ CREATE TABLE IF NOT EXISTS bot_instances (
     current_zone_id TEXT,
     last_active_turn INTEGER DEFAULT 0
 );
+
+-- ── World Events (AI-generated living world feed) ─────────────────────────────
+CREATE TABLE IF NOT EXISTS world_events (
+    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_type     TEXT NOT NULL,    -- "world_event" | "rumor" | "lore_entry" | "area_activity"
+    zone_id        TEXT,
+    event_text     TEXT NOT NULL,
+    title          TEXT DEFAULT '',
+    npc_hint       TEXT DEFAULT '',
+    generated_turn INTEGER DEFAULT 0,
+    shown          INTEGER DEFAULT 0
+);
 """
 
 
@@ -251,6 +263,19 @@ class WorldDatabase:
             """)
             self._conn.execute("UPDATE db_meta SET value = 3 WHERE key = 'schema_version'")
             self._conn.commit()
+        if from_version < 4:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS world_events (
+                    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                    event_type     TEXT NOT NULL,
+                    zone_id        TEXT,
+                    event_text     TEXT NOT NULL,
+                    title          TEXT DEFAULT '',
+                    npc_hint       TEXT DEFAULT '',
+                    generated_turn INTEGER DEFAULT 0,
+                    shown          INTEGER DEFAULT 0
+                );
+            """)
         self._conn.execute(
             "INSERT OR REPLACE INTO db_meta VALUES ('schema_version', ?)",
             (str(DB_SCHEMA_VERSION),),
@@ -657,4 +682,54 @@ class WorldDatabase:
         """Load all bot agent rows as plain dicts."""
         assert self._conn
         rows = self._conn.execute("SELECT * FROM bot_instances").fetchall()
+        return [dict(r) for r in rows]
+
+    # ── World Events ──────────────────────────────────────────────────────────
+
+    def store_world_event(
+        self,
+        event_type: str,
+        event_text: str,
+        zone_id: str | None = None,
+        title: str = "",
+        npc_hint: str = "",
+        generated_turn: int = 0,
+    ) -> None:
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO world_events
+               (event_type, zone_id, event_text, title, npc_hint, generated_turn)
+               VALUES (?, ?, ?, ?, ?, ?)""",
+            (event_type, zone_id, event_text, title, npc_hint, generated_turn),
+        )
+        self._conn.commit()
+
+    def get_unshown_events(self, limit: int = 10) -> list[dict[str, Any]]:
+        assert self._conn
+        rows = self._conn.execute(
+            "SELECT * FROM world_events WHERE shown = 0 ORDER BY id ASC LIMIT ?",
+            (limit,),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def mark_events_shown(self, ids: list[int]) -> None:
+        assert self._conn
+        if ids:
+            placeholders = ",".join("?" * len(ids))
+            self._conn.execute(
+                f"UPDATE world_events SET shown = 1 WHERE id IN ({placeholders})", ids
+            )
+            self._conn.commit()
+
+    def get_recent_events(self, limit: int = 20, event_type: str | None = None) -> list[dict[str, Any]]:
+        assert self._conn
+        if event_type:
+            rows = self._conn.execute(
+                "SELECT * FROM world_events WHERE event_type = ? ORDER BY id DESC LIMIT ?",
+                (event_type, limit),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT * FROM world_events ORDER BY id DESC LIMIT ?", (limit,)
+            ).fetchall()
         return [dict(r) for r in rows]

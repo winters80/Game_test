@@ -308,7 +308,7 @@ class GameEngine:
             renderer.print_error("All options are locked.")
             return None
 
-        extra = ["[?] Ask about this situation", "[K] Skills", "[I] Items & Equipment", "[S] Save game", "[A] Admin Panel", "[Q] Quit to menu"]
+        extra = ["[?] Ask about this situation", "[K] Skills", "[I] Items & Equipment", "[L] World Log", "[S] Save game", "[A] Admin Panel", "[Q] Quit to menu"]
         if feature("crafting_system"):
             player = self.state.player
             if player.has_flag("alchemist") or player.has_flag("crafter"):
@@ -336,6 +336,9 @@ class GameEngine:
             return None
         if answer.startswith("[C]"):
             self._craft_menu()
+            return None
+        if answer.startswith("[L]"):
+            self._lore_log()
             return None
 
         # Parse number
@@ -1612,10 +1615,11 @@ class GameEngine:
         if not results:
             return
 
-        integrated_any = False
         for result in results:
             try:
                 rtype = result.get("type")
+
+                # ── Quests ────────────────────────────────────────────────────
                 if rtype == "quest" and feature("quest_system") and self.quest_registry:
                     template = result.get("template")
                     if template:
@@ -1627,11 +1631,15 @@ class GameEngine:
                                 zone_id=self.state.current_scene_id,
                                 generated_turn=self.state.player.turn_count,
                             )
-                        integrated_any = True
+                        renderer.console.print(
+                            f"\n  [system_msg][ NEW QUEST AVAILABLE ][/system_msg]  "
+                            f"[scene_text]{template.title}[/scene_text]"
+                        )
 
+                # ── Zone narrative ────────────────────────────────────────────
                 elif rtype == "narrative":
                     zone_id = result.get("zone_id", "")
-                    text = result.get("text", "")
+                    text    = result.get("text", "")
                     if zone_id and text:
                         scene = self.scene_registry.get(zone_id)
                         if scene:
@@ -1643,11 +1651,11 @@ class GameEngine:
                                 zone_id=zone_id,
                                 generated_turn=self.state.player.turn_count,
                             )
-                        integrated_any = True
 
+                # ── NPC branch ────────────────────────────────────────────────
                 elif rtype == "npc_branch" and feature("npc_system") and self.npc_registry:
                     npc_id = result.get("npc_id", "")
-                    node = result.get("node", {})
+                    node   = result.get("node", {})
                     if npc_id and node:
                         npc = self.npc_registry.get(npc_id)
                         if npc and hasattr(npc, "dialogue_nodes") and node.get("node_id"):
@@ -1655,19 +1663,19 @@ class GameEngine:
                             try:
                                 npc.dialogue_nodes[node["node_id"]] = NPCDialogueNode.model_validate(node)
                             except Exception:
-                                pass  # Malformed node — skip silently
+                                pass
                         if feature("world_db") and self.state.world_db:
                             self.state.world_db.store_bg_content(
                                 "npc_branch", npc_id, node,
                                 generated_turn=self.state.player.turn_count,
                             )
-                        integrated_any = True
 
+                # ── Bot action ────────────────────────────────────────────────
                 elif rtype == "bot_action" and feature("bot_system") and self._bot_manager:
                     bot_id = result.get("bot_id", "")
                     action = result.get("action", "")
                     target = result.get("target", "")
-                    bot = self._bot_manager.get(bot_id)
+                    bot    = self._bot_manager.get(bot_id)
                     if bot and action:
                         if action == "move_zone":
                             bot.current_zone_id = target
@@ -1678,13 +1686,48 @@ class GameEngine:
                         bot.turn_last_acted = self.state.player.turn_count
                         if feature("world_db") and self.state.world_db:
                             self._bot_manager.save_to_db(self.state.world_db)
-                        integrated_any = True
+
+                # ── World events, rumors, lore, area activity ─────────────────
+                elif rtype in ("world_event", "rumor", "lore_entry", "area_activity"):
+                    event_text = result.get("event_text", "").strip()
+                    r_zone_id  = result.get("zone_id", "")
+                    title      = result.get("title", "")
+                    npc_hint   = result.get("npc_hint", "")
+                    if not event_text:
+                        continue
+
+                    # Persist to world_db
+                    if feature("world_db") and self.state.world_db:
+                        self.state.world_db.store_world_event(
+                            event_type=rtype,
+                            event_text=event_text,
+                            zone_id=r_zone_id or self.state.current_scene_id,
+                            title=title,
+                            npc_hint=npc_hint,
+                            generated_turn=self.state.player.turn_count,
+                        )
+
+                    # Visual feedback based on type
+                    if rtype == "world_event":
+                        renderer.console.print(
+                            f"\n  [system_msg][ WORLD ][/system_msg]  [scene_text]{event_text}[/scene_text]"
+                        )
+                    elif rtype == "rumor":
+                        renderer.console.print(
+                            f"\n  [dim_text][ RUMOUR ][/dim_text]  [italic scene_text]{event_text}[/italic scene_text]"
+                        )
+                    elif rtype == "lore_entry":
+                        renderer.console.print(
+                            f"\n  [gold][ LORE ][/gold]  [scene_text]{event_text}[/scene_text]"
+                        )
+                    elif rtype == "area_activity":
+                        renderer.console.print(
+                            f"\n  [dim_text][ {(r_zone_id or 'nearby').upper()} ][/dim_text]  "
+                            f"[scene_text]{event_text}[/scene_text]"
+                        )
 
             except Exception as exc:
                 logger.warning(f"Content integration error: {exc}")
-
-        if integrated_any:
-            renderer.console.print("\n  [dim_text][ New content discovered nearby ][/dim_text]")
 
     def _maybe_submit_background_task(self) -> None:
         """Submit background generation tasks at configured intervals."""
@@ -1695,35 +1738,76 @@ class GameEngine:
         player = self.state.player
         turn = player.turn_count
 
-        # Skip during turn 0 and non-interval turns
-        if turn == 0 or turn % BG_GEN_INTERVAL != 0:
+        # Fire at turn 1 (first real turn) and every BG_GEN_INTERVAL turns after
+        if turn < 1 or (turn > 1 and turn % BG_GEN_INTERVAL != 0):
             return
 
-        zone_id = self.state.current_scene_id
-        player_profile = {
-            "level": player.level,
-            "alignment": player.alignment,
-            "active_class": player.active_class or player.base_class or "Unclassified",
-            "flags": list(player.flags.keys())[:10],  # cap for prompt size
-        }
+        zone_id       = self.state.current_scene_id
+        scene         = self.scene_registry.get(zone_id)
+        zone_name     = scene.title if scene else zone_id
+        context_flags = [k for k in player.flags if not k.startswith("_")][:8]
+        player_level  = player.level
 
-        # Submit quest generation every interval
-        self._bg_generator.submit_quest(
+        # ── Always: world event for the current zone ──────────────────────────
+        self._bg_generator.submit_world_event(
             zone_id=zone_id,
-            npc_hint="a stranger in the area",
-            player=player,
+            zone_name=zone_name,
+            player_level=player_level,
+            context_flags=context_flags,
         )
 
-        # Submit zone narrative the first time a zone is visited
-        bg_narrative_flag = f"_bg_narrative_submitted:{zone_id}"
-        if not player.has_flag(bg_narrative_flag):
-            player.set_flag(bg_narrative_flag)
-            scene = self.scene_registry.get(zone_id)
-            zone_name = scene.title if scene else zone_id
-            context_flags = [k for k in player.flags if not k.startswith("_")][:8]
-            self._bg_generator.submit_zone_narrative(zone_id, zone_name, context_flags)
+        # ── Rotate through deeper content types ───────────────────────────────
+        rotation = (turn // max(BG_GEN_INTERVAL, 1)) % 5
 
-        # Submit bot decision tasks for each active bot (staggered)
+        if rotation == 0:
+            # AI quest tailored to player's current situation
+            self._bg_generator.submit_quest(
+                zone_id=zone_id,
+                npc_hint="a contact in the area",
+                player=player,
+            )
+        elif rotation == 1:
+            # Refresh zone entrance narrative
+            bg_narrative_flag = f"_bg_narrative_submitted:{zone_id}"
+            if not player.has_flag(bg_narrative_flag):
+                player.set_flag(bg_narrative_flag)
+            self._bg_generator.submit_zone_narrative(zone_id, zone_name, context_flags)
+        elif rotation == 2:
+            # Local rumour
+            self._bg_generator.submit_rumor(
+                zone_id=zone_id,
+                context_flags=context_flags,
+                player_level=player_level,
+            )
+        elif rotation == 3:
+            # Lore entry
+            self._bg_generator.submit_lore_entry(
+                context_flags=context_flags,
+                player_flags=context_flags,
+            )
+        else:
+            # Area activity texture
+            self._bg_generator.submit_area_activity(
+                zone_id=zone_id,
+                zone_name=zone_name,
+                context_flags=context_flags,
+            )
+
+        # ── NPC branch enrichment ─────────────────────────────────────────────
+        if turn % (BG_GEN_INTERVAL * 3) == 0 and feature("npc_system") and self.npc_registry:
+            player_profile = {
+                "level": player_level,
+                "alignment": player.alignment,
+                "active_class": player.active_class or player.base_class or "Unclassified",
+            }
+            # Pick a visible NPC to enrich
+            for npc_id in ("torven_blacksmith", "mira_innkeeper", "sylara_guildmaster"):
+                npc = self.npc_registry.get(npc_id)
+                if npc:
+                    self._bg_generator.submit_npc_branch(npc_id, npc.name, player_profile)
+                    break
+
+        # ── Bot decisions ─────────────────────────────────────────────────────
         if feature("bot_system") and self._bot_manager:
             world_context = {"player_zone": zone_id, "turn": turn}
             for bot in self._bot_manager.all():
@@ -1734,6 +1818,51 @@ class GameEngine:
                     "current_zone_id": bot.current_zone_id,
                 }
                 self._bg_generator.submit_bot_decision(bot.bot_id, bot_profile, world_context)
+
+    def _lore_log(self) -> None:
+        """Browse AI-generated world events, rumors, and lore entries."""
+        renderer.clear()
+        renderer.print_title()
+        renderer.console.print(
+            "  [system_msg][ WORLD LOG ][/system_msg]  "
+            "[dim_text]AI-generated world events, rumours, and lore[/dim_text]\n"
+        )
+
+        if not feature("world_db") or not self.state.world_db:
+            renderer.console.print("  [dim_text]World database not available.[/dim_text]")
+            renderer.prompt_any_key()
+            return
+
+        events = self.state.world_db.get_recent_events(limit=30)
+        if not events:
+            renderer.console.print(
+                "  [dim_text]The world is still waking up. No events recorded yet.[/dim_text]\n"
+                "  [dim_text](Background generation fires after your first action.)[/dim_text]"
+            )
+            renderer.prompt_any_key()
+            return
+
+        type_icons = {
+            "world_event":   "[system_msg]WORLD[/system_msg]",
+            "rumor":         "[dim_text]RUMOUR[/dim_text]",
+            "lore_entry":    "[gold]LORE[/gold]",
+            "area_activity": "[dim_text]AREA[/dim_text]",
+            "quest":         "[system_msg]QUEST[/system_msg]",
+            "narrative":     "[dim_text]NARRATIVE[/dim_text]",
+            "npc_branch":    "[dim_text]NPC[/dim_text]",
+        }
+
+        for ev in reversed(events):
+            icon     = type_icons.get(ev.get("event_type", ""), "[dim_text]EVENT[/dim_text]")
+            turn     = ev.get("generated_turn", 0)
+            text     = ev.get("event_text", "") or ev.get("definition", "")[:80]
+            zone     = ev.get("zone_id", "")
+            zone_str = f" [{zone}]" if zone else ""
+            renderer.console.print(
+                f"  {icon}  [dim_text]T{turn}{zone_str}[/dim_text]  [scene_text]{text}[/scene_text]"
+            )
+        renderer.console.print()
+        renderer.prompt_any_key()
 
     def _save_prompt(self) -> None:
         slot = questionary.text("Save slot name:", default=self.state.player.name.lower().replace(" ", "_")).ask()
