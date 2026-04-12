@@ -1,0 +1,14 @@
+[
+  {
+    "skill_id": "inspect",
+    "name": "Inspect",
+    "description": "Passive knowledge of items, creatures, and objects. Reveals the true names of unidentified items at a glance.",
+    "skill_type": "PASSIVE",
+    "rarity": "COMMON",
+    "mp_cost": 0,
+    "damage_multiplier": 0.0,
+    "cooldown_turns": 0,
+    "effects": [],
+    "combo_skills": []
+  }
+]

@@ -13,6 +13,7 @@ from rich.text import Text
 from rich.live import Live
 
 from ui.themes import GAME_THEME
+from config import format_currency
 
 if TYPE_CHECKING:
     from entities.player import Player
@@ -54,28 +55,47 @@ def print_scene_text(lines: list[str], pause_between: float = 0.0) -> None:
 
 
 def print_options(options: list["SceneOption"]) -> None:
+    from rich.markup import escape
     console.print()
     for i, opt in enumerate(options, 1):
+        safe_label = escape(opt.label)  # prevent [AI], [tag], etc. from corrupting Rich markup
         if opt.locked:
-            console.print(f"  [option_locked]  {i}. {opt.label}[/option_locked]")
+            console.print(f"  [option_locked]  {i}. {safe_label}[/option_locked]")
             if opt.lock_reason:
-                console.print(f"     [dim_text]({opt.lock_reason})[/dim_text]")
+                console.print(f"     [dim_text]({escape(opt.lock_reason)})[/dim_text]")
+            if opt.hint_text:
+                console.print(f"     [italic dim_text]~ {escape(opt.hint_text)}[/italic dim_text]")
         else:
-            console.print(f"  [option_number]{i}.[/option_number] [option_label]{opt.label}[/option_label]")
+            # AI-generated options get a distinct colour
+            if opt.option_id.startswith("ai_"):
+                console.print(f"  [option_number]{i}.[/option_number] [cyan]{safe_label}[/cyan]")
+            else:
+                console.print(f"  [option_number]{i}.[/option_number] [option_label]{safe_label}[/option_label]")
     console.print()
 
 
-def print_status_bar(player: "Player") -> None:
-    from ui.panels import build_status_panel, build_stats_panel
-    columns = Columns([build_status_panel(player), build_stats_panel(player)], equal=False)
-    console.print(columns)
+def print_status_bar(player: "Player", item_registry: Any = None) -> None:
+    from ui.panels import build_status_panel, build_stats_panel, build_compact_inventory_panel, build_equipment_panel
+    panels: list = [build_status_panel(player), build_stats_panel(player)]
+    if item_registry is not None:
+        panels.append(build_compact_inventory_panel(player, item_registry))
+        panels.append(build_equipment_panel(player, item_registry))
+    console.print(Columns(panels, equal=False))
 
 
 def print_full_status(player: "Player", item_registry: Any, skill_registry: Any) -> None:
-    from ui.panels import build_status_panel, build_stats_panel, build_inventory_panel, build_skills_panel
+    from ui.panels import (
+        build_status_panel, build_stats_panel,
+        build_inventory_panel, build_skills_panel,
+        build_guild_panel, build_faction_panel,
+    )
     console.print(Columns([build_status_panel(player), build_stats_panel(player)]))
     console.print(build_inventory_panel(player, item_registry))
     console.print(build_skills_panel(player, skill_registry))
+    if player.guild_memberships:
+        console.print(build_guild_panel(player))
+    if player.faction_standing_cache:
+        console.print(build_faction_panel(player))
 
 
 def print_class_reveal(class_def: "ClassDefinition") -> None:
@@ -128,9 +148,44 @@ def print_success(message: str) -> None:
 
 def print_gold_change(amount: int, gained: bool = True) -> None:
     if gained:
-        console.print(f"  [gold]+ {amount} gold[/gold]")
+        console.print(f"  [gold]+ {format_currency(amount)}[/gold]")
     else:
-        console.print(f"  [damage]- {amount} gold[/damage]")
+        console.print(f"  [damage]- {format_currency(amount)}[/damage]")
+
+
+def print_npc_dialogue(npc_name: str, npc_description: str, text: str) -> None:
+    """Render an NPC speech panel — name as title, description as subtitle, text as body."""
+    from rich.text import Text as RichText
+    body = RichText()
+    body.append(f"{npc_description}\n\n", style="dim_text")
+    body.append(text, style="scene_text")
+    console.print(Panel(
+        body,
+        title=f"[scene_title]{npc_name}[/scene_title]",
+        border_style="border",
+        padding=(0, 2),
+    ))
+    console.print()
+
+
+def print_npc_response(npc_name: str, text: str) -> None:
+    """Render the NPC's reply to a player choice — inline, italicised."""
+    console.print(f"\n  [italic scene_text]{npc_name}: {text}[/italic scene_text]\n")
+    time.sleep(0.3)
+
+
+def print_quest_log(quests: list[dict]) -> None:
+    """Render a compact quest log panel."""
+    from rich.table import Table
+    table = Table.grid(padding=(0, 1))
+    table.add_column(style="system_msg", width=30)
+    table.add_column(style="dim_text")
+    if not quests:
+        table.add_row("No active quests.", "")
+    else:
+        for q in quests:
+            table.add_row(q["title"], q["objective"])
+    console.print(Panel(table, title="[system_msg][ QUESTS ][/system_msg]", border_style="border"))
 
 
 def prompt_any_key() -> None:

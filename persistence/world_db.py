@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 1
+DB_SCHEMA_VERSION = 2
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -142,6 +142,17 @@ CREATE TABLE IF NOT EXISTS turn_log (
     event_type  TEXT NOT NULL,
     payload     TEXT DEFAULT '{}'
 );
+
+-- ── AI Generated Content ──────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ai_generated_content (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    content_type    TEXT NOT NULL,      -- "quest" | "narrative" | "npc_branch"
+    content_id      TEXT NOT NULL,      -- zone_id, npc_id, or quest template_id
+    definition      TEXT NOT NULL,      -- full JSON blob
+    zone_id         TEXT,
+    generated_turn  INTEGER DEFAULT 0,
+    integrated      INTEGER DEFAULT 0   -- 0 = pending, 1 = integrated into live game
+);
 """
 
 
@@ -189,6 +200,31 @@ class WorldDatabase:
                 (str(DB_SCHEMA_VERSION),),
             )
             self._conn.commit()
+        else:
+            stored = int(row["value"])
+            if stored < DB_SCHEMA_VERSION:
+                self._migrate(stored)
+
+    def _migrate(self, from_version: int) -> None:
+        """Apply incremental migrations from from_version to DB_SCHEMA_VERSION."""
+        assert self._conn
+        if from_version < 2:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS ai_generated_content (
+                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    content_type    TEXT NOT NULL,
+                    content_id      TEXT NOT NULL,
+                    definition      TEXT NOT NULL,
+                    zone_id         TEXT,
+                    generated_turn  INTEGER DEFAULT 0,
+                    integrated      INTEGER DEFAULT 0
+                );
+            """)
+        self._conn.execute(
+            "INSERT OR REPLACE INTO db_meta VALUES ('schema_version', ?)",
+            (str(DB_SCHEMA_VERSION),),
+        )
+        self._conn.commit()
 
     # ── NPC ───────────────────────────────────────────────────────────────────
 
@@ -514,5 +550,41 @@ class WorldDatabase:
         self._conn.execute(
             "INSERT INTO turn_log (turn_number, event_type, payload) VALUES (?, ?, ?)",
             (turn_number, event_type, json.dumps(payload or {})),
+        )
+        self._conn.commit()
+
+    # ── AI Generated Content ──────────────────────────────────────────────────
+
+    def store_bg_content(
+        self, content_type: str, content_id: str, definition: dict,
+        zone_id: str | None = None, generated_turn: int = 0,
+    ) -> None:
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO ai_generated_content
+               (content_type, content_id, definition, zone_id, generated_turn)
+               VALUES (?, ?, ?, ?, ?)""",
+            (content_type, content_id, json.dumps(definition), zone_id, generated_turn),
+        )
+        self._conn.commit()
+
+    def get_unintegrated_bg_content(self, content_type: str | None = None) -> list[dict[str, Any]]:
+        assert self._conn
+        if content_type:
+            rows = self._conn.execute(
+                "SELECT * FROM ai_generated_content WHERE integrated = 0 AND content_type = ?",
+                (content_type,),
+            ).fetchall()
+        else:
+            rows = self._conn.execute(
+                "SELECT * FROM ai_generated_content WHERE integrated = 0"
+            ).fetchall()
+        return [dict(r) for r in rows]
+
+    def mark_bg_content_integrated(self, row_id: int) -> None:
+        assert self._conn
+        self._conn.execute(
+            "UPDATE ai_generated_content SET integrated = 1 WHERE id = ?",
+            (row_id,),
         )
         self._conn.commit()

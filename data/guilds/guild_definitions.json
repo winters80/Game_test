@@ -1,0 +1,149 @@
+[
+  {
+    "guild_id": "iron_vanguard",
+    "name": "Iron Vanguard",
+    "description": "Aethoria's oldest warrior fraternity. They guard the frontier zones and take contracts for dangerous monster exterminations. Membership demands proven combat strength.",
+    "flavor_text": "Steel forged in the Fracture does not rust.",
+    "archetype": "combat",
+    "zone_id": "verath_city",
+    "npc_contact_id": "captain_aldis",
+    "join_requires": {"min_stats": {"STR": 12}},
+    "rival_guilds": ["shadow_network"],
+    "allied_factions": ["iron_vanguard_faction"],
+    "is_auction_guild": false,
+    "ranks": [
+      {"rank_id": "recruit", "name": "Recruit", "standing_required": 0, "title": "Recruit", "description": "Fresh blood on the front line."},
+      {"rank_id": "soldier", "name": "Soldier", "standing_required": 25, "title": "Soldier", "description": "Proven in at least one campaign."},
+      {"rank_id": "veteran", "name": "Veteran", "standing_required": 50, "title": "Veteran", "description": "Scarred and reliable."},
+      {"rank_id": "warden", "name": "Warden", "standing_required": 75, "title": "Warden", "description": "Zone commander."},
+      {"rank_id": "marshal", "name": "Marshal", "standing_required": 95, "title": "Marshal of the Vanguard", "description": "Second only to the Grand Commander."}
+    ],
+    "perks": [
+      {"perk_id": "iv_toughness", "name": "Ironhide", "description": "+2 END from Vanguard training drills.", "rank_required": "soldier", "stat_bonuses": {"END": 2}},
+      {"perk_id": "iv_contracts", "name": "Combat Contracts", "description": "Access to high-paying monster extermination missions.", "rank_required": "veteran", "special_flag": "iron_vanguard_contracts"},
+      {"perk_id": "iv_fortress", "name": "Fortress Techniques", "description": "Unlocks the Fortress Stance skill.", "rank_required": "warden", "skill_unlocks": ["fortress_stance"]}
+    ]
+  },
+  {
+    "guild_id": "shadow_network",
+    "name": "Shadow Network",
+    "description": "No public headquarters. No official charter. The Network operates through whisper-routes and dead drops. They move information, valuables, and people — for the right price.",
+    "flavor_text": "Everyone leaves a trail. We follow them all.",
+    "archetype": "stealth",
+    "zone_id": "verath_undermarket",
+    "npc_contact_id": "gray_wanderer",
+    "join_requires": {"flags": ["explored_unmapped_passage"]},
+    "rival_guilds": ["iron_vanguard"],
+    "allied_factions": ["shadow_network_faction"],
+    "is_auction_guild": false,
+    "ranks": [
+      {"rank_id": "contact", "name": "Contact", "standing_required": 0, "title": "Contact", "description": "You know of them. They know of you."},
+      {"rank_id": "courier", "name": "Courier", "standing_required": 20, "title": "Courier", "description": "Trusted with small packages and messages."},
+      {"rank_id": "agent", "name": "Agent", "standing_required": 45, "title": "Agent", "description": "Full operational status."},
+      {"rank_id": "handler", "name": "Handler", "standing_required": 70, "title": "Handler", "description": "You run your own network of contacts."},
+      {"rank_id": "ghost", "name": "Ghost", "standing_required": 92, "title": "Ghost", "description": "You don't exist. The Network denies you. This is a compliment."}
+    ],
+    "perks": [
+      {"perk_id": "sn_dead_drop", "name": "Dead Drop Access", "description": "Find hidden caches of items in explored zones.", "rank_required": "courier", "special_flag": "shadow_dead_drops"},
+      {"perk_id": "sn_intel", "name": "Street Intelligence", "description": "+2 AGI from constant evasion practice.", "rank_required": "agent", "stat_bonuses": {"AGI": 2}},
+      {"perk_id": "sn_vanish", "name": "Vanishing Act", "description": "Unlocks the Phase Step skill. Escape any non-boss combat instantly.", "rank_required": "handler", "skill_unlocks": ["phase_step"]}
+    ]
+  },
+  {
+    "guild_id": "mages_conclave",
+    "name": "Mages Conclave",
+    "description": "The premier arcane research institution in Aethoria. They study the Fracture, harvest System data, and develop spells that bend reality. Entry is by examination only.",
+    "flavor_text": "The System assigned you a class. We assign you understanding.",
+    "archetype": "arcane",
+    "zone_id": "verath_spire",
+    "npc_contact_id": "sylara_guildmaster",
+    "join_requires": {"min_stats": {"INT": 14}},
+    "rival_guilds": [],
+    "allied_factions": ["mages_conclave_faction"],
+    "is_auction_guild": false,
+    "ranks": [
+      {"rank_id": "initiate", "name": "Initiate", "standing_required": 0, "title": "Initiate", "description": "Passed the entrance examination."},
+      {"rank_id": "apprentice", "name": "Apprentice", "standing_required": 20, "title": "Apprentice", "description": "Assigned a research track."},
+      {"rank_id": "arcanist", "name": "Arcanist", "standing_required": 50, "title": "Arcanist", "description": "Full research access."},
+      {"rank_id": "senior_arcanist", "name": "Senior Arcanist", "standing_required": 75, "title": "Senior Arcanist", "description": "Department lead."},
+      {"rank_id": "archmage", "name": "Archmage", "standing_required": 95, "title": "Archmage", "description": "One of seven seats on the Conclave Council."}
+    ],
+    "perks": [
+      {"perk_id": "mc_focus", "name": "Arcane Focus", "description": "+2 INT from daily meditation exercises.", "rank_required": "apprentice", "stat_bonuses": {"INT": 2}},
+      {"perk_id": "mc_library", "name": "Library Access", "description": "Unlocks Fracture Lore knowledge. Reveals hidden System mechanics.", "rank_required": "arcanist", "special_flag": "conclave_library_access"},
+      {"perk_id": "mc_anomaly", "name": "Anomaly Detection", "description": "Unlocks Rift Sense skill — detects dimensional tears and hidden paths.", "rank_required": "senior_arcanist", "skill_unlocks": ["rift_sense"]}
+    ]
+  },
+  {
+    "guild_id": "silver_fangs",
+    "name": "Silver Fangs",
+    "description": "An assassins guild that presents itself as a 'security consultancy'. They take elimination contracts, protection details, and the occasional political removal. Very polished. Very deadly.",
+    "flavor_text": "The difference between murder and justice is the client.",
+    "archetype": "stealth",
+    "zone_id": "verath_city",
+    "npc_contact_id": "",
+    "join_requires": {"flags": ["silver_fangs_invitation"]},
+    "rival_guilds": [],
+    "allied_factions": [],
+    "is_auction_guild": false,
+    "ranks": [
+      {"rank_id": "blade", "name": "Blade", "standing_required": 0, "title": "Blade", "description": "Entry level operative."},
+      {"rank_id": "fang", "name": "Fang", "standing_required": 30, "title": "Fang", "description": "Cleared for solo contracts."},
+      {"rank_id": "viper", "name": "Viper", "standing_required": 60, "title": "Viper", "description": "High-value target specialist."},
+      {"rank_id": "serpent", "name": "Serpent", "standing_required": 85, "title": "Serpent of the Council", "description": "Contract arbiter. Near mythical status."}
+    ],
+    "perks": [
+      {"perk_id": "sf_precision", "name": "Killing Edge", "description": "+2 AGI, +1 LCK from contract training.", "rank_required": "fang", "stat_bonuses": {"AGI": 2, "LCK": 1}},
+      {"perk_id": "sf_contracts", "name": "Black Contracts", "description": "Access to assassination contract board.", "rank_required": "viper", "special_flag": "silver_fangs_contracts"},
+      {"perk_id": "sf_mark", "name": "Mark of the Viper", "description": "Unlocks Shadowstrike skill. Guaranteed critical on first attack.", "rank_required": "viper", "skill_unlocks": ["shadowstrike"]}
+    ]
+  },
+  {
+    "guild_id": "golden_scales",
+    "name": "Golden Scales Trading Co.",
+    "description": "The largest auction house network in Aethoria. They deal in everything from mundane goods to life tokens harvested from dying System users. Legitimately chartered. Ethically questionable.",
+    "flavor_text": "Everything has a price. We determine what that price is.",
+    "archetype": "merchant",
+    "zone_id": "verath_market",
+    "npc_contact_id": "scales_auctioneer",
+    "join_requires": {},
+    "rival_guilds": ["iron_hammer_exchange"],
+    "allied_factions": [],
+    "is_auction_guild": true,
+    "ranks": [
+      {"rank_id": "buyer", "name": "Registered Buyer", "standing_required": 0, "title": "Buyer", "description": "Can bid on all standard listings."},
+      {"rank_id": "member", "name": "Member", "standing_required": 20, "title": "Member", "description": "5% discount on all purchases."},
+      {"rank_id": "preferred", "name": "Preferred Client", "standing_required": 50, "title": "Preferred Client", "description": "10% discount. Early access to rare listings."},
+      {"rank_id": "patron", "name": "Patron", "standing_required": 80, "title": "Patron", "description": "15% discount. Can list items. Access to life token auctions."}
+    ],
+    "perks": [
+      {"perk_id": "gs_discount_5", "name": "Member Discount", "description": "5% off all Golden Scales purchases.", "rank_required": "member", "discount_pct": 5},
+      {"perk_id": "gs_discount_10", "name": "Preferred Discount", "description": "10% off all Golden Scales purchases.", "rank_required": "preferred", "discount_pct": 10},
+      {"perk_id": "gs_life_tokens", "name": "Life Token Access", "description": "Can bid on life token auctions.", "rank_required": "patron", "special_flag": "golden_scales_patron"}
+    ]
+  },
+  {
+    "guild_id": "iron_hammer_exchange",
+    "name": "Iron Hammer Exchange",
+    "description": "A scrappier, rougher auction house that operates in the grey market. They deal in confiscated goods, dungeon salvage, and stolen System tokens. Lower prices. Higher risk.",
+    "flavor_text": "No questions asked. No refunds given.",
+    "archetype": "merchant",
+    "zone_id": "verath_undermarket",
+    "npc_contact_id": "hammer_broker",
+    "join_requires": {},
+    "rival_guilds": ["golden_scales"],
+    "allied_factions": ["shadow_network_faction"],
+    "is_auction_guild": true,
+    "ranks": [
+      {"rank_id": "punter", "name": "Punter", "standing_required": 0, "title": "Punter", "description": "Anyone can walk in."},
+      {"rank_id": "regular", "name": "Regular", "standing_required": 15, "title": "Regular", "description": "Recognized face. Better prices."},
+      {"rank_id": "fence", "name": "Fence", "standing_required": 40, "title": "Fence", "description": "Can sell stolen and flagged items."},
+      {"rank_id": "broker", "name": "Broker", "standing_required": 70, "title": "Broker", "description": "Runs your own stall. Access to black-market life tokens."}
+    ],
+    "perks": [
+      {"perk_id": "ihe_salvage", "name": "Salvage Rights", "description": "Can access dungeon salvage listings before public.", "rank_required": "regular", "special_flag": "ihe_salvage_access"},
+      {"perk_id": "ihe_fence", "name": "Fencing License", "description": "Can sell items of questionable origin.", "rank_required": "fence", "special_flag": "ihe_fence_license"},
+      {"perk_id": "ihe_black_tokens", "name": "Black Market Life Tokens", "description": "Access to unverified life tokens — cheaper but riskier.", "rank_required": "broker", "special_flag": "ihe_black_market"}
+    ]
+  }
+]

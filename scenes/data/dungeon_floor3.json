@@ -1,0 +1,158 @@
+{
+  "scene_id": "dungeon_floor3",
+  "title": "The Fracture Core",
+  "entrance_text": [
+    "This is the bottom.",
+    "The Fracture Core antechamber is a cathedral of wrongness — geometry that doesn't resolve cleanly, System interfaces floating in mid-air displaying error states in three dead languages, and at the center, a wound in reality itself.",
+    "The wound that started everything three years ago."
+  ],
+  "nodes": {
+    "root": {
+      "text": "The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. System notifications appear in your vision and immediately corrupt into static. A System terminal stands against the far wall, still functional, its glow steady and incongruously mundane. To the east, the wound in reality pulses. Behind a sealed door to the north, something waits — something that will recognize you if you have the access.",
+      "options": [
+        {
+          "option_id": "examine_core",
+          "label": "Approach the wound in reality.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "examine_core"
+        },
+        {
+          "option_id": "go_system_terminal",
+          "label": "Approach the System terminal.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "system_terminal"
+        },
+        {
+          "option_id": "go_core_chamber",
+          "label": "Approach the sealed north door.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "core_chamber",
+          "requires": {
+            "flags_any": ["fracture_data_recorded", "fracture_truth_access"]
+          }
+        },
+        {
+          "option_id": "leave_dungeon",
+          "label": "Turn back. Climb out of the dungeon.",
+          "expected": true,
+          "leads_to": null
+        }
+      ]
+    },
+    "examine_core": {
+      "text": "Up close, the wound is worse. It's a tear approximately two meters across, hovering at chest height. Through it: not darkness, but something that light goes into without coming back out. The edges pulse with void-energy in the same deep purple as the crystals above — which you now understand were grown from this, from the Fracture, like scar tissue.\n\nThe System has no designation for it. No warning. No instruction. Just a single blinking cursor in your notification field, as if waiting for input.",
+      "options": [
+        {
+          "option_id": "touch_the_core",
+          "label": "Reach out and touch the edge of the Fracture wound.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "examine_core",
+          "triggers": ["flag:touched_fracture_core", "alignment:-10"]
+        },
+        {
+          "option_id": "observe_safely",
+          "label": "Observe the wound from a safe distance. Document what you can.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "examine_core",
+          "triggers": ["flag:fracture_observed"]
+        },
+        {
+          "option_id": "leave_core_wound",
+          "label": "Step back from the wound.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "system_terminal": {
+      "text": "The terminal is a standard System interface — the same design as every municipal status display in Verath, except this one is here, at the origin point of the Fracture, and its display is showing logs.\n\nNot status data. Not class assignments. Logs. Event records. From before the Fracture. From during it. From moments after, when the entries become fragmented and then silent.\n\nThe access level required for most entries is far above anything you should have. And yet the terminal is on. And yet it's waiting.",
+      "options": [
+        {
+          "option_id": "read_logs",
+          "label": "Read the pre-Fracture event logs.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "system_terminal",
+          "triggers": ["flag:fracture_origin_known", "alignment:+5"],
+          "requires": {
+            "min_stats": {"INT": 16}
+          }
+        },
+        {
+          "option_id": "attempt_override",
+          "label": "Attempt to access the restricted override commands.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "system_terminal",
+          "triggers": ["flag:system_override_attempted", "alignment:-5"],
+          "requires": {
+            "flags": ["system_exploit_access"]
+          }
+        },
+        {
+          "option_id": "record_data",
+          "label": "Copy whatever data you can access. Record everything.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "system_terminal",
+          "triggers": ["flag:fracture_data_recorded"]
+        },
+        {
+          "option_id": "leave_terminal",
+          "label": "Step away from the terminal.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "core_chamber": {
+      "text": "The north door opens to the convergence point — the exact geometric center of the Fracture's influence. The chamber is circular, the ceiling lost in darkness, the floor a perfect disk of black stone. At the center, a column of void energy rises from floor to ceiling, rotating slowly.\n\nThis is where the branches split. Where the decisions made across the whole world, across the whole System, come to their conclusion.\n\nYou know, standing here, that what you do next will not be undone. The System knows it too. You can feel it waiting for your input.",
+      "options": [
+        {
+          "option_id": "rule_the_system",
+          "label": "Step forward to claim authority over the System.",
+          "expected": false,
+          "leads_to": "ending_rule",
+          "leads_to_node": "root",
+          "triggers": ["flag:rule_the_system_ready"],
+          "requires": {
+            "flags": ["crown_ruler_candidate_flag"]
+          }
+        },
+        {
+          "option_id": "destroy_the_system",
+          "label": "Activate the break sequence.",
+          "expected": false,
+          "leads_to": "ending_destroy",
+          "leads_to_node": "root",
+          "triggers": ["flag:destroy_the_system_ready"],
+          "requires": {
+            "flags": ["destroy_system_path_flag"]
+          }
+        },
+        {
+          "option_id": "report_and_leave",
+          "label": "Record what you've seen. Report it. Leave.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "root",
+          "triggers": ["flag:fracture_reported"]
+        },
+        {
+          "option_id": "examine_core_chamber",
+          "label": "Study the chamber before deciding anything.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "core_chamber"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,121 @@
+[
+  {
+    "faction_id": "iron_vanguard_faction",
+    "name": "Iron Vanguard",
+    "description": "The military establishment of Aethoria. Controls frontier defense, monster suppression, and the System's enforcement arm. Aligned with order and the capital.",
+    "flavor_text": "Order holds the line. Chaos gets people killed.",
+    "ideology": "order",
+    "zone_id": "verath_city",
+    "rival_factions": ["shadow_network_faction", "system_breakers"],
+    "allied_factions": ["verath_crown"],
+    "alignment_min": -20.0,
+    "alignment_max": 100.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Outsider", "standing_required": -999},
+      {"rank_id": "known", "name": "Known to the Vanguard", "standing_required": 0},
+      {"rank_id": "ally", "name": "Ally", "standing_required": 25, "perks": ["iron_vanguard_safe_passage"]},
+      {"rank_id": "trusted", "name": "Trusted Operative", "standing_required": 50, "perks": ["iron_vanguard_armory"]},
+      {"rank_id": "champion", "name": "Champion", "standing_required": 75, "perks": ["iron_vanguard_reinforcements"]},
+      {"rank_id": "commander", "name": "Field Commander", "standing_required": 95, "perks": ["iron_vanguard_command_flag"]}
+    ]
+  },
+  {
+    "faction_id": "shadow_network_faction",
+    "name": "Shadow Network",
+    "description": "The information underground. They know about the Fracture's true cause and have been suppressing it. Operate through cells — no one knows the full structure.",
+    "flavor_text": "The truth about the Fracture would end the world. That's why we buried it.",
+    "ideology": "freedom",
+    "zone_id": "verath_undermarket",
+    "rival_factions": ["iron_vanguard_faction", "verath_crown"],
+    "allied_factions": [],
+    "alignment_min": -100.0,
+    "alignment_max": 50.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Unknown", "standing_required": -999},
+      {"rank_id": "aware", "name": "Network-Aware", "standing_required": 0},
+      {"rank_id": "asset", "name": "Asset", "standing_required": 20, "perks": ["shadow_network_rumors"]},
+      {"rank_id": "operative", "name": "Operative", "standing_required": 45, "perks": ["shadow_network_safe_houses"]},
+      {"rank_id": "inner_circle", "name": "Inner Circle", "standing_required": 75, "perks": ["fracture_truth_access"]},
+      {"rank_id": "architect", "name": "Architect", "standing_required": 95, "perks": ["shadow_architect_flag"]}
+    ]
+  },
+  {
+    "faction_id": "mages_conclave_faction",
+    "name": "Mages Conclave",
+    "description": "The academic and arcane authority of Aethoria. They believe the System is a tool, not a god, and study it as such. Politically neutral but heavily influential.",
+    "flavor_text": "The System is a machine. Machines can be reprogrammed.",
+    "ideology": "balance",
+    "zone_id": "verath_spire",
+    "rival_factions": [],
+    "allied_factions": ["verath_crown"],
+    "alignment_min": -40.0,
+    "alignment_max": 100.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Layperson", "standing_required": -999},
+      {"rank_id": "acquainted", "name": "Acquainted", "standing_required": 0},
+      {"rank_id": "scholar", "name": "Scholar Friend", "standing_required": 20, "perks": ["conclave_research_access"]},
+      {"rank_id": "associate", "name": "Associate Member", "standing_required": 50, "perks": ["conclave_spell_discounts"]},
+      {"rank_id": "fellow", "name": "Fellow", "standing_required": 75, "perks": ["conclave_anomaly_reports"]},
+      {"rank_id": "council_voice", "name": "Council Voice", "standing_required": 95, "perks": ["conclave_council_seat_flag"]}
+    ]
+  },
+  {
+    "faction_id": "verath_crown",
+    "name": "Verath Crown",
+    "description": "The ruling government of Verath and by extension most of settled Aethoria. They legitimized the System as divine mandate shortly after the Fracture. Many suspect they knew it was coming.",
+    "flavor_text": "Legitimacy is just power with better paperwork.",
+    "ideology": "power",
+    "zone_id": "verath_palace",
+    "rival_factions": ["shadow_network_faction", "system_breakers"],
+    "allied_factions": ["iron_vanguard_faction", "mages_conclave_faction"],
+    "alignment_min": -10.0,
+    "alignment_max": 100.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Citizen", "standing_required": -999},
+      {"rank_id": "recognized", "name": "Recognized", "standing_required": 0},
+      {"rank_id": "favored", "name": "Favored", "standing_required": 25, "perks": ["crown_merchant_discount"]},
+      {"rank_id": "noble_friend", "name": "Noble Friend", "standing_required": 50, "perks": ["crown_safe_passage_all_zones"]},
+      {"rank_id": "lord", "name": "Lord/Lady", "standing_required": 75, "perks": ["crown_lordship_title"]},
+      {"rank_id": "ruler_candidate", "name": "Ruler Candidate", "standing_required": 95, "perks": ["crown_ruler_candidate_flag"]}
+    ]
+  },
+  {
+    "faction_id": "system_breakers",
+    "name": "System Breakers",
+    "description": "A revolutionary faction that believes the System is a cage, not a gift. They work to undermine System assignments, hide anomalous individuals from the authorities, and ultimately destroy the mechanism behind the Fracture.",
+    "flavor_text": "They gave you a class and called it destiny. We call it a leash.",
+    "ideology": "chaos",
+    "zone_id": "dungeon_deep",
+    "rival_factions": ["iron_vanguard_faction", "verath_crown"],
+    "allied_factions": ["shadow_network_faction"],
+    "alignment_min": -100.0,
+    "alignment_max": 30.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Unawakened", "standing_required": -999},
+      {"rank_id": "sympathizer", "name": "Sympathizer", "standing_required": 0},
+      {"rank_id": "resistor", "name": "Resistor", "standing_required": 20, "perks": ["system_breaker_safeword"]},
+      {"rank_id": "breaker", "name": "Breaker", "standing_required": 50, "perks": ["system_exploit_access"]},
+      {"rank_id": "herald", "name": "Herald of the Break", "standing_required": 80, "perks": ["fracture_map_fragment"]},
+      {"rank_id": "the_break", "name": "The Break", "standing_required": 95, "perks": ["destroy_system_path_flag"]}
+    ]
+  },
+  {
+    "faction_id": "the_undying",
+    "name": "The Undying",
+    "description": "Those who have already spent all their lives once and came back through forbidden means. They hoard life tokens, perform dark rituals, and are obsessed with defeating the System's death mechanic permanently.",
+    "flavor_text": "Death is just a checkpoint. We've disabled it.",
+    "ideology": "power",
+    "zone_id": "dungeon_deep",
+    "rival_factions": ["verath_crown"],
+    "allied_factions": [],
+    "alignment_min": -100.0,
+    "alignment_max": -10.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "The Living", "standing_required": -999},
+      {"rank_id": "marked", "name": "Marked by Death", "standing_required": 0},
+      {"rank_id": "initiate", "name": "Initiate of the Undying", "standing_required": 20, "perks": ["undying_revival_boost"]},
+      {"rank_id": "deathless", "name": "Deathless", "standing_required": 60, "perks": ["life_token_discount"]},
+      {"rank_id": "eternal", "name": "The Eternal", "standing_required": 90, "perks": ["rule_system_path_flag"]}
+    ]
+  }
+]

@@ -7,6 +7,8 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
+from config import format_currency
+
 if TYPE_CHECKING:
     from entities.player import Player
     from entities.character_class import ClassDefinition
@@ -30,9 +32,26 @@ def _hp_color(current: int, max_hp: int) -> str:
     return "hp_low"
 
 
+_ALIGNMENT_COLORS = [
+    (+50,  +100, "bright_yellow"),
+    (+20,   +49, "green"),
+    (-19,   +19, "white"),
+    (-49,   -20, "yellow"),
+    (-100,  -49, "red"),
+]
+
+
+def _alignment_color(alignment: float) -> str:
+    for low, high, color in _ALIGNMENT_COLORS:
+        if low <= alignment <= high:
+            return color
+    return "white"
+
+
 def build_status_panel(player: "Player") -> Panel:
+    from config import feature
     table = Table.grid(padding=(0, 1))
-    table.add_column(style="stat_name", width=8)
+    table.add_column(style="stat_name", width=10)
     table.add_column(style="stat_value")
 
     hp_color = _hp_color(player.current_hp, player.max_hp)
@@ -45,26 +64,63 @@ def build_status_panel(player: "Player") -> Panel:
     table.add_row("Level", f"[level]{player.level}[/level]  XP: [xp]{player.experience}/{player.experience_to_next}[/xp]")
     table.add_row("HP", hp_text)
     table.add_row("MP", mp_text)
-    table.add_row("Gold", f"[gold]{player.gold}[/gold]")
+    table.add_row("Gold", f"[gold]{format_currency(player.gold)}[/gold]")
 
-    return Panel(table, title="[system_msg][ STATUS ][/system_msg]", border_style="border", width=40)
+    if feature("species_system") and player.species_id:
+        species_str = player.species_id.replace("_", " ").title()
+        if player.evolution_stage > 0:
+            species_str += f" (Evo {player.evolution_stage})"
+        table.add_row("Species", species_str)
+
+    if feature("alignment_system"):
+        label = player.alignment_label
+        color = _alignment_color(player.alignment)
+        table.add_row("Alignment", f"[{color}]{label} ({player.alignment:+.0f})[/{color}]")
+
+    if player.active_buffs:
+        from systems.buff_system import summarize_buffs
+        buff_lines = summarize_buffs(player)
+        if buff_lines:
+            table.add_row("Buffs", f"[bright_green]{', '.join(buff_lines[:2])}[/bright_green]")
+
+    if feature("lives_system"):
+        table.add_row("Lives", f"[bright_white]{'◆' * player.lives_remaining}[/bright_white] {player.lives_remaining}/{player.lives_remaining + player.lives_used}")
+
+    return Panel(table, title="[system_msg][ STATUS ][/system_msg]", border_style="border", width=44)
 
 
 def build_stats_panel(player: "Player") -> Panel:
     stats = player.stats
     table = Table.grid(padding=(0, 2))
-    table.add_column(style="stat_name", width=4)
+    table.add_column(style="stat_name", width=5)
     table.add_column(style="stat_value", width=4)
-    table.add_column(style="stat_name", width=4)
+    table.add_column(style="stat_name", width=5)
     table.add_column(style="stat_value")
 
     table.add_row("STR", str(stats.STR), "WIS", str(stats.WIS))
     table.add_row("INT", str(stats.INT), "END", str(stats.END))
-    table.add_row("AGI", str(stats.AGI), "", "")
+    table.add_row("AGI", str(stats.AGI), "PER", str(player.perception))
     table.add_row("LCK", str(stats.LCK), "", "")
     table.add_row("VIT", str(stats.VIT), "", "")
 
     return Panel(table, title="[system_msg][ STATS ][/system_msg]", border_style="border", width=30)
+
+
+def build_compact_inventory_panel(player: "Player", item_registry: object) -> Panel:
+    """Narrow inventory panel for the always-visible status bar."""
+    lines = Text()
+    if not player.inventory:
+        lines.append("  Empty", style="dim_text")
+    else:
+        for slot in player.inventory:
+            item = item_registry.get(slot.item_id) if item_registry else None
+            if item:
+                rarity_color = RARITY_COLORS.get(item.rarity.value, "white")
+                qty = f" x{slot.quantity}" if slot.quantity > 1 else ""
+                lines.append(f"  {item.name}{qty}\n", style=rarity_color)
+            else:
+                lines.append(f"  {slot.item_id}\n", style="dim_text")
+    return Panel(lines, title="[system_msg][ ITEMS ][/system_msg]", border_style="border", width=26)
 
 
 def build_inventory_panel(player: "Player", item_registry: object) -> Panel:
@@ -108,6 +164,39 @@ def build_skills_panel(player: "Player", skill_registry: object) -> Panel:
     return Panel(lines, title="[system_msg][ SKILLS ][/system_msg]", border_style="border")
 
 
+def build_guild_panel(player: "Player") -> Panel:
+    """Panel listing guild memberships and current ranks."""
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="stat_name", width=24)
+    table.add_column(style="stat_value")
+
+    if not player.guild_memberships:
+        table.add_row("[dim_text]No guild memberships[/dim_text]", "")
+    else:
+        for guild_id, rank_id in player.guild_memberships.items():
+            name = guild_id.replace("_", " ").title()
+            table.add_row(name, rank_id.replace("_", " ").title())
+
+    return Panel(table, title="[system_msg][ GUILDS ][/system_msg]", border_style="border")
+
+
+def build_faction_panel(player: "Player") -> Panel:
+    """Panel listing known faction standings."""
+    table = Table.grid(padding=(0, 2))
+    table.add_column(style="stat_name", width=24)
+    table.add_column(style="stat_value", width=8)
+
+    if not player.faction_standing_cache:
+        table.add_row("[dim_text]No faction contacts[/dim_text]", "")
+    else:
+        for faction_id, standing in player.faction_standing_cache.items():
+            name = faction_id.replace("_", " ").title()
+            color = "green" if standing >= 25 else ("red" if standing <= -25 else "white")
+            table.add_row(name, f"[{color}]{standing:+.0f}[/{color}]")
+
+    return Panel(table, title="[system_msg][ FACTIONS ][/system_msg]", border_style="border")
+
+
 def build_class_panel(class_def: "ClassDefinition") -> Panel:
     rarity_color = RARITY_COLORS.get(class_def.rarity.value, "white")
     lines = Text()
@@ -118,3 +207,29 @@ def build_class_panel(class_def: "ClassDefinition") -> Panel:
         lines.append(f'"{class_def.flavor_text}"', style="italic dim_text")
 
     return Panel(lines, title="[system_msg][ CLASS DESIGNATION ][/system_msg]", border_style=rarity_color)
+
+
+def build_equipment_panel(player: "Player", item_registry: object) -> Panel:
+    """Compact panel showing currently equipped items in all three slots."""
+    table = Table.grid(padding=(0, 1))
+    table.add_column(style="stat_name", width=10)
+    table.add_column(style="stat_value")
+
+    slots = [
+        ("Weapon", player.equipped.weapon),
+        ("Armor",  player.equipped.armor),
+        ("Access", player.equipped.accessory),
+    ]
+
+    for label, item_id in slots:
+        if item_id:
+            item = item_registry.get(item_id) if item_registry else None
+            if item:
+                color = RARITY_COLORS.get(item.rarity.value, "white")
+                table.add_row(label, f"[{color}]{item.name}[/{color}]")
+            else:
+                table.add_row(label, item_id)
+        else:
+            table.add_row(label, "[dim_text][empty][/dim_text]")
+
+    return Panel(table, title="[system_msg][ EQUIP ][/system_msg]", border_style="border", width=26)

@@ -1,0 +1,215 @@
+{
+  "scene_id": "dungeon_floor2",
+  "title": "Crystal Caverns — Floor 2",
+  "entrance_text": [
+    "The stairs down creak with crystalline resonance.",
+    "The walls of the second floor are embedded with massive void-crystals — deep purple, pulsing with captured System energy from the Fracture.",
+    "The air smells of ozone and something older."
+  ],
+  "nodes": {
+    "root": {
+      "text": "The Crystal Caverns open before you. The purple crystals in the walls pulse slowly — an irregular heartbeat that doesn't match any natural rhythm. Three paths present themselves: a broad chamber to the north-west where crystal formations cluster thickly, a set of winding tunnels heading north, and a sealed stone door to the east with System runes carved into it. The boss chamber. Far ahead, barely visible, a passage continues downward.",
+      "options": [
+        {
+          "option_id": "go_crystal_formations",
+          "label": "Examine the crystal formations.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "crystal_formations"
+        },
+        {
+          "option_id": "go_north_tunnels",
+          "label": "Take the north tunnels.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "north_tunnels"
+        },
+        {
+          "option_id": "go_boss_chamber",
+          "label": "Approach the sealed boss chamber.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "boss_chamber",
+          "requires": {
+            "flags": ["dungeon_floor2_cleared"]
+          }
+        },
+        {
+          "option_id": "go_floor3_entrance",
+          "label": "Descend to Floor 3.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "floor3_entrance",
+          "requires": {
+            "flags": ["boss_golem_defeated"]
+          }
+        },
+        {
+          "option_id": "back_to_floor1",
+          "label": "Climb back up to Floor 1.",
+          "expected": true,
+          "leads_to": null,
+          "triggers": ["flag:return_to_floor1"]
+        }
+      ]
+    },
+    "crystal_formations": {
+      "text": "The crystal formations are extraordinary and wrong. Void-crystals the size of a person jut from the floor and ceiling, their deep purple light casting inverted shadows. The System's appraisal function hiccups when aimed at them — returning CLASSIFICATION: ANOMALOUS and nothing else.\n\nA fist-sized crystal has broken loose from a formation near the floor. Nearby, a larger cluster vibrates at a frequency you can feel in your teeth.",
+      "options": [
+        {
+          "option_id": "take_void_shard",
+          "label": "Pocket the loose void shard.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "crystal_formations",
+          "triggers": ["give_item:void_shard", "alignment:-2"]
+        },
+        {
+          "option_id": "study_crystals",
+          "label": "Study the crystal structure carefully.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "crystal_formations",
+          "triggers": ["flag:crystal_lore_studied"],
+          "requires": {
+            "min_stats": {"INT": 12}
+          }
+        },
+        {
+          "option_id": "smash_crystals",
+          "label": "Smash a smaller formation and take the shards.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "crystal_formations",
+          "triggers": ["give_item:crystal_shard", "alignment:-5"]
+        },
+        {
+          "option_id": "leave_formations",
+          "label": "Leave the formation chamber.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "north_tunnels": {
+      "text": "The north tunnels wind in ways that don't match the shape of the floor above. The System's compass spins uselessly. Somewhere deeper in, you can hear the low rumble of something large moving — and, beneath that, the drip of water that sounds almost like a pattern.\n\nAn alcove in the tunnel wall shows signs of recent use: scuffed stone, a fire ring that's still warm. Someone camps down here. And there, deeper in the unmapped dark, a passage the System hasn't marked.",
+      "options": [
+        {
+          "option_id": "fight_troll",
+          "label": "Follow the sound of the troll patrol.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "north_tunnels",
+          "triggers": ["combat:troll_patrol"]
+        },
+        {
+          "option_id": "find_passage",
+          "label": "Explore the unmapped passage.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "north_tunnels",
+          "triggers": ["flag:explored_unmapped_passage"]
+        },
+        {
+          "option_id": "check_hidden_cache",
+          "label": "Check the alcove carefully. You know this spot from the goblin survey.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "hidden_cache",
+          "requires": {
+            "flags": ["surveyed_goblins"]
+          }
+        },
+        {
+          "option_id": "leave_tunnels",
+          "label": "Return to the main cavern.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "hidden_cache": {
+      "text": "Behind the fire ring, under a flat stone that was placed deliberately and not by nature, you find a sealed leather satchel. Inside: a pouch of gold, a health potion still cold from the stone, and a note that reads only: 'For the one who did the survey work. You earned it. — The Management.'\n\nYou have no idea who The Management is. The gold is real.",
+      "options": [
+        {
+          "option_id": "take_cache",
+          "label": "Take the cache. Ask questions later.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "north_tunnels",
+          "triggers": ["give_gold:80", "give_item:health_potion", "flag:floor2_cache_found"]
+        },
+        {
+          "option_id": "leave_cache",
+          "label": "Leave it. You don't take things from unknown sources.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "north_tunnels"
+        }
+      ]
+    },
+    "boss_chamber": {
+      "text": "The sealed door opens to a chamber that the System has marked with a red border in your vision: DESIGNATED ENCOUNTER ZONE. DANGER RATING: HIGH.\n\nAt the center stands the Crystal Golem — twelve feet of condensed void-crystal animated into something that moves with terrible purpose. Its eyes are the same deep purple as the walls. Its fists are the size of your torso.\n\nIt turns toward you slowly, and the System produces a combat notification.",
+      "options": [
+        {
+          "option_id": "fight_golem",
+          "label": "Engage the Crystal Golem.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "boss_chamber",
+          "triggers": ["combat:crystal_golem", "flag:boss_golem_defeated"]
+        },
+        {
+          "option_id": "study_golem",
+          "label": "Observe the Golem's movement patterns before engaging.",
+          "expected": false,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "boss_chamber",
+          "triggers": ["flag:golem_weakness_known"],
+          "requires": {
+            "min_stats": {"INT": 14}
+          }
+        },
+        {
+          "option_id": "flee_boss",
+          "label": "Retreat from the chamber.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "floor3_entrance": {
+      "text": "The passage down begins as carved stone and ends as something else — the walls shift from quarried rock to something smoother, darker, as if shaped by pressure rather than tools. The System's depth display gives a reading, then stops and displays three question marks.\n\nFrom below comes a sound that isn't quite sound — more a pressure behind the eyes, a wrongness that the System can't classify. The wound in reality is below. You can feel it from here.",
+      "options": [
+        {
+          "option_id": "descend_to_floor3",
+          "label": "Descend to Floor 3.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "root",
+          "triggers": ["flag:dungeon_floor2_cleared", "flag:enter_floor3"]
+        },
+        {
+          "option_id": "examine_entrance",
+          "label": "Study the entrance before descending.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "floor3_entrance"
+        },
+        {
+          "option_id": "back_from_floor3_entrance",
+          "label": "Return to the main cavern. Not yet.",
+          "expected": true,
+          "leads_to": "dungeon_floor2",
+          "leads_to_node": "root"
+        }
+      ],
+      "requires": {
+        "flags": ["boss_golem_defeated"]
+      }
+    }
+  }
+}

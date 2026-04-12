@@ -110,3 +110,145 @@ World: {lore_data.get("world_name", "Aethoria")}
 Current threat context: {lore_data.get("current_threat", "")}
 
 End with a line that transitions naturally to continued exploration. Write as plain prose — no JSON, no headers."""
+
+
+def build_quest_generation_prompt(
+    player: "Player",
+    giver_npc_id: str,
+    npc_name: str,
+    npc_role: str,
+    lore_data: dict,
+    ai_context: dict | None = None,
+) -> str:
+    """Build a prompt for dynamic quest generation based on player profile."""
+    from config import ALIGNMENT_LABELS
+
+    # Derive alignment label
+    alignment_label = "Neutral"
+    for low, high, label in ALIGNMENT_LABELS:
+        if low <= player.alignment <= high:
+            alignment_label = label
+            break
+
+    skills_str = ", ".join(player.skills[:5]) if player.skills else "none"
+    inventory_str = ", ".join(s.item_id for s in player.inventory[:5]) if player.inventory else "empty"
+
+    world_name = lore_data.get("world_name", "Aethoria")
+    capital = lore_data.get("capital", "Verath")
+
+    return f"""Generate a quest for a LitRPG game set in the world of {world_name}.
+Capital city: {capital}. The System appeared 3 years ago during the Fracture.
+
+NPC QUEST GIVER: {npc_name} ({npc_role}, id: {giver_npc_id})
+
+PLAYER PROFILE:
+  Name: {player.name}
+  Level: {player.level}
+  Class: {player.active_class or player.base_class or 'Unclassified'}
+  Species: {player.species_id or 'human'}
+  Gender: {player.gender}
+  Alignment: {alignment_label} ({player.alignment:+.0f})
+  Top stats: STR={player.stats.STR}, INT={player.stats.INT}, AGI={player.stats.AGI}
+  Skills: {skills_str}
+  Inventory items: {inventory_str}
+  Flags set: {list(player.flags.keys())[:8]}
+
+REQUIREMENTS:
+- Create a 2-3 stage quest that fits this player's profile and alignment
+- Quest must feel personal to this character's background and choices
+- Use existing world lore: faction politics, the dungeon, guild rivalries
+- stages must have completion_condition as {{"has_flag": "flag_name"}} or {{"has_item": "item_id"}}
+- Flags should be snake_case like "completed_verath_errand"
+- reward_gold should be 50-300 based on difficulty
+- reward_xp should be 100-500 based on difficulty
+- If player is evil-aligned, quest can have morally gray objectives
+- faction_rewards and guild_rewards: use faction/guild IDs like "iron_vanguard", "shadow_network", "mages_conclave", "silver_fangs"
+- Return ONLY valid JSON matching the schema exactly
+
+Return JSON in this exact format:
+{{
+  "template_id": "ai_quest_<short_unique_id>",
+  "title": "Quest title",
+  "description": "Brief description",
+  "stages": [
+    {{
+      "stage_id": "stage_1",
+      "objective_text": "Player-facing objective",
+      "completion_condition": {{"has_flag": "some_flag"}},
+      "next_stage_id": "stage_2"
+    }},
+    {{
+      "stage_id": "stage_2",
+      "objective_text": "Final objective",
+      "completion_condition": {{"has_flag": "quest_done_flag"}},
+      "next_stage_id": null
+    }}
+  ],
+  "reward_gold": 100,
+  "reward_xp": 200,
+  "reward_items": [],
+  "alignment_reward": 5.0,
+  "faction_rewards": {{"iron_vanguard": 10.0}},
+  "guild_rewards": {{}},
+  "flavor_text": "Atmospheric closing line"
+}}"""
+
+
+def build_dynamic_options_prompt(
+    question: str,
+    scene_title: str,
+    scene_text: str,
+    current_options: list[str],
+    player_stats: dict,
+    player_flags: list[str],
+    lore_data: dict,
+) -> str:
+    """
+    Build a prompt for generating dynamic situational options based on player question.
+    """
+    stats_str = ", ".join(f"{k}:{v}" for k, v in player_stats.items())
+    options_str = "\n".join(f"- {o}" for o in current_options)
+    flags_str = ", ".join(player_flags[:12]) or "none"
+    world_name = lore_data.get("world_name", "Aethoria")
+
+    return f"""
+The player is in scene: {scene_title}
+Scene text: {scene_text[:300]}
+
+Current choices available:
+{options_str}
+
+Player stats: {stats_str}
+Active flags: {flags_str}
+
+The player asks: "{question}"
+
+Generate 1-4 new situational options that address this question. These options should:
+- Be creative and grounded in the scene context
+- Use realistic stat checks if the action requires ability
+- Include specific triggers (e.g. "combat:enemy_id", "flag:action_done", "give_gold:50")
+- NOT duplicate existing options
+- Feel like a skilled GM adding depth to the encounter
+
+Available trigger types:
+- flag:FLAG_NAME — sets a player flag
+- combat:ENEMY_ID — starts combat (use existing IDs: goblin_scout, goblin_looter, dungeon_slime)
+- give_gold:N — gives N copper (100 = 1 gold)
+- give_item:ITEM_ID — gives item
+- give_skill:SKILL_ID — grants a skill
+- alignment:+N or alignment:-N — shifts alignment
+
+Return ONLY valid JSON matching this schema:
+{{
+  "situation_text": "A narrative paragraph (2-4 sentences) explaining what the player can see or do given their question. Be specific about what's possible.",
+  "options": [
+    {{
+      "option_id": "unique_snake_case_id",
+      "label": "Short action label (max 60 chars)",
+      "narrative": "What happens if they choose this (1 sentence)",
+      "triggers": ["flag:example_flag"],
+      "requires": {{}}
+    }}
+  ]
+}}
+"""

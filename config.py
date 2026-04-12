@@ -20,6 +20,10 @@ OLLAMA_MAX_RETRIES = 3
 OLLAMA_TEMP_JSON = 0.4                 # lower = more consistent structured output
 OLLAMA_TEMP_TEXT = 0.85                # higher = more creative narrative
 
+# ── Background AI generation ────────────────────────────────────────────────
+BG_GEN_ENABLED  = True    # master switch for background content generation
+BG_GEN_INTERVAL = 15      # turns between background task submissions
+
 # ── Divergence / AI trigger ────────────────────────────────────────────────────
 DIVERGENCE_THRESHOLD = 30              # score >= this triggers AI class generation
 DIVERGENCE_SCORE_UNEXPECTED_CHOICE = 10
@@ -39,7 +43,26 @@ DIVERGENCE_FLAGS = [
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP
 STAT_POINTS_PER_LEVEL = 3
-STARTING_GOLD = 50
+STARTING_GOLD    = 5000             # copper pieces (50 gold)
+COPPER_PER_GOLD  = 100              # 1 gold = 100 copper
+COPPER_PER_SILVER = 10              # 1 silver = 10 copper
+
+
+def format_currency(copper: int) -> str:
+    """Format copper amount as 'Xg Ys Zc', dropping zero denominations."""
+    if copper <= 0:
+        return "0c"
+    g = copper // 100
+    s = (copper % 100) // 10
+    c = copper % 10
+    parts = []
+    if g:
+        parts.append(f"{g}g")
+    if s:
+        parts.append(f"{s}s")
+    if c:
+        parts.append(f"{c}c")
+    return " ".join(parts) or "0c"
 
 # ── Lives system ───────────────────────────────────────────────────────────────
 STARTING_LIVES = 9
@@ -81,17 +104,17 @@ GAME_SUBTITLE = "The Universe Is Watching"
 # Set to True to enable a system. False = system is present in code but never called.
 # This lets you build and test systems in isolation before wiring them together.
 FEATURES: dict[str, bool] = {
-    "species_system":     False,   # Species selection + evolution paths
-    "alignment_system":   False,   # Alignment float + alignment-gated content
-    "npc_system":         False,   # Named NPCs with memory + stat-gated dialogue
-    "quest_system":       False,   # Dynamic AI quest generation + state machine
-    "guild_system":       False,   # Guild membership, ranks, perks
-    "faction_system":     False,   # Faction politics, standing, ascension
-    "auction_house":      False,   # Auction listings, competing guilds, life tokens
-    "lives_system":       False,   # 9-lives death mechanic (replaces instant game-over)
+    "species_system":     True,    # Species selection + evolution paths
+    "alignment_system":   True,    # Alignment float + alignment-gated content
+    "npc_system":         True,    # Named NPCs with memory + stat-gated dialogue
+    "quest_system":       True,    # Quest state machine + completion tracking
+    "guild_system":       True,    # Guild membership, ranks, perks
+    "faction_system":     True,    # Faction politics, standing, ascension
+    "auction_house":      True,    # Auction listings, competing guilds, life tokens
+    "lives_system":       True,    # 9-lives death mechanic (replaces instant game-over)
     "crafting_system":    False,   # Recipe + material crafting
-    "stat_gating":        False,   # INT/Perception/LCK/WIS content gates
-    "world_db":           False,   # SQLite world state (required by most above)
+    "stat_gating":        True,    # INT/Perception/LCK/WIS content gates
+    "world_db":           True,    # SQLite world state (required by npc/quest systems)
 }
 
 
