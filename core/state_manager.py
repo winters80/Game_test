@@ -20,6 +20,7 @@ class GameState:
         self.turn_number: int = 0
         self.generated_content_cache: dict[str, Any] = {}
         self._dirty: bool = False
+        self._entrance_shown: set[str] = set()  # scene_ids whose entrance_text has been displayed
 
     # ── Dirty tracking ────────────────────────────────────────────────────────
 

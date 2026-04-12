@@ -186,9 +186,11 @@ class GameEngine:
 
         renderer.print_scene_header(scene.title)
 
-        # Show entrance text only on first visit to root node
+        # Show entrance text only the first time this scene's root is visited
         node_id = self.state.current_node_id
-        if node_id == "root" and scene.entrance_text:
+        scene_key = self.state.current_scene_id
+        if node_id == "root" and scene.entrance_text and scene_key not in self.state._entrance_shown:
+            self.state._entrance_shown.add(scene_key)
             renderer.print_scene_text(scene.entrance_text, pause_between=0.05)
             renderer.print_divider()
 
