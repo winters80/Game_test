@@ -15,16 +15,34 @@
           "option_id": "go_left_goblins",
           "label": "Take the wide tunnel. Fight the goblins.",
           "expected": true,
+          "requires": {"flags_absent": ["goblins_defeated"]},
           "leads_to": "dungeon_floor1",
-          "leads_to_node": "goblin_fight"
+          "leads_to_node": "goblin_scout_node"
+        },
+        {
+          "option_id": "goblins_cleared",
+          "label": "The goblin tunnel is cleared. Search the area.",
+          "expected": true,
+          "requires": {"flags": ["goblins_defeated"]},
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "after_goblins"
         },
         {
           "option_id": "go_right_unmapped",
           "label": "Take the narrow unmapped passage. See what the System doesn't know about.",
           "expected": false,
+          "requires": {"flags_absent": ["explored_unmapped_passage"]},
           "leads_to": "dungeon_floor1",
           "leads_to_node": "unmapped_passage",
           "triggers": ["flag:explored_unmapped_passage"]
+        },
+        {
+          "option_id": "go_right_revisit",
+          "label": "Revisit the unmapped passage.",
+          "expected": true,
+          "requires": {"flags": ["explored_unmapped_passage"]},
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "unmapped_revisit"
         },
         {
           "option_id": "examine_glowing",
@@ -42,20 +60,20 @@
         }
       ]
     },
-    "goblin_fight": {
-      "text": "Three goblins crouch over what looks like a stolen pack from a previous adventurer. They notice you immediately — their yellow eyes catching the fungal light.\n\nCOMBAT INITIATED\nEnemies: Goblin Scout x2, Goblin Looter x1",
+    "goblin_scout_node": {
+      "text": "You edge to the tunnel entrance and peer in. The fungal light is bright enough to see clearly.\n\nThree goblins are crouched over a stolen adventurer's pack: two wiry Goblin Scouts flanking the entrance, and a heavier Goblin Looter in the center gripping a rusty cleaver. They haven't noticed you yet.\n\nThe Looter looks tougher — higher HP, hits harder. The Scouts are faster. You have a moment to plan your approach.",
       "options": [
         {
           "option_id": "fight_goblins",
-          "label": "Fight! (Enter combat)",
+          "label": "Charge in — fight all three! [Goblin Scout x2 + Goblin Looter]",
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "after_goblins",
-          "triggers": ["combat:goblin_patrol", "flag:surveyed_goblins"]
+          "triggers": ["combat:goblin_patrol", "flag:goblins_defeated"]
         },
         {
           "option_id": "sneak_past",
-          "label": "Try to sneak past them.",
+          "label": "Try to sneak past them quietly.",
           "requires": {"min_stats": {"AGI": 8}},
           "expected": false,
           "leads_to": "dungeon_floor1",
@@ -65,26 +83,36 @@
       ]
     },
     "after_goblins": {
-      "text": "The goblins are defeated. The System pulses:\n\nEXPERIENCE GAINED. ITEMS LOOTED.",
+      "text": "The goblin tunnel is quiet now. The System pulses: EXPERIENCE GAINED.\n\nAmong the debris you spot the stolen adventurer's pack.",
       "options": [
         {
-          "option_id": "continue_exploring",
-          "label": "Continue exploring.",
+          "option_id": "examine_pack",
+          "label": "Check what's in the stolen pack.",
           "expected": true,
+          "requires": {"flags_absent": ["checked_stolen_pack"]},
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "stolen_pack",
+          "triggers": ["flag:checked_stolen_pack"]
+        },
+        {
+          "option_id": "pack_already_looted",
+          "label": "The pack is already empty — you searched it last time.",
+          "expected": true,
+          "requires": {"flags": ["checked_stolen_pack"]},
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
         },
         {
-          "option_id": "examine_pack",
-          "label": "Check what was in the stolen pack.",
+          "option_id": "continue_exploring",
+          "label": "Leave the pack. Continue exploring.",
           "expected": true,
           "leads_to": "dungeon_floor1",
-          "leads_to_node": "stolen_pack"
+          "leads_to_node": "root"
         }
       ]
     },
     "stolen_pack": {
-      "text": "Inside the pack: a health potion, some rations, and — oddly — a leather-bound book with no title. The pages appear blank at first, but when you hold it under the fungal light, text appears and vanishes like smoke.\n\nThe System gives you an unusual notification: ITEM CLASSIFICATION PENDING.\n\nAlso in the pack, half-buried under torn canvas: a smithing hammer. Heavy, balanced, with a double-lobe stamp mark on the head and a V between the lobes.",
+      "text": "Inside the pack: a health potion, some rations, and — oddly — a leather-bound book with no title. The pages appear blank at first, but when you hold it under the fungal light, text appears and vanishes like smoke.\n\nThe System produces no notification. None. It has nothing to say about this object.\n\nAlso in the pack, half-buried under torn canvas: a smithing hammer. Heavy, balanced, with a double-lobe stamp mark on the head and a V between the lobes.",
       "options": [
         {
           "option_id": "take_all",
@@ -131,6 +159,7 @@
           "option_id": "take_void_shard",
           "label": "Take the void shard.",
           "expected": false,
+          "requires": {"flags_absent": ["found_void_shard"]},
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
           "triggers": ["give_item:void_shard", "flag:found_void_shard"]
@@ -139,29 +168,77 @@
           "option_id": "leave_void_shard",
           "label": "Leave it. You don't touch things the System can't explain.",
           "expected": true,
+          "requires": {"flags_absent": ["found_void_shard"]},
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "void_shard_taken",
+          "label": "The alcove is empty — you already claimed the shard.",
+          "requires": {"flags": ["found_void_shard"]},
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "unmapped_revisit": {
+      "text": "The narrow passage is quiet. The alcove where the void shard sat is empty — a dark smudge on the stone where it rested for years, maybe decades.\n\nNothing else here. But you notice the rock wall at the back has faint tool marks. Someone carved this alcove deliberately.",
+      "options": [
+        {
+          "option_id": "note_carvings",
+          "label": "Study the tool marks more carefully.",
+          "expected": false,
+          "requires": {"flags_absent": ["noticed_alcove_carvings"]},
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["flag:noticed_alcove_carvings"]
+        },
+        {
+          "option_id": "leave_passage",
+          "label": "Head back to the main corridor.",
+          "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
         }
       ]
     },
     "crystal_chamber": {
-      "text": "The chamber is lit by a cluster of blue crystals growing from the ceiling. At its center: a stone platform with a softly glowing mana crystal the size of your fist.\n\nThis is clearly a resource node — the Guild would pay for confirmed locations.",
+      "text": "The chamber is lit by a cluster of blue crystals growing from the ceiling. At its center: a stone platform with a softly glowing mana crystal the size of your fist.\n\nThis is clearly a resource node — the Guild would pay well for confirmed locations.",
       "options": [
         {
           "option_id": "mark_location",
           "label": "Mark the location for the Guild survey.",
           "expected": true,
+          "requires": {"flags_absent": ["survey_mana_node"]},
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["flag:survey_mana_node", "give_gold:15"]
+          "triggers": ["flag:survey_mana_node", "give_gold:1500"]
+        },
+        {
+          "option_id": "location_marked",
+          "label": "Location already marked. The crystal pulses steadily.",
+          "requires": {"flags": ["survey_mana_node"]},
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
         },
         {
           "option_id": "take_crystal",
-          "label": "Take the mana crystal.",
+          "label": "Take the mana crystal for yourself.",
           "expected": false,
+          "requires": {"flags_absent": ["took_guild_resource"]},
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:mana_potion", "flag:took_guild_resource"]
+          "triggers": ["give_item:mana_potion", "flag:took_guild_resource", "alignment:-5"]
+        },
+        {
+          "option_id": "crystal_taken",
+          "label": "The platform is empty — you already took the crystal.",
+          "requires": {"flags": ["took_guild_resource"]},
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
         },
         {
           "option_id": "descend_to_floor2",
@@ -186,29 +263,9 @@
           "option_id": "descend_anyway",
           "label": "Descend anyway. You need to understand what's changed.",
           "expected": false,
-          "leads_to": "dungeon_floor1",
-          "leads_to_node": "floor2_arrival",
-          "triggers": ["flag:descended_to_floor2", "flag:ignored_system_warning"]
-        }
-      ]
-    },
-    "floor2_arrival": {
-      "text": "The bottom of the stairs opens into a chamber that doesn't match the rest of the dungeon. The walls here are smoother, darker — like obsidian rather than quarried stone. And the creature in the center of the chamber is not a goblin.\n\nIt's bipedal. Armored in dark chitin. Its eyes glow the same color as the void shard you may or may not have in your pocket.\n\nIt looks at you like it's been waiting.\n\nTHE SYSTEM HAS NO ENTRY FOR THIS CREATURE.",
-      "options": [
-        {
-          "option_id": "fight_unknown",
-          "label": "Fight it. That's what you're here for.",
-          "expected": false,
-          "leads_to": "dungeon_floor1",
+          "leads_to": "dungeon_floor2",
           "leads_to_node": "root",
-          "triggers": ["combat:unknown_creature", "flag:fought_unknown_creature"]
-        },
-        {
-          "option_id": "retreat_floor2",
-          "label": "Retreat immediately. This is beyond you.",
-          "expected": true,
-          "leads_to": "dungeon_floor1",
-          "leads_to_node": "root"
+          "triggers": ["flag:descended_to_floor2", "flag:ignored_system_warning"]
         }
       ]
     }

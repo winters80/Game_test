@@ -73,14 +73,14 @@
       },
       "shop": {
         "node_id": "shop",
-        "npc_text": "'Iron Sword is fifty Shards — proper balance, forged it myself. Leather Armor is forty Shards, Health Potion twenty-five Shards, Mana Potion thirty Shards. What'll it be?'",
+        "npc_text": "'Iron Sword — 50g, proper balance, forged it myself. Leather Armor — 40g. Health Potion — 25g. Mana Potion — 30g. What'll it be?'",
         "options": [
           {
             "option_id": "buy_sword",
             "label": "Buy Iron Sword (50g)",
             "requires": {},
             "npc_response": "'Good choice. Try not to let goblins chip it.'",
-            "triggers": ["give_item:iron_sword", "give_gold:-50"],
+            "triggers": ["buy_item:iron_sword:5000"],
             "disposition_change": 2.0,
             "leads_to_node": "shop",
             "memory_event_type": "purchase",
@@ -91,7 +91,7 @@
             "label": "Buy Leather Armor (40g)",
             "requires": {},
             "npc_response": "'Good fit for your frame. Keep it oiled.'",
-            "triggers": ["give_item:leather_armor", "give_gold:-40"],
+            "triggers": ["buy_item:leather_armor:4000"],
             "disposition_change": 2.0,
             "leads_to_node": "shop"
           },
@@ -100,7 +100,7 @@
             "label": "Buy Health Potion (25g)",
             "requires": {},
             "npc_response": "'Two-day shelf life once opened. Don't wait too long.'",
-            "triggers": ["give_item:health_potion", "give_gold:-25"],
+            "triggers": ["buy_item:health_potion:2500"],
             "leads_to_node": "shop"
           },
           {
@@ -108,7 +108,7 @@
             "label": "Buy Mana Potion (30g)",
             "requires": {},
             "npc_response": "'Brew's from the alchemist on the east road. Better than it tastes.'",
-            "triggers": ["give_item:mana_potion", "give_gold:-30"],
+            "triggers": ["buy_item:mana_potion:3000"],
             "leads_to_node": "shop"
           },
           {
@@ -316,9 +316,9 @@
           {
             "option_id": "submit_survey",
             "label": "I completed the dungeon survey contract.",
-            "requires": {"flags": ["surveyed_goblins", "contract_dungeon_survey"]},
-            "npc_response": "'Goblin patrol documented, slime colony noted, layout mapped. This is clean work.' She pulls out a ledger. 'Thirty Shards, as contracted.'",
-            "triggers": ["flag:submitted_dungeon_survey", "give_gold:30"],
+            "requires": {"flags": ["goblins_defeated", "contract_dungeon_survey"]},
+            "npc_response": "'Goblin patrol documented, crystal chamber located. This is clean work.' She marks the ledger and nods toward the door. 'Reward is being processed — check your System balance shortly.'",
+            "triggers": ["flag:submitted_dungeon_survey"],
             "disposition_change": 10.0,
             "leads_to_node": "survey_complete",
             "memory_event_type": "contract_completed",

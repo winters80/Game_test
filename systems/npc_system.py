@@ -231,6 +231,8 @@ def apply_option_effects(
             engine_triggers.append(trigger)
         elif trigger.startswith("give_npc_memory:"):
             engine_triggers.append(trigger)
+        elif trigger.startswith("buy_item:"):
+            engine_triggers.append(trigger)
         else:
             scene_triggers.append(trigger)
 
