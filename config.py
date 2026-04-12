@@ -22,7 +22,7 @@ OLLAMA_TEMP_TEXT = 0.85                # higher = more creative narrative
 
 # ── Background AI generation ────────────────────────────────────────────────
 BG_GEN_ENABLED  = True    # master switch for background content generation
-BG_GEN_INTERVAL = 15      # turns between background task submissions
+BG_GEN_INTERVAL = 5       # turns between background task submissions
 
 # ── Divergence / AI trigger ────────────────────────────────────────────────────
 DIVERGENCE_THRESHOLD = 30              # score >= this triggers AI class generation

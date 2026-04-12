@@ -91,6 +91,51 @@ class BackgroundGenerator:
             "world_context": world_context,
         })
 
+    def submit_world_event(
+        self, zone_id: str, zone_name: str,
+        player_level: int, context_flags: list[str],
+    ) -> bool:
+        """Queue generation of a world event relevant to the current zone."""
+        return self._submit({
+            "type": "world_event",
+            "zone_id": zone_id,
+            "zone_name": zone_name,
+            "player_level": player_level,
+            "context_flags": context_flags,
+        })
+
+    def submit_rumor(
+        self, zone_id: str, context_flags: list[str], player_level: int,
+    ) -> bool:
+        """Queue generation of a local rumor or piece of gossip."""
+        return self._submit({
+            "type": "rumor",
+            "zone_id": zone_id,
+            "context_flags": context_flags,
+            "player_level": player_level,
+        })
+
+    def submit_lore_entry(
+        self, context_flags: list[str], player_flags: list[str],
+    ) -> bool:
+        """Queue generation of a lore fragment."""
+        return self._submit({
+            "type": "lore_entry",
+            "context_flags": context_flags,
+            "player_flags": player_flags,
+        })
+
+    def submit_area_activity(
+        self, zone_id: str, zone_name: str, context_flags: list[str],
+    ) -> bool:
+        """Queue generation of moment-to-moment area activity."""
+        return self._submit({
+            "type": "area_activity",
+            "zone_id": zone_id,
+            "zone_name": zone_name,
+            "context_flags": context_flags,
+        })
+
     def _submit(self, task: dict) -> bool:
         try:
             self._task_queue.put_nowait(task)
@@ -142,6 +187,10 @@ class BackgroundGenerator:
             return self._gen_npc_branch(task)
         if t == "bot_action":
             return self._gen_bot_action(task)
+        if t == "world_event":   return self._gen_world_event(task)
+        if t == "rumor":         return self._gen_rumor_task(task)
+        if t == "lore_entry":    return self._gen_lore_entry(task)
+        if t == "area_activity": return self._gen_area_activity(task)
         return None
 
     def _gen_quest(self, task: dict) -> dict | None:
@@ -243,4 +292,126 @@ class BackgroundGenerator:
                 return result
         except Exception as exc:
             logger.warning(f"BG bot action error: {exc}")
+        return None
+
+    def _gen_world_event(self, task: dict) -> dict | None:
+        try:
+            zone_name    = task.get("zone_name", "the city")
+            player_level = task.get("player_level", 1)
+            flags        = task.get("context_flags", [])
+            flags_str    = ", ".join(flags[:6]) if flags else "none"
+            system_prompt = (
+                "You are the world event feed for Aethoria, a post-Fracture fantasy world. "
+                "The System — an AI that assigns classes and tracks lives — governs society. "
+                "Generate ONE brief world event (1-2 sentences, max 45 words). "
+                "Be concrete, specific, atmospheric. No lists. No meta-commentary."
+            )
+            user_prompt = (
+                f"Generate a world event near '{zone_name}'. "
+                f"Player is level {player_level}. Active world flags: {flags_str}. "
+                "Something specific just happened — a sighting, a development, a shift. "
+                "Make it feel like the world is alive and changing."
+            )
+            text = self._content_gen.client.generate_text(
+                prompt=user_prompt, system_prompt=system_prompt,
+                temperature=0.9, max_tokens=80,
+            )
+            if text:
+                return {
+                    "type": "world_event",
+                    "zone_id": task.get("zone_id", ""),
+                    "event_text": text.strip(),
+                }
+        except Exception as exc:
+            logger.warning(f"BG world_event error: {exc}")
+        return None
+
+    def _gen_rumor_task(self, task: dict) -> dict | None:
+        try:
+            flags     = task.get("context_flags", [])
+            zone_id   = task.get("zone_id", "")
+            flags_str = ", ".join(flags[:5]) if flags else "none"
+            system_prompt = (
+                "You write overheard gossip and rumours for Aethoria. "
+                "One sentence only. Under 30 words. In the voice of a local resident — "
+                "not omniscient, just what people are saying."
+            )
+            user_prompt = (
+                f"Generate a rumour heard around {zone_id or 'the area'}. "
+                f"World context flags: {flags_str}. "
+                "Something a villager, guard, or merchant might whisper."
+            )
+            text = self._content_gen.client.generate_text(
+                prompt=user_prompt, system_prompt=system_prompt,
+                temperature=0.92, max_tokens=50,
+            )
+            if text:
+                return {
+                    "type": "rumor",
+                    "zone_id": zone_id,
+                    "event_text": text.strip(),
+                }
+        except Exception as exc:
+            logger.warning(f"BG rumor error: {exc}")
+        return None
+
+    def _gen_lore_entry(self, task: dict) -> dict | None:
+        try:
+            flags     = task.get("context_flags", [])
+            flags_str = ", ".join(flags[:6]) if flags else "none"
+            system_prompt = (
+                "You write lore fragments for Aethoria. "
+                "Each fragment is 2-3 sentences from an in-world source: "
+                "a torn journal page, a carved inscription, an overheard scholar. "
+                "Tone: measured, a little unsettling. No titles in the text."
+            )
+            user_prompt = (
+                f"Write a lore fragment about the world of Aethoria. "
+                f"Relevant context flags: {flags_str}. "
+                "It should reveal something small but interesting about the Fracture, "
+                "the System, or the world before the Fracture."
+            )
+            text = self._content_gen.client.generate_text(
+                prompt=user_prompt, system_prompt=system_prompt,
+                temperature=0.88, max_tokens=100,
+            )
+            if text:
+                return {
+                    "type": "lore_entry",
+                    "event_text": text.strip(),
+                    "title": "Lore Fragment",
+                }
+        except Exception as exc:
+            logger.warning(f"BG lore_entry error: {exc}")
+        return None
+
+    def _gen_area_activity(self, task: dict) -> dict | None:
+        try:
+            zone_name = task.get("zone_name", "the area")
+            zone_id   = task.get("zone_id", "")
+            flags     = task.get("context_flags", [])
+            flags_str = ", ".join(flags[:5]) if flags else "none"
+            system_prompt = (
+                "You describe background activity in specific zones of Aethoria. "
+                "1-2 sentences. Concrete observable detail. Present tense. "
+                "Things a sharp-eyed person would notice."
+            )
+            user_prompt = (
+                f"Describe one thing currently happening in the background at '{zone_name}'. "
+                f"World flags: {flags_str}. "
+                "A small, specific detail — movement, sound, a person, an object. "
+                "Not plot-critical, just texture."
+            )
+            text = self._content_gen.client.generate_text(
+                prompt=user_prompt, system_prompt=system_prompt,
+                temperature=0.87, max_tokens=70,
+            )
+            if text:
+                return {
+                    "type": "area_activity",
+                    "zone_id": zone_id,
+                    "event_text": text.strip(),
+                }
+        except Exception as exc:
+            logger.warning(f"BG area_activity error: {exc}")
         return None
