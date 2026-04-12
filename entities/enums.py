@@ -7,6 +7,7 @@ class Rarity(str, Enum):
     RARE = "RARE"
     EPIC = "EPIC"
     LEGENDARY = "LEGENDARY"
+    AI_GENERATED = "AI_GENERATED"
 
 
 class StatType(str, Enum):

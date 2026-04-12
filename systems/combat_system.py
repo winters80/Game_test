@@ -103,6 +103,8 @@ def player_attack(player: "Player", enemy: Enemy) -> tuple[int, bool]:
     crit_chance = player.stats.LCK * 0.01  # 1% per LCK point
     is_crit = random.random() < crit_chance
     damage = int(base_dmg * 1.5) if is_crit else base_dmg
+    from systems.synergy_system import apply_synergy_bonuses
+    damage, _ = apply_synergy_bonuses(player, damage, 0)
     enemy.current_hp = max(0, enemy.current_hp - damage)
     return damage, is_crit
 
@@ -121,7 +123,13 @@ def player_skill_attack(player: "Player", skill_id: str, enemy: Enemy, skill_reg
 def enemy_attack(enemy: Enemy, player: "Player") -> int:
     """Enemy attacks player. Returns damage dealt."""
     damage = max(1, enemy.attack + random.randint(-1, 2) - max(0, player.stats.END // 3))
-    dodge_chance = player.stats.AGI * 0.008
+    from systems.synergy_system import get_active_synergies
+    _synergies = get_active_synergies(player)
+    for _syn in _synergies:
+        if "damage_reduction" in _syn["bonus"]:
+            damage = max(1, int(damage * (1 - _syn["bonus"]["damage_reduction"] / 100)))
+    _extra_dodge = sum(_syn["bonus"].get("dodge_pct", 0) / 100 for _syn in _synergies)
+    dodge_chance = player.stats.AGI * 0.008 + _extra_dodge
     if random.random() < dodge_chance:
         return 0  # dodged
     player.current_hp = max(0, player.current_hp - damage)

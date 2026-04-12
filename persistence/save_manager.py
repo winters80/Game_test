@@ -56,6 +56,9 @@ def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
     world_db.open()
 
     state = GameState(player, world_db=world_db)
+    # Stash AI-generated skill definitions for GameEngine to re-register
+    if world_db is not None:
+        state._ai_skill_defs = world_db.load_ai_skills()
     state.current_scene_id = raw.get("current_scene_id", "village_start")
     state.current_node_id = raw.get("current_node_id", "root")
     state.turn_number = raw.get("turn_number", 0)
@@ -92,6 +95,8 @@ def _migrate(data: dict[str, Any], from_version: int, to_version: int) -> dict[s
     logger.info(f"Migrating save from v{from_version} to v{to_version}")
     if from_version == 1 and to_version >= 2:
         data = _v1_to_v2(data)
+    if from_version < 3:
+        data["save_version"] = 3
     return data
 
 

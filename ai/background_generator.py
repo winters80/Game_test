@@ -82,6 +82,15 @@ class BackgroundGenerator:
             "player_profile": player_profile,
         })
 
+    def submit_bot_decision(self, bot_id: str, bot_profile: dict, world_context: dict) -> bool:
+        """Queue an AI decision for a bot agent. Returns False if queue full."""
+        return self._submit({
+            "type": "bot_action",
+            "bot_id": bot_id,
+            "bot_profile": bot_profile,
+            "world_context": world_context,
+        })
+
     def _submit(self, task: dict) -> bool:
         try:
             self._task_queue.put_nowait(task)
@@ -131,6 +140,8 @@ class BackgroundGenerator:
             return self._gen_narrative(task)
         if t == "npc_branch":
             return self._gen_npc_branch(task)
+        if t == "bot_action":
+            return self._gen_bot_action(task)
         return None
 
     def _gen_quest(self, task: dict) -> dict | None:
@@ -207,4 +218,29 @@ class BackgroundGenerator:
                 return {"type": "npc_branch", "npc_id": npc_id, "node": result}
         except Exception as exc:
             logger.warning(f"BG NPC branch generation error: {exc}")
+        return None
+
+    def _gen_bot_action(self, task: dict) -> dict | None:
+        try:
+            bot_id = task.get("bot_id", "")
+            profile = task.get("bot_profile", {})
+            context = task.get("world_context", {})
+            system_prompt = (
+                "You are the behaviour engine for autonomous NPC agents in Aethoria. "
+                "Return JSON only: {\"type\": \"bot_action\", \"bot_id\": \"...\", \"action\": \"...\", \"target\": \"...\"}. "
+                "Valid actions: move_zone, trade, talk_npc, rest, craft."
+            )
+            user_prompt = (
+                f"Bot '{profile.get('name')}' (id: {bot_id}), personality: {profile.get('personality_seed')}. "
+                f"Current goal: {profile.get('current_goal')}. Zone: {profile.get('current_zone_id')}. "
+                f"World context: {context}. Decide the bot's next single action."
+            )
+            result = self._content_gen.client.generate_json(
+                prompt=user_prompt,
+                system_prompt=system_prompt,
+            )
+            if result and result.get("type") == "bot_action":
+                return result
+        except Exception as exc:
+            logger.warning(f"BG bot action error: {exc}")
         return None

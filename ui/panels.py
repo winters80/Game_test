@@ -14,13 +14,25 @@ if TYPE_CHECKING:
     from entities.character_class import ClassDefinition
 
 
-RARITY_COLORS = {
-    "COMMON": "white",
-    "UNCOMMON": "green",
-    "RARE": "bright_blue",
-    "EPIC": "magenta",
-    "LEGENDARY": "bright_yellow",
+RARITY_COLORS: dict[str, str] = {
+    "COMMON":       "white",
+    "UNCOMMON":     "green",
+    "RARE":         "bright_blue",
+    "EPIC":         "magenta",
+    "LEGENDARY":    "bright_yellow",
+    "AI_GENERATED": "cyan",
 }
+
+
+def _stat_bracket(stats_bonus: object) -> str:
+    """Return ' [+2 STR +1 END]' string for non-zero stats in the bonus object."""
+    parts = []
+    for stat in ("STR", "INT", "AGI", "LCK", "VIT", "WIS", "END"):
+        val = getattr(stats_bonus, stat, 0)
+        if val and val != 0:
+            sign = "+" if val > 0 else ""
+            parts.append(f"{sign}{val} {stat}")
+    return f" [{' '.join(parts)}]" if parts else ""
 
 
 def _hp_color(current: int, max_hp: int) -> str:
@@ -226,7 +238,8 @@ def build_equipment_panel(player: "Player", item_registry: object) -> Panel:
             item = item_registry.get(item_id) if item_registry else None
             if item:
                 color = RARITY_COLORS.get(item.rarity.value, "white")
-                table.add_row(label, f"[{color}]{item.name}[/{color}]")
+                bracket = _stat_bracket(item.stats_bonus) if item.stats_bonus else ""
+                table.add_row(label, f"[{color}]{item.name}[/{color}][dim_text]{bracket}[/dim_text]")
             else:
                 table.add_row(label, item_id)
         else:

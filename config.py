@@ -115,6 +115,8 @@ FEATURES: dict[str, bool] = {
     "crafting_system":    False,   # Recipe + material crafting
     "stat_gating":        True,    # INT/Perception/LCK/WIS content gates
     "world_db":           True,    # SQLite world state (required by npc/quest systems)
+    "synergy_system":     True,
+    "bot_system":         False,
 }
 
 

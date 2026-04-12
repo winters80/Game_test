@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 2
+DB_SCHEMA_VERSION = 3
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -153,6 +153,20 @@ CREATE TABLE IF NOT EXISTS ai_generated_content (
     generated_turn  INTEGER DEFAULT 0,
     integrated      INTEGER DEFAULT 0   -- 0 = pending, 1 = integrated into live game
 );
+-- ── AI Generated Skills ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS ai_generated_skills (
+    skill_id        TEXT PRIMARY KEY,
+    definition      TEXT NOT NULL,
+    source          TEXT DEFAULT '',
+    generated_turn  INTEGER DEFAULT 0
+);
+-- ── Bot Instances ─────────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS bot_instances (
+    bot_id          TEXT PRIMARY KEY,
+    definition      TEXT NOT NULL,
+    current_zone_id TEXT,
+    last_active_turn INTEGER DEFAULT 0
+);
 """
 
 
@@ -220,6 +234,23 @@ class WorldDatabase:
                     integrated      INTEGER DEFAULT 0
                 );
             """)
+        if from_version < 3:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS ai_generated_skills (
+                    skill_id        TEXT PRIMARY KEY,
+                    definition      TEXT NOT NULL,
+                    source          TEXT DEFAULT '',
+                    generated_turn  INTEGER DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS bot_instances (
+                    bot_id          TEXT PRIMARY KEY,
+                    definition      TEXT NOT NULL,
+                    current_zone_id TEXT,
+                    last_active_turn INTEGER DEFAULT 0
+                );
+            """)
+            self._conn.execute("UPDATE db_meta SET value = 3 WHERE key = 'schema_version'")
+            self._conn.commit()
         self._conn.execute(
             "INSERT OR REPLACE INTO db_meta VALUES ('schema_version', ?)",
             (str(DB_SCHEMA_VERSION),),
@@ -588,3 +619,42 @@ class WorldDatabase:
             (row_id,),
         )
         self._conn.commit()
+
+    # ── AI-generated skills ───────────────────────────────────────────────────────
+
+    def store_ai_skill(self, skill_id: str, definition: dict, source: str, generated_turn: int) -> None:
+        """Persist an AI-generated skill definition."""
+        assert self._conn
+        self._conn.execute(
+            "INSERT OR REPLACE INTO ai_generated_skills VALUES (?, ?, ?, ?)",
+            (skill_id, json.dumps(definition), source, generated_turn),
+        )
+        self._conn.commit()
+
+    def load_ai_skills(self) -> list[dict]:
+        """Load all AI-generated skill definitions as raw dicts."""
+        assert self._conn
+        rows = self._conn.execute("SELECT definition FROM ai_generated_skills").fetchall()
+        return [json.loads(r["definition"]) for r in rows]
+
+    # ── Bot instances ─────────────────────────────────────────────────────────────
+
+    def upsert_bot_instance(self, bot_id: str, definition: dict, current_zone_id: str, last_active_turn: int) -> None:
+        """Save or update a bot agent's state."""
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO bot_instances (bot_id, definition, current_zone_id, last_active_turn)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(bot_id) DO UPDATE SET
+                 definition = excluded.definition,
+                 current_zone_id = excluded.current_zone_id,
+                 last_active_turn = excluded.last_active_turn""",
+            (bot_id, json.dumps(definition), current_zone_id, last_active_turn),
+        )
+        self._conn.commit()
+
+    def load_bot_instances(self) -> list[dict]:
+        """Load all bot agent rows as plain dicts."""
+        assert self._conn
+        rows = self._conn.execute("SELECT * FROM bot_instances").fetchall()
+        return [dict(r) for r in rows]

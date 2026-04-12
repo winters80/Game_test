@@ -20,6 +20,7 @@ _RARITY_COLORS = {
     "RARE": "bright_blue",
     "EPIC": "magenta",
     "LEGENDARY": "bright_yellow",
+    "AI_GENERATED": "cyan",
 }
 
 
