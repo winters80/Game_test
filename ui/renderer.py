@@ -55,16 +55,22 @@ def print_scene_text(lines: list[str], pause_between: float = 0.0) -> None:
 
 
 def print_options(options: list["SceneOption"]) -> None:
+    from rich.markup import escape
     console.print()
     for i, opt in enumerate(options, 1):
+        safe_label = escape(opt.label)  # prevent [AI], [tag], etc. from corrupting Rich markup
         if opt.locked:
-            console.print(f"  [option_locked]  {i}. {opt.label}[/option_locked]")
+            console.print(f"  [option_locked]  {i}. {safe_label}[/option_locked]")
             if opt.lock_reason:
-                console.print(f"     [dim_text]({opt.lock_reason})[/dim_text]")
+                console.print(f"     [dim_text]({escape(opt.lock_reason)})[/dim_text]")
             if opt.hint_text:
-                console.print(f"     [italic dim_text]~ {opt.hint_text}[/italic dim_text]")
+                console.print(f"     [italic dim_text]~ {escape(opt.hint_text)}[/italic dim_text]")
         else:
-            console.print(f"  [option_number]{i}.[/option_number] [option_label]{opt.label}[/option_label]")
+            # AI-generated options get a distinct colour
+            if opt.option_id.startswith("ai_"):
+                console.print(f"  [option_number]{i}.[/option_number] [cyan]{safe_label}[/cyan]")
+            else:
+                console.print(f"  [option_number]{i}.[/option_number] [option_label]{safe_label}[/option_label]")
     console.print()
 
 

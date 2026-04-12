@@ -55,13 +55,13 @@ class BackgroundGenerator:
 
     # ── Task submission ────────────────────────────────────────────────────────
 
-    def submit_quest(self, zone_id: str, npc_hint: str, player_profile: dict) -> bool:
+    def submit_quest(self, zone_id: str, npc_hint: str, player: Any) -> bool:
         """Queue a background quest generation. Returns False if queue full."""
         return self._submit({
             "type": "quest",
             "zone_id": zone_id,
             "npc_hint": npc_hint,
-            "player_profile": player_profile,
+            "player": player,
         })
 
     def submit_zone_narrative(self, zone_id: str, zone_name: str, context_flags: list[str]) -> bool:
@@ -135,21 +135,12 @@ class BackgroundGenerator:
 
     def _gen_quest(self, task: dict) -> dict | None:
         try:
-            from ai.prompt_builder import build_quest_generation_prompt
-            zone_id = task.get("zone_id", "unknown_zone")
             npc_hint = task.get("npc_hint", "a mysterious stranger")
-            player_profile = task.get("player_profile", {})
-            lore_data = getattr(self._content_gen, "lore_data", {})
-
-            prompt = build_quest_generation_prompt(
-                player_profile=player_profile,
-                giver_npc_id=None,
-                npc_name=npc_hint,
-                npc_role="stranger",
-                lore_data=lore_data,
-            )
+            player = task.get("player")
+            if player is None:
+                return None
             template = self._content_gen.generate_quest(
-                player_profile=player_profile,
+                player=player,
                 giver_npc_id=None,
                 npc_name=npc_hint,
                 npc_role="stranger",
@@ -180,8 +171,8 @@ class BackgroundGenerator:
                 "Keep it under 60 words. Match the tone: grim, curious, layered with history."
             )
             text = self._content_gen.client.generate_text(
+                prompt=user_prompt,
                 system_prompt=system_prompt,
-                user_prompt=user_prompt,
             )
             if text:
                 return {"type": "narrative", "zone_id": zone_id, "text": text.strip()}
@@ -209,8 +200,8 @@ class BackgroundGenerator:
                 "The dialogue should be a short side comment relevant to current world events."
             )
             result = self._content_gen.client.generate_json(
+                prompt=user_prompt,
                 system_prompt=system_prompt,
-                user_prompt=user_prompt,
             )
             if result and "node_id" in result and "text" in result:
                 return {"type": "npc_branch", "npc_id": npc_id, "node": result}

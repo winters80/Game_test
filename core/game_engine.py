@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -8,6 +9,8 @@ from typing import TYPE_CHECKING
 import questionary
 
 from core.event_bus import bus
+
+logger = logging.getLogger(__name__)
 from core.state_manager import GameState
 from entities.player import Player, Stats
 from entities.character_class import ClassRegistry
@@ -365,17 +368,36 @@ class GameEngine:
         # Refresh item names in notifications now that we may have them
         bus.flush()
 
+        # AI-generated options: show narrative feedback, then remove the used option
+        if option.option_id.startswith("ai_"):
+            state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
+            if option.narrative:
+                renderer.print_divider()
+                renderer.print_scene_text([f"» {option.narrative}"])
+                renderer.print_divider()
+            else:
+                renderer.print_system_message("Action taken.", style="dim_text")
+            # Remove just this option so it can't be spammed; keep others
+            dynamic = self.state._dynamic_options.get(state_key, [])
+            self.state._dynamic_options[state_key] = [
+                o for o in dynamic if o.option_id != option.option_id
+            ]
+            renderer.prompt_any_key()
+
         # Transition
         if option.leads_to and option.leads_to != "__stay__":
+            logger.info(
+                "Scene transition: %s → %s (node: %s) via option '%s'",
+                self.state.current_scene_id, option.leads_to,
+                option.leads_to_node or "root", option.option_id,
+            )
             self.state.current_scene_id = option.leads_to
             self.state.current_node_id = option.leads_to_node or "root"
-        else:
-            self.state.current_node_id = option.leads_to_node or "root"
-
-        # Clear dynamic options when navigating to a new node
-        if option.leads_to and option.leads_to != "__stay__":
+            # Clear all dynamic options for the new node on real navigation
             new_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
             self.state._dynamic_options.pop(new_key, None)
+        else:
+            self.state.current_node_id = option.leads_to_node or "root"
 
         self.state.mark_dirty()
 
@@ -492,12 +514,18 @@ class GameEngine:
 
         if player.current_hp <= 0:
             renderer.print_system_message("YOU HAVE FALLEN.", style="system_warning")
+            logger.warning(
+                "Player died in combat: encounter=%s zone=%s level=%d hp=%d/%d lives=%d",
+                encounter_id, self.state.current_scene_id,
+                player.level, player.current_hp, player.max_hp, player.lives_remaining,
+            )
             if feature("lives_system"):
                 from systems import lives_system
                 zone_id = self.state.current_scene_id
                 survived = lives_system.handle_death(self.state, cause=f"combat:{encounter_id}", zone_id=zone_id)
                 bus.flush()
                 if not survived:
+                    logger.warning("Player game-over: all lives spent. encounter=%s", encounter_id)
                     renderer.print_system_message("ALL LIVES SPENT. GAME OVER.", style="system_warning")
                     renderer.print_scene_text(["The System erases your record. You are gone."])
                     renderer.prompt_any_key()
@@ -767,6 +795,10 @@ class GameEngine:
             return
 
         question = question.strip()
+        logger.info(
+            "Dynamic query: scene=%s node=%s question=%r",
+            self.state.current_scene_id, self.state.current_node_id, question,
+        )
 
         # Get current scene context
         scene = self.scene_registry.get(self.state.current_scene_id)
@@ -790,6 +822,10 @@ class GameEngine:
             )
 
         if not result:
+            logger.warning(
+                "Dynamic query returned no result: scene=%s question=%r",
+                self.state.current_scene_id, question,
+            )
             renderer.print_system_message(
                 "The System could not generate a response. Try rephrasing your question.",
                 style="dim_text",
@@ -841,6 +877,7 @@ class GameEngine:
                 triggers=ai_opt.triggers,
                 locked=locked,
                 lock_reason=lock_reason,
+                narrative=ai_opt.narrative,  # shown as feedback when chosen
             )
             new_scene_options.append(scene_opt)
 
@@ -1161,7 +1198,7 @@ class GameEngine:
         self._bg_generator.submit_quest(
             zone_id=zone_id,
             npc_hint="a stranger in the area",
-            player_profile=player_profile,
+            player=player,
         )
 
         # Submit zone narrative the first time a zone is visited
@@ -1177,5 +1214,10 @@ class GameEngine:
         slot = questionary.text("Save slot name:", default=self.state.player.name.lower().replace(" ", "_")).ask()
         if slot:
             path = save_game(self.state, slot, SAVES_DIR)
+            logger.info(
+                "Game saved: slot=%s player=%s level=%d scene=%s turn=%d",
+                slot, self.state.player.name, self.state.player.level,
+                self.state.current_scene_id, self.state.player.turn_count,
+            )
             renderer.print_success(f"Game saved to {path.name}")
             time.sleep(0.5)

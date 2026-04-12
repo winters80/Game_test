@@ -27,6 +27,7 @@ class SceneOption:
     lock_reason: str = ""
     hint_text: str = ""   # shown for near-miss HIDDEN gates
     should_hide: bool = False  # True = don't render this option at all
+    narrative: str = ""   # feedback text shown after this option is chosen (AI options)
 
 
 class Scene:
