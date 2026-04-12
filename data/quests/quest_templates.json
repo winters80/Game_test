@@ -42,7 +42,7 @@
         "stage_id": "survey_goblins",
         "description": "Document the goblin patrol territory.",
         "objective_text": "Engage or observe the goblin patrol (Floor 1, west corridor).",
-        "completion_condition": {"has_flag": "surveyed_goblins"},
+        "completion_condition": {"has_flag": "goblins_defeated"},
         "on_advance_triggers": [],
         "next_stage_id": "survey_crystal"
       },

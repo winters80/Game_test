@@ -743,6 +743,16 @@ class GameEngine:
             if not options:
                 break
 
+            # If any option is a shop/purchase option, show player's current gold
+            if any(
+                any(t.startswith("buy_item:") for t in (opt.triggers or []))
+                for opt in options
+            ):
+                from config import format_currency as _fc
+                renderer.console.print(
+                    f"  [gold]Your gold: {_fc(self.state.player.gold)}[/gold]\n"
+                )
+
             renderer.print_options(options)
             available = [(i + 1, opt) for i, opt in enumerate(options) if not opt.locked]
             if not available:
@@ -774,6 +784,51 @@ class GameEngine:
             if raw_opt is None:
                 break
 
+            # ── Pre-check: buy_item gold gate (must happen BEFORE npc_response) ──
+            buy_trigger = next(
+                (t for t in raw_opt.triggers if t.startswith("buy_item:")), None
+            )
+            if buy_trigger:
+                parts = buy_trigger[9:].split(":")
+                if len(parts) == 2:
+                    try:
+                        buy_price = int(parts[1])
+                    except ValueError:
+                        buy_price = 0
+                    from config import format_currency as _fc
+                    if self.state.player.gold < buy_price:
+                        # Can't afford — AI shopkeeper broke comment
+                        renderer.print_error(
+                            f"Not enough gold. Need {_fc(buy_price)}, you have {_fc(self.state.player.gold)}."
+                        )
+                        broke_comment = "Come back when your coin purse is heavier."
+                        if self.ai_generator:
+                            try:
+                                with renderer.show_ai_thinking_spinner(f"{npc.name} considers..."):
+                                    raw_comment = self.ai_generator.client.generate_text(
+                                        prompt=(
+                                            f"You are {npc.name}, a {npc.role} in a fantasy city. "
+                                            f"A customer wants to buy something costing {_fc(buy_price)} "
+                                            f"but only has {_fc(self.state.player.gold)}. "
+                                            f"Reply in character, 1-2 short sentences. "
+                                            f"You may offer them a small errand or job to earn coin, "
+                                            f"or make a dry but not cruel remark."
+                                        ),
+                                        system_prompt=(
+                                            "You write brief, flavourful NPC dialogue for a fantasy RPG. "
+                                            "Stay in character. No quotation marks around the response."
+                                        ),
+                                        temperature=0.85,
+                                        max_tokens=80,
+                                    )
+                                if raw_comment:
+                                    broke_comment = raw_comment.strip().strip('"')
+                            except Exception:
+                                pass
+                        renderer.print_npc_response(npc.name, broke_comment)
+                        renderer.prompt_any_key()
+                        continue  # stay on current_node — don't advance
+
             # Show NPC response
             if raw_opt.npc_response:
                 renderer.print_npc_response(npc.name, raw_opt.npc_response)
@@ -787,6 +842,30 @@ class GameEngine:
                     quest_id = eng_trigger[12:]
                     qs.start_quest(quest_id, npc.npc_id, self.state, self.quest_registry)
                     bus.flush()
+
+                elif eng_trigger.startswith("buy_item:"):
+                    # Gold was already validated above; execute purchase
+                    parts = eng_trigger[9:].split(":")
+                    if len(parts) == 2:
+                        buy_item_id = parts[0]
+                        try:
+                            buy_price = int(parts[1])
+                        except ValueError:
+                            buy_price = 0
+                        from config import format_currency as _fc
+                        self.state.player.gold -= buy_price
+                        self.state.player.add_item(buy_item_id)
+                        from core.event_bus import Event
+                        bus.publish(Event("ITEM_FOUND", {"item_id": buy_item_id}))
+                        renderer.print_success(
+                            f"Paid {_fc(buy_price)}.  Gold remaining: {_fc(self.state.player.gold)}"
+                        )
+                        bus.flush()
+
+            # Tick quests immediately after dialogue effects (catches instant completions)
+            if feature("quest_system") and self.quest_registry:
+                qs.tick_quests(self.state, self.quest_registry)
+                bus.flush()
 
             # Refresh disposition after changes
             disposition = npc_system.get_npc_disposition(npc, self.state)

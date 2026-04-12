@@ -94,7 +94,7 @@
       ]
     },
     "board": {
-      "text": "The Adventurers' Board is covered in contracts. Most are marked 'Level 1-5 Only'. A few stand out:\n\n- WOLF PELTS WANTED — 5 Shards each, delivery to Maren the Tanner.\n- DUNGEON SURVEY — First floor, document creature types. 30 Shards reward.\n- MISSING PERSON — Aldric Fenn, last seen entering the old forest. 100 Shards reward.\n\nAt the bottom, someone has scrawled in charcoal: 'THE SECOND FLOOR IS DIFFERENT NOW. DON'T GO THERE.'",
+      "text": "The Adventurers' Board is covered in contracts. Most are marked 'Level 1-5 Only'. A few stand out:\n\n- WOLF PELTS WANTED — 5s each, delivery to Maren the Tanner.\n- DUNGEON SURVEY — First floor, document creature types. Reward: 30g.\n- MISSING PERSON — Aldric Fenn, last seen entering the old forest. Reward: 1g (100s).\n\nAt the bottom, someone has scrawled in charcoal: 'THE SECOND FLOOR IS DIFFERENT NOW. DON'T GO THERE.'",
       "options": [
         {
           "option_id": "take_survey",
@@ -102,7 +102,7 @@
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "survey_accepted",
-          "triggers": ["flag:contract_dungeon_survey"]
+          "triggers": ["flag:contract_dungeon_survey", "start_quest:dungeon_survey"]
         },
         {
           "option_id": "note_warning",
@@ -122,7 +122,7 @@
       ]
     },
     "survey_accepted": {
-      "text": "You pull the contract from the board. A small notification pulses in your vision:\n\nOBJECTIVE ADDED: Survey Dungeon Floor 1. Document creature types for the Adventurers' Guild. Reward: 30 Shards.",
+      "text": "You pull the contract from the board. A small notification pulses in your vision:\n\nOBJECTIVE ADDED: Survey Dungeon Floor 1. Document creature types for the Adventurers' Guild. Reward: 30g.\n\nQUEST STARTED: Dungeon Survey — Floor 1.",
       "options": [
         {
           "option_id": "back_from_board",
