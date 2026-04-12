@@ -55,5 +55,27 @@
     "stats_bonus": {"STR": 0, "INT": 3, "AGI": 1, "LCK": 0, "VIT": 1, "WIS": 3, "END": 0},
     "value_gold": 150,
     "weight": 0.8
+  },
+  {
+    "item_id": "padded_armor",
+    "name": "Padded Armor",
+    "item_type": "ARMOR",
+    "rarity": "COMMON",
+    "description": "Layered cloth and padding. Light but better than nothing.",
+    "value_gold": 15,
+    "weight": 3.0,
+    "stats_bonus": {"VIT": 1},
+    "backstory": "First armor most new classifications can afford."
+  },
+  {
+    "item_id": "chain_shirt",
+    "name": "Chain Shirt",
+    "item_type": "ARMOR",
+    "rarity": "UNCOMMON",
+    "description": "Interlocked rings of iron. Flexible and reasonably protective.",
+    "value_gold": 80,
+    "weight": 6.0,
+    "stats_bonus": {"VIT": 2, "END": 1},
+    "backstory": "Standard issue for veteran dungeon runners who've survived long enough to invest."
   }
 ]

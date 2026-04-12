@@ -23,7 +23,8 @@ OLLAMA_TEMP_TEXT = 0.85                # higher = more creative narrative
 # ── Background AI generation ────────────────────────────────────────────────
 BG_GEN_ENABLED  = True    # master switch for background content generation
 BG_GEN_INTERVAL = 5       # turns between background task submissions
-DIRECTOR_INTERVAL = 30    # turns between WorldDirector analysis cycles
+DIRECTOR_INTERVAL = 20    # turns between WorldDirector analysis cycles (turn-based fallback)
+AUTONOMOUS_GEN_INTERVAL_MINUTES = 20   # how often background AI generates without player action
 
 # ── Divergence / AI trigger ────────────────────────────────────────────────────
 DIVERGENCE_THRESHOLD = 30              # score >= this triggers AI class generation

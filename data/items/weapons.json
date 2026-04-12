@@ -80,5 +80,38 @@
     "combo_catalyst": true,
     "value_gold": 280,
     "weight": 0.7
+  },
+  {
+    "item_id": "rusty_dagger",
+    "name": "Rusty Dagger",
+    "item_type": "WEAPON",
+    "rarity": "COMMON",
+    "description": "A short blade, poorly maintained but functional.",
+    "value_gold": 5,
+    "weight": 0.5,
+    "stats_bonus": {"AGI": 1},
+    "backstory": "Found in every beggar's boot in Verath."
+  },
+  {
+    "item_id": "adventurer_bow",
+    "name": "Short Bow",
+    "item_type": "WEAPON",
+    "rarity": "COMMON",
+    "description": "Standard issue for scouts and hunters.",
+    "value_gold": 25,
+    "weight": 1.5,
+    "stats_bonus": {"AGI": 2},
+    "backstory": "The Adventurers' Guild keeps a stockpile of these for new Rangers."
+  },
+  {
+    "item_id": "apprentice_staff",
+    "name": "Apprentice Staff",
+    "item_type": "WEAPON",
+    "rarity": "COMMON",
+    "description": "A simple wooden staff imbued with minor mana conductivity.",
+    "value_gold": 20,
+    "weight": 1.2,
+    "stats_bonus": {"INT": 2},
+    "backstory": "The Mages Conclave hands these out at classification. Many end up in the dungeon."
   }
 ]

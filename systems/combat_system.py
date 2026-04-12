@@ -13,6 +13,52 @@ if TYPE_CHECKING:
     from entities.skill import SkillRegistry
 
 
+# ── Status Effects ────────────────────────────────────────────────────────────
+STATUS_EFFECTS = {
+    "poison":  {"damage_per_turn": 3,  "duration": 3, "color": "green",  "message": "poisoned"},
+    "bleed":   {"damage_per_turn": 2,  "duration": 4, "color": "red",    "message": "bleeding"},
+    "burn":    {"damage_per_turn": 4,  "duration": 2, "color": "damage", "message": "burning"},
+    "stun":    {"damage_per_turn": 0,  "duration": 1, "color": "gold",   "message": "stunned — loses next action"},
+    "frozen":  {"damage_per_turn": 0,  "duration": 2, "color": "cyan",   "message": "frozen — -3 AGI"},
+}
+
+
+def apply_status_effect(target_data: dict, effect_name: str) -> str:
+    """Apply a status effect to a combatant dict. Returns description."""
+    if "statuses" not in target_data:
+        target_data["statuses"] = {}
+    info = STATUS_EFFECTS.get(effect_name, {})
+    duration = info.get("duration", 2)
+    target_data["statuses"][effect_name] = duration
+    return f"{effect_name} ({duration} turns)"
+
+
+def tick_status_effects(target_data: dict) -> list[str]:
+    """
+    Tick all active status effects on a combatant.
+    Returns list of damage/message strings. Modifies target_data["hp"] directly.
+    """
+    messages = []
+    if "statuses" not in target_data:
+        return messages
+    expired = []
+    for effect, turns_left in list(target_data["statuses"].items()):
+        info = STATUS_EFFECTS.get(effect, {})
+        dot = info.get("damage_per_turn", 0)
+        if dot > 0:
+            target_data["hp"] = max(0, target_data["hp"] - dot)
+            messages.append(f"  [{info.get('color','scene_text')}]{effect.capitalize()}: {dot} damage[/{info.get('color','scene_text')}]  ({target_data['hp']} HP remaining)")
+        turns_left -= 1
+        if turns_left <= 0:
+            expired.append(effect)
+            messages.append(f"  [dim_text]{effect.capitalize()} wears off.[/dim_text]")
+        else:
+            target_data["statuses"][effect] = turns_left
+    for e in expired:
+        del target_data["statuses"][e]
+    return messages
+
+
 @dataclass
 class Enemy:
     enemy_id: str
@@ -149,20 +195,45 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
     all_loot: list[str] = []
     turn = 0
 
+    # Wrap enemies as dicts for status effect tracking
+    enemy_status: dict[str, dict] = {
+        e.enemy_id + str(i): {"hp": e.current_hp, "statuses": {}}
+        for i, e in enumerate(enemies)
+    }
+    enemy_keys = list(enemy_status.keys())
+
     while any(e.is_alive for e in enemies) and player.current_hp > 0:
         turn += 1
         # Player attacks first alive enemy
         target = next((e for e in enemies if e.is_alive), None)
         if target:
             dmg, _ = player_attack(player, target)
+            # Chance to apply bleed on physical attacks (10% base)
+            if random.random() < 0.10:
+                idx = enemies.index(target)
+                ekey = enemy_keys[idx]
+                enemy_status[ekey]["hp"] = target.current_hp
+                apply_status_effect(enemy_status[ekey], "bleed")
             if not target.is_alive:
                 total_xp += target.xp_reward
                 total_gold += target.gold_reward
                 all_loot.extend(target.loot_table)
 
-        # All alive enemies attack player
-        for enemy in enemies:
-            if enemy.is_alive and player.current_hp > 0:
+        # Tick status effects and apply DoT to enemies, then let alive enemies attack
+        for i, enemy in enumerate(enemies):
+            if not enemy.is_alive:
+                continue
+            ekey = enemy_keys[i]
+            enemy_status[ekey]["hp"] = enemy.current_hp
+            status_msgs = tick_status_effects(enemy_status[ekey])
+            # Sync hp back to Enemy object
+            enemy.current_hp = enemy_status[ekey]["hp"]
+            if enemy.current_hp <= 0:
+                total_xp += enemy.xp_reward
+                total_gold += enemy.gold_reward
+                all_loot.extend(enemy.loot_table)
+                continue  # enemy died from DoT
+            if player.current_hp > 0:
                 enemy_attack(enemy, player)
 
         if turn > 50:  # safety cap
