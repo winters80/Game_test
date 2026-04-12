@@ -1,0 +1,271 @@
+[
+  {
+    "species_id": "human",
+    "name": "Human",
+    "rarity": "COMMON",
+    "description": "Adaptable, ambitious, and impossible to categorize. Humans thrive precisely because the System cannot predict them. Every other species has a natural ceiling; humans keep finding ways around theirs.",
+    "flavor_text": "The System filed them under 'wildcard' and moved on.",
+    "base_stat_bonus": {"STR": 0, "INT": 0, "AGI": 0, "LCK": 1, "VIT": 0, "WIS": 0, "END": 0},
+    "base_perception_bonus": 0,
+    "stat_growth_affinity": [],
+    "alignment_tendency": 0.0,
+    "available_backgrounds": ["orphan_of_fracture", "former_guild_member", "scholars_apprentice", "street_thief", "soldier", "farmers_child", "merchants_ward", "nobles_bastard"],
+    "available_class_affinities": ["warrior", "mage", "rogue", "priest", "ranger"],
+    "lore_hint": "Humans were the first species to receive System classifications after the Fracture. The System has more data on them than any other species — and yet they remain the least predictable.",
+    "homeworld_zone_id": "village_start",
+    "evolution_path": [
+      {
+        "stage": 1,
+        "name": "Awakened Human",
+        "description": "Something in you has crystallised. You are no longer merely surviving the System — you are beginning to understand it.",
+        "flavor_text": "The System pauses when it reads your file now.",
+        "stat_bonus": {"STR": 1, "INT": 1, "AGI": 1, "LCK": 1, "VIT": 1, "WIS": 1, "END": 1},
+        "perception_bonus": 2,
+        "passive_skill_id": "adaptability",
+        "trigger_type": "level",
+        "trigger_value": "15",
+        "lore_description": "Humans who survive long enough begin to absorb ambient System energy. Their adaptability becomes a literal force."
+      },
+      {
+        "stage": 2,
+        "name": "System-Touched",
+        "description": "You can feel the System's logic as a physical sensation — a hum in your bones when it categorises something near you. You are starting to read it back.",
+        "flavor_text": "You hear the System thinking.",
+        "stat_bonus": {"STR": 1, "INT": 2, "AGI": 1, "LCK": 2, "VIT": 1, "WIS": 2, "END": 1},
+        "perception_bonus": 4,
+        "passive_skill_id": "system_sense",
+        "trigger_type": "level",
+        "trigger_value": "30",
+        "lore_description": "A rare few Awakened Humans develop a resonance with the System itself — not as slaves to it, but as readers of it."
+      },
+      {
+        "stage": 3,
+        "name": "System Breaker",
+        "description": "The System does not have a category for what you are becoming. Its framework bends around you. You are the anomaly it cannot file away.",
+        "flavor_text": "The System has stopped trying to explain you.",
+        "stat_bonus": {"STR": 2, "INT": 3, "AGI": 2, "LCK": 3, "VIT": 2, "WIS": 3, "END": 2},
+        "perception_bonus": 8,
+        "passive_skill_id": "break_the_frame",
+        "trigger_type": "quest",
+        "trigger_value": "endgame_system_breach",
+        "lore_description": "In recorded history, fewer than ten humans have reached this stage. Each one changed the world."
+      }
+    ]
+  },
+  {
+    "species_id": "aetherian_elf",
+    "name": "Aetherian Elf",
+    "rarity": "COMMON",
+    "description": "The eldest mortal species, the Aetherians predate the System itself. They remember a world without classifications and carry that memory as both gift and wound. They age slowly and think deeply — sometimes too deeply.",
+    "flavor_text": "They were ancient when the world was young.",
+    "base_stat_bonus": {"STR": 0, "INT": 3, "AGI": 2, "LCK": 0, "VIT": 0, "WIS": 2, "END": 0},
+    "base_perception_bonus": 3,
+    "stat_growth_affinity": ["INT", "WIS"],
+    "alignment_tendency": 0.1,
+    "available_backgrounds": ["scholars_apprentice", "former_guild_member", "orphan_of_fracture", "nobles_bastard"],
+    "available_class_affinities": ["mage", "priest", "ranger"],
+    "lore_hint": "Aetherian Elves carry dormant memories of the pre-Fracture world encoded in their blood. High enough Wisdom lets them access these race-memories as fragments of lost knowledge.",
+    "homeworld_zone_id": "village_start",
+    "unique_dialogue_flags": ["known_as_elf", "pre_fracture_memory"],
+    "evolution_path": [
+      {
+        "stage": 1,
+        "name": "Starwarden",
+        "description": "The ancient bloodline stirs. You begin to perceive arcane currents invisible to others, and the System's framework appears to you as a lattice of light.",
+        "flavor_text": "Your eyes hold stars others cannot see.",
+        "stat_bonus": {"STR": 0, "INT": 2, "AGI": 1, "LCK": 0, "VIT": 0, "WIS": 3, "END": 0},
+        "perception_bonus": 4,
+        "passive_skill_id": "arcane_sight",
+        "trigger_type": "stat",
+        "trigger_value": "INT:20",
+        "lore_description": "When an Aetherian's INT crosses a threshold, dormant genes activate — a biological memory of their pre-Fracture magic."
+      },
+      {
+        "stage": 2,
+        "name": "Ancient One",
+        "description": "Time moves differently around you. You have stopped aging visibly. Mortals sometimes mistake you for something divine. You are not. But you are no longer entirely mortal either.",
+        "flavor_text": "You have seen civilisations rise and wonder what comes next.",
+        "stat_bonus": {"STR": 0, "INT": 3, "AGI": 1, "LCK": 1, "VIT": 1, "WIS": 4, "END": 1},
+        "perception_bonus": 6,
+        "passive_skill_id": "timeless_mind",
+        "trigger_type": "level",
+        "trigger_value": "35",
+        "lore_description": "Ancient Ones have accessed the full depth of their racial memory. They carry the weight of extinct civilisations."
+      },
+      {
+        "stage": 3,
+        "name": "Void-Born Elf",
+        "description": "You have passed beyond the boundaries the System understands for your kind. The void between worlds is not empty to you — it is full, and it recognises you.",
+        "flavor_text": "Between worlds, between moments, between classifications.",
+        "stat_bonus": {"STR": 0, "INT": 5, "AGI": 2, "LCK": 2, "VIT": 0, "WIS": 5, "END": 0},
+        "perception_bonus": 10,
+        "passive_skill_id": "void_step",
+        "trigger_type": "quest",
+        "trigger_value": "elven_ancient_trial",
+        "lore_description": "The Void-Born are the reason humans fear elves. Their mastery of arcane energy transcends what the System was designed to contain."
+      }
+    ]
+  },
+  {
+    "species_id": "beast_kin",
+    "name": "Beast-Kin",
+    "rarity": "COMMON",
+    "description": "Somewhere between human and apex predator, Beast-Kin carry the memory of the wild in every cell. They are fast, fierce, and terrifyingly instinctive. The System categorises them as volatile. They wear that as a badge.",
+    "flavor_text": "The hunt never really ends. They just changed prey.",
+    "base_stat_bonus": {"STR": 2, "INT": 0, "AGI": 3, "LCK": 0, "VIT": 2, "WIS": 0, "END": 1},
+    "base_perception_bonus": 2,
+    "stat_growth_affinity": ["STR", "AGI"],
+    "alignment_tendency": 0.0,
+    "available_backgrounds": ["orphan_of_fracture", "soldier", "farmers_child", "street_thief"],
+    "available_class_affinities": ["warrior", "rogue", "ranger"],
+    "lore_hint": "Beast-Kin evolved from humans who were transformed during the early days of the Fracture. The System's energy restructured their biology. The transformation is still ongoing in some bloodlines.",
+    "homeworld_zone_id": "village_start",
+    "unique_dialogue_flags": ["known_as_beast_kin", "predator_scent"],
+    "evolution_path": [
+      {
+        "stage": 1,
+        "name": "Primal Awakening",
+        "description": "The beast inside you is no longer metaphor. Your senses sharpen to an almost painful degree. You can smell fear. You can hear heartbeats. And something inside you has decided that is useful.",
+        "flavor_text": "Instinct stops being a handicap and starts being a weapon.",
+        "stat_bonus": {"STR": 2, "INT": 0, "AGI": 2, "LCK": 0, "VIT": 2, "WIS": 0, "END": 2},
+        "perception_bonus": 5,
+        "passive_skill_id": "predator_senses",
+        "trigger_type": "stat",
+        "trigger_value": "AGI:20",
+        "lore_description": "Beast-Kin who push their agility past a threshold trigger a biological cascade — a transformation the System classifies as 'Primal Threshold Breach'."
+      },
+      {
+        "stage": 2,
+        "name": "Apex Predator",
+        "description": "Other creatures recognise what you have become. Prey animals scatter. Predators challenge or defer. Even humans pick up on something primal when you enter a room.",
+        "flavor_text": "At the top of every food chain ever devised.",
+        "stat_bonus": {"STR": 3, "INT": 0, "AGI": 3, "LCK": 1, "VIT": 2, "WIS": 0, "END": 2},
+        "perception_bonus": 7,
+        "passive_skill_id": "apex_instinct",
+        "trigger_type": "level",
+        "trigger_value": "30",
+        "lore_description": "The Apex Predator stage is feared even by military commanders. A Beast-Kin at this level is a mobile force of nature."
+      },
+      {
+        "stage": 3,
+        "name": "Primordial",
+        "description": "You have crossed back beyond what the Fracture made you. You are something the world remembers from before civilisation — before the System — before names.",
+        "flavor_text": "Even the System hesitates.",
+        "stat_bonus": {"STR": 5, "INT": 1, "AGI": 4, "LCK": 2, "VIT": 4, "WIS": 1, "END": 3},
+        "perception_bonus": 9,
+        "passive_skill_id": "primal_roar",
+        "trigger_type": "quest",
+        "trigger_value": "beast_kin_ancient_hunt",
+        "lore_description": "The Primordial form exists in fragments of pre-Fracture mythology. To become one is to become legend."
+      }
+    ]
+  },
+  {
+    "species_id": "stone_dwarf",
+    "name": "Stone Dwarf",
+    "rarity": "COMMON",
+    "description": "Built like mountains and stubborn as geology, the Stone Dwarves survived the Fracture by doing what they always did: digging deeper. They are masters of endurance, crafting, and the long game. They do not hurry. They do not need to.",
+    "flavor_text": "They've outlasted everything else. They'll outlast this too.",
+    "base_stat_bonus": {"STR": 2, "INT": 0, "AGI": 0, "LCK": 0, "VIT": 2, "WIS": 1, "END": 4},
+    "base_perception_bonus": 1,
+    "stat_growth_affinity": ["END", "VIT"],
+    "alignment_tendency": 0.05,
+    "available_backgrounds": ["former_guild_member", "soldier", "farmers_child", "merchants_ward", "scholars_apprentice"],
+    "available_class_affinities": ["warrior", "priest"],
+    "lore_hint": "Stone Dwarves carry geological memory — they can sense the age and composition of stone, and in deep enough places, hear the 'voice' of the earth. This is not metaphor. It is biology.",
+    "homeworld_zone_id": "village_start",
+    "unique_dialogue_flags": ["known_as_dwarf", "stone_memory"],
+    "evolution_path": [
+      {
+        "stage": 1,
+        "name": "Deep-Forged",
+        "description": "Your body has begun to harden at a structural level. Your bones carry trace minerals that don't appear in standard biology. The System flags it as an anomaly. You call it Tuesday.",
+        "flavor_text": "Stone given purpose.",
+        "stat_bonus": {"STR": 1, "INT": 0, "AGI": 0, "LCK": 0, "VIT": 2, "WIS": 1, "END": 3},
+        "perception_bonus": 2,
+        "passive_skill_id": "stone_skin",
+        "trigger_type": "stat",
+        "trigger_value": "END:20",
+        "lore_description": "Deep-Forged Dwarves are nearly impervious to geological forces. Rockfalls bounce off them. Cave-ins inconvenience them."
+      },
+      {
+        "stage": 2,
+        "name": "Mountain Heart",
+        "description": "You have stopped thinking of rock as an obstacle. It is a material, a language, a companion. Your endurance is now a force of nature in its own right.",
+        "flavor_text": "The mountain does not hurry. Neither do you.",
+        "stat_bonus": {"STR": 2, "INT": 0, "AGI": 0, "LCK": 0, "VIT": 3, "WIS": 2, "END": 4},
+        "perception_bonus": 3,
+        "passive_skill_id": "unyielding",
+        "trigger_type": "level",
+        "trigger_value": "30",
+        "lore_description": "Mountain Hearts are the Dwarven version of legend — commanders who held city gates alone, architects of structures that survived the Fracture itself."
+      },
+      {
+        "stage": 3,
+        "name": "Living Stone",
+        "description": "The boundary between flesh and mineral has blurred. You do not feel pain the way others do. You do not tire the way others do. You are not sure you are fully mortal anymore, and you find you don't care.",
+        "flavor_text": "Eternal. Immovable. Inevitable.",
+        "stat_bonus": {"STR": 3, "INT": 1, "AGI": 0, "LCK": 1, "VIT": 5, "WIS": 3, "END": 6},
+        "perception_bonus": 4,
+        "passive_skill_id": "stone_heart",
+        "trigger_type": "quest",
+        "trigger_value": "dwarven_deep_rite",
+        "lore_description": "Living Stone is spoken of in whispers in Dwarven halls. To achieve it is to become the mountain itself."
+      }
+    ]
+  },
+  {
+    "species_id": "void_touched",
+    "name": "Void-Touched",
+    "rarity": "UNCOMMON",
+    "description": "Nobody knows exactly what the Void-Touched are. Not even the System. They emerged from the deepest zones of the Fracture — places where the System's energy intersected with something older and stranger. They are marked by it. Lucky. Unstable. Fascinating.",
+    "flavor_text": "The System classified them as 'see notes'. The notes are redacted.",
+    "base_stat_bonus": {"STR": 0, "INT": 2, "AGI": 1, "LCK": 4, "VIT": 0, "WIS": 2, "END": 0},
+    "base_perception_bonus": 4,
+    "stat_growth_affinity": ["LCK", "INT"],
+    "alignment_tendency": 0.0,
+    "available_backgrounds": ["orphan_of_fracture", "street_thief", "scholars_apprentice", "nobles_bastard"],
+    "available_class_affinities": ["mage", "rogue"],
+    "lore_hint": "Void-Touched carry a fragment of pre-System reality in their biology. The System cannot fully read them, which is why their luck stat interacts with its framework in unpredictable ways. They are essentially walking exceptions.",
+    "homeworld_zone_id": "village_start",
+    "unique_dialogue_flags": ["known_as_void_touched", "system_blind_spot", "luck_field"],
+    "evolution_path": [
+      {
+        "stage": 1,
+        "name": "Void Walker",
+        "description": "The fragment inside you has stabilised into something you can almost control. You slip through the System's tracking like water through fingers. It cannot reliably predict you.",
+        "flavor_text": "The System loses you in its own records.",
+        "stat_bonus": {"STR": 0, "INT": 1, "AGI": 2, "LCK": 3, "VIT": 0, "WIS": 2, "END": 0},
+        "perception_bonus": 5,
+        "passive_skill_id": "probability_warp",
+        "trigger_type": "stat",
+        "trigger_value": "LCK:20",
+        "lore_description": "Void Walkers are the reason some adventurers refuse to gamble against Void-Touched. The odds simply don't apply to them in the normal way."
+      },
+      {
+        "stage": 2,
+        "name": "Reality Bender",
+        "description": "The Void inside you is no longer passive. You can nudge probability in ways that look like miracles — or disasters — depending on your alignment.",
+        "flavor_text": "Reality is a suggestion. You suggest differently.",
+        "stat_bonus": {"STR": 0, "INT": 3, "AGI": 2, "LCK": 4, "VIT": 1, "WIS": 3, "END": 0},
+        "perception_bonus": 7,
+        "passive_skill_id": "fate_manipulation",
+        "trigger_type": "level",
+        "trigger_value": "25",
+        "lore_description": "Reality Benders are banned from most auction houses and gambling dens. The ban is enforced inconsistently, because they tend to predict the enforcement."
+      },
+      {
+        "stage": 3,
+        "name": "System Anomaly",
+        "description": "The System has formally logged you as an error in its own framework. You are not supposed to exist in the way you currently exist. It doesn't know what to do about that. Neither do you. But you plan to find out.",
+        "flavor_text": "ERROR: ENTITY CANNOT BE CLASSIFIED. PROCEEDING ANYWAY.",
+        "stat_bonus": {"STR": 1, "INT": 4, "AGI": 3, "LCK": 6, "VIT": 1, "WIS": 4, "END": 1},
+        "perception_bonus": 12,
+        "passive_skill_id": "undefined_power",
+        "trigger_type": "quest",
+        "trigger_value": "void_source_investigation",
+        "lore_description": "Only three System Anomalies have been recorded. The first destroyed a dungeon. The second founded a city. The third disappeared. The System refuses to speculate about the third."
+      }
+    ]
+  }
+]

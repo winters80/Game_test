@@ -19,7 +19,7 @@ from systems import class_system, level_system, combat_system, inventory_system
 from persistence.save_manager import save_game, load_game, list_saves, new_game_state, close_game
 from ui import renderer
 from ui.notifications import setup_notification_listeners
-from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES
+from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, feature
 
 if TYPE_CHECKING:
     pass
@@ -31,6 +31,8 @@ class GameEngine:
         self.skill_registry = SkillRegistry()
         self.item_registry = ItemRegistry()
         self.scene_registry = SceneRegistry()
+        self.species_registry = None   # loaded if species_system feature enabled
+        self.backgrounds: dict = {}    # loaded if species_system feature enabled
         self.system_messages: dict = {}
         self.lore_data: dict = {}
         self.state: GameState | None = None
@@ -58,6 +60,13 @@ class GameEngine:
         msg_path = DATA_DIR / "world" / "system_messages.json"
         if msg_path.exists():
             self.system_messages = json.loads(msg_path.read_text(encoding="utf-8"))
+
+        if feature("species_system"):
+            from entities.species import SpeciesRegistry
+            from systems.species_system import load_backgrounds
+            self.species_registry = SpeciesRegistry()
+            self.species_registry.load_from_file(DATA_DIR / "species" / "species_definitions.json")
+            self.backgrounds = load_backgrounds(DATA_DIR)
 
     def _setup_ai(self) -> None:
         if not AI_ENABLED:
@@ -140,6 +149,13 @@ class GameEngine:
             while self._running and self.state:
                 bus.flush()
                 self.state.advance_turn()
+
+                # Alignment inertia — nudge toward 0 every N turns
+                if feature("alignment_system"):
+                    from systems.alignment_system import should_apply_inertia, apply_inertia
+                    if should_apply_inertia(self.state.player.turn_count):
+                        apply_inertia(self.state.player)
+
                 self._render_scene()
                 options = self._get_current_options()
                 if not options:
@@ -244,6 +260,11 @@ class GameEngine:
                 encounter_id = trigger[7:]
                 self._run_combat(encounter_id)
 
+        # Apply pending species (set by scene_base as _pending_species:<id>)
+        if feature("species_system") and self.species_registry:
+            self._apply_pending_species(player)
+            self._apply_pending_background(player)
+
         # Refresh item names in notifications now that we may have them
         bus.flush()
 
@@ -255,6 +276,30 @@ class GameEngine:
             self.state.current_node_id = option.leads_to_node or "root"
 
         self.state.mark_dirty()
+
+    def _apply_pending_species(self, player) -> None:
+        """Apply _pending_species:<id> flag set by scene triggers."""
+        from systems.species_system import apply_species
+        prefix = "_pending_species:"
+        pending = [f for f in list(player.flags) if f.startswith(prefix)]
+        for flag in pending:
+            species_id = flag[len(prefix):]
+            species = self.species_registry.get(species_id)
+            if species:
+                apply_species(player, species)
+            del player.flags[flag]
+
+    def _apply_pending_background(self, player) -> None:
+        """Apply _pending_background:<id> flag set by scene triggers."""
+        from systems.species_system import apply_background
+        prefix = "_pending_background:"
+        pending = [f for f in list(player.flags) if f.startswith(prefix)]
+        for flag in pending:
+            bg_id = flag[len(prefix):]
+            bg_data = self.backgrounds.get(bg_id)
+            if bg_data:
+                apply_background(player, bg_data, self.item_registry)
+            del player.flags[flag]
 
     def _assign_class(self, class_id: str) -> None:
         ok, msg = class_system.assign_base_class(
@@ -377,6 +422,16 @@ class GameEngine:
             if choice == "Skip" or choice is None:
                 break
             level_system.spend_stat_point(player, choice)
+
+        # Check for species evolution after stats are allocated
+        if feature("species_system") and self.species_registry and player.species_id:
+            from systems.species_system import check_evolution, trigger_evolution
+            species = self.species_registry.get(player.species_id)
+            if species:
+                stage = check_evolution(player, species, self.skill_registry)
+                if stage:
+                    trigger_evolution(player, stage, species, self.skill_registry)
+                    bus.flush()
 
     def _save_prompt(self) -> None:
         slot = questionary.text("Save slot name:", default=self.state.player.name.lower().replace(" ", "_")).ask()

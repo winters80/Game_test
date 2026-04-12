@@ -81,8 +81,8 @@ GAME_SUBTITLE = "The Universe Is Watching"
 # Set to True to enable a system. False = system is present in code but never called.
 # This lets you build and test systems in isolation before wiring them together.
 FEATURES: dict[str, bool] = {
-    "species_system":     False,   # Species selection + evolution paths
-    "alignment_system":   False,   # Alignment float + alignment-gated content
+    "species_system":     True,    # Species selection + evolution paths
+    "alignment_system":   True,    # Alignment float + alignment-gated content
     "npc_system":         False,   # Named NPCs with memory + stat-gated dialogue
     "quest_system":       False,   # Dynamic AI quest generation + state machine
     "guild_system":       False,   # Guild membership, ranks, perks
@@ -90,7 +90,7 @@ FEATURES: dict[str, bool] = {
     "auction_house":      False,   # Auction listings, competing guilds, life tokens
     "lives_system":       False,   # 9-lives death mechanic (replaces instant game-over)
     "crafting_system":    False,   # Recipe + material crafting
-    "stat_gating":        False,   # INT/Perception/LCK/WIS content gates
+    "stat_gating":        True,    # INT/Perception/LCK/WIS content gates
     "world_db":           False,   # SQLite world state (required by most above)
 }
 

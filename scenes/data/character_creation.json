@@ -1,14 +1,364 @@
 {
   "scene_id": "character_creation",
-  "title": "Who Are You?",
+  "title": "Classification Rite — Identity Protocol",
   "entrance_text": [
-    "The blue light coalesces. The System is reading you.",
-    "Not just your body — your history, your instincts, the shape of your ambitions.",
-    "It wants to know: what are you, fundamentally?"
+    "The System's light coalesces around you, shifting from the warm blue of the square into something colder.",
+    "More precise.",
+    "It is not reading your history. It has no access to that.",
+    "It is reading what you ARE — the fundamental data of your existence.",
+    "And before it can assign you a purpose, it needs to understand what you are made of."
   ],
   "nodes": {
+
     "root": {
-      "text": "Before the Rite concludes, you must reflect on yourself. The System is listening.",
+      "text": "IDENTITY PROTOCOL INITIATED.\n\nThe System begins its assessment. First: the most basic classification. The shape of the self.",
+      "options": [
+        {
+          "option_id": "begin_identity",
+          "label": "Let the System read you.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "gender"
+        },
+        {
+          "option_id": "resist_reading",
+          "label": "Try to resist the System's scan.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "resist_scan",
+          "triggers": ["flag:resisted_identity_scan"]
+        }
+      ]
+    },
+
+    "resist_scan": {
+      "text": "The light pauses. For three full seconds, nothing happens.\n\nThen it intensifies — not violently, but deliberately. The System is not asking. It is waiting for you to tire first.\n\nYou do. Eventually.",
+      "options": [
+        {
+          "option_id": "relent_to_scan",
+          "label": "Stop fighting it. Let it read what it needs.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "gender",
+          "triggers": ["flag:broke_tutorial_sequence", "alignment:-5"]
+        }
+      ]
+    },
+
+    "gender": {
+      "text": "The System registers the first layer of your identity.\n\nIt does not judge. It catalogues.",
+      "options": [
+        {
+          "option_id": "gender_male",
+          "label": "Male",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species",
+          "triggers": ["set_gender:male"]
+        },
+        {
+          "option_id": "gender_female",
+          "label": "Female",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species",
+          "triggers": ["set_gender:female"]
+        },
+        {
+          "option_id": "gender_other",
+          "label": "Neither. Something else.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species",
+          "triggers": ["set_gender:other"]
+        },
+        {
+          "option_id": "gender_decline",
+          "label": "That's none of the System's business.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "species",
+          "triggers": ["set_gender:unspecified", "flag:refused_identity_classification", "alignment:-3"]
+        }
+      ]
+    },
+
+    "species": {
+      "text": "SPECIES CLASSIFICATION PROTOCOL.\n\nThe System identifies the biological framework of your existence. Each carries its own history, its own strengths, its own relationship with the world the Fracture remade.",
+      "options": [
+        {
+          "option_id": "species_human",
+          "label": "Human — Adaptable. Unpredictable. Stubbornly alive.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species_human_confirm",
+          "triggers": ["set_species:human"]
+        },
+        {
+          "option_id": "species_elf",
+          "label": "Aetherian Elf — Ancient bloodline. Deep magic. Long memory.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species_elf_confirm",
+          "triggers": ["set_species:aetherian_elf"]
+        },
+        {
+          "option_id": "species_beast_kin",
+          "label": "Beast-Kin — Fast, fierce, instinctive. The wild doesn't leave you.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species_beast_confirm",
+          "triggers": ["set_species:beast_kin"]
+        },
+        {
+          "option_id": "species_dwarf",
+          "label": "Stone Dwarf — Enduring, crafted by geology, unbothered by catastrophe.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species_dwarf_confirm",
+          "triggers": ["set_species:stone_dwarf"]
+        },
+        {
+          "option_id": "species_void",
+          "label": "Void-Touched — Something from the deep Fracture zones. Lucky. Unstable. Undefined.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "species_void_confirm",
+          "triggers": ["set_species:void_touched"]
+        }
+      ]
+    },
+
+    "species_human_confirm": {
+      "text": "HUMAN.\n\nThe System has more data on humans than any other species. It still can't predict them.\n\nBase bonuses: LCK +1\nEvolution path: Awakened Human → System-Touched → System Breaker\nClass affinity: All classes\n\nThe System marks you as: WILDCARD.",
+      "options": [
+        {
+          "option_id": "confirm_human",
+          "label": "This is what I am.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "background"
+        },
+        {
+          "option_id": "back_to_species",
+          "label": "Wait. Let me reconsider.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species"
+        }
+      ]
+    },
+
+    "species_elf_confirm": {
+      "text": "AETHERIAN ELF.\n\nThe System pauses slightly longer than usual. The Aetherian bloodline predates its own records.\n\nBase bonuses: INT +3, AGI +2, WIS +2, Perception +3\nGrowth affinity: INT, WIS\nEvolution path: Starwarden → Ancient One → Void-Born Elf\nClass affinity: Mage, Priest, Ranger\n\nThe System marks you as: LEGACY ENTITY.",
+      "options": [
+        {
+          "option_id": "confirm_elf",
+          "label": "Yes. This is my heritage.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "background"
+        },
+        {
+          "option_id": "back_to_species_from_elf",
+          "label": "Let me think again.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species"
+        }
+      ]
+    },
+
+    "species_beast_confirm": {
+      "text": "BEAST-KIN.\n\nThe System notes elevated biological response patterns. Fight-or-flight is not a reaction for Beast-Kin — it is a permanent state, refined into an art form.\n\nBase bonuses: STR +2, AGI +3, VIT +2, END +1, Perception +2\nGrowth affinity: STR, AGI\nEvolution path: Primal Awakening → Apex Predator → Primordial\nClass affinity: Warrior, Rogue, Ranger\n\nThe System marks you as: APEX POTENTIAL.",
+      "options": [
+        {
+          "option_id": "confirm_beast",
+          "label": "The hunt continues. This is who I am.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "background"
+        },
+        {
+          "option_id": "back_to_species_from_beast",
+          "label": "I need a moment.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species"
+        }
+      ]
+    },
+
+    "species_dwarf_confirm": {
+      "text": "STONE DWARF.\n\nThe System registers exceptional structural integrity. Also: an alarming stubbornness reading that it initially flagged as a sensor error.\n\nBase bonuses: STR +2, VIT +2, WIS +1, END +4, Perception +1\nGrowth affinity: END, VIT\nEvolution path: Deep-Forged → Mountain Heart → Living Stone\nClass affinity: Warrior, Priest\n\nThe System marks you as: IMMOVABLE OBJECT.",
+      "options": [
+        {
+          "option_id": "confirm_dwarf",
+          "label": "Aye. Made of stone and time.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "background"
+        },
+        {
+          "option_id": "back_to_species_from_dwarf",
+          "label": "Not quite. Let me look again.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species"
+        }
+      ]
+    },
+
+    "species_void_confirm": {
+      "text": "VOID-TOUCHED.\n\nThe System attempts to complete its standard analysis and fails. It tries again. It generates an error code it has never generated before and quietly archives it.\n\nBase bonuses: INT +2, AGI +1, LCK +4, WIS +2, Perception +4\nGrowth affinity: LCK, INT\nEvolution path: Void Walker → Reality Bender → System Anomaly\nClass affinity: Mage, Rogue\n\nThe System marks you as: CLASSIFICATION PENDING.",
+      "options": [
+        {
+          "option_id": "confirm_void",
+          "label": "Yes. The System doesn't know what to make of me. I'm comfortable with that.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "background",
+          "triggers": ["flag:void_origin_confirmed"]
+        },
+        {
+          "option_id": "back_to_species_from_void",
+          "label": "Actually, maybe something more... classifiable.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "species"
+        }
+      ]
+    },
+
+    "background": {
+      "text": "ORIGIN PROTOCOL.\n\nThe System reads the grooves your past has worn into you — the skills learned from necessity, the habits built for survival, the marks left by a life lived before all this.\n\nWho were you before the Rite?",
+      "options": [
+        {
+          "option_id": "bg_orphan",
+          "label": "Orphan of the Fracture — Lost everything. Built from scratch. Lucky to be alive.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_orphan_confirm",
+          "triggers": ["set_background:orphan_of_fracture"]
+        },
+        {
+          "option_id": "bg_guild",
+          "label": "Former Guild Member — Trained, connected, and then something went wrong.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_guild_confirm",
+          "triggers": ["set_background:former_guild_member"]
+        },
+        {
+          "option_id": "bg_scholar",
+          "label": "Scholar's Apprentice — The System holds answers. You were taught to ask the right questions.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_scholar_confirm",
+          "triggers": ["set_background:scholars_apprentice"]
+        },
+        {
+          "option_id": "bg_thief",
+          "label": "Street Thief — You took what you needed. You're still not sure if you feel bad about it.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_thief_confirm",
+          "triggers": ["set_background:street_thief"]
+        },
+        {
+          "option_id": "bg_soldier",
+          "label": "Former Soldier — The orders stopped making sense. You stopped following them.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_soldier_confirm",
+          "triggers": ["set_background:soldier"]
+        },
+        {
+          "option_id": "bg_farmer",
+          "label": "Farmer's Child — The land gives you everything. The Fracture took the land.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_farmer_confirm",
+          "triggers": ["set_background:farmers_child"]
+        },
+        {
+          "option_id": "bg_merchant",
+          "label": "Merchant's Ward — Raised on numbers and negotiation. The System is just another market.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_merchant_confirm",
+          "triggers": ["set_background:merchants_ward"]
+        },
+        {
+          "option_id": "bg_noble",
+          "label": "Noble's Bastard — Close enough to power to understand it. Too illegitimate to inherit it.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "bg_noble_confirm",
+          "triggers": ["set_background:nobles_bastard"]
+        }
+      ]
+    },
+
+    "bg_orphan_confirm": {
+      "text": "Orphan of the Fracture.\n\nLCK +2, VIT +1\nStarting alignment: +5 (cautious optimism — you survived once)\n\nThe System notes: high adaptability index. Absence of attachments logged.",
+      "options": [
+        {"option_id": "confirm_bg_orphan", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_orphan", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_guild_confirm": {
+      "text": "Former Guild Member.\n\nSTR +1, WIS +1, END +1, Gold +30, Leather Armor\nStarting alignment: 0 (complicated loyalties)\n\nThe System notes: guild affiliation history flagged. Reason for departure unrecorded.",
+      "options": [
+        {"option_id": "confirm_bg_guild", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_guild", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_scholar_confirm": {
+      "text": "Scholar's Apprentice.\n\nINT +3, WIS +2, Mana Potion\nStarting alignment: +10 (knowledge tends toward order)\n\nThe System notes: elevated lore comprehension index. Residual academic trauma detected.",
+      "options": [
+        {"option_id": "confirm_bg_scholar", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_scholar", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_thief_confirm": {
+      "text": "Street Thief.\n\nINT +1, AGI +3, LCK +1, Gold +15\nStarting alignment: -15 (the System judges the method, not the hunger)\n\nThe System notes: elevated stealth capability index. Light fingers flagged.",
+      "options": [
+        {"option_id": "confirm_bg_thief", "label": "That's me.", "expected": false, "leads_to": "character_creation", "leads_to_node": "affinity", "triggers": ["flag:criminal_record"]},
+        {"option_id": "back_bg_thief", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_soldier_confirm": {
+      "text": "Former Soldier.\n\nSTR +2, VIT +2, END +2, Iron Sword\nStarting alignment: 0 (the war was complicated)\n\nThe System notes: combat conditioning registered. Chain of command status: severed.",
+      "options": [
+        {"option_id": "confirm_bg_soldier", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_soldier", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_farmer_confirm": {
+      "text": "Farmer's Child.\n\nSTR +1, LCK +1, VIT +3, END +2, Health Potion\nStarting alignment: +15 (proximity to honest work)\n\nThe System notes: resilience index: exceptional. Weather-sense module activated.",
+      "options": [
+        {"option_id": "confirm_bg_farmer", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_farmer", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_merchant_confirm": {
+      "text": "Merchant's Ward.\n\nINT +2, LCK +2, WIS +1, Gold +75\nStarting alignment: +5 (enlightened self-interest)\n\nThe System notes: trade knowledge registered. Haggling instinct flagged as asset.",
+      "options": [
+        {"option_id": "confirm_bg_merchant", "label": "That's me.", "expected": true, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_merchant", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+    "bg_noble_confirm": {
+      "text": "Noble's Bastard.\n\nINT +2, AGI +1, LCK +1, WIS +2, Gold +25\nStarting alignment: 0 (you've seen both sides; you're not sure either is right)\n\nThe System notes: noble contact network registered. Legitimacy: contested.",
+      "options": [
+        {"option_id": "confirm_bg_noble", "label": "That's me.", "expected": false, "leads_to": "character_creation", "leads_to_node": "affinity"},
+        {"option_id": "back_bg_noble", "label": "Actually, let me reconsider.", "expected": true, "leads_to": "character_creation", "leads_to_node": "background"}
+      ]
+    },
+
+    "affinity": {
+      "text": "POTENTIAL CLASSIFICATION.\n\nThe System has read your species, your history, and the shape of your survival instincts.\n\nNow it needs to know: when the moment comes — when something is in front of you and you have to choose — what do you reach for?",
       "options": [
         {
           "option_id": "born_fighter",
@@ -56,42 +406,43 @@
           "expected": false,
           "leads_to": "character_creation",
           "leads_to_node": "refuse_definition",
-          "triggers": ["flag:refused_system", "flag:affinity_unknown"]
+          "triggers": ["flag:refused_system", "flag:affinity_unknown", "alignment:-10"]
         }
       ]
     },
+
     "confirm_warrior": {
-      "text": "The light flares red-gold. It recognizes the calluses on your knuckles, the set of your jaw, the way you instinctively scan a room for threats.\n\nYes. This is what you are.",
+      "text": "The light flares red-gold. It recognises the calluses on your knuckles, the set of your jaw, the way you instinctively scan a room for threats.\n\nCLASS AFFINITY: WARRIOR\n\nThe System accepts your self-assessment.",
       "options": [
         {
           "option_id": "accept_warrior",
-          "label": "Begin the journey.",
+          "label": "Begin.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root",
-          "triggers": ["set_base_class:warrior", "give_item:rusty_sword", "give_item:health_potion"]
+          "triggers": ["set_base_class:warrior", "give_item:rusty_sword", "give_item:health_potion", "alignment:5"]
         }
       ]
     },
     "confirm_mage": {
-      "text": "The light deepens to a cool violet. It senses the pathways your mind has carved — the love of patterns, the hunger for understanding, the instinct to reach beyond what can be touched.\n\nYes. This is what you are.",
+      "text": "The light deepens to a cool violet. It senses the pathways your mind has carved — the hunger for patterns, the love of understanding, the instinct to reach beyond what can be touched.\n\nCLASS AFFINITY: MAGE\n\nThe System accepts your self-assessment.",
       "options": [
         {
           "option_id": "accept_mage",
-          "label": "Begin the journey.",
+          "label": "Begin.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root",
-          "triggers": ["set_base_class:mage", "give_item:mages_staff", "give_item:mana_potion"]
+          "triggers": ["set_base_class:mage", "give_item:mages_staff", "give_item:mana_potion", "alignment:5"]
         }
       ]
     },
     "confirm_rogue": {
-      "text": "The light dims — deliberately, testing. It finds the habit of watching exits, the practiced stillness, the way you move without thinking to occupy shadows.\n\nYes. This is what you are.",
+      "text": "The light dims — deliberately, testing. It finds the habit of watching exits, the practiced stillness, the way you move without thinking to occupy shadows.\n\nCLASS AFFINITY: ROGUE\n\nThe System accepts your self-assessment.",
       "options": [
         {
           "option_id": "accept_rogue",
-          "label": "Begin the journey.",
+          "label": "Begin.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root",
@@ -100,33 +451,34 @@
       ]
     },
     "confirm_priest": {
-      "text": "The light becomes warm gold. It senses the places in your chest that have been broken and healed and broken again — the scars that became a map of everything you protect.\n\nYes. This is what you are.",
+      "text": "The light becomes warm gold. It senses the places in your chest that have been broken and healed — the scars that became a map of everything you protect.\n\nCLASS AFFINITY: PRIEST\n\nThe System accepts your self-assessment.",
       "options": [
         {
           "option_id": "accept_priest",
-          "label": "Begin the journey.",
+          "label": "Begin.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root",
-          "triggers": ["set_base_class:priest", "give_item:cloth_robe", "give_item:health_potion", "give_item:mana_potion"]
+          "triggers": ["set_base_class:priest", "give_item:cloth_robe", "give_item:health_potion", "give_item:mana_potion", "alignment:15"]
         }
       ]
     },
     "confirm_ranger": {
-      "text": "The light spreads outward, reaching like roots. It finds the part of you that belongs more to open spaces than closed rooms, to movement rather than stillness.\n\nYes. This is what you are.",
+      "text": "The light spreads outward, reaching like roots. It finds the part of you that belongs more to open spaces — to movement, to watching, to understanding terrain as a language.\n\nCLASS AFFINITY: RANGER\n\nThe System accepts your self-assessment.",
       "options": [
         {
           "option_id": "accept_ranger",
-          "label": "Begin the journey.",
+          "label": "Begin.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root",
-          "triggers": ["set_base_class:ranger", "give_item:leather_armor", "give_item:health_potion"]
+          "triggers": ["set_base_class:ranger", "give_item:leather_armor", "give_item:health_potion", "alignment:5"]
         }
       ]
     },
+
     "refuse_definition": {
-      "text": "The light... pauses.\n\nIt has seen this before — once, twice, maybe ten times in the System's recorded history. Someone who slips through the classification matrix. Who isn't warrior, mage, rogue, priest, or ranger.\n\nWho is just... something else.\n\nThe System considers. The pressure against your sternum becomes almost painful.\n\nThen the light goes very, very still.",
+      "text": "The light pauses.\n\nIt has seen this before — very rarely, in its long history. Someone who slips through the classification matrix.\n\nThe System considers. The pressure against your sternum becomes almost painful.\n\nThen the light goes very, very still.",
       "options": [
         {
           "option_id": "stand_firm",
@@ -134,14 +486,15 @@
           "expected": false,
           "leads_to": "village_start",
           "leads_to_node": "unknown_arrival",
-          "triggers": ["flag:held_ground_against_system", "give_item:fate_coin"]
+          "triggers": ["flag:held_ground_against_system", "give_item:fate_coin", "alignment:-15"]
         },
         {
           "option_id": "relent",
           "label": "Perhaps you were being dramatic. Choose a path.",
           "expected": true,
           "leads_to": "character_creation",
-          "leads_to_node": "root"
+          "leads_to_node": "affinity",
+          "triggers": ["alignment:5"]
         }
       ]
     }

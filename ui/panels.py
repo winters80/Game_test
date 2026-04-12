@@ -30,9 +30,26 @@ def _hp_color(current: int, max_hp: int) -> str:
     return "hp_low"
 
 
+_ALIGNMENT_COLORS = [
+    (+50,  +100, "bright_yellow"),
+    (+20,   +49, "green"),
+    (-19,   +19, "white"),
+    (-49,   -20, "yellow"),
+    (-100,  -49, "red"),
+]
+
+
+def _alignment_color(alignment: float) -> str:
+    for low, high, color in _ALIGNMENT_COLORS:
+        if low <= alignment <= high:
+            return color
+    return "white"
+
+
 def build_status_panel(player: "Player") -> Panel:
+    from config import feature
     table = Table.grid(padding=(0, 1))
-    table.add_column(style="stat_name", width=8)
+    table.add_column(style="stat_name", width=10)
     table.add_column(style="stat_value")
 
     hp_color = _hp_color(player.current_hp, player.max_hp)
@@ -47,20 +64,34 @@ def build_status_panel(player: "Player") -> Panel:
     table.add_row("MP", mp_text)
     table.add_row("Gold", f"[gold]{player.gold}[/gold]")
 
-    return Panel(table, title="[system_msg][ STATUS ][/system_msg]", border_style="border", width=40)
+    if feature("species_system") and player.species_id:
+        species_str = player.species_id.replace("_", " ").title()
+        if player.evolution_stage > 0:
+            species_str += f" (Evo {player.evolution_stage})"
+        table.add_row("Species", species_str)
+
+    if feature("alignment_system"):
+        label = player.alignment_label
+        color = _alignment_color(player.alignment)
+        table.add_row("Alignment", f"[{color}]{label} ({player.alignment:+.0f})[/{color}]")
+
+    if feature("lives_system"):
+        table.add_row("Lives", f"[bright_white]{'◆' * player.lives_remaining}[/bright_white] {player.lives_remaining}/{player.lives_remaining + player.lives_used}")
+
+    return Panel(table, title="[system_msg][ STATUS ][/system_msg]", border_style="border", width=44)
 
 
 def build_stats_panel(player: "Player") -> Panel:
     stats = player.stats
     table = Table.grid(padding=(0, 2))
-    table.add_column(style="stat_name", width=4)
+    table.add_column(style="stat_name", width=5)
     table.add_column(style="stat_value", width=4)
-    table.add_column(style="stat_name", width=4)
+    table.add_column(style="stat_name", width=5)
     table.add_column(style="stat_value")
 
     table.add_row("STR", str(stats.STR), "WIS", str(stats.WIS))
     table.add_row("INT", str(stats.INT), "END", str(stats.END))
-    table.add_row("AGI", str(stats.AGI), "", "")
+    table.add_row("AGI", str(stats.AGI), "PER", str(player.perception))
     table.add_row("LCK", str(stats.LCK), "", "")
     table.add_row("VIT", str(stats.VIT), "", "")
 

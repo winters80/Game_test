@@ -60,6 +60,8 @@ def print_options(options: list["SceneOption"]) -> None:
             console.print(f"  [option_locked]  {i}. {opt.label}[/option_locked]")
             if opt.lock_reason:
                 console.print(f"     [dim_text]({opt.lock_reason})[/dim_text]")
+            if opt.hint_text:
+                console.print(f"     [italic dim_text]~ {opt.hint_text}[/italic dim_text]")
         else:
             console.print(f"  [option_number]{i}.[/option_number] [option_label]{opt.label}[/option_label]")
     console.print()
