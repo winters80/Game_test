@@ -1,0 +1,80 @@
+{
+  "scene_id": "camp_rest",
+  "title": "Roadside Camp",
+  "entrance_text": [
+    "You find a sheltered spot off the road and make camp.",
+    "The fire crackles softly. Stars wheel overhead. For a moment the System is silent."
+  ],
+  "nodes": {
+    "root": {
+      "text": "The camp is quiet. You have time to rest, cook, or study.",
+      "options": [
+        {
+          "option_id": "sleep_full",
+          "label": "Sleep until dawn (full rest — 8 hours)",
+          "expected": true,
+          "leads_to_node": "root",
+          "triggers": ["rest_camp:full"]
+        },
+        {
+          "option_id": "short_rest",
+          "label": "Rest briefly (light rest — 2 hours)",
+          "expected": true,
+          "leads_to_node": "root",
+          "triggers": ["rest_camp:short"]
+        },
+        {
+          "option_id": "cook_meal",
+          "label": "Cook a meal from your supplies",
+          "expected": true,
+          "leads_to_node": "cook_node"
+        },
+        {
+          "option_id": "study_skills",
+          "label": "Study your skills by firelight",
+          "expected": true,
+          "leads_to_node": "root",
+          "triggers": ["flag:studied_at_camp"]
+        },
+        {
+          "option_id": "break_camp",
+          "label": "Break camp and move on",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "cook_node": {
+      "text": "You dig through your pack. What will you prepare?",
+      "options": [
+        {
+          "option_id": "cook_bread",
+          "label": "Eat your bread",
+          "requires": {"items": ["bread"]},
+          "leads_to_node": "root",
+          "triggers": ["give_food:bread"]
+        },
+        {
+          "option_id": "cook_meat",
+          "label": "Roast your meat",
+          "requires": {"items": ["roasted_meat"]},
+          "leads_to_node": "root",
+          "triggers": ["give_food:roasted_meat"]
+        },
+        {
+          "option_id": "cook_stew",
+          "label": "Heat your traveler's stew",
+          "requires": {"items": ["traveler_stew"]},
+          "leads_to_node": "root",
+          "triggers": ["give_food:traveler_stew"]
+        },
+        {
+          "option_id": "cook_nothing",
+          "label": "Nothing worth cooking tonight",
+          "leads_to_node": "root"
+        }
+      ]
+    }
+  }
+}

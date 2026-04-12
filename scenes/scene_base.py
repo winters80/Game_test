@@ -223,6 +223,10 @@ class Scene:
                 # Handled in game_engine for full registry access
                 state.player.set_flag(f"_pending_background:{trigger[15:]}")
 
+            elif trigger.startswith("rest_camp:"):
+                rest_type = trigger[10:]  # "full" or "short"
+                state.player.set_flag(f"_pending_rest_camp:{rest_type}")
+
             elif trigger.startswith("rest_inn:"):
                 # rest_inn:COST_COPPER — pay copper, full HP/MP restore + well-rested buff
                 try:

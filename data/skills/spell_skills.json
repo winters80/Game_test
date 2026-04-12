@@ -1,0 +1,58 @@
+[
+  {
+    "skill_id": "fireball",
+    "name": "Fireball",
+    "rarity": "UNCOMMON",
+    "description": "Hurl a condensed sphere of arcane flame at a single target. Fast, reliable, hot.",
+    "flavor_text": "The System logs every cast. It finds the heat... interesting.",
+    "skill_type": "ACTIVE",
+    "spell_type": "fire",
+    "mp_cost": 15,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 20.0, "scaling_coefficient": 1.5}
+    ]
+  },
+  {
+    "skill_id": "frost_lance",
+    "name": "Frost Lance",
+    "rarity": "UNCOMMON",
+    "description": "A piercing bolt of crystallised cold. Slows enemy reactions on hit.",
+    "flavor_text": "Cold slows everything — including thought.",
+    "skill_type": "ACTIVE",
+    "spell_type": "ice",
+    "mp_cost": 12,
+    "cooldown_turns": 1,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 15.0, "scaling_coefficient": 1.2}
+    ]
+  },
+  {
+    "skill_id": "arcane_bolt",
+    "name": "Arcane Bolt",
+    "rarity": "COMMON",
+    "description": "A raw discharge of unformed arcane energy. No element, no subtlety — just force.",
+    "flavor_text": "Even the System cannot fully categorise raw arcane force.",
+    "skill_type": "ACTIVE",
+    "spell_type": "arcane",
+    "mp_cost": 8,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 1.0}
+    ]
+  },
+  {
+    "skill_id": "healing_light",
+    "name": "Healing Light",
+    "rarity": "UNCOMMON",
+    "description": "Channel restorative energy to mend wounds. Restores HP proportional to WIS.",
+    "flavor_text": "The System monitors healing. Too much makes it nervous.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 20,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "heal", "scaling_stat": "WIS", "base_value": 25.0, "scaling_coefficient": 2.0}
+    ]
+  }
+]

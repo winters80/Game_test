@@ -7,7 +7,7 @@ SAVES_DIR = BASE_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 
 # ── Save versioning ────────────────────────────────────────────────────────────
-SAVE_VERSION = 2   # bump when Player schema or world_db schema changes
+SAVE_VERSION = 3   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
 AI_ENABLED = True
@@ -112,11 +112,11 @@ FEATURES: dict[str, bool] = {
     "faction_system":     True,    # Faction politics, standing, ascension
     "auction_house":      True,    # Auction listings, competing guilds, life tokens
     "lives_system":       True,    # 9-lives death mechanic (replaces instant game-over)
-    "crafting_system":    False,   # Recipe + material crafting
+    "crafting_system":    True,    # Recipe + material crafting
     "stat_gating":        True,    # INT/Perception/LCK/WIS content gates
     "world_db":           True,    # SQLite world state (required by npc/quest systems)
-    "synergy_system":     True,
-    "bot_system":         False,
+    "synergy_system":     True,    # Stat synergy bonuses in combat
+    "bot_system":         True,    # AI-driven autonomous bot agents
 }
 
 

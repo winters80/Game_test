@@ -387,6 +387,9 @@ class GameEngine:
                 renderer.prompt_any_key()
             elif trigger == "show_auction" and feature("auction_house"):
                 self._show_auction_house()
+            elif trigger.startswith("rest_camp:"):
+                rest_type = trigger[10:]
+                self._handle_rest(rest_type)
             elif trigger.startswith("start_quest:") and feature("quest_system") and self.quest_registry:
                 quest_id = trigger[12:]
                 from systems import quest_system as qs
@@ -494,23 +497,35 @@ class GameEngine:
 
             # Player turn
             skills_available = [sid for sid in player.skills if self.skill_registry.get(sid)]
-            combat_choices = ["Basic Attack"] + [
-                self.skill_registry.get(sid).name
-                for sid in skills_available
-                if self.skill_registry.get(sid)
-            ] + ["Flee"]
+
+            # Build enriched combat choices showing MP cost and cooldown
+            def _skill_label(sid: str) -> str:
+                sk = self.skill_registry.get(sid)
+                if sk is None:
+                    return sid
+                label = sk.name
+                cd = player.skill_cooldowns.get(sid, 0)
+                if cd > 0:
+                    label += f" [CD:{cd}]"
+                elif sk.mp_cost > 0:
+                    label += f" [{sk.mp_cost} MP]"
+                return label
+
+            combat_choices = ["⚔ Basic Attack"] + [
+                _skill_label(sid) for sid in skills_available
+            ] + ["🏃 Flee"]
 
             action = questionary.select("Your action:", choices=combat_choices).ask()
             target = alive_enemies[0]
 
-            if action == "Flee":
+            if action == "🏃 Flee":
                 if combat_system.try_flee(player, target):
                     renderer.print_scene_text(["You flee from combat!"])
                     renderer.prompt_any_key()
                     return
                 else:
                     renderer.print_scene_text(["You failed to flee!"])
-            elif action == "Basic Attack":
+            elif action == "⚔ Basic Attack":
                 dmg, is_crit = combat_system.player_attack(player, target)
                 style = "critical" if is_crit else "damage"
                 renderer.print_combat_action(
@@ -519,19 +534,48 @@ class GameEngine:
                 if not target.is_alive:
                     renderer.print_combat_action(target.name, "is defeated!", style="success")
             else:
-                # Skill attack
+                # Skill/spell — find skill_id by matching label
                 skill_id = next(
-                    (sid for sid in skills_available if self.skill_registry.get(sid).name == action), None
+                    (sid for sid in skills_available if _skill_label(sid) == action), None
                 )
                 if skill_id:
-                    val, success = combat_system.player_skill_attack(player, skill_id, target, self.skill_registry)
-                    if success:
-                        skill = self.skill_registry.get(skill_id)
-                        renderer.print_combat_action("You", f"use {skill.name}!", val, "rare")
-                    else:
+                    skill = self.skill_registry.get(skill_id)
+                    cd = player.skill_cooldowns.get(skill_id, 0)
+                    if cd > 0:
+                        renderer.print_scene_text([f"{skill.name} is on cooldown ({cd} turns remaining)."])
+                    elif skill.mp_cost > 0 and player.current_mp < skill.mp_cost:
                         renderer.print_scene_text(["Not enough MP!"])
-                    if not target.is_alive:
-                        renderer.print_combat_action(target.name, "is defeated!", style="success")
+                    else:
+                        # Check for heal effects (healing_light etc.)
+                        from entities.enums import EffectType
+                        is_heal = skill.effects and any(
+                            e.effect_type == EffectType.HEAL for e in skill.effects
+                        )
+                        if is_heal:
+                            from systems.skill_system import calculate_skill_damage
+                            heal_val = calculate_skill_damage(skill, player)
+                            player.current_mp -= skill.mp_cost
+                            player.current_hp = min(player.max_hp, player.current_hp + heal_val)
+                            if skill.cooldown_turns > 0:
+                                player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                            renderer.print_scene_text([
+                                f"You cast {skill.name}. Healed {heal_val} HP. "
+                                f"({player.current_hp}/{player.max_hp})"
+                            ])
+                        else:
+                            # Damage skill — use combat_system for MP deduction + cooldown
+                            val, success = combat_system.player_skill_attack(
+                                player, skill_id, target, self.skill_registry
+                            )
+                            if success:
+                                # Set cooldown if applicable (player_skill_attack doesn't do this)
+                                if skill.cooldown_turns > 0:
+                                    player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                                renderer.print_combat_action("You", f"use {skill.name}!", val, "rare")
+                            else:
+                                renderer.print_scene_text(["Not enough MP!"])
+                            if not target.is_alive:
+                                renderer.print_combat_action(target.name, "is defeated!", style="success")
 
             # Enemy turns
             for enemy in alive_enemies:
@@ -1166,6 +1210,42 @@ class GameEngine:
                     renderer.console.print("  [dim_text](Note: some flags require restart to take full effect)[/dim_text]")
                     renderer.prompt_any_key()
                     break
+
+    def _handle_rest(self, rest_type: str = "short") -> None:
+        """Handle camp rest. full=8hrs (100% HP/MP), short=2hrs (40% HP/MP). 10% ambush chance for camp."""
+        import random
+        from systems.buff_system import tick_buffs
+
+        player = self.state.player
+
+        if rest_type == "full":
+            hp_pct, mp_pct, tick_count, label = 1.0, 1.0, 8, "Full Rest (8 hours)"
+        else:
+            hp_pct, mp_pct, tick_count, label = 0.4, 0.4, 2, "Light Rest (2 hours)"
+
+        healed_hp = int(player.max_hp * hp_pct)
+        healed_mp = int(player.max_mp * mp_pct)
+        player.current_hp = min(player.max_hp, player.current_hp + healed_hp)
+        player.current_mp = min(player.max_mp, player.current_mp + healed_mp)
+
+        for _ in range(tick_count):
+            tick_buffs(player)
+
+        renderer.print_divider()
+        renderer.print_system_message(
+            f"{label}: +{healed_hp} HP, +{healed_mp} MP restored.",
+            style="success",
+        )
+
+        # 10% ambush chance on camp rest
+        if random.random() < 0.10:
+            renderer.print_system_message(
+                "Something stirs in the dark. You are not alone.", style="system_warning"
+            )
+            renderer.prompt_any_key()
+            self._run_combat("goblin_scout")
+        else:
+            renderer.prompt_any_key()
 
     def _inventory_menu(self) -> None:
         """Interactive inventory and equipment management menu."""

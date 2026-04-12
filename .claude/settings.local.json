@@ -24,7 +24,8 @@
       "Bash(gh pr:*)",
       "Bash(git pull:*)",
       "Bash(git fetch:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(python -c \"from core.game_engine import GameEngine; e = GameEngine\\(\\); e.bootstrap\\(\\); print\\('OK'\\)\")"
     ]
   }
 }

@@ -31,5 +31,29 @@
     "stats_bonus": {"STR": 0, "INT": 0, "AGI": -1, "LCK": 0, "VIT": 4, "WIS": 0, "END": 3},
     "value_gold": 80,
     "weight": 5.0
+  },
+  {
+    "item_id": "traveler_cloak",
+    "name": "Traveler's Cloak",
+    "rarity": "COMMON",
+    "item_type": "ARMOR",
+    "description": "A worn but functional travelling cloak. Provides basic protection and warmth.",
+    "flavor_text": "Every road leaves its mark.",
+    "backstory": "",
+    "stats_bonus": {"STR": 0, "INT": 0, "AGI": 1, "LCK": 1, "VIT": 1, "WIS": 0, "END": 1},
+    "value_gold": 25,
+    "weight": 0.5
+  },
+  {
+    "item_id": "mage_robes",
+    "name": "Mage Robes",
+    "rarity": "UNCOMMON",
+    "item_type": "ARMOR",
+    "description": "Robes woven with mana-reactive thread. Light and flexible, enhancing focus and arcane sensitivity.",
+    "flavor_text": "Comfort is a form of power.",
+    "backstory": "Standard issue for licensed arcane practitioners before the Fracture disrupted the Mages' Accord. Most were destroyed. These survived.",
+    "stats_bonus": {"STR": 0, "INT": 3, "AGI": 1, "LCK": 0, "VIT": 1, "WIS": 3, "END": 0},
+    "value_gold": 150,
+    "weight": 0.8
   }
 ]

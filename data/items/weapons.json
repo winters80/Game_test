@@ -55,5 +55,30 @@
     "stats_bonus": {"STR": 0, "INT": 0, "AGI": 3, "LCK": 1, "VIT": 0, "WIS": 0, "END": 0},
     "value_gold": 120,
     "weight": 0.5
+  },
+  {
+    "item_id": "mages_wand",
+    "name": "Mage's Wand",
+    "rarity": "UNCOMMON",
+    "item_type": "WEAPON",
+    "description": "A slender wand carved from void-touched wood. Channels arcane energy with unusual efficiency.",
+    "flavor_text": "The wood still hums with borrowed power.",
+    "backstory": "Cut from a tree that grew through a sealed Fracture rift. The System classifies it as an anomalous implement — catalogued but not understood.",
+    "stats_bonus": {"STR": 0, "INT": 3, "AGI": 1, "LCK": 2, "VIT": 0, "WIS": 2, "END": 0},
+    "value_gold": 120,
+    "weight": 0.5
+  },
+  {
+    "item_id": "shadow_dagger",
+    "name": "Shadow Dagger",
+    "rarity": "RARE",
+    "item_type": "WEAPON",
+    "description": "A blade that seems to absorb light. Strikes faster than the eye can track.",
+    "flavor_text": "It doesn't cut. It erases.",
+    "backstory": "Recovered from the body of a Void-Walker during the third purge. The System's classification is simply: DANGEROUS. RETAIN FOR STUDY.",
+    "stats_bonus": {"STR": 2, "INT": 1, "AGI": 4, "LCK": 3, "VIT": 0, "WIS": 0, "END": 0},
+    "combo_catalyst": true,
+    "value_gold": 280,
+    "weight": 0.7
   }
 ]
