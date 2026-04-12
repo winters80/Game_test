@@ -1,0 +1,74 @@
+[
+  {
+    "skill_id": "power_strike",
+    "name": "Power Strike",
+    "rarity": "COMMON",
+    "description": "A forceful blow that deals bonus physical damage based on your strength.",
+    "flavor_text": "Simple. Effective. Devastating.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "damage", "scaling_stat": "STR", "base_value": 5.0, "scaling_coefficient": 1.5}]
+  },
+  {
+    "skill_id": "iron_skin",
+    "name": "Iron Skin",
+    "rarity": "COMMON",
+    "description": "Passively increases your natural defense through hardened muscle and battle-worn instinct.",
+    "flavor_text": "Every scar is a lesson remembered.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "buff", "scaling_stat": "END", "base_value": 3.0, "scaling_coefficient": 0.5}]
+  },
+  {
+    "skill_id": "berserker_rage",
+    "name": "Berserker Rage",
+    "rarity": "UNCOMMON",
+    "description": "Enter a fury that dramatically boosts attack power at the cost of defense for 3 turns.",
+    "flavor_text": "Pain becomes fuel.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 5,
+    "cooldown_turns": 5,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "STR", "base_value": 8.0, "scaling_coefficient": 2.0},
+      {"effect_type": "debuff", "scaling_stat": "END", "base_value": 4.0, "scaling_coefficient": 1.0}
+    ]
+  },
+  {
+    "skill_id": "shield_bash",
+    "name": "Shield Bash",
+    "rarity": "COMMON",
+    "description": "Strike an enemy with your shield, dealing damage and stunning them for 1 turn.",
+    "flavor_text": "Sometimes the best offense is a shield to the face.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 3.0, "scaling_coefficient": 1.0},
+      {"effect_type": "debuff", "scaling_stat": null, "base_value": 1.0, "scaling_coefficient": 0.0}
+    ]
+  },
+  {
+    "skill_id": "war_cry",
+    "name": "War Cry",
+    "rarity": "UNCOMMON",
+    "description": "Unleash a terrifying battle cry that boosts all stats for 2 turns.",
+    "flavor_text": "Let your enemies know fear before they know pain.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 8,
+    "cooldown_turns": 6,
+    "effects": [{"effect_type": "buff", "scaling_stat": "STR", "base_value": 5.0, "scaling_coefficient": 1.2}]
+  },
+  {
+    "skill_id": "blade_storm",
+    "name": "Blade Storm",
+    "rarity": "RARE",
+    "description": "Spin in a deadly arc, striking all enemies for physical damage.",
+    "flavor_text": "Become the storm.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 12,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "damage", "scaling_stat": "STR", "base_value": 8.0, "scaling_coefficient": 1.8}]
+  }
+]

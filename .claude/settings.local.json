@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p \"D:/Stuff/Game_Test/core\" \"D:/Stuff/Game_Test/entities\" \"D:/Stuff/Game_Test/systems\" \"D:/Stuff/Game_Test/ai\" \"D:/Stuff/Game_Test/scenes/data\" \"D:/Stuff/Game_Test/ui\" \"D:/Stuff/Game_Test/persistence\" \"D:/Stuff/Game_Test/data/classes\" \"D:/Stuff/Game_Test/data/skills\" \"D:/Stuff/Game_Test/data/items\" \"D:/Stuff/Game_Test/data/world\" \"D:/Stuff/Game_Test/saves\")",
+      "Bash(touch \"D:/Stuff/Game_Test/core/__init__.py\" \"D:/Stuff/Game_Test/entities/__init__.py\" \"D:/Stuff/Game_Test/systems/__init__.py\" \"D:/Stuff/Game_Test/ai/__init__.py\" \"D:/Stuff/Game_Test/scenes/__init__.py\" \"D:/Stuff/Game_Test/ui/__init__.py\" \"D:/Stuff/Game_Test/persistence/__init__.py\")",
+      "Bash(pip install:*)",
+      "Bash(python -c ':*)",
+      "Bash(python -c \"from core.game_engine import GameEngine; print\\('Engine imports OK'\\)\")",
+      "Bash(python -c \"from core.game_engine import GameEngine; print\\('Final import check OK'\\)\")"
+    ]
+  }
+}

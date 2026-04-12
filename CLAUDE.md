@@ -1,0 +1,281 @@
+# SYSTEM BREAKER — Developer Reference
+
+> Read this before touching any code. It covers architecture, content authoring, trigger strings, feature flags, and AI integration contracts.
+
+---
+
+## Architecture in One Paragraph
+
+The game is a Python terminal LitRPG. **Static content** (class definitions, skill definitions, item templates, species, guilds, NPCs, quests, scene scripts) lives in **JSON files** under `data/` and is read-only at runtime. **Dynamic world state** (NPC memory, active quests, faction relationships, auction listings, death records) lives in a **SQLite database** at `saves/{slot}.db`. The player's own serializable data (stats, inventory, alignment, lives, etc.) lives in `saves/{slot}.json` as a Pydantic v2 model. The two databases are always opened and closed together by `persistence/save_manager.py`.
+
+**The one rule:** content is always JSON, state is always SQLite. Never mix them.
+
+---
+
+## Directory Map
+
+| Path | Purpose |
+|------|---------|
+| `config.py` | All constants, feature flags, balance values — change here, never in game logic |
+| `entities/` | Pydantic v2 data models + Registry classes (load JSON → in-memory dict) |
+| `systems/` | Pure-function game logic — no I/O, no rendering, no direct Ollama calls |
+| `ai/` | Ollama integration — client, prompt builders, response validators, content generator |
+| `scenes/data/*.json` | Scene definitions — all game narrative and choice trees |
+| `data/` | All static content definitions (JSON) |
+| `core/` | Engine (game loop), event bus, game state |
+| `ui/` | All Rich rendering — **only `ui/renderer.py` imports `rich`** |
+| `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite API) |
+| `saves/` | Runtime save files — gitignored except `.gitkeep` |
+
+---
+
+## Adding Content (No Code Required)
+
+### New class
+Add an entry to `data/classes/base_classes.json` or `combo_classes.json`. See existing entries for the schema. `ClassRegistry.load_from_file()` picks it up at startup.
+
+### New skill
+Add to a `data/skills/*.json` file. `SkillRegistry.load_from_dir()` loads all files in the directory.
+
+### New item
+Add to a `data/items/*.json` file. Set `"combo_catalyst": true` if the item should contribute to AI class divergence detection.
+
+### New NPC *(npc_system feature flag must be True)*
+Add a template to `data/npcs/*.json`. The NPC is instantiated into `npc_instances` SQLite table on first entry to their home zone.
+
+### New quest template *(quest_system feature flag must be True)*
+Add to `data/quests/*.json`. Quest state machine states are defined in the JSON.
+
+### New species *(species_system feature flag must be True)*
+Add to `data/species/species_definitions.json`. Define `evolution_path` as an ordered list of stages.
+
+### New scene
+Add a new `scenes/data/*.json` file. `SceneRegistry.load_from_dir()` loads all JSON in that directory. Scene ID must match the filename stem.
+
+### New zone
+Add to `data/world/zones.json`.
+
+---
+
+## Trigger String Reference
+
+Trigger strings are the `"triggers": [...]` values on scene option nodes. They are processed by `scenes/scene_base.Scene.process_triggers()` and `core/game_engine.GameEngine._handle_choice()`.
+
+| Trigger | Effect |
+|---------|--------|
+| `flag:X` | Set `player.flags["X"] = True` |
+| `give_item:X` | Add item_id X to player inventory; fires `ITEM_FOUND` event |
+| `give_skill:X` | Add skill_id X to player; fires `SKILL_ACQUIRED` event |
+| `give_gold:N` | Add N gold to player |
+| `set_base_class:X` | Assign class_id X as player's base class via `class_system.assign_base_class()` |
+| `combat:X` | Start encounter X (see `combat_system.ENEMY_TEMPLATES`) |
+| `alignment:+N` | Shift player alignment by +N (float) |
+| `alignment:-N` | Shift player alignment by -N (float) |
+| `talk_npc:X` | *(npc_system)* Trigger NPC interaction with NPC id X |
+| `start_quest:X` | *(quest_system)* Activate quest template X |
+| `advance_quest:X:STATE` | *(quest_system)* Move quest instance X to state STATE |
+
+### Adding a new trigger type
+1. Add it to the `process_triggers()` method in `scenes/scene_base.py`
+2. If it needs engine context (combat, scene transitions), also handle it in `game_engine._handle_choice()`
+3. Document it in this table
+
+---
+
+## Scene Option Gate Reference
+
+Option `"requires"` block controls visibility and locking:
+
+```json
+"requires": {
+  "min_stats": { "INT": 15 },
+  "items": ["ancient_tome"],
+  "flags": ["found_vault"],
+  "alignment_min": 20,
+  "alignment_max": 100
+}
+```
+
+| Field | Behavior |
+|-------|---------|
+| `min_stats` | Hard lock if any stat below threshold. Shows lock reason. |
+| `items` | Hard lock if item not in inventory |
+| `flags` | Hard lock if flag not set on player |
+| `alignment_min` | *(alignment_system)* Hard lock if `player.alignment < value` |
+| `alignment_max` | *(alignment_system)* Hard lock if `player.alignment > value` |
+
+**Divergence signal:** Set `"expected": false` on any option that represents an unusual player path. This feeds the divergence scorer. The higher the score, the more likely the player gets an AI-generated class at the Class Awakening scene.
+
+---
+
+## Feature Flags
+
+All flags live in `config.FEATURES`. Set to `True` to enable, `False` to disable without removing code.
+
+```python
+from config import feature
+if feature("npc_system"):
+    npc_system.handle_interaction(...)
+```
+
+| Flag | Controls |
+|------|---------|
+| `world_db` | SQLite WorldDatabase open/close in SaveManager |
+| `species_system` | Species selection in character creation + evolution checks |
+| `alignment_system` | Alignment float tracking + alignment gates in scenes |
+| `npc_system` | NPC instances, memory, stat-gated dialogue |
+| `quest_system` | Quest state machine + AI quest generation |
+| `guild_system` | Guild membership, ranks, perks |
+| `faction_system` | Faction standing, political ascension |
+| `auction_house` | Auction listings, competing guilds, life tokens |
+| `lives_system` | 9-lives death mechanic (replaces instant game over) |
+| `crafting_system` | Recipe + material crafting |
+| `stat_gating` | INT/Perception/LCK/WIS content gates via `systems/stat_gate.py` |
+
+**Enable order matters.** `world_db` must be True before `npc_system`, `quest_system`, `faction_system`, or `auction_house`. `stat_gating` should be enabled before `npc_system`.
+
+---
+
+## Player Model — Key Fields
+
+```
+player.alignment          float -100.0 to +100.0 (never store the label, derive it)
+player.alignment_label    property → human-readable string
+player.perception         property → derived from AGI//2 + WIS//3 + perception_bonus
+player.species_id         string, references species definitions JSON
+player.evolution_stage    int, 0 = base form
+player.lives_remaining    int, starts at STARTING_LIVES (9)
+player.guild_memberships  dict {guild_id: rank_id}
+player.active_quest_ids   list of quest instance UUIDs (full state in world_db)
+player.flags              dict for arbitrary story state
+player.choice_history     list of "unexpected:scene:option_id" strings
+player.turn_count         incremented each game loop iteration
+player.last_safe_zone_id  where the player respawns after death
+```
+
+---
+
+## SQLite World Database (`persistence/world_db.py`)
+
+One `.db` file per save slot. Always opened/closed alongside the `.json` file.
+
+| Table | Stores |
+|-------|--------|
+| `npc_instances` | Live NPC state: zone, disposition, alive/dead, custom flags |
+| `npc_memory` | Per-NPC interaction history (compressed to summary at 20 events) |
+| `quest_instances` | Active/completed quest state machine positions |
+| `ai_quest_data` | Full JSON definition for AI-generated quests |
+| `faction_standing` | Player standing with each faction + current rank |
+| `faction_relations` | Faction-to-faction relationship matrix |
+| `auction_listings` | Active auction items and life tokens |
+| `auction_bids` | Bid history per listing |
+| `death_records` | Every death: cause, zone, level, alignment, lives_remaining |
+| `world_flags` | Global flags independent of the player |
+| `turn_log` | Lightweight event log for quest/NPC trigger processing |
+
+**Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
+
+---
+
+## AI Integration Contract
+
+### When AI is called
+1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30). Triggered by `systems/class_system.resolve_combo_class()`.
+2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
+3. **Quest generation** *(quest_system)* — when NPC's `quest_seeds` contains `"ai_dynamic"`.
+4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
+
+### AI response schemas (validated by `ai/response_validator.py`)
+All AI calls must return JSON validated against Pydantic models. If validation fails, retry up to `OLLAMA_MAX_RETRIES` times, then use the fallback.
+
+| Generator method | Returns | Fallback |
+|-----------------|---------|---------|
+| `generate_class()` | `AIClassResponse` | `fallback_generated` class from combo_classes.json |
+| `generate_narrative()` | plain text string | None (scene uses static text) |
+| `generate_quest()` *(future)* | `AIQuestResponse` | nearest matching template quest |
+| `generate_npc_dialogue()` *(future)* | `AINPCDialogueResponse` | NPC's `dialogue_hooks["default"]` |
+
+### Lore constraints (always injected into system prompt)
+- World name: Aethoria
+- The System appeared during the Fracture (3 years before game start)
+- Magic = "arcane arts" in formal contexts
+- Capital city = Verath
+- Classes are assigned by the System, not chosen (unless player diverges)
+- See `data/world/lore_fragments.json` for full context
+
+---
+
+## Divergence System (How AI Classes Are Triggered)
+
+The `systems/progression_tracker.compute_divergence_score()` function scores how far the player has deviated from the expected path:
+
+| Signal | Score |
+|--------|-------|
+| Each `expected: false` option taken | +10 |
+| No standard combo class matches player's classes | +40 |
+| Each "wild catalyst" item (combo_catalyst=true, not in any known combo) | +20 |
+| Each divergence flag set (refused_system, broke_tutorial, etc.) | +25 |
+
+Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DIVERGENCE_THRESHOLD`.
+
+---
+
+## Save Format Versions
+
+| Version | Changes |
+|---------|---------|
+| 1 | Initial — Player, scene position, AI cache |
+| 2 | Added: gender, species_id, alignment, lives_remaining/used, guild_memberships, faction_standing_cache, active/completed_quest_ids, evolution_stage, background, perception_bonus, turn_count, last_safe_zone_id. Paired SQLite .db file introduced. |
+
+Migration in `persistence/save_manager._migrate()`. Always backward-compatible (new fields have defaults).
+
+---
+
+## Event Bus Reference (`core/event_bus.py`)
+
+All UI notifications are driven by events. Subscribe in `ui/notifications.py`.
+
+| Event name | Payload keys | Fired by |
+|-----------|-------------|---------|
+| `LEVEL_UP` | `level`, `stat_points` | `systems/level_system` |
+| `SKILL_ACQUIRED` | `skill_id`, `skill_name`, `rarity` | `systems/class_system`, `scenes/scene_base` |
+| `CLASS_ASSIGNED` | `class_id`, `class_name`, `rarity` | `systems/class_system` |
+| `ANOMALY_DETECTED` | *(none)* | `systems/class_system` (before AI gen) |
+| `ITEM_FOUND` | `item_id`, `item_name`, `rarity` | `systems/inventory_system`, `scenes/scene_base` |
+| `WARNING` | *(none)* | various |
+| `PLAYER_DIED` | `lives_remaining`, `cause` | `systems/lives_system` *(future)* |
+| `QUEST_STARTED` | `quest_id`, `title` | `systems/quest_system` *(future)* |
+| `QUEST_COMPLETED` | `quest_id`, `outcome` | `systems/quest_system` *(future)* |
+| `SPECIES_EVOLVED` | `species_id`, `stage`, `new_name` | `systems/class_system` *(future)* |
+| `FACTION_RANK_CHANGED` | `faction_id`, `old_rank`, `new_rank` | `systems/faction_system` *(future)* |
+
+---
+
+## Development Workflow
+
+```bash
+# Start a new feature
+git checkout -b feature/npc-system
+
+# Enable the feature flag while developing
+# config.py: FEATURES["npc_system"] = True
+
+# Run the game
+python main.py
+
+# Before committing, disable the flag if not ready for main
+# config.py: FEATURES["npc_system"] = False
+
+git add -p   # stage only intentional changes
+git commit -m "feat: add NPC template loading + instance creation"
+git push origin feature/npc-system
+```
+
+### Implementation order for next phases
+1. `species_system` + `alignment_system` (self-contained, no world_db needed)
+2. `stat_gating` — `systems/stat_gate.py` (needed by NPC system)
+3. `npc_system` (requires world_db + stat_gating)
+4. `quest_system` (requires npc_system)
+5. `guild_system` (requires quest_system)
+6. `lives_system` (tiny, enable anytime after world_db)
+7. `faction_system` + `auction_house` (requires guild_system)

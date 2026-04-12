@@ -1,0 +1,58 @@
+[
+  {
+    "item_id": "health_potion",
+    "name": "Health Potion",
+    "rarity": "COMMON",
+    "item_type": "CONSUMABLE",
+    "description": "A vial of red liquid that restores 30 HP when consumed.",
+    "flavor_text": "Tastes like iron and hope.",
+    "value_gold": 25,
+    "weight": 0.2,
+    "stackable": true
+  },
+  {
+    "item_id": "mana_potion",
+    "name": "Mana Potion",
+    "rarity": "COMMON",
+    "item_type": "CONSUMABLE",
+    "description": "A vial of blue liquid that restores 20 MP when consumed.",
+    "flavor_text": "The universe distilled into a gulp.",
+    "value_gold": 30,
+    "weight": 0.2,
+    "stackable": true
+  },
+  {
+    "item_id": "ancient_tome",
+    "name": "Ancient Tome",
+    "rarity": "EPIC",
+    "item_type": "KEY_ITEM",
+    "description": "A tome of indecipherable script that seems to rewrite itself when you aren't looking. The System cannot categorize it.",
+    "flavor_text": "Some knowledge predates the System itself.",
+    "combo_catalyst": true,
+    "value_gold": 0,
+    "weight": 1.0
+  },
+  {
+    "item_id": "fate_coin",
+    "name": "Coin of Fate",
+    "rarity": "RARE",
+    "item_type": "ACCESSORY",
+    "description": "A coin that always lands on the side you need, not the side you expect. Passively boosts luck.",
+    "flavor_text": "Heads or tails? Yes.",
+    "stats_bonus": {"STR": 0, "INT": 0, "AGI": 0, "LCK": 5, "VIT": 0, "WIS": 0, "END": 0},
+    "combo_catalyst": true,
+    "value_gold": 0,
+    "weight": 0.1
+  },
+  {
+    "item_id": "void_shard",
+    "name": "Void Shard",
+    "rarity": "EPIC",
+    "item_type": "KEY_ITEM",
+    "description": "A fragment of something that should not exist within the System's framework. Humming with undefined potential.",
+    "flavor_text": "The System has no entry for this.",
+    "combo_catalyst": true,
+    "value_gold": 0,
+    "weight": 0.5
+  }
+]

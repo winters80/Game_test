@@ -1,0 +1,71 @@
+[
+  {
+    "skill_id": "fireball",
+    "name": "Fireball",
+    "rarity": "COMMON",
+    "description": "Hurl a sphere of condensed fire at a single enemy, dealing magic damage.",
+    "flavor_text": "The first spell. Never grows old.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 8,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "damage", "scaling_stat": "INT", "base_value": 8.0, "scaling_coefficient": 1.8}]
+  },
+  {
+    "skill_id": "mana_shield",
+    "name": "Mana Shield",
+    "rarity": "COMMON",
+    "description": "Convert incoming damage to mana loss instead of HP loss for 2 turns.",
+    "flavor_text": "Why bleed when you can think?",
+    "skill_type": "ACTIVE",
+    "mp_cost": 5,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "shield", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 2.0}]
+  },
+  {
+    "skill_id": "ice_lance",
+    "name": "Ice Lance",
+    "rarity": "UNCOMMON",
+    "description": "Pierce an enemy with a shard of absolute cold, dealing damage and slowing them.",
+    "flavor_text": "Colder than the void between worlds.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 2.0},
+      {"effect_type": "debuff", "scaling_stat": "AGI", "base_value": 3.0, "scaling_coefficient": 0.5}
+    ]
+  },
+  {
+    "skill_id": "lightning_bolt",
+    "name": "Lightning Bolt",
+    "rarity": "UNCOMMON",
+    "description": "Call down a bolt of lightning that can chain to nearby enemies.",
+    "flavor_text": "The sky answers to no one. Neither do you.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 12,
+    "cooldown_turns": 1,
+    "effects": [{"effect_type": "damage", "scaling_stat": "INT", "base_value": 12.0, "scaling_coefficient": 2.2}]
+  },
+  {
+    "skill_id": "arcane_surge",
+    "name": "Arcane Surge",
+    "rarity": "RARE",
+    "description": "Draw on raw arcane energy for a massive damage burst. Drains significant mana.",
+    "flavor_text": "The line between power and destruction is very thin.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 25,
+    "cooldown_turns": 5,
+    "effects": [{"effect_type": "damage", "scaling_stat": "INT", "base_value": 25.0, "scaling_coefficient": 3.5}]
+  },
+  {
+    "skill_id": "time_slow",
+    "name": "Time Slow",
+    "rarity": "EPIC",
+    "description": "Distort time around an enemy, giving you two actions before they can move.",
+    "flavor_text": "Time is just another element to be mastered.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 30,
+    "cooldown_turns": 8,
+    "effects": [{"effect_type": "debuff", "scaling_stat": "WIS", "base_value": 0.0, "scaling_coefficient": 0.0}]
+  }
+]

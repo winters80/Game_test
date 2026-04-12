@@ -1,0 +1,208 @@
+{
+  "scene_id": "dungeon_floor1",
+  "title": "The Old Dungeon — Floor 1",
+  "entrance_text": [
+    "The dungeon entrance is a crack in the hillside that the old city used as a quarry before the Fracture changed the stone.",
+    "Inside, the air is cold and smells of damp earth. Bioluminescent fungi cling to the walls, casting everything in pale blue-green light.",
+    "Your System compass pulses — RANK F ZONE. Proceed with appropriate caution.",
+    "Something skitters in the darkness ahead."
+  ],
+  "nodes": {
+    "root": {
+      "text": "You stand at the dungeon's entrance corridor. The path splits — a wide tunnel to the left where you can hear goblin chatter, and a narrow passage to the right that the System's compass marks as 'unmapped'. Ahead is a chamber with something glowing.",
+      "options": [
+        {
+          "option_id": "go_left_goblins",
+          "label": "Take the wide tunnel. Fight the goblins.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "goblin_fight"
+        },
+        {
+          "option_id": "go_right_unmapped",
+          "label": "Take the narrow unmapped passage. See what the System doesn't know about.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "unmapped_passage",
+          "triggers": ["flag:explored_unmapped_passage"]
+        },
+        {
+          "option_id": "examine_glowing",
+          "label": "Move toward the glowing chamber.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "crystal_chamber"
+        },
+        {
+          "option_id": "return_village",
+          "label": "Return to the village. Not ready yet.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "goblin_fight": {
+      "text": "Three goblins crouch over what looks like a stolen pack from a previous adventurer. They notice you immediately — their yellow eyes catching the fungal light.\n\nCOMBAT INITIATED\nEnemies: Goblin Scout x2, Goblin Looter x1",
+      "options": [
+        {
+          "option_id": "fight_goblins",
+          "label": "Fight! (Enter combat)",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "after_goblins",
+          "triggers": ["combat:goblin_patrol"]
+        },
+        {
+          "option_id": "sneak_past",
+          "label": "Try to sneak past them.",
+          "requires": {"min_stats": {"AGI": 8}},
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "sneak_success",
+          "triggers": ["flag:sneaked_past_goblins"]
+        }
+      ]
+    },
+    "after_goblins": {
+      "text": "The goblins are defeated. The System pulses:\n\nEXPERIENCE GAINED. ITEMS LOOTED.",
+      "options": [
+        {
+          "option_id": "continue_exploring",
+          "label": "Continue exploring.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "examine_pack",
+          "label": "Check what was in the stolen pack.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "stolen_pack"
+        }
+      ]
+    },
+    "stolen_pack": {
+      "text": "Inside the pack: a health potion, some rations, and — oddly — a leather-bound book with no title. The pages appear blank at first, but when you hold it under the fungal light, text appears and vanishes like smoke.\n\nThe System gives you an unusual notification: ITEM CLASSIFICATION PENDING.",
+      "options": [
+        {
+          "option_id": "take_tome",
+          "label": "Take the strange book.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["give_item:ancient_tome", "flag:found_ancient_tome"]
+        },
+        {
+          "option_id": "leave_tome",
+          "label": "Leave it. Unclassified items are trouble.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["give_item:health_potion"]
+        }
+      ]
+    },
+    "sneak_success": {
+      "text": "You slip past the goblins in utter silence. They never know you were there.\n\nThe System notes this with what almost feels like surprise.",
+      "options": [
+        {
+          "option_id": "continue_after_sneak",
+          "label": "Continue deeper.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "crystal_chamber"
+        }
+      ]
+    },
+    "unmapped_passage": {
+      "text": "The passage narrows until you have to turn sideways. The System's compass shows a blinking question mark.\n\nDeep in the dark, you find a small alcove. Sitting on a natural stone shelf is a shard of something black and crystalline that seems to eat light rather than reflect it.\n\nThe System produces no notification. None. It has nothing to say about this object.",
+      "options": [
+        {
+          "option_id": "take_void_shard",
+          "label": "Take the void shard.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["give_item:void_shard", "flag:found_void_shard"]
+        },
+        {
+          "option_id": "leave_void_shard",
+          "label": "Leave it. You don't touch things the System can't explain.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "crystal_chamber": {
+      "text": "The chamber is lit by a cluster of blue crystals growing from the ceiling. At its center: a stone platform with a softly glowing mana crystal the size of your fist.\n\nThis is clearly a resource node — the Guild would pay for confirmed locations.",
+      "options": [
+        {
+          "option_id": "mark_location",
+          "label": "Mark the location for the Guild survey.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["flag:survey_mana_node", "give_gold:15"]
+        },
+        {
+          "option_id": "take_crystal",
+          "label": "Take the mana crystal.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["give_item:mana_potion", "flag:took_guild_resource"]
+        },
+        {
+          "option_id": "descend_to_floor2",
+          "label": "Find the stairs to Floor 2.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "floor2_warning"
+        }
+      ]
+    },
+    "floor2_warning": {
+      "text": "You find the staircase leading down. The System pings a warning: RANK MISMATCH DETECTED. RANK F ADVENTURER. FLOOR 2 CREATURES: RANK C. PROCEEDING IS INADVISABLE.\n\nThe stairs descend into darkness. You can hear... something large, moving.",
+      "options": [
+        {
+          "option_id": "go_back_up",
+          "label": "Retreat. The Guild was right.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "descend_anyway",
+          "label": "Descend anyway. You need to understand what's changed.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "floor2_arrival",
+          "triggers": ["flag:descended_to_floor2", "flag:ignored_system_warning"]
+        }
+      ]
+    },
+    "floor2_arrival": {
+      "text": "The bottom of the stairs opens into a chamber that doesn't match the rest of the dungeon. The walls here are smoother, darker — like obsidian rather than quarried stone. And the creature in the center of the chamber is not a goblin.\n\nIt's bipedal. Armored in dark chitin. Its eyes glow the same color as the void shard you may or may not have in your pocket.\n\nIt looks at you like it's been waiting.\n\nTHE SYSTEM HAS NO ENTRY FOR THIS CREATURE.",
+      "options": [
+        {
+          "option_id": "fight_unknown",
+          "label": "Fight it. That's what you're here for.",
+          "expected": false,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["combat:unknown_creature", "flag:fought_unknown_creature"]
+        },
+        {
+          "option_id": "retreat_floor2",
+          "label": "Retreat immediately. This is beyond you.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        }
+      ]
+    }
+  }
+}

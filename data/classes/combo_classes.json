@@ -1,0 +1,87 @@
+[
+  {
+    "class_id": "battle_mage",
+    "name": "Battle Mage",
+    "rarity": "UNCOMMON",
+    "description": "A rare fusion of martial and arcane discipline, Battle Mages channel magic directly through their weapons. They sacrifice the peak of both disciplines for a lethal combination.",
+    "flavor_text": "Steel and sorcery, indistinguishable in their hands.",
+    "base_stats_bonus": {"STR": 2, "INT": 2, "AGI": 1, "LCK": 0, "VIT": 2, "WIS": 1, "END": 1},
+    "stat_growth": {"STR": 1, "INT": 2, "AGI": 1, "LCK": 0, "VIT": 1, "WIS": 1, "END": 0},
+    "starting_skills": ["spell_blade", "arcane_strike"],
+    "learnable_skills": ["mana_blade", "runic_armor", "spellsword_surge", "elemental_weapon"],
+    "combo_requirements": {
+      "required_classes": ["warrior", "mage"],
+      "min_stats": {"STR": 8, "INT": 8, "AGI": 5, "LCK": 0, "VIT": 5, "WIS": 0, "END": 0},
+      "required_items": [],
+      "required_flags": [],
+      "min_level": 5
+    }
+  },
+  {
+    "class_id": "spell_blade",
+    "name": "Spell Blade",
+    "rarity": "RARE",
+    "description": "Where Battle Mages blend the two arts broadly, Spell Blades achieve a narrow, devastating mastery — a single infused blade strike that can level fortresses.",
+    "flavor_text": "One strike. One spell. One ending.",
+    "base_stats_bonus": {"STR": 2, "INT": 3, "AGI": 2, "LCK": 0, "VIT": 1, "WIS": 2, "END": 1},
+    "stat_growth": {"STR": 1, "INT": 2, "AGI": 2, "LCK": 0, "VIT": 1, "WIS": 1, "END": 0},
+    "starting_skills": ["perfect_slash", "void_infusion"],
+    "learnable_skills": ["null_field", "blade_resonance", "anti_magic_edge", "dimension_cut"],
+    "combo_requirements": {
+      "required_classes": ["warrior", "mage"],
+      "min_stats": {"STR": 12, "INT": 12, "AGI": 8, "LCK": 0, "VIT": 0, "WIS": 5, "END": 0},
+      "required_items": ["enchanted_blade"],
+      "required_flags": [],
+      "min_level": 10
+    }
+  },
+  {
+    "class_id": "shadow_mage",
+    "name": "Shadow Mage",
+    "rarity": "RARE",
+    "description": "Blending illusion, darkness, and arcane power, Shadow Mages are the boogeymen of the System's hierarchy. They can be anywhere. Or nowhere.",
+    "flavor_text": "Even the darkness fears what lurks within it.",
+    "base_stats_bonus": {"STR": 0, "INT": 3, "AGI": 2, "LCK": 2, "VIT": 0, "WIS": 2, "END": 0},
+    "stat_growth": {"STR": 0, "INT": 2, "AGI": 2, "LCK": 2, "VIT": 0, "WIS": 1, "END": 0},
+    "starting_skills": ["shadow_bolt", "phantom_step"],
+    "learnable_skills": ["dark_nova", "soul_drain", "void_walk", "nightmare_bind"],
+    "combo_requirements": {
+      "required_classes": ["rogue", "mage"],
+      "min_stats": {"STR": 0, "INT": 10, "AGI": 10, "LCK": 5, "VIT": 0, "WIS": 5, "END": 0},
+      "required_items": [],
+      "required_flags": [],
+      "min_level": 8
+    }
+  },
+  {
+    "class_id": "paladin",
+    "name": "Paladin",
+    "rarity": "UNCOMMON",
+    "description": "Warriors who have taken holy vows, Paladins combine martial might with divine magic. They are the shield against which darkness breaks.",
+    "flavor_text": "Blessed steel, unyielding faith.",
+    "base_stats_bonus": {"STR": 2, "INT": 0, "AGI": 0, "LCK": 1, "VIT": 3, "WIS": 2, "END": 2},
+    "stat_growth": {"STR": 1, "INT": 0, "AGI": 0, "LCK": 1, "VIT": 2, "WIS": 2, "END": 1},
+    "starting_skills": ["holy_blade", "lay_on_hands"],
+    "learnable_skills": ["divine_strike", "consecration", "aura_of_protection", "judgment"],
+    "combo_requirements": {
+      "required_classes": ["warrior", "priest"],
+      "min_stats": {"STR": 8, "INT": 0, "AGI": 0, "LCK": 0, "VIT": 8, "WIS": 8, "END": 5},
+      "required_items": [],
+      "required_flags": [],
+      "min_level": 5
+    }
+  },
+  {
+    "class_id": "fallback_generated",
+    "name": "Wayward Soul",
+    "rarity": "RARE",
+    "description": "The System struggled to categorize this existence. Perhaps that is precisely the point. You are something the System has never seen before — and that makes you dangerous.",
+    "flavor_text": "Undefined. Unbound. Unstoppable.",
+    "base_stats_bonus": {"STR": 1, "INT": 1, "AGI": 1, "LCK": 3, "VIT": 1, "WIS": 1, "END": 1},
+    "stat_growth": {"STR": 1, "INT": 1, "AGI": 1, "LCK": 2, "VIT": 1, "WIS": 1, "END": 0},
+    "starting_skills": ["wild_surge", "chaotic_aura"],
+    "learnable_skills": ["reality_glitch", "fortune_strike", "adapt", "undefined_power"],
+    "combo_requirements": null,
+    "is_ai_generated": true
+  }
+]

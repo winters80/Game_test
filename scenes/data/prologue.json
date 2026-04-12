@@ -1,0 +1,91 @@
+{
+  "scene_id": "prologue",
+  "title": "The Day the Sky Shattered",
+  "entrance_text": [
+    "You remember the moment the sky broke.",
+    "Not metaphorically. The sky literally fractured — great shards of azure light falling upward into the void, leaving behind a lattice of cold blue runes that hung in the air like the bones of a dead god.",
+    "The world called it the Fracture.",
+    "You called it Tuesday. Because it happened on a Tuesday, and you were late for work.",
+    "",
+    "That was three years ago.",
+    "",
+    "Now the System governs everything. Classes. Skills. Ranks. The hierarchy of power made visible, measurable, tradeable. Some people thrived. Most just survived.",
+    "You survived.",
+    "",
+    "But today, something is different. You can feel it — a pressure behind your sternum, like the universe is holding its breath.",
+    "THE SYSTEM IS WATCHING."
+  ],
+  "nodes": {
+    "root": {
+      "text": "The pressure builds. You are at the threshold. The Classification Rite is beginning.",
+      "options": [
+        {
+          "option_id": "begin_rite",
+          "label": "Step forward. Accept what comes.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "examine_self",
+          "label": "Take a moment. Examine your surroundings.",
+          "expected": true,
+          "leads_to": "prologue",
+          "leads_to_node": "examine"
+        }
+      ]
+    },
+    "examine": {
+      "text": "You are standing in the town square of Verath. Around you, others who've come of age today stand in their own circles of blue light — their own private Classification Rites. Some look excited. Some look terrified. One child is crying. A man nearby looks like he's about to run.",
+      "options": [
+        {
+          "option_id": "step_forward",
+          "label": "Step forward. It's time.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "help_child",
+          "label": "Go comfort the crying child first.",
+          "expected": false,
+          "leads_to": "prologue",
+          "leads_to_node": "help_child",
+          "triggers": ["flag:comforted_child"]
+        },
+        {
+          "option_id": "flee_attempt",
+          "label": "Follow the man who looks like he's about to run.",
+          "expected": false,
+          "leads_to": "prologue",
+          "leads_to_node": "flee_attempt"
+        }
+      ]
+    },
+    "help_child": {
+      "text": "You kneel beside the child. She's about eight years old, clutching something in her fist — a small coin. She looks up at you with tear-streaked eyes.\n\n'I don't want a class,' she whispers. 'I don't want the System to own me.'\n\nYou have no answer for that. But you stay with her until the light around you both fades to a patient blue pulse.\n\nThe System notes your delay. And something about the way the light pulses seems... curious.",
+      "options": [
+        {
+          "option_id": "continue_rite",
+          "label": "Return to your own Rite.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "flee_attempt": {
+      "text": "The man bolts. You follow.\n\nYou make it about thirty feet before the blue light catches up — it flows across the ground like water, surrounding both of you. The man falls to his knees, gasping. You manage to stay standing.\n\nThe System's light is warmer now. As if it appreciates the challenge.\n\nSomething has been noted.",
+      "options": [
+        {
+          "option_id": "accept_rite_after_flee",
+          "label": "Stop running. Face the Rite.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "root",
+          "triggers": ["flag:broke_tutorial_sequence"]
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,209 @@
+{
+  "scene_id": "village_start",
+  "title": "Verath — The Day After",
+  "entrance_text": [
+    "The Classification Rite is complete.",
+    "You feel it — a subtle shift, like a lock being turned somewhere deep in your bones.",
+    "The System has marked you. Catalogued you. Filed you away.",
+    "Verath goes about its business around you, as if the world didn't just permanently change."
+  ],
+  "nodes": {
+    "root": {
+      "text": "You stand in Verath's market district. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, and the road leading to the old forest dungeon.",
+      "options": [
+        {
+          "option_id": "check_board",
+          "label": "Check the Adventurers' Board.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "board"
+        },
+        {
+          "option_id": "enter_guild",
+          "label": "Enter the Adventurers' Guild.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "guild"
+        },
+        {
+          "option_id": "visit_blacksmith",
+          "label": "Visit the blacksmith.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "blacksmith"
+        },
+        {
+          "option_id": "head_to_dungeon",
+          "label": "Head toward the dungeon. Time to see what you can do.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "check_status",
+          "label": "[View your status and inventory]",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "status_check"
+        }
+      ]
+    },
+    "unknown_arrival": {
+      "text": "You arrive in Verath's market district with a strange coin in your pocket and absolutely no idea what the System has done with you.\n\nOthers who went through the Rite today are comparing class designations, showing off their new skill notifications. One man nearby got 'Iron Warrior'. A woman is practically glowing — she got 'Ember Mage'.\n\nYour status screen shows... nothing. Just 'Unclassified'. And somehow that feels exactly right.",
+      "options": [
+        {
+          "option_id": "explore_unclassified",
+          "label": "Explore the town. Figure out what being 'Unclassified' means.",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["flag:explored_unclassified"]
+        }
+      ]
+    },
+    "board": {
+      "text": "The Adventurers' Board is covered in contracts. Most are marked 'Level 1-5 Only'. A few stand out:\n\n• WOLF PELTS WANTED — 5g each, delivery to Maren the Tanner.\n• DUNGEON SURVEY — First floor, document creature types. 30g reward.\n• MISSING PERSON — Aldric Fenn, last seen entering the old forest. 100g reward.\n\nAt the bottom, someone has scrawled in charcoal: 'THE SECOND FLOOR IS DIFFERENT NOW. DON'T GO THERE.'",
+      "options": [
+        {
+          "option_id": "take_survey",
+          "label": "Accept the dungeon survey contract.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "survey_accepted",
+          "triggers": ["flag:contract_dungeon_survey"]
+        },
+        {
+          "option_id": "note_warning",
+          "label": "Note the warning about the second floor.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["flag:knows_second_floor_warning"]
+        },
+        {
+          "option_id": "back_to_market",
+          "label": "Return to the market.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "survey_accepted": {
+      "text": "You pull the contract from the board. A small notification pulses in your vision:\n\nOBJECTIVE ADDED: Survey Dungeon Floor 1. Document creature types for the Adventurers' Guild. Reward: 30 gold.",
+      "options": [
+        {
+          "option_id": "back_from_board",
+          "label": "Return to the market.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "guild": {
+      "text": "The Adventurers' Guild is a low-ceilinged hall that smells of leather and pine resin. A woman behind the counter with close-cropped silver hair and a Guild insignia on her shoulder looks up.\n\n'New face. Fresh from your Rite, I'd wager.' She glances at your status — that slight unfocusing of the eyes that means she's reading your System profile. Her eyebrow goes up. Just a fraction.\n\n'Hm. You should probably start with the dungeon's first floor. Everyone does.'",
+      "options": [
+        {
+          "option_id": "ask_about_dungeon",
+          "label": "Ask about the dungeon.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "guild_dungeon_info"
+        },
+        {
+          "option_id": "ask_about_second_floor",
+          "label": "Ask about the second floor specifically.",
+          "expected": false,
+          "requires": {"flags": ["knows_second_floor_warning"]},
+          "leads_to": "village_start",
+          "leads_to_node": "guild_second_floor",
+          "triggers": ["flag:guild_knows_you_know"]
+        },
+        {
+          "option_id": "leave_guild",
+          "label": "Thank her and leave.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "guild_dungeon_info": {
+      "text": "'Standard dungeon. Three registered floors. First floor is Rank F — goblins, slimes, the occasional oversized rat. Good for new classifications.' She pauses. 'Second floor has been... irregular lately. We've had two survey teams not come back. Third floor is sealed until the Ranking Committee says otherwise.\n\nStick to the first floor until your rank improves.'",
+      "options": [
+        {
+          "option_id": "back_from_guild_info",
+          "label": "Thank her and leave.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["flag:knows_dungeon_floors"]
+        }
+      ]
+    },
+    "guild_second_floor": {
+      "text": "The guildmaster's expression sharpens. She leans forward.\n\n'Where did you hear about the second floor?' She doesn't wait for an answer. 'The creatures there — they're not matching their registered ranks. A Rank F dungeon floor is producing Rank C creatures. The System's data doesn't account for it. We don't know why.\n\nDon't go there. Not yet.'",
+      "options": [
+        {
+          "option_id": "promise_not_to",
+          "label": "Promise to stay on the first floor.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "dont_promise",
+          "label": "Offer no promises. Just nod.",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["flag:interested_in_second_floor"]
+        }
+      ]
+    },
+    "blacksmith": {
+      "text": "The blacksmith is a barrel-chested man named Torven who looks at you the way craftsmen look at everything — as a problem to be assessed and solved.\n\n'New adventurer, eh. Got some basics in stock. Nothing fancy, but it'll keep you alive on the first floor.'",
+      "options": [
+        {
+          "option_id": "browse_wares",
+          "label": "Browse his wares.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "shop"
+        },
+        {
+          "option_id": "leave_blacksmith",
+          "label": "Thank him and leave.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "shop": {
+      "text": "Available for purchase:\n• Iron Sword — 50 gold (STR +2)\n• Leather Armor — 40 gold (VIT +2, AGI +1, END +1)\n• Health Potion — 25 gold\n• Mana Potion — 30 gold\n\n(Shop functionality coming soon — use gold to prepare for the dungeon.)",
+      "options": [
+        {
+          "option_id": "leave_shop",
+          "label": "Leave the shop.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "status_check": {
+      "text": "[Your current status is displayed above.]",
+      "options": [
+        {
+          "option_id": "back_from_status",
+          "label": "Back to the market.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    }
+  }
+}

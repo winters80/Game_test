@@ -1,0 +1,35 @@
+[
+  {
+    "item_id": "cloth_robe",
+    "name": "Cloth Robe",
+    "rarity": "COMMON",
+    "item_type": "ARMOR",
+    "description": "Simple cloth robes. Offer minimal protection but don't hinder movement.",
+    "flavor_text": "Practicality over pride.",
+    "stats_bonus": {"STR": 0, "INT": 1, "AGI": 0, "LCK": 0, "VIT": 0, "WIS": 1, "END": 0},
+    "value_gold": 15,
+    "weight": 0.5
+  },
+  {
+    "item_id": "leather_armor",
+    "name": "Leather Armor",
+    "rarity": "COMMON",
+    "item_type": "ARMOR",
+    "description": "Cured leather armor, offering a balance of protection and mobility.",
+    "flavor_text": "The favored second skin of those who survive.",
+    "stats_bonus": {"STR": 0, "INT": 0, "AGI": 1, "LCK": 0, "VIT": 2, "WIS": 0, "END": 1},
+    "value_gold": 40,
+    "weight": 1.5
+  },
+  {
+    "item_id": "iron_plate",
+    "name": "Iron Plate",
+    "rarity": "COMMON",
+    "item_type": "ARMOR",
+    "description": "Heavy iron plate armor. You won't be sneaking anywhere in this.",
+    "flavor_text": "Every dent is a story of survival.",
+    "stats_bonus": {"STR": 0, "INT": 0, "AGI": -1, "LCK": 0, "VIT": 4, "WIS": 0, "END": 3},
+    "value_gold": 80,
+    "weight": 5.0
+  }
+]

@@ -1,0 +1,10 @@
+{
+  "world_name": "Aethoria",
+  "system_origin": "The System appeared without warning on the day the sky shattered — what scholars now call the Fracture. It imposed structure on chaos, assigning classes, skills, and ranks to every living being. Most welcomed order. A few questioned the cost.",
+  "system_nature": "The System is not a god, but it is not merely a tool either. It observes, categorizes, and occasionally intervenes. It rewards those who follow its frameworks and... reacts... to those who do not.",
+  "class_awakening": "When a person crosses the threshold of power — typically after surviving their first true battle — the System performs a Classification Rite. It examines their body, mind, spirit, and potential, then assigns the class that fits its models. The rite is not a choice. Or so most believe.",
+  "anomalies": "Across recorded history, a handful of individuals have received classes that the System's official records cannot explain. These Anomalies tend to reshape the world around them. The System watches them most closely of all.",
+  "factions": ["The Steel Covenant (Warriors' guild)", "The Arcane Academy (Mages' institution)", "The Shadow Web (Rogues' network)", "The Ordained (Priests' order)", "The Freeblades (Independent adventurers)"],
+  "current_threat": "Something is breaking the System's framework from within. Dungeons are generating creatures that don't match their registered ranks. Class assignments are glitching. And deep beneath the city of Verath, something old — something that predates the System — is stirring.",
+  "tone": "Dark but not hopeless. Heroism exists but must be earned. The System is powerful but not omnipotent. Anomalies are both gift and curse."
+}

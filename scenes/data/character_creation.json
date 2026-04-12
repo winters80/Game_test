@@ -1,0 +1,149 @@
+{
+  "scene_id": "character_creation",
+  "title": "Who Are You?",
+  "entrance_text": [
+    "The blue light coalesces. The System is reading you.",
+    "Not just your body — your history, your instincts, the shape of your ambitions.",
+    "It wants to know: what are you, fundamentally?"
+  ],
+  "nodes": {
+    "root": {
+      "text": "Before the Rite concludes, you must reflect on yourself. The System is listening.",
+      "options": [
+        {
+          "option_id": "born_fighter",
+          "label": "I've always led with my fists. Strength is the only language that matters.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "confirm_warrior",
+          "triggers": ["flag:affinity_warrior"]
+        },
+        {
+          "option_id": "born_scholar",
+          "label": "I've spent years studying. Knowledge is the foundation of all power.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "confirm_mage",
+          "triggers": ["flag:affinity_mage"]
+        },
+        {
+          "option_id": "born_shadow",
+          "label": "I've survived by being unseen. The hidden path is the only safe one.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "confirm_rogue",
+          "triggers": ["flag:affinity_rogue"]
+        },
+        {
+          "option_id": "born_devoted",
+          "label": "I believe in something greater than myself. Service is my purpose.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "confirm_priest",
+          "triggers": ["flag:affinity_priest"]
+        },
+        {
+          "option_id": "born_wanderer",
+          "label": "I adapt. I watch. I find my way in any terrain, any situation.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "confirm_ranger",
+          "triggers": ["flag:affinity_ranger"]
+        },
+        {
+          "option_id": "born_refuse",
+          "label": "I don't fit into any of those boxes. I am something else entirely.",
+          "expected": false,
+          "leads_to": "character_creation",
+          "leads_to_node": "refuse_definition",
+          "triggers": ["flag:refused_system", "flag:affinity_unknown"]
+        }
+      ]
+    },
+    "confirm_warrior": {
+      "text": "The light flares red-gold. It recognizes the calluses on your knuckles, the set of your jaw, the way you instinctively scan a room for threats.\n\nYes. This is what you are.",
+      "options": [
+        {
+          "option_id": "accept_warrior",
+          "label": "Begin the journey.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["set_base_class:warrior", "give_item:rusty_sword", "give_item:health_potion"]
+        }
+      ]
+    },
+    "confirm_mage": {
+      "text": "The light deepens to a cool violet. It senses the pathways your mind has carved — the love of patterns, the hunger for understanding, the instinct to reach beyond what can be touched.\n\nYes. This is what you are.",
+      "options": [
+        {
+          "option_id": "accept_mage",
+          "label": "Begin the journey.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["set_base_class:mage", "give_item:mages_staff", "give_item:mana_potion"]
+        }
+      ]
+    },
+    "confirm_rogue": {
+      "text": "The light dims — deliberately, testing. It finds the habit of watching exits, the practiced stillness, the way you move without thinking to occupy shadows.\n\nYes. This is what you are.",
+      "options": [
+        {
+          "option_id": "accept_rogue",
+          "label": "Begin the journey.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["set_base_class:rogue", "give_item:shadow_daggers", "give_item:health_potion"]
+        }
+      ]
+    },
+    "confirm_priest": {
+      "text": "The light becomes warm gold. It senses the places in your chest that have been broken and healed and broken again — the scars that became a map of everything you protect.\n\nYes. This is what you are.",
+      "options": [
+        {
+          "option_id": "accept_priest",
+          "label": "Begin the journey.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["set_base_class:priest", "give_item:cloth_robe", "give_item:health_potion", "give_item:mana_potion"]
+        }
+      ]
+    },
+    "confirm_ranger": {
+      "text": "The light spreads outward, reaching like roots. It finds the part of you that belongs more to open spaces than closed rooms, to movement rather than stillness.\n\nYes. This is what you are.",
+      "options": [
+        {
+          "option_id": "accept_ranger",
+          "label": "Begin the journey.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["set_base_class:ranger", "give_item:leather_armor", "give_item:health_potion"]
+        }
+      ]
+    },
+    "refuse_definition": {
+      "text": "The light... pauses.\n\nIt has seen this before — once, twice, maybe ten times in the System's recorded history. Someone who slips through the classification matrix. Who isn't warrior, mage, rogue, priest, or ranger.\n\nWho is just... something else.\n\nThe System considers. The pressure against your sternum becomes almost painful.\n\nThen the light goes very, very still.",
+      "options": [
+        {
+          "option_id": "stand_firm",
+          "label": "Hold your ground. You are what you are.",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "unknown_arrival",
+          "triggers": ["flag:held_ground_against_system", "give_item:fate_coin"]
+        },
+        {
+          "option_id": "relent",
+          "label": "Perhaps you were being dramatic. Choose a path.",
+          "expected": true,
+          "leads_to": "character_creation",
+          "leads_to_node": "root"
+        }
+      ]
+    }
+  }
+}

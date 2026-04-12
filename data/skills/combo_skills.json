@@ -1,0 +1,75 @@
+[
+  {
+    "skill_id": "spell_blade",
+    "name": "Spell Blade",
+    "rarity": "UNCOMMON",
+    "description": "Infuse a weapon strike with arcane energy, dealing both physical and magic damage.",
+    "flavor_text": "Two arts, one edge.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 1,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 6.0, "scaling_coefficient": 1.2},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 6.0, "scaling_coefficient": 1.2}
+    ]
+  },
+  {
+    "skill_id": "arcane_strike",
+    "name": "Arcane Strike",
+    "rarity": "UNCOMMON",
+    "description": "Each melee attack has a chance to release a burst of arcane energy.",
+    "flavor_text": "The spell is always loaded.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_hit",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "damage", "scaling_stat": "INT", "base_value": 4.0, "scaling_coefficient": 0.8}]
+  },
+  {
+    "skill_id": "holy_blade",
+    "name": "Holy Blade",
+    "rarity": "UNCOMMON",
+    "description": "Imbue your weapon with divine light, dealing bonus holy damage especially effective against undead.",
+    "flavor_text": "The light judges all.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 8,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 5.0, "scaling_coefficient": 1.0},
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 5.0, "scaling_coefficient": 1.5}
+    ]
+  },
+  {
+    "skill_id": "lay_on_hands",
+    "name": "Lay on Hands",
+    "rarity": "UNCOMMON",
+    "description": "Channel divine healing through touch, restoring a significant amount of HP.",
+    "flavor_text": "Faith made manifest.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 15,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "heal", "scaling_stat": "WIS", "base_value": 20.0, "scaling_coefficient": 2.0}]
+  },
+  {
+    "skill_id": "wild_surge",
+    "name": "Wild Surge",
+    "rarity": "RARE",
+    "description": "Release an unpredictable burst of chaotic energy that deals random elemental damage.",
+    "flavor_text": "Even you don't know what happens next.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 3,
+    "effects": [{"effect_type": "damage", "scaling_stat": "LCK", "base_value": 8.0, "scaling_coefficient": 2.5}]
+  },
+  {
+    "skill_id": "chaotic_aura",
+    "name": "Chaotic Aura",
+    "rarity": "RARE",
+    "description": "Your very presence warps probability, giving all your actions a luck-based bonus.",
+    "flavor_text": "Chaos favours those who embrace it.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "buff", "scaling_stat": "LCK", "base_value": 0.0, "scaling_coefficient": 1.5}]
+  }
+]

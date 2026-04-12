@@ -1,0 +1,68 @@
+[
+  {
+    "skill_id": "backstab",
+    "name": "Backstab",
+    "rarity": "COMMON",
+    "description": "Strike from the shadows for massive damage. Requires the enemy to be unaware.",
+    "flavor_text": "Honour is for those who can afford to lose.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 2,
+    "effects": [{"effect_type": "damage", "scaling_stat": "AGI", "base_value": 10.0, "scaling_coefficient": 2.5}]
+  },
+  {
+    "skill_id": "shadow_step",
+    "name": "Shadow Step",
+    "rarity": "COMMON",
+    "description": "Teleport behind an enemy in an instant, repositioning and gaining initiative.",
+    "flavor_text": "Distance is just an illusion.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 4,
+    "cooldown_turns": 3,
+    "effects": [{"effect_type": "buff", "scaling_stat": "AGI", "base_value": 5.0, "scaling_coefficient": 1.0}]
+  },
+  {
+    "skill_id": "poison_blade",
+    "name": "Poison Blade",
+    "rarity": "UNCOMMON",
+    "description": "Coat your weapon in venom. Attacks deal damage over 3 turns.",
+    "flavor_text": "The wound you don't notice is the one that kills you.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 5,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "debuff", "scaling_stat": "AGI", "base_value": 4.0, "scaling_coefficient": 0.8}]
+  },
+  {
+    "skill_id": "smoke_bomb",
+    "name": "Smoke Bomb",
+    "rarity": "UNCOMMON",
+    "description": "Deploy a smoke bomb that blinds enemies and grants you stealth for 2 turns.",
+    "flavor_text": "Visibility is a liability.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 6,
+    "cooldown_turns": 5,
+    "effects": [{"effect_type": "debuff", "scaling_stat": null, "base_value": 2.0, "scaling_coefficient": 0.0}]
+  },
+  {
+    "skill_id": "assassinate",
+    "name": "Assassinate",
+    "rarity": "RARE",
+    "description": "A single lethal strike that deals massive damage, tripled against unaware enemies.",
+    "flavor_text": "One chance. One moment. One life ends.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 15,
+    "cooldown_turns": 6,
+    "effects": [{"effect_type": "damage", "scaling_stat": "AGI", "base_value": 20.0, "scaling_coefficient": 3.0}]
+  },
+  {
+    "skill_id": "evasion",
+    "name": "Evasion",
+    "rarity": "UNCOMMON",
+    "description": "Passively gives a chance to dodge physical attacks entirely, based on agility.",
+    "flavor_text": "The best defense is not being there.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "buff", "scaling_stat": "AGI", "base_value": 0.0, "scaling_coefficient": 1.0}]
+  }
+]

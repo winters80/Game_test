@@ -1,0 +1,57 @@
+[
+  {
+    "class_id": "warrior",
+    "name": "Warrior",
+    "rarity": "COMMON",
+    "description": "Masters of physical combat, Warriors channel raw strength and endurance into devastating melee attacks. They are the backbone of any party.",
+    "flavor_text": "Where others hesitate, the Warrior advances.",
+    "base_stats_bonus": {"STR": 3, "INT": 0, "AGI": 1, "LCK": 0, "VIT": 3, "WIS": 0, "END": 2},
+    "stat_growth": {"STR": 2, "INT": 0, "AGI": 1, "LCK": 0, "VIT": 2, "WIS": 0, "END": 1},
+    "starting_skills": ["power_strike", "iron_skin"],
+    "learnable_skills": ["berserker_rage", "shield_bash", "war_cry", "blade_storm"]
+  },
+  {
+    "class_id": "mage",
+    "name": "Mage",
+    "rarity": "COMMON",
+    "description": "Students of the arcane arts, Mages wield elemental and destructive magic at the cost of physical fragility. Their potential is limitless.",
+    "flavor_text": "Reality bends at the Mage's will.",
+    "base_stats_bonus": {"STR": 0, "INT": 4, "AGI": 1, "LCK": 1, "VIT": 0, "WIS": 3, "END": 0},
+    "stat_growth": {"STR": 0, "INT": 3, "AGI": 0, "LCK": 1, "VIT": 0, "WIS": 2, "END": 0},
+    "starting_skills": ["fireball", "mana_shield"],
+    "learnable_skills": ["ice_lance", "lightning_bolt", "arcane_surge", "time_slow"]
+  },
+  {
+    "class_id": "rogue",
+    "name": "Rogue",
+    "rarity": "COMMON",
+    "description": "Shadows are their domain. Rogues strike from concealment with lethal precision, relying on speed and cunning over brute force.",
+    "flavor_text": "The blade you never see is the one that kills you.",
+    "base_stats_bonus": {"STR": 1, "INT": 1, "AGI": 4, "LCK": 2, "VIT": 0, "WIS": 0, "END": 1},
+    "stat_growth": {"STR": 1, "INT": 1, "AGI": 3, "LCK": 1, "VIT": 0, "WIS": 0, "END": 0},
+    "starting_skills": ["backstab", "shadow_step"],
+    "learnable_skills": ["poison_blade", "smoke_bomb", "assassinate", "evasion"]
+  },
+  {
+    "class_id": "priest",
+    "name": "Priest",
+    "rarity": "COMMON",
+    "description": "Conduits of divine energy, Priests sustain allies and smite the undead. Their faith is their weapon and their shield.",
+    "flavor_text": "Faith is the armor no blade can pierce.",
+    "base_stats_bonus": {"STR": 0, "INT": 2, "AGI": 0, "LCK": 1, "VIT": 2, "WIS": 4, "END": 0},
+    "stat_growth": {"STR": 0, "INT": 1, "AGI": 0, "LCK": 1, "VIT": 1, "WIS": 3, "END": 1},
+    "starting_skills": ["holy_light", "divine_ward"],
+    "learnable_skills": ["resurrection", "smite", "blessed_aura", "sanctuary"]
+  },
+  {
+    "class_id": "ranger",
+    "name": "Ranger",
+    "rarity": "COMMON",
+    "description": "Hunters of the wilds, Rangers excel at ranged combat and tracking. They form bonds with nature and strike enemies before they can react.",
+    "flavor_text": "The arrow finds its mark before the enemy draws breath.",
+    "base_stats_bonus": {"STR": 1, "INT": 1, "AGI": 3, "LCK": 2, "VIT": 1, "WIS": 1, "END": 0},
+    "stat_growth": {"STR": 1, "INT": 0, "AGI": 2, "LCK": 2, "VIT": 1, "WIS": 0, "END": 0},
+    "starting_skills": ["aimed_shot", "hunters_mark"],
+    "learnable_skills": ["volley", "camouflage", "nature_bond", "eagle_eye"]
+  }
+]
