@@ -368,7 +368,12 @@ class GameEngine:
                 self._assign_class(class_id)
             elif trigger.startswith("combat:"):
                 encounter_id = trigger[7:]
-                self._run_combat(encounter_id)
+                # Surprise round if the option was an AI ambush/sneak option
+                _surprise = (
+                    option.option_id.startswith("ai_") and
+                    any(kw in option.label.lower() for kw in ("ambush", "sneak", "surprise", "ledge", "stealth"))
+                )
+                self._run_combat(encounter_id, surprise=_surprise)
             elif trigger.startswith("talk_npc:"):
                 template_id = trigger[9:]
                 self._run_dialogue(template_id)
@@ -471,18 +476,65 @@ class GameEngine:
                 renderer.print_class_reveal(cls)
                 renderer.prompt_any_key()
 
-    def _run_combat(self, encounter_id: str) -> None:
+    def _run_combat(self, encounter_id: str, surprise: bool = False) -> None:
         enemies = combat_system.spawn_encounter(encounter_id)
         if not enemies:
             return
 
+        # Give numbered display names to duplicates — "Goblin Scout #1", "Goblin Scout #2"
+        _name_counts: dict[str, int] = {}
+        for e in enemies:
+            _name_counts[e.name] = _name_counts.get(e.name, 0) + 1
+        _name_idx: dict[str, int] = {}
+        for e in enemies:
+            if _name_counts[e.name] > 1:
+                _name_idx[e.name] = _name_idx.get(e.name, 0) + 1
+                e.name = f"{e.name} #{_name_idx[e.name]}"
+
         renderer.print_divider()
-        renderer.print_system_message("COMBAT INITIATED", style="system_warning")
+        count = len(enemies)
+        names_str = ", ".join(e.name for e in enemies)
+        renderer.print_system_message(
+            f"COMBAT INITIATED — {count} enem{'y' if count == 1 else 'ies'}: {names_str}",
+            style="system_warning",
+        )
         time.sleep(0.5)
 
         player = self.state.player
         turn = 0
         alive_enemies = [e for e in enemies if e.is_alive]
+
+        # Surprise round: player gets one free attack before enemies can respond
+        if surprise and alive_enemies:
+            target = alive_enemies[0]
+            dmg, is_crit = combat_system.player_attack(player, target)
+            crit_str = " CRITICALLY" if is_crit else ""
+            renderer.print_combat_action(
+                "SURPRISE!", f"You strike {target.name}{crit_str} before they react!", dmg, "system_warning"
+            )
+            if not target.is_alive:
+                renderer.print_combat_action(target.name, "goes down before the fight begins!", style="success")
+            alive_enemies = [e for e in enemies if e.is_alive]
+            time.sleep(0.4)
+
+        def _enemy_bar(e) -> str:
+            pct = e.current_hp / e.max_hp if e.max_hp > 0 else 0
+            filled = int(pct * 10)
+            bar = "█" * filled + "░" * (10 - filled)
+            color = "hp_high" if pct > 0.6 else ("hp_mid" if pct > 0.3 else "hp_low")
+            return f"[{color}]{bar}[/{color}] {e.current_hp}/{e.max_hp}"
+
+        def _skill_label(sid: str) -> str:
+            sk = self.skill_registry.get(sid)
+            if sk is None:
+                return sid
+            label = sk.name
+            cd = player.skill_cooldowns.get(sid, 0)
+            if cd > 0:
+                label += f" [CD:{cd}]"
+            elif sk.mp_cost > 0:
+                label += f" [{sk.mp_cost} MP]"
+            return label
 
         while alive_enemies and player.current_hp > 0:
             turn += 1
@@ -491,100 +543,117 @@ class GameEngine:
             renderer.print_status_bar(player, self.item_registry)
             renderer.print_divider()
 
-            # Show enemies
-            for enemy in alive_enemies:
-                renderer.print_combat_header(enemy.name, enemy.current_hp, enemy.max_hp, player=player)
+            # Show all enemies with HP bars
+            renderer.console.print(f"  [system_warning]⚔  TURN {turn}[/system_warning]")
+            for i, enemy in enumerate(alive_enemies, 1):
+                renderer.console.print(
+                    f"  [{i}] [damage]{enemy.name}[/damage]  {_enemy_bar(enemy)}  "
+                    f"[dim_text]ATK {enemy.attack}  DEF {enemy.defense}[/dim_text]"
+                )
+            renderer.console.print()
 
-            # Player turn
+            # ── Choose action ─────────────────────────────────────────────────
             skills_available = [sid for sid in player.skills if self.skill_registry.get(sid)]
+            action_choices = ["⚔ Basic Attack"] + [_skill_label(sid) for sid in skills_available] + ["🏃 Flee"]
+            action = questionary.select("Your action:", choices=action_choices).ask()
 
-            # Build enriched combat choices showing MP cost and cooldown
-            def _skill_label(sid: str) -> str:
-                sk = self.skill_registry.get(sid)
-                if sk is None:
-                    return sid
-                label = sk.name
-                cd = player.skill_cooldowns.get(sid, 0)
-                if cd > 0:
-                    label += f" [CD:{cd}]"
-                elif sk.mp_cost > 0:
-                    label += f" [{sk.mp_cost} MP]"
-                return label
-
-            combat_choices = ["⚔ Basic Attack"] + [
-                _skill_label(sid) for sid in skills_available
-            ] + ["🏃 Flee"]
-
-            action = questionary.select("Your action:", choices=combat_choices).ask()
-            target = alive_enemies[0]
-
-            if action == "🏃 Flee":
-                if combat_system.try_flee(player, target):
+            if action is None or action == "🏃 Flee":
+                if combat_system.try_flee(player, alive_enemies[0]):
                     renderer.print_scene_text(["You flee from combat!"])
                     renderer.prompt_any_key()
                     return
                 else:
                     renderer.print_scene_text(["You failed to flee!"])
-            elif action == "⚔ Basic Attack":
-                dmg, is_crit = combat_system.player_attack(player, target)
-                style = "critical" if is_crit else "damage"
-                renderer.print_combat_action(
-                    "You", "strike" + (" CRITICALLY" if is_crit else ""), dmg, style
-                )
-                if not target.is_alive:
-                    renderer.print_combat_action(target.name, "is defeated!", style="success")
+
             else:
-                # Skill/spell — find skill_id by matching label
-                skill_id = next(
-                    (sid for sid in skills_available if _skill_label(sid) == action), None
-                )
-                if skill_id:
-                    skill = self.skill_registry.get(skill_id)
-                    cd = player.skill_cooldowns.get(skill_id, 0)
-                    if cd > 0:
-                        renderer.print_scene_text([f"{skill.name} is on cooldown ({cd} turns remaining)."])
-                    elif skill.mp_cost > 0 and player.current_mp < skill.mp_cost:
-                        renderer.print_scene_text(["Not enough MP!"])
-                    else:
-                        # Check for heal effects (healing_light etc.)
-                        from entities.enums import EffectType
-                        is_heal = skill.effects and any(
-                            e.effect_type == EffectType.HEAL for e in skill.effects
-                        )
-                        if is_heal:
-                            from systems.skill_system import calculate_skill_damage
-                            heal_val = calculate_skill_damage(skill, player)
-                            player.current_mp -= skill.mp_cost
-                            player.current_hp = min(player.max_hp, player.current_hp + heal_val)
-                            if skill.cooldown_turns > 0:
-                                player.skill_cooldowns[skill_id] = skill.cooldown_turns
-                            renderer.print_scene_text([
-                                f"You cast {skill.name}. Healed {heal_val} HP. "
-                                f"({player.current_hp}/{player.max_hp})"
-                            ])
+                # ── Choose target (if more than one enemy alive) ──────────────
+                if len(alive_enemies) > 1 and action != "🏃 Flee":
+                    target_choices = [
+                        f"[{i}] {e.name}  ({e.current_hp}/{e.max_hp} HP)"
+                        for i, e in enumerate(alive_enemies, 1)
+                    ]
+                    t_answer = questionary.select("Target:", choices=target_choices).ask()
+                    try:
+                        t_idx = int(t_answer.split("]")[0].lstrip("[")) - 1
+                        target = alive_enemies[t_idx]
+                    except Exception:
+                        target = alive_enemies[0]
+                else:
+                    target = alive_enemies[0]
+
+                # ── Execute action ────────────────────────────────────────────
+                if action == "⚔ Basic Attack":
+                    dmg, is_crit = combat_system.player_attack(player, target)
+                    crit_str = " CRITICALLY" if is_crit else ""
+                    renderer.print_combat_action(
+                        "You", f"strike {target.name}{crit_str} for", dmg,
+                        "critical" if is_crit else "damage",
+                    )
+                    renderer.console.print(
+                        f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
+                    )
+                    if not target.is_alive:
+                        renderer.print_combat_action(target.name, "is defeated!", style="success")
+
+                else:
+                    # Skill / spell
+                    skill_id = next(
+                        (sid for sid in skills_available if _skill_label(sid) == action), None
+                    )
+                    if skill_id:
+                        skill = self.skill_registry.get(skill_id)
+                        cd = player.skill_cooldowns.get(skill_id, 0)
+                        if cd > 0:
+                            renderer.print_scene_text([f"{skill.name} is on cooldown ({cd} turns remaining)."])
+                        elif skill.mp_cost > 0 and player.current_mp < skill.mp_cost:
+                            renderer.print_scene_text([f"Not enough MP! Need {skill.mp_cost}, have {player.current_mp}."])
                         else:
-                            # Damage skill — use combat_system for MP deduction + cooldown
-                            val, success = combat_system.player_skill_attack(
-                                player, skill_id, target, self.skill_registry
+                            from entities.enums import EffectType
+                            is_heal = skill.effects and any(
+                                e.effect_type == EffectType.HEAL for e in skill.effects
                             )
-                            if success:
-                                # Set cooldown if applicable (player_skill_attack doesn't do this)
+                            if is_heal:
+                                from systems.skill_system import calculate_skill_damage
+                                heal_val = calculate_skill_damage(skill, player)
+                                player.current_mp -= skill.mp_cost
+                                player.current_hp = min(player.max_hp, player.current_hp + heal_val)
                                 if skill.cooldown_turns > 0:
                                     player.skill_cooldowns[skill_id] = skill.cooldown_turns
-                                renderer.print_combat_action("You", f"use {skill.name}!", val, "rare")
+                                renderer.print_scene_text([
+                                    f"You cast {skill.name}. Healed {heal_val} HP. "
+                                    f"({player.current_hp}/{player.max_hp})"
+                                ])
                             else:
-                                renderer.print_scene_text(["Not enough MP!"])
-                            if not target.is_alive:
-                                renderer.print_combat_action(target.name, "is defeated!", style="success")
+                                val, success = combat_system.player_skill_attack(
+                                    player, skill_id, target, self.skill_registry
+                                )
+                                if success:
+                                    if skill.cooldown_turns > 0:
+                                        player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                                    renderer.print_combat_action(
+                                        "You", f"cast {skill.name} on {target.name} for", val, "rare"
+                                    )
+                                    renderer.console.print(
+                                        f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
+                                    )
+                                else:
+                                    renderer.print_scene_text(["Not enough MP!"])
+                                if not target.is_alive:
+                                    renderer.print_combat_action(target.name, "is defeated!", style="success")
 
-            # Enemy turns
+            # ── Enemy turns ───────────────────────────────────────────────────
             for enemy in alive_enemies:
                 if enemy.is_alive and player.current_hp > 0:
                     dmg = combat_system.enemy_attack(enemy, player)
                     if dmg == 0:
                         renderer.print_combat_action(enemy.name, "attacks — you dodge!", style="miss")
                     else:
-                        renderer.print_combat_action(enemy.name, "attacks you for", dmg, "damage")
+                        renderer.print_combat_action(
+                            enemy.name, f"strikes you for", dmg, "damage"
+                        )
+                        renderer.console.print(
+                            f"  [dim_text]→ Your HP: {player.current_hp}/{player.max_hp}[/dim_text]"
+                        )
 
             alive_enemies = [e for e in enemies if e.is_alive]
             time.sleep(0.3)
@@ -1078,6 +1147,111 @@ class GameEngine:
                 renderer.print_system_message(msg, style="success" if ok else "system_warning")
                 renderer.prompt_any_key()
 
+    def _admin_bots_panel(self) -> None:
+        """Full bot agent viewer — list all bots, drill into character sheet."""
+        from config import format_currency
+        from ui.panels import RARITY_COLORS
+
+        while True:
+            renderer.clear()
+            renderer.print_title()
+            renderer.console.print("\n  [system_msg][ ACTIVE AGENTS ][/system_msg]\n")
+            renderer.console.print(f"  Players : [gold]1[/gold]  (local session)")
+
+            if not self._bot_manager or self._bot_manager.active_count() == 0:
+                renderer.console.print("  AI Bots : [dim_text]0  (bot_system disabled or no bots loaded)[/dim_text]")
+                renderer.console.print()
+                renderer.prompt_any_key()
+                return
+
+            bots = self._bot_manager.all()
+            renderer.console.print(f"  AI Bots : [cyan]{len(bots)}[/cyan]\n")
+
+            bot_choices = []
+            for bot in bots:
+                bot_choices.append(
+                    f"  {bot.name}  [{bot.bot_id}]  zone: {bot.current_zone_id}  goal: {bot.current_goal}"
+                )
+            bot_choices.append("← Back")
+
+            chosen = questionary.select("Select bot to inspect:", choices=bot_choices).ask()
+            if chosen is None or chosen == "← Back":
+                break
+
+            # Find the selected bot
+            bot_idx = bot_choices.index(chosen)
+            bot = bots[bot_idx]
+
+            # Full character sheet
+            renderer.clear()
+            renderer.print_title()
+            renderer.console.print(f"\n  [cyan]═══  {bot.name}  ═══[/cyan]  [dim_text][{bot.bot_id}][/dim_text]\n")
+            renderer.console.print(f"  Personality : [dim_text]{bot.personality_seed}[/dim_text]")
+            renderer.console.print(f"  Current Goal: [system_msg]{bot.current_goal}[/system_msg]")
+            renderer.console.print(f"  Zone        : {bot.current_zone_id}")
+            renderer.console.print(f"  Last Active : turn {bot.turn_last_acted}")
+            renderer.console.print(f"  Gold        : [gold]{format_currency(bot.gold)}[/gold]")
+
+            # Alignment
+            align = bot.disposition
+            if align >= 50:   align_label = "Virtuous"
+            elif align >= 20: align_label = "Good-Natured"
+            elif align >= -20: align_label = "Neutral"
+            elif align >= -50: align_label = "Morally Gray"
+            else:              align_label = "Corrupt"
+            align_sign = "+" if align >= 0 else ""
+            renderer.console.print(f"  Alignment   : [dim_text]{align_sign}{align:.1f} ({align_label})[/dim_text]")
+            renderer.console.print()
+
+            # Stats
+            renderer.console.print("  [system_msg][ STATS ][/system_msg]")
+            s = bot.stats
+            renderer.console.print(
+                f"  STR {s.STR:3}   INT {s.INT:3}   AGI {s.AGI:3}   LCK {s.LCK:3}"
+            )
+            renderer.console.print(
+                f"  VIT {s.VIT:3}   WIS {s.WIS:3}   END {s.END:3}"
+            )
+            renderer.console.print()
+
+            # Inventory
+            if bot.inventory:
+                renderer.console.print("  [system_msg][ INVENTORY ][/system_msg]")
+                for item_id in bot.inventory:
+                    item = self.item_registry.get(item_id)
+                    name = item.name if item else item_id
+                    color = RARITY_COLORS.get(item.rarity.value, "white") if item else "white"
+                    renderer.console.print(f"    [{color}]{name}[/{color}]")
+            else:
+                renderer.console.print("  [dim_text]Inventory: empty[/dim_text]")
+            renderer.console.print()
+
+            # Memory
+            if bot.memory:
+                renderer.console.print("  [system_msg][ RECENT MEMORY ][/system_msg]")
+                for mem in bot.memory[-5:]:
+                    renderer.console.print(f"    [dim_text]• {mem}[/dim_text]")
+            renderer.console.print()
+
+            sub = questionary.select(
+                f"{bot.name}:",
+                choices=["Set Goal", "Move Zone", "← Back"]
+            ).ask()
+
+            if sub == "Set Goal":
+                new_goal = questionary.text("New goal:").ask()
+                if new_goal:
+                    bot.current_goal = new_goal.strip()
+                    renderer.print_success(f"{bot.name}'s goal set to: {bot.current_goal}")
+                    renderer.prompt_any_key()
+
+            elif sub == "Move Zone":
+                new_zone = questionary.text("Zone ID:").ask()
+                if new_zone:
+                    bot.current_zone_id = new_zone.strip()
+                    renderer.print_success(f"{bot.name} moved to: {bot.current_zone_id}")
+                    renderer.prompt_any_key()
+
     def _admin_panel(self) -> None:
         """Admin panel — feature flags, AI stats, debug tools."""
         while True:
@@ -1136,21 +1310,7 @@ class GameEngine:
                 renderer.prompt_any_key()
 
             elif action.startswith("Active Bots"):
-                renderer.console.print()
-                renderer.console.print("  [system_msg][ ACTIVE AGENTS ][/system_msg]")
-                renderer.console.print(f"  Players : [gold]1[/gold]  (local session)")
-                if self._bot_manager:
-                    renderer.console.print(f"  AI Bots : [cyan]{self._bot_manager.active_count()}[/cyan]")
-                    for bot in self._bot_manager.all():
-                        renderer.console.print(
-                            f"    [cyan]{bot.name}[/cyan]  [{bot.bot_id}]  "
-                            f"zone: [dim_text]{bot.current_zone_id}[/dim_text]  "
-                            f"goal: [dim_text]{bot.current_goal}[/dim_text]"
-                        )
-                else:
-                    renderer.console.print("  AI Bots : 0  (bot_system disabled)")
-                renderer.console.print()
-                renderer.prompt_any_key()
+                self._admin_bots_panel()
 
             elif action == "God Mode (restore HP + MP)":
                 self.state.player.current_hp = self.state.player.max_hp

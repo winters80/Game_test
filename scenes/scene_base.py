@@ -64,6 +64,7 @@ class Scene:
         min_stats = requires.get("min_stats", {})
         required_items = requires.get("items", [])
         required_flags = requires.get("flags", [])
+        absent_flags   = requires.get("flags_absent", [])   # hide option if ANY of these are set
         align_min = requires.get("alignment_min")
         align_max = requires.get("alignment_max")
         raw_stat_gates = requires.get("stat_gates", [])
@@ -95,6 +96,13 @@ class Scene:
                 if not player.has_flag(flag):
                     locked = True
                     lock_reason = "Condition not met"
+                    break
+
+        # ── 3b. Absent-flag checks (hide if any listed flag IS set) ──────────
+        if not should_hide:
+            for flag in absent_flags:
+                if player.has_flag(flag):
+                    should_hide = True
                     break
 
         # ── 4. Alignment checks (alignment_system feature) ────────────────────

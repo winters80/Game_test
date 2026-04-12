@@ -25,7 +25,8 @@
       "Bash(git pull:*)",
       "Bash(git fetch:*)",
       "Bash(git merge:*)",
-      "Bash(python -c \"from core.game_engine import GameEngine; e = GameEngine\\(\\); e.bootstrap\\(\\); print\\('OK'\\)\")"
+      "Bash(python -c \"from core.game_engine import GameEngine; e = GameEngine\\(\\); e.bootstrap\\(\\); print\\('OK'\\)\")",
+      "Bash(python -c \"import json; json.load\\(open\\('scenes/data/dungeon_floor1.json'\\)\\)\")"
     ]
   }
 }
