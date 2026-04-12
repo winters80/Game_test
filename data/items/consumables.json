@@ -54,5 +54,25 @@
     "combo_catalyst": true,
     "value_gold": 0,
     "weight": 0.5
+  },
+  {
+    "item_id": "torven_hammer",
+    "name": "Journeyman Hammer",
+    "rarity": "UNCOMMON",
+    "item_type": "KEY_ITEM",
+    "description": "A well-balanced smithing hammer with a double-lobe stamp mark and a V between the lobes — Torven's journeyman mark. Fifteen years of craft work in the grip.",
+    "flavor_text": "A tool that remembers every shape it ever made.",
+    "value_gold": 0,
+    "weight": 1.5
+  },
+  {
+    "item_id": "room_key",
+    "name": "Iron Compass Room Key",
+    "rarity": "COMMON",
+    "item_type": "KEY_ITEM",
+    "description": "A brass key to Room 3 at the Iron Compass Inn. Good for one night.",
+    "flavor_text": "It points nowhere, but it opens something.",
+    "value_gold": 5,
+    "weight": 0.1
   }
 ]

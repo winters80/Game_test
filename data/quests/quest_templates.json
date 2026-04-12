@@ -1,0 +1,111 @@
+[
+  {
+    "template_id": "blacksmith_hammer",
+    "title": "The Journeyman Hammer",
+    "description": "Torven's journeyman hammer — fifteen years of work in the grip — was stolen by a Goblin Looter patrol. He tracked them to the dungeon entrance but couldn't go further. He asked you to retrieve it.",
+    "giver_npc_id": "torven_blacksmith",
+    "stages": [
+      {
+        "stage_id": "find_hammer",
+        "description": "Locate the hammer in the goblin territory on Dungeon Floor 1.",
+        "objective_text": "Find Torven's journeyman hammer in the goblin territory (Dungeon Floor 1).",
+        "completion_condition": {"has_item": "torven_hammer"},
+        "on_advance_triggers": ["flag:hammer_found"],
+        "next_stage_id": "return_hammer"
+      },
+      {
+        "stage_id": "return_hammer",
+        "description": "Return the hammer to Torven.",
+        "objective_text": "Return the hammer to Torven at his forge.",
+        "completion_condition": {"has_flag": "torven_hammer_returned"},
+        "on_advance_triggers": [],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 40,
+    "reward_items": [],
+    "reward_flags": ["torven_owes_favour"],
+    "reward_xp": 75,
+    "alignment_reward": 5.0,
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "dungeon_survey",
+    "title": "Dungeon Survey — Floor 1",
+    "description": "The Adventurers' Guild needs a survey of the dungeon's first floor: creature types, patrol patterns, resource nodes. Standard first-contract work.",
+    "giver_npc_id": "sylara_guildmaster",
+    "stages": [
+      {
+        "stage_id": "survey_goblins",
+        "description": "Document the goblin patrol territory.",
+        "objective_text": "Engage or observe the goblin patrol (Floor 1, west corridor).",
+        "completion_condition": {"has_flag": "surveyed_goblins"},
+        "on_advance_triggers": [],
+        "next_stage_id": "survey_crystal"
+      },
+      {
+        "stage_id": "survey_crystal",
+        "description": "Locate and document the crystal chamber.",
+        "objective_text": "Find and document the crystal chamber resource node.",
+        "completion_condition": {"has_flag": "survey_mana_node"},
+        "on_advance_triggers": [],
+        "next_stage_id": "report_survey"
+      },
+      {
+        "stage_id": "report_survey",
+        "description": "Report findings to the Guild.",
+        "objective_text": "Report survey results to Sylara at the Adventurers' Guild.",
+        "completion_condition": {"has_flag": "submitted_dungeon_survey"},
+        "on_advance_triggers": ["flag:first_contract_done"],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 30,
+    "reward_items": [],
+    "reward_flags": ["guild_registered"],
+    "reward_xp": 60,
+    "alignment_reward": 5.0,
+    "failure_conditions": [],
+    "time_limit_turns": null
+  },
+  {
+    "template_id": "theft_investigation",
+    "title": "The Quiet Thief",
+    "description": "Mira at the Iron Compass Inn has had small valuables stolen from guests — a coin purse, a ring, a carved bone token. She can't go to the Guard. She needs someone who notices things to find out who it is.",
+    "giver_npc_id": "mira_innkeeper",
+    "stages": [
+      {
+        "stage_id": "gather_clues",
+        "description": "Interview guests or observe the inn to gather clues.",
+        "objective_text": "Find clues about the thief at the Iron Compass Inn.",
+        "completion_condition": {"has_flag": "theft_clue_short_stay"},
+        "on_advance_triggers": [],
+        "next_stage_id": "identify_thief"
+      },
+      {
+        "stage_id": "identify_thief",
+        "description": "Identify the thief and confront or expose them.",
+        "objective_text": "Identify who is stealing from short-term guests at the inn.",
+        "completion_condition": {"has_flag": "thief_identified"},
+        "on_advance_triggers": [],
+        "next_stage_id": "report_mira"
+      },
+      {
+        "stage_id": "report_mira",
+        "description": "Report the thief to Mira.",
+        "objective_text": "Report your findings to Mira at the Iron Compass.",
+        "completion_condition": {"has_flag": "mira_informed_of_thief"},
+        "on_advance_triggers": ["flag:inn_thefts_resolved"],
+        "next_stage_id": null
+      }
+    ],
+    "reward_gold": 25,
+    "reward_items": [],
+    "reward_flags": ["mira_owes_favour"],
+    "reward_xp": 50,
+    "alignment_reward": 8.0,
+    "failure_conditions": [{"has_flag": "tipped_off_thief"}],
+    "time_limit_turns": null
+  }
+]

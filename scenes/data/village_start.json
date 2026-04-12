@@ -9,7 +9,7 @@
   ],
   "nodes": {
     "root": {
-      "text": "You stand in Verath's market district. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, and the road leading to the old forest dungeon.",
+      "text": "You stand in Verath's market district. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, the Iron Compass Inn, and the road leading to the old forest dungeon.",
       "options": [
         {
           "option_id": "check_board",
@@ -23,14 +23,39 @@
           "label": "Enter the Adventurers' Guild.",
           "expected": true,
           "leads_to": "village_start",
-          "leads_to_node": "guild"
+          "leads_to_node": "guild_entrance"
         },
         {
           "option_id": "visit_blacksmith",
-          "label": "Visit the blacksmith.",
+          "label": "Visit the blacksmith's forge.",
           "expected": true,
           "leads_to": "village_start",
-          "leads_to_node": "blacksmith"
+          "leads_to_node": "blacksmith_entrance"
+        },
+        {
+          "option_id": "visit_inn",
+          "label": "Visit the Iron Compass Inn.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "inn_entrance"
+        },
+        {
+          "option_id": "approach_stranger",
+          "label": "Approach the cloaked figure at the edge of the market.",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "wanderer_approach",
+          "requires": {
+            "stat_gates": [
+              {
+                "stat": "PERCEPTION",
+                "threshold": 8,
+                "gate_type": "hidden",
+                "hidden_hint_threshold": 3,
+                "hint_text": "You sense a presence at the market's edge that the crowd seems to flow around without noticing."
+              }
+            ]
+          }
         },
         {
           "option_id": "head_to_dungeon",
@@ -62,7 +87,7 @@
       ]
     },
     "board": {
-      "text": "The Adventurers' Board is covered in contracts. Most are marked 'Level 1-5 Only'. A few stand out:\n\n• WOLF PELTS WANTED — 5g each, delivery to Maren the Tanner.\n• DUNGEON SURVEY — First floor, document creature types. 30g reward.\n• MISSING PERSON — Aldric Fenn, last seen entering the old forest. 100g reward.\n\nAt the bottom, someone has scrawled in charcoal: 'THE SECOND FLOOR IS DIFFERENT NOW. DON'T GO THERE.'",
+      "text": "The Adventurers' Board is covered in contracts. Most are marked 'Level 1-5 Only'. A few stand out:\n\n- WOLF PELTS WANTED — 5g each, delivery to Maren the Tanner.\n- DUNGEON SURVEY — First floor, document creature types. 30g reward.\n- MISSING PERSON — Aldric Fenn, last seen entering the old forest. 100g reward.\n\nAt the bottom, someone has scrawled in charcoal: 'THE SECOND FLOOR IS DIFFERENT NOW. DON'T GO THERE.'",
       "options": [
         {
           "option_id": "take_survey",
@@ -101,92 +126,109 @@
         }
       ]
     },
-    "guild": {
-      "text": "The Adventurers' Guild is a low-ceilinged hall that smells of leather and pine resin. A woman behind the counter with close-cropped silver hair and a Guild insignia on her shoulder looks up.\n\n'New face. Fresh from your Rite, I'd wager.' She glances at your status — that slight unfocusing of the eyes that means she's reading your System profile. Her eyebrow goes up. Just a fraction.\n\n'Hm. You should probably start with the dungeon's first floor. Everyone does.'",
+    "guild_entrance": {
+      "text": "The Adventurers' Guild is a low-ceilinged hall that smells of leather and pine resin. Sylara — silver-haired, Guild insignia on her shoulder — looks up from behind the counter.",
       "options": [
         {
-          "option_id": "ask_about_dungeon",
-          "label": "Ask about the dungeon.",
+          "option_id": "talk_to_sylara",
+          "label": "Speak with Sylara.",
           "expected": true,
-          "leads_to": "village_start",
-          "leads_to_node": "guild_dungeon_info"
-        },
-        {
-          "option_id": "ask_about_second_floor",
-          "label": "Ask about the second floor specifically.",
-          "expected": false,
-          "requires": {"flags": ["knows_second_floor_warning"]},
-          "leads_to": "village_start",
-          "leads_to_node": "guild_second_floor",
-          "triggers": ["flag:guild_knows_you_know"]
+          "leads_to": "__stay__",
+          "leads_to_node": "guild_entrance",
+          "triggers": ["talk_npc:sylara_guildmaster"]
         },
         {
           "option_id": "leave_guild",
-          "label": "Thank her and leave.",
+          "label": "Leave the Guild hall.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root"
         }
       ]
     },
-    "guild_dungeon_info": {
-      "text": "'Standard dungeon. Three registered floors. First floor is Rank F — goblins, slimes, the occasional oversized rat. Good for new classifications.' She pauses. 'Second floor has been... irregular lately. We've had two survey teams not come back. Third floor is sealed until the Ranking Committee says otherwise.\n\nStick to the first floor until your rank improves.'",
+    "blacksmith_entrance": {
+      "text": "The forge is loud and hot, even from the doorway. Torven — barrel-chested, hands like forge tools — sets down a piece of work and looks at you.",
       "options": [
         {
-          "option_id": "back_from_guild_info",
-          "label": "Thank her and leave.",
+          "option_id": "talk_to_torven",
+          "label": "Speak with Torven.",
           "expected": true,
-          "leads_to": "village_start",
-          "leads_to_node": "root",
-          "triggers": ["flag:knows_dungeon_floors"]
-        }
-      ]
-    },
-    "guild_second_floor": {
-      "text": "The guildmaster's expression sharpens. She leans forward.\n\n'Where did you hear about the second floor?' She doesn't wait for an answer. 'The creatures there — they're not matching their registered ranks. A Rank F dungeon floor is producing Rank C creatures. The System's data doesn't account for it. We don't know why.\n\nDon't go there. Not yet.'",
-      "options": [
-        {
-          "option_id": "promise_not_to",
-          "label": "Promise to stay on the first floor.",
-          "expected": true,
-          "leads_to": "village_start",
-          "leads_to_node": "root"
+          "leads_to": "__stay__",
+          "leads_to_node": "blacksmith_entrance",
+          "triggers": ["talk_npc:torven_blacksmith"]
         },
         {
-          "option_id": "dont_promise",
-          "label": "Offer no promises. Just nod.",
-          "expected": false,
-          "leads_to": "village_start",
-          "leads_to_node": "root",
-          "triggers": ["flag:interested_in_second_floor"]
-        }
-      ]
-    },
-    "blacksmith": {
-      "text": "The blacksmith is a barrel-chested man named Torven who looks at you the way craftsmen look at everything — as a problem to be assessed and solved.\n\n'New adventurer, eh. Got some basics in stock. Nothing fancy, but it'll keep you alive on the first floor.'",
-      "options": [
-        {
-          "option_id": "browse_wares",
-          "label": "Browse his wares.",
+          "option_id": "return_hammer",
+          "label": "Return Torven's hammer. [Hand it over]",
           "expected": true,
-          "leads_to": "village_start",
-          "leads_to_node": "shop"
+          "leads_to": "__stay__",
+          "leads_to_node": "blacksmith_entrance",
+          "requires": {"items": ["torven_hammer"]},
+          "triggers": ["talk_npc:torven_blacksmith"]
         },
         {
           "option_id": "leave_blacksmith",
-          "label": "Thank him and leave.",
+          "label": "Leave the forge.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root"
         }
       ]
     },
-    "shop": {
-      "text": "Available for purchase:\n• Iron Sword — 50 gold (STR +2)\n• Leather Armor — 40 gold (VIT +2, AGI +1, END +1)\n• Health Potion — 25 gold\n• Mana Potion — 30 gold\n\n(Shop functionality coming soon — use gold to prepare for the dungeon.)",
+    "inn_entrance": {
+      "text": "The Iron Compass Inn is warm and smells of woodsmoke and something cooking. Mira is behind the bar, watching the door the way people watch doors when they're waiting for something.",
       "options": [
         {
-          "option_id": "leave_shop",
-          "label": "Leave the shop.",
+          "option_id": "talk_to_mira",
+          "label": "Speak with Mira.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "inn_entrance",
+          "triggers": ["talk_npc:mira_innkeeper"]
+        },
+        {
+          "option_id": "leave_inn",
+          "label": "Leave the inn.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "wanderer_approach": {
+      "text": "The figure sits apart from the market crowd on a low wall, watching the road. Up close, you realize nobody else is looking at him — not deliberately avoiding, just somehow not noticing he's there.",
+      "options": [
+        {
+          "option_id": "talk_to_wanderer",
+          "label": "Speak with him.",
+          "expected": false,
+          "leads_to": "__stay__",
+          "leads_to_node": "wanderer_approach",
+          "triggers": ["talk_npc:gray_wanderer"]
+        },
+        {
+          "option_id": "leave_wanderer",
+          "label": "Think better of it. Return to the market.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "guard_post": {
+      "text": "Captain Aldis stands at the market checkpoint with the stillness of someone who has assessed a lot of people at a lot of checkpoints.",
+      "options": [
+        {
+          "option_id": "talk_to_aldis",
+          "label": "Approach the guard captain.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "guard_post",
+          "triggers": ["talk_npc:captain_aldis"]
+        },
+        {
+          "option_id": "leave_guard",
+          "label": "Move along.",
           "expected": true,
           "leads_to": "village_start",
           "leads_to_node": "root"

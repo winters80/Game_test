@@ -33,6 +33,8 @@ class GameEngine:
         self.scene_registry = SceneRegistry()
         self.species_registry = None   # loaded if species_system feature enabled
         self.backgrounds: dict = {}    # loaded if species_system feature enabled
+        self.npc_registry = None       # loaded if npc_system feature enabled
+        self.quest_registry = None     # loaded if quest_system feature enabled
         self.system_messages: dict = {}
         self.lore_data: dict = {}
         self.state: GameState | None = None
@@ -67,6 +69,16 @@ class GameEngine:
             self.species_registry = SpeciesRegistry()
             self.species_registry.load_from_file(DATA_DIR / "species" / "species_definitions.json")
             self.backgrounds = load_backgrounds(DATA_DIR)
+
+        if feature("npc_system"):
+            from entities.npc import NPCRegistry
+            self.npc_registry = NPCRegistry()
+            self.npc_registry.load_from_file(DATA_DIR / "npcs" / "npcs.json")
+
+        if feature("quest_system"):
+            from entities.quest import QuestRegistry
+            self.quest_registry = QuestRegistry()
+            self.quest_registry.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
 
     def _setup_ai(self) -> None:
         if not AI_ENABLED:
@@ -155,6 +167,12 @@ class GameEngine:
                     from systems.alignment_system import should_apply_inertia, apply_inertia
                     if should_apply_inertia(self.state.player.turn_count):
                         apply_inertia(self.state.player)
+
+                # Quest tick — check silent completions and failures
+                if feature("quest_system") and self.quest_registry:
+                    from systems import quest_system
+                    quest_system.tick_quests(self.state, self.quest_registry)
+                    bus.flush()
 
                 self._render_scene()
                 options = self._get_current_options()
@@ -261,6 +279,9 @@ class GameEngine:
             elif trigger.startswith("combat:"):
                 encounter_id = trigger[7:]
                 self._run_combat(encounter_id)
+            elif trigger.startswith("talk_npc:"):
+                template_id = trigger[9:]
+                self._run_dialogue(template_id)
 
         # Apply pending species (set by scene_base as _pending_species:<id>)
         if feature("species_system") and self.species_registry:
@@ -412,6 +433,99 @@ class GameEngine:
             self._stat_allocation_prompt()
 
         bus.flush()
+        renderer.prompt_any_key()
+
+    def _run_dialogue(self, template_id: str) -> None:
+        """Run a full NPC dialogue loop until __exit__ or no options remain."""
+        if not feature("npc_system") or self.npc_registry is None:
+            return
+
+        from systems import npc_system
+        from systems import quest_system as qs
+
+        npc = self.npc_registry.get(template_id)
+        if not npc:
+            renderer.print_error(f"NPC not found: {template_id}")
+            return
+
+        # Visibility check (appears_requires)
+        if not npc_system.check_npc_visible(npc, self.state):
+            renderer.print_scene_text(["There is no one there that you can make out."])
+            return
+
+        # Register in world_db if first encounter
+        if feature("world_db"):
+            npc_system.ensure_npc_instance(npc, self.state)
+
+        disposition = npc_system.get_npc_disposition(npc, self.state)
+        current_node = npc_system.get_disposition_hook(npc, disposition)
+
+        while True:
+            bus.flush()
+            resolved = npc_system.resolve_node(npc, current_node, self.state, disposition)
+
+            renderer.clear()
+            renderer.print_title()
+            renderer.print_npc_dialogue(npc.name, npc.description, resolved.display_text)
+
+            options = resolved.options
+            if not options:
+                break
+
+            renderer.print_options(options)
+            available = [(i + 1, opt) for i, opt in enumerate(options) if not opt.locked]
+            if not available:
+                renderer.print_scene_text(["You have nothing to say here."])
+                renderer.prompt_any_key()
+                break
+
+            choice_labels = [f"{i}. {opt.label}" for i, opt in available]
+            answer = questionary.select("Say:", choices=choice_labels).ask()
+            if answer is None:
+                break
+
+            try:
+                num = int(answer.split(".")[0])
+                chosen_opt_scene = next((opt for i, opt in available if i == num), None)
+            except (ValueError, IndexError):
+                chosen_opt_scene = None
+
+            if not chosen_opt_scene:
+                break
+
+            # Find the raw NPCDialogueOption matching the chosen SceneOption
+            node_data = npc.dialogue_nodes.get(current_node)
+            raw_opt = next(
+                (o for o in (node_data.options if node_data else [])
+                 if o.option_id == chosen_opt_scene.option_id),
+                None,
+            )
+            if raw_opt is None:
+                break
+
+            # Show NPC response
+            if raw_opt.npc_response:
+                renderer.print_npc_response(npc.name, raw_opt.npc_response)
+
+            # Apply effects and get engine-delegated triggers
+            apply_result = npc_system.apply_option_effects(raw_opt, npc, self.state)
+
+            # Handle engine-delegated triggers
+            for eng_trigger in apply_result.engine_triggers:
+                if eng_trigger.startswith("start_quest:") and feature("quest_system") and self.quest_registry:
+                    quest_id = eng_trigger[12:]
+                    qs.start_quest(quest_id, npc.npc_id, self.state, self.quest_registry)
+                    bus.flush()
+
+            # Refresh disposition after changes
+            disposition = npc_system.get_npc_disposition(npc, self.state)
+
+            next_node = raw_opt.leads_to_node
+            if next_node == "__exit__":
+                break
+            current_node = next_node
+
+        self.state.mark_dirty()
         renderer.prompt_any_key()
 
     def _stat_allocation_prompt(self) -> None:

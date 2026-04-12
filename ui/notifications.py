@@ -94,11 +94,31 @@ def notify_warning(console: "Console", messages: list[str]) -> None:
 
 def notify_alignment_shift(console: "Console", old: float, new: float, label: str) -> None:
     delta = new - old
-    arrow = "↑" if delta > 0 else "↓"
+    arrow = "(+)" if delta > 0 else "(-)"
     color = "green" if delta > 0 else "red"
     console.print(
         f"  [dim_text]Alignment {arrow}[/dim_text] [{color}]{label}[/{color}] [dim_text]({new:+.0f})[/dim_text]"
     )
+
+
+def notify_quest_started(console: "Console", title: str) -> None:
+    _system_notify(console, ["NEW OBJECTIVE ADDED", title.upper()], style="system_msg", pause=0.8)
+
+
+def notify_quest_completed(console: "Console", title: str, reward_gold: int, reward_xp: int) -> None:
+    lines = ["OBJECTIVE COMPLETE", title.upper()]
+    if reward_gold or reward_xp:
+        parts = []
+        if reward_gold:
+            parts.append(f"{reward_gold}g")
+        if reward_xp:
+            parts.append(f"{reward_xp} XP")
+        lines.append("Rewards: " + "  ".join(parts))
+    _system_notify(console, lines, style="success", pause=1.0)
+
+
+def notify_quest_failed(console: "Console", title: str) -> None:
+    _system_notify(console, ["OBJECTIVE FAILED", title.upper()], style="system_warning", pause=1.0)
 
 
 def notify_species_evolved(console: "Console", new_name: str, stage: int, description: str, flavor_text: str) -> None:
@@ -175,5 +195,22 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
     bus.subscribe("ANOMALY_DETECTED", on_anomaly)
     bus.subscribe("ITEM_FOUND", on_item_found)
     bus.subscribe("WARNING", on_warning)
+    def on_quest_started(event: Event) -> None:
+        notify_quest_started(console, event.data.get("title", "Unknown Quest"))
+
+    def on_quest_completed(event: Event) -> None:
+        notify_quest_completed(
+            console,
+            event.data.get("title", "Unknown Quest"),
+            event.data.get("reward_gold", 0),
+            event.data.get("reward_xp", 0),
+        )
+
+    def on_quest_failed(event: Event) -> None:
+        notify_quest_failed(console, event.data.get("title", "Unknown Quest"))
+
     bus.subscribe("ALIGNMENT_SHIFTED", on_alignment_shifted)
     bus.subscribe("SPECIES_EVOLVED", on_species_evolved)
+    bus.subscribe("QUEST_STARTED", on_quest_started)
+    bus.subscribe("QUEST_COMPLETED", on_quest_completed)
+    bus.subscribe("QUEST_FAILED", on_quest_failed)

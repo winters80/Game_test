@@ -51,7 +51,7 @@
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "after_goblins",
-          "triggers": ["combat:goblin_patrol"]
+          "triggers": ["combat:goblin_patrol", "flag:surveyed_goblins"]
         },
         {
           "option_id": "sneak_past",
@@ -84,19 +84,27 @@
       ]
     },
     "stolen_pack": {
-      "text": "Inside the pack: a health potion, some rations, and — oddly — a leather-bound book with no title. The pages appear blank at first, but when you hold it under the fungal light, text appears and vanishes like smoke.\n\nThe System gives you an unusual notification: ITEM CLASSIFICATION PENDING.",
+      "text": "Inside the pack: a health potion, some rations, and — oddly — a leather-bound book with no title. The pages appear blank at first, but when you hold it under the fungal light, text appears and vanishes like smoke.\n\nThe System gives you an unusual notification: ITEM CLASSIFICATION PENDING.\n\nAlso in the pack, half-buried under torn canvas: a smithing hammer. Heavy, balanced, with a double-lobe stamp mark on the head and a V between the lobes.",
       "options": [
         {
-          "option_id": "take_tome",
-          "label": "Take the strange book.",
+          "option_id": "take_all",
+          "label": "Take everything — the book and the hammer.",
           "expected": false,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:ancient_tome", "flag:found_ancient_tome"]
+          "triggers": ["give_item:ancient_tome", "flag:found_ancient_tome", "give_item:torven_hammer", "give_item:health_potion"]
+        },
+        {
+          "option_id": "take_hammer_only",
+          "label": "Take the hammer. Leave the unclassified book.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
+          "triggers": ["give_item:torven_hammer", "give_item:health_potion"]
         },
         {
           "option_id": "leave_tome",
-          "label": "Leave it. Unclassified items are trouble.",
+          "label": "Take the health potion. Leave everything else.",
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",

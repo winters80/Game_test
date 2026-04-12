@@ -83,15 +83,15 @@ GAME_SUBTITLE = "The Universe Is Watching"
 FEATURES: dict[str, bool] = {
     "species_system":     True,    # Species selection + evolution paths
     "alignment_system":   True,    # Alignment float + alignment-gated content
-    "npc_system":         False,   # Named NPCs with memory + stat-gated dialogue
-    "quest_system":       False,   # Dynamic AI quest generation + state machine
+    "npc_system":         True,    # Named NPCs with memory + stat-gated dialogue
+    "quest_system":       True,    # Quest state machine + completion tracking
     "guild_system":       False,   # Guild membership, ranks, perks
     "faction_system":     False,   # Faction politics, standing, ascension
     "auction_house":      False,   # Auction listings, competing guilds, life tokens
     "lives_system":       False,   # 9-lives death mechanic (replaces instant game-over)
     "crafting_system":    False,   # Recipe + material crafting
     "stat_gating":        True,    # INT/Perception/LCK/WIS content gates
-    "world_db":           False,   # SQLite world state (required by most above)
+    "world_db":           True,    # SQLite world state (required by npc/quest systems)
 }
 
 

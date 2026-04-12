@@ -135,6 +135,41 @@ def print_gold_change(amount: int, gained: bool = True) -> None:
         console.print(f"  [damage]- {amount} gold[/damage]")
 
 
+def print_npc_dialogue(npc_name: str, npc_description: str, text: str) -> None:
+    """Render an NPC speech panel — name as title, description as subtitle, text as body."""
+    from rich.text import Text as RichText
+    body = RichText()
+    body.append(f"{npc_description}\n\n", style="dim_text")
+    body.append(text, style="scene_text")
+    console.print(Panel(
+        body,
+        title=f"[scene_title]{npc_name}[/scene_title]",
+        border_style="border",
+        padding=(0, 2),
+    ))
+    console.print()
+
+
+def print_npc_response(npc_name: str, text: str) -> None:
+    """Render the NPC's reply to a player choice — inline, italicised."""
+    console.print(f"\n  [italic scene_text]{npc_name}: {text}[/italic scene_text]\n")
+    time.sleep(0.3)
+
+
+def print_quest_log(quests: list[dict]) -> None:
+    """Render a compact quest log panel."""
+    from rich.table import Table
+    table = Table.grid(padding=(0, 1))
+    table.add_column(style="system_msg", width=30)
+    table.add_column(style="dim_text")
+    if not quests:
+        table.add_row("No active quests.", "")
+    else:
+        for q in quests:
+            table.add_row(q["title"], q["objective"])
+    console.print(Panel(table, title="[system_msg][ QUESTS ][/system_msg]", border_style="border"))
+
+
 def prompt_any_key() -> None:
     console.print("\n  [dim_text]Press Enter to continue...[/dim_text]")
     input()
