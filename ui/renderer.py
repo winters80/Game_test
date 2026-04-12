@@ -111,12 +111,21 @@ def show_ai_thinking_spinner(message: str = "THE SYSTEM IS CONTEMPLATING...") ->
     return Live(Align.center(spinner), console=console, refresh_per_second=10)
 
 
-def print_combat_header(enemy_name: str, enemy_hp: int, enemy_max_hp: int) -> None:
+def print_combat_header(enemy_name: str, enemy_hp: int, enemy_max_hp: int, player: Any = None) -> None:
     bar_width = 20
     ratio = enemy_hp / enemy_max_hp if enemy_max_hp > 0 else 0
     filled = int(ratio * bar_width)
     bar = "█" * filled + "░" * (bar_width - filled)
     console.print(Rule(f"[damage]⚔  {enemy_name}[/damage]  [{bar_color(ratio)}]{bar}[/{bar_color(ratio)}]  [damage]{enemy_hp}/{enemy_max_hp}[/damage]", style="border"))
+    if player is not None:
+        try:
+            from systems.synergy_system import get_active_synergies
+            active = get_active_synergies(player)
+            if active:
+                names = "  ".join(f"[cyan]{s['name']}[/cyan]" for s in active)
+                console.print(f"  [dim_text]Synergies:[/dim_text] {names}")
+        except Exception:
+            pass
 
 
 def bar_color(ratio: float) -> str:

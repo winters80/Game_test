@@ -1,0 +1,29 @@
+[
+  {
+    "bot_id": "wanderer_kael",
+    "name": "Kael",
+    "personality_seed": "cautious explorer, avoids conflict, seeks rare herbs",
+    "current_goal": "explore",
+    "current_zone_id": "village_start",
+    "stats": {"STR": 6, "INT": 7, "AGI": 8, "LCK": 5, "VIT": 5, "WIS": 6, "END": 5},
+    "gold": 200
+  },
+  {
+    "bot_id": "merchant_dova",
+    "name": "Dova",
+    "personality_seed": "shrewd trader, always buying low selling high, suspicious of magic",
+    "current_goal": "trade",
+    "current_zone_id": "verath_city",
+    "stats": {"STR": 4, "INT": 9, "AGI": 5, "LCK": 8, "VIT": 5, "WIS": 7, "END": 4},
+    "gold": 2000
+  },
+  {
+    "bot_id": "fighter_ryn",
+    "name": "Ryn",
+    "personality_seed": "aggressive brawler, seeks strong opponents, collects trophies",
+    "current_goal": "combat",
+    "current_zone_id": "dungeon_floor1",
+    "stats": {"STR": 12, "INT": 4, "AGI": 7, "LCK": 5, "VIT": 8, "WIS": 3, "END": 9},
+    "gold": 50
+  }
+]

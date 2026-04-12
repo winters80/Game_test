@@ -166,8 +166,36 @@ class Scene:
             elif trigger.startswith("give_skill:"):
                 skill_id = trigger[11:]
                 if skill_id not in state.player.skills:
+                    # Look up the skill — auto-create if AI-generated and not yet registered
+                    skill = state.skill_registry.get(skill_id) if state.skill_registry else None
+                    if skill is None:
+                        from entities.skill import Skill
+                        from entities.enums import Rarity
+                        skill = Skill(
+                            skill_id=skill_id,
+                            name=skill_id.replace("_", " ").title(),
+                            rarity=Rarity.UNCOMMON,
+                            description="An ability awakened through unconventional experience.",
+                            is_ai_generated=True,
+                        )
+                        if state.skill_registry:
+                            state.skill_registry.register(skill)
+                        if feature("world_db") and getattr(state, "world_db", None):
+                            try:
+                                state.world_db.store_ai_skill(
+                                    skill_id=skill_id,
+                                    definition=skill.model_dump(mode="json"),
+                                    source="give_skill_trigger",
+                                    generated_turn=state.player.turn_count,
+                                )
+                            except Exception:
+                                pass
                     state.player.skills.append(skill_id)
-                    bus.publish(Event("SKILL_ACQUIRED", {"skill_id": skill_id}))
+                    bus.publish(Event("SKILL_ACQUIRED", {
+                        "skill_id": skill_id,
+                        "skill_name": skill.name if skill else skill_id.replace("_", " ").title(),
+                        "rarity": skill.rarity.value if skill else "UNCOMMON",
+                    }))
 
             elif trigger.startswith("give_gold:"):
                 state.player.gold += int(trigger[10:])

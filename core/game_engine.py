@@ -45,6 +45,7 @@ class GameEngine:
         self.state: GameState | None = None
         self.ai_generator = None
         self._bg_generator = None
+        self._bot_manager = None
         self._running = False
 
     # ── Bootstrap ─────────────────────────────────────────────────────────────
@@ -95,6 +96,15 @@ class GameEngine:
             from entities.faction import FactionRegistry
             self.faction_registry = FactionRegistry()
             self.faction_registry.load_from_file(DATA_DIR / "factions" / "faction_definitions.json")
+
+        if feature("bot_system"):
+            from systems.bot_system import BotRegistry, BotManager
+            bot_registry = BotRegistry()
+            bot_path = DATA_DIR / "bots" / "bot_templates.json"
+            if bot_path.exists():
+                bot_registry.load_from_file(bot_path)
+            self._bot_manager = BotManager()
+            self._bot_manager.load_from_templates(bot_registry)
 
     def _setup_ai(self) -> None:
         if not AI_ENABLED:
@@ -152,6 +162,13 @@ class GameEngine:
         state = load_game(choice, SAVES_DIR)
         if state:
             self.state = state
+            self.state.skill_registry = self.skill_registry
+            # Re-register any AI-generated skills stored in the world DB
+            for defn in getattr(self.state, "_ai_skill_defs", []):
+                from entities.skill import Skill
+                skill = Skill.model_validate(defn)
+                self.skill_registry.register(skill)
+            self.state._ai_skill_defs = []
             renderer.print_success(f"Loaded save: {choice}")
             self._game_loop()
         else:
@@ -169,6 +186,7 @@ class GameEngine:
         player = Player(name=name.strip())
         slot_name = player.name.lower().replace(" ", "_")
         self.state = new_game_state(player, SAVES_DIR, slot_name)
+        self.state.skill_registry = self.skill_registry
         self.state.current_scene_id = "prologue"
         self.state.current_node_id = "root"
         renderer.print_success(f"Welcome, {player.name}.")
@@ -191,6 +209,11 @@ class GameEngine:
                 if self.state.player.active_buffs:
                     from systems.buff_system import tick_buffs
                     expired = tick_buffs(self.state.player)
+
+                # Skill cooldown tick
+                if self.state.player.skill_cooldowns:
+                    from systems.skill_system import tick_skill_cooldowns
+                    tick_skill_cooldowns(self.state.player)
                     # Expired buffs are silently removed (no notification needed for normal buffs)
 
                 # Alignment inertia — nudge toward 0 every N turns
@@ -285,7 +308,11 @@ class GameEngine:
             renderer.print_error("All options are locked.")
             return None
 
-        extra = ["[?] Ask about this situation", "[I] Items & Equipment", "[S] Save game", "[A] Admin Panel", "[Q] Quit to menu"]
+        extra = ["[?] Ask about this situation", "[K] Skills", "[I] Items & Equipment", "[S] Save game", "[A] Admin Panel", "[Q] Quit to menu"]
+        if feature("crafting_system"):
+            player = self.state.player
+            if player.has_flag("alchemist") or player.has_flag("crafter"):
+                extra.insert(2, "[C] Craft")
         choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extra
         answer = questionary.select("Choose:", choices=choice_labels).ask()
 
@@ -301,8 +328,14 @@ class GameEngine:
         if answer.startswith("[?]"):
             self._handle_situation_query(options)
             return None
+        if answer.startswith("[K]"):
+            self._skills_menu()
+            return None
         if answer.startswith("[I]"):
             self._inventory_menu()
+            return None
+        if answer.startswith("[C]"):
+            self._craft_menu()
             return None
 
         # Parse number
@@ -457,7 +490,7 @@ class GameEngine:
 
             # Show enemies
             for enemy in alive_enemies:
-                renderer.print_combat_header(enemy.name, enemy.current_hp, enemy.max_hp)
+                renderer.print_combat_header(enemy.name, enemy.current_hp, enemy.max_hp, player=player)
 
             # Player turn
             skills_available = [sid for sid in player.skills if self.skill_registry.get(sid)]
@@ -888,6 +921,119 @@ class GameEngine:
         renderer.console.print("  [dim_text]New options unlocked. Choose below.[/dim_text]")
         renderer.prompt_any_key()
 
+    # ── Skills menu ───────────────────────────────────────────────────────────
+
+    def _skills_menu(self) -> None:
+        """Show all learned skills grouped by type with full detail view."""
+        from ui.panels import RARITY_COLORS
+        player = self.state.player
+
+        if not player.skills:
+            renderer.print_system_message("You have not learned any skills yet.", style="dim_text")
+            renderer.prompt_any_key()
+            return
+
+        # Group skills by type
+        groups: dict[str, list] = {"ACTIVE": [], "PASSIVE": [], "TRIGGERED": [], "OTHER": []}
+        for skill_id in player.skills:
+            skill = self.skill_registry.get(skill_id)
+            if not skill:
+                continue
+            key = skill.skill_type.value if skill.skill_type.value in groups else "OTHER"
+            groups[key].append(skill)
+
+        # Build flat choice list with headers
+        skill_choices: list[str] = []
+        skill_map: dict[str, object] = {}
+        for group_name in ("ACTIVE", "PASSIVE", "TRIGGERED", "OTHER"):
+            skills = groups[group_name]
+            if not skills:
+                continue
+            skill_choices.append(f"── {group_name} ──")
+            for skill in skills:
+                ai_tag = " ✦" if skill.is_ai_generated else ""
+                label = f"  {skill.name}{ai_tag}  [{skill.rarity.value}]"
+                skill_choices.append(label)
+                skill_map[label] = skill
+        skill_choices.append("← Back")
+
+        while True:
+            renderer.clear()
+            renderer.print_title()
+            renderer.console.print("\n  [system_msg][ SKILLS ][/system_msg]\n")
+            chosen = questionary.select("Select skill to inspect:", choices=skill_choices).ask()
+            if chosen is None or chosen == "← Back" or chosen.startswith("──"):
+                break
+            skill = skill_map.get(chosen)
+            if not skill:
+                continue
+
+            # Detail view
+            renderer.clear()
+            renderer.print_title()
+            color = RARITY_COLORS.get(skill.rarity.value, "white")
+            renderer.console.print(f"\n  [{color}]{skill.name}[/{color}]  [{color}]{skill.rarity.value}[/{color}]")
+            if skill.is_ai_generated:
+                renderer.console.print("  [cyan]✦ System-Awakened[/cyan]")
+            renderer.console.print(f"\n  [scene_text]{skill.description}[/scene_text]")
+            if skill.flavor_text:
+                renderer.console.print(f'  [italic dim_text]"{skill.flavor_text}"[/italic dim_text]')
+            renderer.console.print()
+            if skill.skill_type:
+                renderer.console.print(f"  Type    : [dim_text]{skill.skill_type.value}[/dim_text]")
+            if skill.mp_cost > 0:
+                renderer.console.print(f"  MP Cost : [mp]{skill.mp_cost}[/mp]")
+            if skill.spell_type:
+                renderer.console.print(f"  Element : [cyan]{skill.spell_type.upper()}[/cyan]")
+            if skill.cooldown_turns > 0:
+                cd_remaining = player.skill_cooldowns.get(skill.skill_id, 0)
+                cd_str = f"  [dim_text](on cooldown: {cd_remaining} turns)[/dim_text]" if cd_remaining > 0 else ""
+                renderer.console.print(f"  Cooldown: {skill.cooldown_turns} turns{cd_str}")
+            if skill.effects:
+                renderer.console.print("  Effects :")
+                for eff in skill.effects:
+                    stat = eff.scaling_stat or "—"
+                    renderer.console.print(f"    [dim_text]{eff.effect_type.value.upper()}  base={eff.base_value}  ×{eff.scaling_coefficient} {stat}[/dim_text]")
+            renderer.console.print()
+            renderer.prompt_any_key()
+
+    # ── Crafting menu ─────────────────────────────────────────────────────────
+
+    def _craft_menu(self) -> None:
+        """Alchemy / crafting menu — combine ingredients into items."""
+        from systems.alchemy_system import load_recipes, craft_item
+        recipes = load_recipes(DATA_DIR)
+        if not recipes:
+            renderer.print_system_message("No recipes are known yet.", style="dim_text")
+            renderer.prompt_any_key()
+            return
+
+        while True:
+            renderer.clear()
+            renderer.print_title()
+            renderer.console.print("\n  [system_msg][ CRAFTING ][/system_msg]\n")
+            choices = [r["name"] for r in recipes] + ["← Back"]
+            selected = questionary.select("Select recipe:", choices=choices).ask()
+            if selected is None or selected == "← Back":
+                break
+            recipe = next((r for r in recipes if r["name"] == selected), None)
+            if not recipe:
+                continue
+            # Show ingredients required
+            renderer.console.print()
+            renderer.console.print(f"  [scene_title]{recipe['name']}[/scene_title]")
+            for ing in recipe.get("ingredients", []):
+                item = self.item_registry.get(ing["item_id"])
+                name = item.name if item else ing["item_id"]
+                has = "✓" if self.state.player.has_item(ing["item_id"]) else "✗"
+                renderer.console.print(f"    [{has}] {name} x{ing['qty']}")
+            renderer.console.print()
+            confirm = questionary.select("Craft?", choices=["Yes — craft it", "← Back"]).ask()
+            if confirm == "Yes — craft it":
+                ok, msg = craft_item(self.state.player, recipe["recipe_id"], self.item_registry, recipes)
+                renderer.print_system_message(msg, style="success" if ok else "system_warning")
+                renderer.prompt_any_key()
+
     def _admin_panel(self) -> None:
         """Admin panel — feature flags, AI stats, debug tools."""
         while True:
@@ -898,10 +1044,12 @@ class GameEngine:
             bg_status = "ON" if self._bg_generator and self._bg_generator._running else "OFF"
             ai_status = "online" if self.ai_generator else "offline"
 
+            bot_count = self._bot_manager.active_count() if self._bot_manager else 0
             choices = [
                 f"AI Token Usage  (AI: {ai_status})",
                 f"Toggle Feature Flags",
                 f"Background Generator: {bg_status}",
+                f"Active Bots / Players  ({bot_count} bots · 1 player)",
                 "God Mode (restore HP + MP)",
                 "Grant Test Item",
                 "Player Stats Dump",
@@ -941,6 +1089,23 @@ class GameEngine:
                         renderer.print_system_message("Background generator started.", style="success")
                 else:
                     renderer.print_system_message("Background generator not initialized (AI offline).", style="dim_text")
+                renderer.prompt_any_key()
+
+            elif action.startswith("Active Bots"):
+                renderer.console.print()
+                renderer.console.print("  [system_msg][ ACTIVE AGENTS ][/system_msg]")
+                renderer.console.print(f"  Players : [gold]1[/gold]  (local session)")
+                if self._bot_manager:
+                    renderer.console.print(f"  AI Bots : [cyan]{self._bot_manager.active_count()}[/cyan]")
+                    for bot in self._bot_manager.all():
+                        renderer.console.print(
+                            f"    [cyan]{bot.name}[/cyan]  [{bot.bot_id}]  "
+                            f"zone: [dim_text]{bot.current_zone_id}[/dim_text]  "
+                            f"goal: [dim_text]{bot.current_goal}[/dim_text]"
+                        )
+                else:
+                    renderer.console.print("  AI Bots : 0  (bot_system disabled)")
+                renderer.console.print()
                 renderer.prompt_any_key()
 
             elif action == "God Mode (restore HP + MP)":
@@ -1026,8 +1191,10 @@ class GameEngine:
                 if not item:
                     continue
                 display = get_item_display_name(player, item, self.item_registry)
+                from ui.panels import _stat_bracket, RARITY_COLORS
+                bracket = _stat_bracket(item.stats_bonus) if item.stats_bonus else ""
                 qty_str = f" x{slot.quantity}" if slot.quantity > 1 else ""
-                label = f"{display}{qty_str}"
+                label = f"{display}{bracket}{qty_str}"
                 item_choices.append(label)
                 item_map[label] = slot.item_id
 
@@ -1054,6 +1221,7 @@ class GameEngine:
                     sub_choices.append("Unequip")
                 else:
                     sub_choices.append("Equip")
+                sub_choices.append("Inspect")
             elif item.item_type == ItemType.CONSUMABLE:
                 sub_choices.append("Use")
                 if "inspect" not in player.skills and item_id not in player.identified_items:
@@ -1093,9 +1261,19 @@ class GameEngine:
                 renderer.prompt_any_key()
 
             elif sub_answer == "Inspect":
-                renderer.print_scene_text([item.description])
+                from ui.panels import RARITY_COLORS, _stat_bracket
+                color = RARITY_COLORS.get(item.rarity.value, "white")
+                renderer.console.print(f"\n  [{color}]{item.name}[/{color}]  [{color}]{item.rarity.value}[/{color}]")
+                renderer.console.print(f"  [scene_text]{item.description}[/scene_text]")
                 if item.flavor_text:
                     renderer.console.print(f'  [italic dim_text]"{item.flavor_text}"[/italic dim_text]')
+                if item.backstory:
+                    renderer.console.print(f'\n  [dim_text]{item.backstory}[/dim_text]')
+                if item.stats_bonus:
+                    bracket = _stat_bracket(item.stats_bonus)
+                    if bracket:
+                        renderer.console.print(f"  [dim_text]Bonuses:{bracket}[/dim_text]")
+                renderer.console.print()
                 renderer.prompt_any_key()
 
             elif sub_answer == "Drop":
@@ -1166,9 +1344,25 @@ class GameEngine:
                             )
                         integrated_any = True
 
+                elif rtype == "bot_action" and feature("bot_system") and self._bot_manager:
+                    bot_id = result.get("bot_id", "")
+                    action = result.get("action", "")
+                    target = result.get("target", "")
+                    bot = self._bot_manager.get(bot_id)
+                    if bot and action:
+                        if action == "move_zone":
+                            bot.current_zone_id = target
+                        elif action == "trade":
+                            bot.memory.append(f"Traded at {target} (turn {self.state.player.turn_count})")
+                        elif action == "rest":
+                            bot.current_goal = "idle"
+                        bot.turn_last_acted = self.state.player.turn_count
+                        if feature("world_db") and self.state.world_db:
+                            self._bot_manager.save_to_db(self.state.world_db)
+                        integrated_any = True
+
             except Exception as exc:
-                import logging
-                logging.getLogger(__name__).warning(f"Content integration error: {exc}")
+                logger.warning(f"Content integration error: {exc}")
 
         if integrated_any:
             renderer.console.print("\n  [dim_text][ New content discovered nearby ][/dim_text]")
@@ -1209,6 +1403,18 @@ class GameEngine:
             zone_name = scene.title if scene else zone_id
             context_flags = [k for k in player.flags if not k.startswith("_")][:8]
             self._bg_generator.submit_zone_narrative(zone_id, zone_name, context_flags)
+
+        # Submit bot decision tasks for each active bot (staggered)
+        if feature("bot_system") and self._bot_manager:
+            world_context = {"player_zone": zone_id, "turn": turn}
+            for bot in self._bot_manager.all():
+                bot_profile = {
+                    "name": bot.name,
+                    "personality_seed": bot.personality_seed,
+                    "current_goal": bot.current_goal,
+                    "current_zone_id": bot.current_zone_id,
+                }
+                self._bg_generator.submit_bot_decision(bot.bot_id, bot_profile, world_context)
 
     def _save_prompt(self) -> None:
         slot = questionary.text("Save slot name:", default=self.state.player.name.lower().replace(" ", "_")).ask()

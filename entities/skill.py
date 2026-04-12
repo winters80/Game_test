@@ -22,6 +22,7 @@ class Skill(BaseModel):
     rarity: Rarity = Rarity.COMMON
     description: str
     flavor_text: str = ""
+    spell_type: str = ""        # "fire" | "ice" | "arcane" | "" for non-spells
     skill_type: SkillType = SkillType.ACTIVE
     trigger_condition: str | None = None   # e.g. "on_kill", "on_low_hp"
     mp_cost: int = 0

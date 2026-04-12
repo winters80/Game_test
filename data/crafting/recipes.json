@@ -1,0 +1,47 @@
+[
+  {
+    "recipe_id": "basic_health_salve",
+    "name": "Basic Health Salve",
+    "ingredients": [
+      {"item_id": "forest_herb", "qty": 2},
+      {"item_id": "empty_vial",  "qty": 1}
+    ],
+    "output_item_id": "health_potion",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "major_health_brew",
+    "name": "Major Health Brew",
+    "ingredients": [
+      {"item_id": "forest_herb",    "qty": 4},
+      {"item_id": "mountain_root",  "qty": 1},
+      {"item_id": "empty_vial",     "qty": 1}
+    ],
+    "output_item_id": "health_potion_major",
+    "output_qty": 1,
+    "required_skill": "herbalism"
+  },
+  {
+    "recipe_id": "mana_concentrate",
+    "name": "Mana Concentrate",
+    "ingredients": [
+      {"item_id": "void_crystal", "qty": 1},
+      {"item_id": "empty_vial",   "qty": 1}
+    ],
+    "output_item_id": "mana_potion",
+    "output_qty": 1,
+    "required_skill": "arcane_knowledge"
+  },
+  {
+    "recipe_id": "traveler_stew_recipe",
+    "name": "Traveler's Stew",
+    "ingredients": [
+      {"item_id": "bread",        "qty": 1},
+      {"item_id": "roasted_meat", "qty": 1}
+    ],
+    "output_item_id": "traveler_stew",
+    "output_qty": 1,
+    "required_skill": null
+  }
+]

@@ -17,6 +17,7 @@ class Item(BaseModel):
     item_type: ItemType
     description: str
     flavor_text: str = ""
+    backstory: str = ""
     stats_bonus: Stats | None = None
     effects: list[str] = []              # Skill IDs granted when equipped
     combo_catalyst: bool = False         # Can contribute to AI-class divergence detection
