@@ -163,6 +163,102 @@ class ContentGenerator:
             logger.warning(f"Dynamic options generation failed: {e}")
             return None
 
+    def generate_guild_intent(
+        self,
+        guild: object,   # GuildState
+        member: object,  # GuildMember
+    ) -> object | None:
+        """
+        Ask AI to propose a structured guild intent for an NPC member.
+        The engine adjudicates; AI must not set success/failure.
+        Returns a GuildIntent or None on failure.
+        """
+        from ai.prompt_builder import build_guild_intent_prompt
+        from systems.guilds.guild_engine import get_eligible_actions, compute_betrayal_risk
+        from systems.guilds.guild_models import GuildIntent
+
+        eligible = get_eligible_actions(compute_betrayal_risk(member, guild))
+        if not eligible:
+            return None
+
+        prompt = build_guild_intent_prompt(guild, member, eligible)
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt,
+                system_prompt=self.system_prompt,
+                temperature=0.5,
+            )
+            if not raw:
+                return None
+            return GuildIntent.model_validate(raw)
+        except Exception as e:
+            logger.warning(f"Guild intent generation failed: {e}")
+            return None
+
+    def generate_guild_template(
+        self,
+        name: str,
+        archetype: str,
+        zone_id: str,
+        founding_reason: str = "",
+        seed_traits: list[str] | None = None,
+    ) -> object | None:
+        """
+        Generate a full GuildDefinition template (ranks + perks) for a newly founded guild.
+        Returns a GuildDefinition or None on failure.
+        """
+        from ai.prompt_builder import build_guild_template_prompt
+        from ai.response_validator import AIGuildTemplateResponse
+        from entities.guild import GuildDefinition, GuildRank, GuildPerk
+
+        prompt = build_guild_template_prompt(
+            name=name, archetype=archetype, zone_id=zone_id,
+            founding_reason=founding_reason, seed_traits=seed_traits or [],
+        )
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt,
+                system_prompt=self.system_prompt,
+                temperature=0.7,
+            )
+            if not raw:
+                return None
+            validated = AIGuildTemplateResponse.model_validate(raw)
+            ranks = [
+                GuildRank(
+                    rank_id=r.rank_id,
+                    name=r.name,
+                    standing_required=float(r.standing_required),
+                    title=r.title,
+                    description=r.description,
+                )
+                for r in validated.ranks
+            ]
+            perks = [
+                GuildPerk(
+                    perk_id=p.perk_id,
+                    name=p.name,
+                    description=p.description,
+                    rank_required=p.rank_required,
+                    stat_bonuses=p.stat_bonuses,
+                    skill_unlocks=p.skill_unlocks,
+                )
+                for p in validated.perks
+            ]
+            return GuildDefinition(
+                guild_id=validated.guild_id,
+                name=validated.name,
+                description=validated.description,
+                flavor_text=validated.flavor_text,
+                archetype=validated.archetype,
+                zone_id=zone_id,
+                ranks=ranks,
+                perks=perks,
+            )
+        except Exception as e:
+            logger.error(f"Guild template generation failed: {e}")
+            return None
+
     def _get_standard_combo_names(self, player: "Player", class_registry: "ClassRegistry") -> list[str]:
         player_classes = {c for c in [player.base_class, player.secondary_class] if c}
         names = []

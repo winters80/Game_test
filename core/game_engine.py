@@ -22,7 +22,7 @@ from systems import class_system, level_system, combat_system, inventory_system
 from persistence.save_manager import save_game, load_game, list_saves, new_game_state, close_game
 from ui import renderer
 from ui.notifications import setup_notification_listeners
-from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, feature
+from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, feature, GUILD_SIM_INTERVAL
 from entities.enums import SkillType
 
 if TYPE_CHECKING:
@@ -90,9 +90,8 @@ class GameEngine:
             self.quest_registry.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
 
         if feature("guild_system"):
-            from entities.guild import GuildRegistry
-            self.guild_registry = GuildRegistry()
-            self.guild_registry.load_from_file(DATA_DIR / "guilds" / "guild_definitions.json")
+            from systems.guilds.guild_loader import load_guild_registry
+            self.guild_registry = load_guild_registry(DATA_DIR)
 
         if feature("faction_system"):
             from entities.faction import FactionRegistry
@@ -325,6 +324,8 @@ class GameEngine:
             player = self.state.player
             if player.has_flag("alchemist") or player.has_flag("crafter"):
                 extra.insert(2, "[C] Craft")
+        if feature("guild_system"):
+            extra.insert(-1, "[G] Found a Guild")
         choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extra
         answer = questionary.select("Choose:", choices=choice_labels).ask()
 
@@ -351,6 +352,9 @@ class GameEngine:
             return None
         if answer.startswith("[L]"):
             self._lore_log()
+            return None
+        if answer.startswith("[G]"):
+            self._found_guild_menu()
             return None
 
         # Parse number
@@ -1007,6 +1011,93 @@ class GameEngine:
         renderer.print_system_message(msg, style=style)
         bus.flush()
         renderer.prompt_any_key()
+
+    def _found_guild_menu(self) -> None:
+        """Interactive flow for founding a new guild."""
+        from systems.guilds.guild_models import FoundGuildIntent
+        from systems.guilds import guild_repo
+        from systems.guilds.guild_loader import save_generated_template, make_default_template
+        import uuid as _uuid
+
+        renderer.clear()
+        renderer.print_system_message("FOUND A GUILD", style="system_msg")
+
+        name = questionary.text("Guild name:").ask()
+        if not name or not name.strip():
+            return
+        name = name.strip()
+
+        archetype = questionary.select(
+            "Guild archetype:",
+            choices=["combat", "stealth", "arcane", "merchant"],
+        ).ask()
+        if not archetype:
+            return
+
+        reason = questionary.text("Founding reason (optional, press Enter to skip):").ask() or ""
+
+        intent = FoundGuildIntent(
+            name=name,
+            archetype=archetype,
+            zone_id=self.state.current_scene_id or "verath_market",
+            founding_reason=reason,
+            initial_members=[],
+        )
+
+        # AI generates template if enabled
+        template = None
+        if self.ai_generator:
+            try:
+                renderer.console.print("  [dim_text]Consulting the System...[/dim_text]")
+                template = self.ai_generator.generate_guild_template(
+                    name=name,
+                    archetype=archetype,
+                    zone_id=intent.zone_id,
+                    founding_reason=reason,
+                    seed_traits=[],
+                )
+            except Exception:
+                pass
+
+        if template is None:
+            guild_id = "gen_" + _uuid.uuid4().hex[:8]
+            template = make_default_template(
+                guild_id=guild_id, name=name, archetype=archetype,
+                zone_id=intent.zone_id, founding_reason=reason,
+            )
+
+        # Persist template JSON and register in memory
+        if self.guild_registry:
+            try:
+                save_generated_template(template, DATA_DIR / "guilds" / "generated")
+            except Exception:
+                pass
+            self.guild_registry.register(template)
+
+        # Create runtime state if world_db available
+        if self.state.world_db is not None:
+            guild_state = guild_repo.found_guild(
+                world_db=self.state.world_db,
+                intent=intent,
+                template_id=template.guild_id,
+                turn=self.state.player.turn_count,
+                player_id=self.state.player.player_id,
+            )
+            if guild_state:
+                self.state.player.guild_memberships[guild_state.guild_id] = "leader"
+                renderer.print_system_message(
+                    f"Guild '{template.name}' founded! You are its first leader.",
+                    style="success",
+                )
+            else:
+                renderer.print_error("Failed to create guild state in database.")
+        else:
+            renderer.print_system_message(
+                f"Guild '{template.name}' founded (no database — state not persisted).",
+                style="system_warning",
+            )
+
+        bus.flush()
 
     def _update_faction_standing(self, faction_id: str, delta: float) -> None:
         """Handle update_faction:faction_id:delta trigger."""
@@ -1782,6 +1873,14 @@ class GameEngine:
                         if feature("world_db") and self.state.world_db:
                             self._bot_manager.save_to_db(self.state.world_db)
 
+                # ── Guild tick results ────────────────────────────────────────
+                elif rtype == "guild_tick_results":
+                    for r in result.get("results", []):
+                        if r.success and r.narrative:
+                            renderer.console.print(
+                                f"  [dim_text][ {r.narrative} ][/dim_text]"
+                            )
+
                 # ── World events, rumors, lore, area activity ─────────────────
                 elif rtype in ("world_event", "rumor", "lore_entry", "area_activity"):
                     event_text = result.get("event_text", "").strip()
@@ -1839,6 +1938,7 @@ class GameEngine:
             zone_name=zone_name,
             player_level=self.state.player.level,
             flags=context_flags,
+            turn=self.state.player.turn_count,
         )
 
         from config import BG_GEN_INTERVAL
@@ -1914,6 +2014,13 @@ class GameEngine:
                 if npc:
                     self._bg_generator.submit_npc_branch(npc_id, npc.name, player_profile)
                     break
+
+        # ── Guild simulation tick ─────────────────────────────────────────────
+        if feature("guild_system") and self.guild_registry and turn % GUILD_SIM_INTERVAL == 0:
+            self._bg_generator.submit_guild_tick(
+                world_db=self.state.world_db,
+                guild_registry=self.guild_registry,
+            )
 
         # ── Bot decisions ─────────────────────────────────────────────────────
         if feature("bot_system") and self._bot_manager:
