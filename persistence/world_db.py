@@ -603,6 +603,27 @@ class WorldDatabase:
         )
         self._conn.commit()
 
+    def get_all_faction_relations(self) -> list[dict]:
+        """Return all faction-to-faction relation rows."""
+        assert self._conn
+        rows = self._conn.execute(
+            "SELECT faction_a, faction_b, relation FROM faction_relations"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def set_faction_relation(self, faction_a: str, faction_b: str, relation: float) -> None:
+        """Absolute-set the relation between two factions (clamped -100..+100)."""
+        assert self._conn
+        a, b = sorted([faction_a, faction_b])
+        clamped = max(-100.0, min(100.0, relation))
+        self._conn.execute(
+            """INSERT INTO faction_relations (faction_a, faction_b, relation)
+               VALUES (?, ?, ?)
+               ON CONFLICT(faction_a, faction_b) DO UPDATE SET relation = excluded.relation""",
+            (a, b, clamped),
+        )
+        self._conn.commit()
+
     # ── Auction House ─────────────────────────────────────────────────────────
 
     def add_auction_listing(

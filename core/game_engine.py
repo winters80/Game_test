@@ -29,6 +29,25 @@ if TYPE_CHECKING:
     pass
 
 
+# ── Bot goal cycling ──────────────────────────────────────────────────────────
+
+_BOT_GOAL_CYCLE: dict[str, str] = {
+    "explore": "trade",
+    "trade":   "rest",
+    "rest":    "explore",
+    "combat":  "rest",
+    "idle":    "explore",
+}
+
+
+def _advance_bot_goal(bot: "Any") -> None:
+    """Cycle the bot's current goal and trim memory to last 10 entries."""
+    from typing import Any as _Any  # noqa: F401 (type hint only)
+    bot.current_goal = _BOT_GOAL_CYCLE.get(bot.current_goal, "explore")
+    if len(bot.memory) > 20:
+        bot.memory = bot.memory[-10:]
+
+
 class GameEngine:
     def __init__(self) -> None:
         self.class_registry = ClassRegistry()
@@ -63,6 +82,9 @@ class GameEngine:
         self.skill_registry.load_from_dir(DATA_DIR / "skills")
         self.item_registry.load_from_dir(DATA_DIR / "items")
         self.scene_registry.load_from_dir(Path(__file__).parent.parent / "scenes" / "data")
+
+        from systems.world_zones import load_zones
+        load_zones(DATA_DIR)
 
         lore_path = DATA_DIR / "world" / "lore_fragments.json"
         if lore_path.exists():
@@ -247,6 +269,26 @@ class GameEngine:
                 # Check for ending path unlock (political ascension)
                 if feature("faction_system") and self.faction_registry:
                     self._check_ending_paths()
+
+                # Autonomous faction relation drift
+                if feature("faction_system") and feature("world_db") and self.state.world_db:
+                    from systems.faction_system import drift_faction_relations
+                    drift_changes = drift_faction_relations(
+                        self.state.world_db, self.state.player.turn_count
+                    )
+                    for fa, fb, delta in drift_changes:
+                        direction = "warmer" if delta > 0 else "cooler"
+                        self.state.world_db.store_world_event(
+                            event_type="rumor",
+                            event_text=(
+                                f"Relations between {fa.replace('_', ' ').title()} and "
+                                f"{fb.replace('_', ' ').title()} grow {direction}."
+                            ),
+                            zone_id="verath_city",
+                            title="Political Shift",
+                            npc_hint="",
+                            generated_turn=self.state.player.turn_count,
+                        )
 
                 self._render_scene()
                 options = self._get_current_options()
@@ -823,6 +865,19 @@ class GameEngine:
         if not npc_system.check_npc_visible(npc, self.state):
             renderer.print_scene_text(["There is no one there that you can make out."])
             return
+
+        # Schedule / location check — NPC may have moved to another zone
+        if npc.schedule:
+            from systems.npc_system import get_npc_zone
+            npc_zone = get_npc_zone(npc, self.state.player.turn_count)
+            if npc_zone != self.state.current_scene_id:
+                phase = "day" if (self.state.player.turn_count % 20) < 10 else "night"
+                renderer.print_system_message(
+                    f"{npc.name} isn't here right now. "
+                    f"They're usually in {npc_zone.replace('_', ' ').title()} during the {phase}.",
+                    style="dim",
+                )
+                return
 
         # Register in world_db if first encounter
         if feature("world_db"):
@@ -1863,15 +1918,66 @@ class GameEngine:
                     target = result.get("target", "")
                     bot    = self._bot_manager.get(bot_id)
                     if bot and action:
+                        event_text: str | None = None
                         if action == "move_zone":
-                            bot.current_zone_id = target
+                            from systems.world_zones import is_adjacent, get_connected
+                            if is_adjacent(bot.current_zone_id, target):
+                                event_text = (
+                                    f"{bot.name} was spotted traveling toward "
+                                    f"{target.replace('_', ' ').title()}."
+                                )
+                                bot.current_zone_id = target
+                            else:
+                                adj = get_connected(bot.current_zone_id)
+                                if adj:
+                                    bot.current_zone_id = adj[0]
                         elif action == "trade":
-                            bot.memory.append(f"Traded at {target} (turn {self.state.player.turn_count})")
+                            cost = min(50, bot.gold)
+                            bot.gold -= cost
+                            bot.memory.append(
+                                f"Traded at {target} for {cost}g"
+                                f" (turn {self.state.player.turn_count})"
+                            )
+                            event_text = (
+                                f"{bot.name} completed a trade deal in "
+                                f"{target.replace('_', ' ').title()}."
+                            )
                         elif action == "rest":
                             bot.current_goal = "idle"
+                        elif action == "craft":
+                            bot.memory.append(
+                                f"Crafted at {target}"
+                                f" (turn {self.state.player.turn_count})"
+                            )
+                            event_text = (
+                                f"{bot.name} was seen working at a crafting bench in "
+                                f"{bot.current_zone_id.replace('_', ' ').title()}."
+                            )
+                        elif action == "talk_npc":
+                            bot.memory.append(
+                                f"Spoke with {target}"
+                                f" (turn {self.state.player.turn_count})"
+                            )
+                            event_text = (
+                                f"{bot.name} was overheard talking to "
+                                f"{target.replace('_', ' ').title()} in "
+                                f"{bot.current_zone_id.replace('_', ' ').title()}."
+                            )
+                        # Goal cycling every 10 turns of inactivity
+                        if self.state.player.turn_count - bot.turn_last_acted >= 10:
+                            _advance_bot_goal(bot)
                         bot.turn_last_acted = self.state.player.turn_count
                         if feature("world_db") and self.state.world_db:
                             self._bot_manager.save_to_db(self.state.world_db)
+                            if event_text:
+                                self.state.world_db.store_world_event(
+                                    event_type="area_activity",
+                                    event_text=event_text,
+                                    zone_id=bot.current_zone_id,
+                                    title="",
+                                    npc_hint=bot.bot_id,
+                                    generated_turn=self.state.player.turn_count,
+                                )
 
                 # ── Guild tick results ────────────────────────────────────────
                 elif rtype == "guild_tick_results":

@@ -24,6 +24,21 @@ if TYPE_CHECKING:
     from scenes.scene_base import SceneOption
 
 
+def get_npc_zone(npc: "NPCTemplate", turn: int) -> str:
+    """
+    Return the NPC's current zone based on their schedule and the current turn phase.
+    Phase: turns 0-9 of every 20-turn cycle = 'day', turns 10-19 = 'night'.
+    NPCs without a schedule always return their home zone_id.
+    """
+    if not npc.schedule:
+        return npc.zone_id
+    phase = "day" if (turn % 20) < 10 else "night"
+    for entry in npc.schedule:
+        if entry.phase in (phase, "always"):
+            return entry.zone_id
+    return npc.zone_id
+
+
 # ── Result types ─────────────────────────────────────────────────────────────
 
 @dataclass

@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from entities.player import Player
     from entities.faction import FactionDefinition, FactionRegistry
     from core.state_manager import GameState
+    from persistence.world_db import WorldDatabase
 
 
 RANK_ORDER = ["outsider", "known", "ally", "trusted", "champion", "commander",
@@ -132,3 +133,35 @@ def get_faction_summary(state: "GameState", faction_registry: "FactionRegistry")
             "rank_name": faction.get_rank(rank_id).name if faction.get_rank(rank_id) else rank_id,
         })
     return summaries
+
+
+# ── Autonomous faction drift ──────────────────────────────────────────────────
+
+DRIFT_INTERVAL = 15          # turns between autonomous relation nudges
+_DRIFT_MAGNITUDE = 0.5       # relation points shifted per cycle
+
+
+def drift_faction_relations(
+    world_db: "WorldDatabase", turn: int
+) -> list[tuple[str, str, float]]:
+    """
+    Nudge faction-to-faction relations slightly each cycle.
+    Allied pairs (relation > +20) drift warmer; rival pairs (< -20) drift colder.
+    Neutral bands (-20..+20) are left untouched.
+    Returns list of (faction_a, faction_b, delta) for world-event generation.
+    """
+    if turn % DRIFT_INTERVAL != 0:
+        return []
+    changes: list[tuple[str, str, float]] = []
+    for row in world_db.get_all_faction_relations():
+        fa, fb, rel = row["faction_a"], row["faction_b"], float(row["relation"])
+        if rel > 20:
+            delta = _DRIFT_MAGNITUDE
+        elif rel < -20:
+            delta = -_DRIFT_MAGNITUDE
+        else:
+            continue
+        new_rel = max(-100.0, min(100.0, rel + delta))
+        world_db.set_faction_relation(fa, fb, new_rel)
+        changes.append((fa, fb, delta))
+    return changes

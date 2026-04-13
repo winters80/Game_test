@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -49,6 +49,11 @@ class NPCQuestSeed(BaseModel):
     already_given_flag: str = ""    # flag set after quest offered; prevents re-offering
 
 
+class NPCScheduleEntry(BaseModel):
+    phase: Literal["day", "night", "always"] = "always"
+    zone_id: str
+
+
 class NPCTemplate(BaseModel):
     template_id: str                # stable ID, used in talk_npc: triggers
     npc_id: str                     # instance ID written to npc_instances SQLite table
@@ -68,6 +73,7 @@ class NPCTemplate(BaseModel):
     # All dialogue nodes for this NPC, keyed by node_id
     dialogue_nodes: dict[str, NPCDialogueNode] = Field(default_factory=dict)
     quest_seeds: list[NPCQuestSeed] = Field(default_factory=list)
+    schedule: list[NPCScheduleEntry] = Field(default_factory=list)
 
 
 class NPCRegistry:
