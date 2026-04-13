@@ -20,6 +20,8 @@ class OllamaClient:
         self.model = model
         self.base_url = base_url
         self._client = None
+        self._client_timeout: int = 30   # tracks which timeout the cached client was built with
+        self._default_timeout: int = 30  # used when no per-call timeout is specified
         # Cumulative token counters for this session
         self.tokens_prompt: int = 0
         self.tokens_generated: int = 0
@@ -46,18 +48,22 @@ class OllamaClient:
         except Exception:
             pass
 
-    def _get_client(self):
-        if self._client is None:
+    def _get_client(self, timeout: int | None = None):
+        """Return (or create) an ollama.Client. If timeout differs from cached, creates a new one."""
+        desired = timeout if timeout is not None else self._default_timeout
+        if self._client is None or self._client_timeout != desired:
             try:
                 import ollama
-                self._client = ollama.Client(host=self.base_url)
+                import httpx
+                self._client = ollama.Client(host=self.base_url, timeout=httpx.Timeout(desired))
+                self._client_timeout = desired
             except ImportError:
                 raise RuntimeError("ollama package not installed. Run: pip install ollama")
         return self._client
 
     def is_available(self) -> bool:
         try:
-            client = self._get_client()
+            client = self._get_client()  # uses default timeout
             client.list()
             return True
         except Exception:
@@ -71,7 +77,7 @@ class OllamaClient:
         timeout: int = 30,
         max_retries: int = 3,
     ) -> dict[str, Any]:
-        client = self._get_client()
+        client = self._get_client(timeout)
         last_error: Exception | None = None
 
         for attempt in range(max_retries):
@@ -89,7 +95,6 @@ class OllamaClient:
                         "temperature": temperature,
                         "num_predict": 800,
                     },
-                    timeout=timeout,
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
                 data = json.loads(raw)
@@ -119,7 +124,7 @@ class OllamaClient:
         max_tokens: int = 400,
         timeout: int = 20,
     ) -> str:
-        client = self._get_client()
+        client = self._get_client(timeout)
         logger.debug(
             "generate_text model=%s temp=%.2f max_tokens=%d prompt_chars=%d",
             self.model, temperature, max_tokens, len(prompt),
@@ -133,7 +138,6 @@ class OllamaClient:
                     "temperature": temperature,
                     "num_predict": max_tokens,
                 },
-                timeout=timeout,
             )
             raw = response.get("response", "") if isinstance(response, dict) else response.response
             self._record_usage(response)
