@@ -86,6 +86,11 @@ class NPCRegistry:
             npc = NPCTemplate.model_validate(entry)
             self._npcs[npc.template_id] = npc
 
+    def load_from_dir(self, path: Path) -> None:
+        """Load all *.json files in a directory. Each file is a JSON array of NPC templates."""
+        for json_file in sorted(path.glob("*.json")):
+            self.load_from_file(json_file)
+
     def get(self, template_id: str) -> NPCTemplate | None:
         return self._npcs.get(template_id)
 

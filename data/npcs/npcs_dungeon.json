@@ -1,0 +1,164 @@
+[
+  {
+    "template_id": "dungeon_vendor",
+    "npc_id": "dungeon_vendor",
+    "name": "Pell",
+    "role": "traveling vendor",
+    "zone_id": "dungeon_floor1",
+    "description": "A wiry woman with too many belt pouches and the calmly exhausted look of someone who has made a living selling potions to people who should have bought more before they came in.",
+    "flavor_text": "She set up outside the dungeon entrance three days after the Fracture and never left. Business has been consistent.",
+    "starting_disposition": 5.0,
+    "appears_requires": {},
+    "disposition_hooks": {
+      "default": "root",
+      "hostile": "hostile"
+    },
+    "dialogue_nodes": {
+      "root": {
+        "node_id": "root",
+        "npc_text": "Pell looks up from her folding table, which is covered in neat rows of glass vials and herb bundles. 'You're going in or coming out?' She doesn't actually wait for the answer. 'Either way, you could use supplies.'",
+        "options": [
+          {
+            "option_id": "browse_stock",
+            "label": "What are you selling?",
+            "requires": {},
+            "npc_response": "'Everything the dungeon eats through. Vials, herb bundles, potions. Clean materials — I source from the upper forest road.' She gestures at the table. 'Prices are fair because I don't have competition.'",
+            "leads_to_node": "shop"
+          },
+          {
+            "option_id": "ask_about_dungeon",
+            "label": "Seen anything unusual down here lately?",
+            "requires": {},
+            "npc_response": "'Usual rotation: goblin scouts, slimes, the occasional wolf. Nothing unusual on floor one.' A pause. 'Floor two's a different topic. I've seen what comes back out from the teams that go there. Or I've seen what doesn't.'",
+            "disposition_change": 2.0,
+            "leads_to_node": "dungeon_talk",
+            "memory_event_type": "dungeon_query",
+            "memory_summary": "Player asked about dungeon activity."
+          },
+          {
+            "option_id": "ask_about_void_crystal",
+            "label": "Do you buy void crystals?",
+            "requires": {
+              "items": [
+                "void_crystal"
+              ]
+            },
+            "npc_response": "She pauses. 'Where did you get one of those in the first dungeon floor?' She doesn't take it. 'I don't buy those. They don't play nice with standard inventory. But a scholar in the Spire might pay well — ask for Vael, third floor.'",
+            "disposition_change": 3.0,
+            "leads_to_node": "root",
+            "triggers": [
+              "flag:knows_vael_spire"
+            ],
+            "memory_event_type": "void_crystal_shown",
+            "memory_summary": "Player showed Pell a void crystal. Directed to Vael at the Spire."
+          },
+          {
+            "option_id": "leave",
+            "label": "Just passing through.",
+            "requires": {},
+            "npc_response": "'Come back when you're bleeding.' She turns back to her inventory.",
+            "leads_to_node": "__exit__"
+          }
+        ]
+      },
+      "shop": {
+        "node_id": "shop",
+        "npc_text": "'Empty Vial — 2s. Herb Bundle — 3s. Health Potion — 25s. Mana Potion — 30s. Everything's clearly labelled.' She taps the folding table. 'No refunds on opened vials.'",
+        "options": [
+          {
+            "option_id": "buy_empty_vial",
+            "label": "Buy Empty Vial (2s)",
+            "requires": {},
+            "npc_response": "'Good base for salve-work. You know what you're doing?'",
+            "triggers": [
+              "buy_item:empty_vial:200"
+            ],
+            "leads_to_node": "shop"
+          },
+          {
+            "option_id": "buy_herb_bundle",
+            "label": "Buy Herb Bundle (3s)",
+            "requires": {},
+            "npc_response": "'Mixed forest herbs. Solid for basic alchemy.'",
+            "triggers": [
+              "buy_item:herb_bundle:300"
+            ],
+            "leads_to_node": "shop"
+          },
+          {
+            "option_id": "buy_health_potion",
+            "label": "Buy Health Potion (25s)",
+            "requires": {},
+            "npc_response": "'Brewed myself. It works — I've tested it.'",
+            "triggers": [
+              "buy_item:health_potion:2500"
+            ],
+            "leads_to_node": "shop"
+          },
+          {
+            "option_id": "buy_mana_potion",
+            "label": "Buy Mana Potion (30s)",
+            "requires": {},
+            "npc_response": "'The casters always ask first. Second batch of the week.'",
+            "triggers": [
+              "buy_item:mana_potion:3000"
+            ],
+            "leads_to_node": "shop"
+          },
+          {
+            "option_id": "leave_shop",
+            "label": "Nothing today. Thanks.",
+            "requires": {},
+            "npc_response": "'Come back after the monsters have a go at you.'",
+            "leads_to_node": "root"
+          }
+        ]
+      },
+      "dungeon_talk": {
+        "node_id": "dungeon_talk",
+        "npc_text": "'I've been here three years. Floor one's predictable — bad, but predictable. The second floor went quiet about a month before the survey teams went missing. No activity at the border. That's not normal. Something down there cleared the approach.'",
+        "smart_observation": "She says this with the matter-of-fact calm of someone who has thought about it enough that the fear has been replaced by analysis.",
+        "smart_threshold": 9,
+        "options": [
+          {
+            "option_id": "ask_more_floor2",
+            "label": "What do you think is down there?",
+            "requires": {},
+            "npc_response": "'I don't speculate. I sell potions.' She straightens a row of vials. 'If you're planning on finding out, buy the health potion.'",
+            "triggers": [
+              "flag:knows_dungeon_floors"
+            ],
+            "leads_to_node": "root"
+          },
+          {
+            "option_id": "back_to_shop",
+            "label": "All right. What do you have in stock?",
+            "requires": {},
+            "npc_response": "'Now we're talking.'",
+            "leads_to_node": "shop"
+          }
+        ]
+      },
+      "hostile": {
+        "node_id": "hostile",
+        "npc_text": "Pell slides everything on the table out of your reach without a word. Her expression says the conversation is over.",
+        "options": [
+          {
+            "option_id": "leave_hostile",
+            "label": "Fine.",
+            "requires": {},
+            "npc_response": "'Dungeon's that way.'",
+            "leads_to_node": "__exit__"
+          }
+        ]
+      }
+    },
+    "quest_seeds": [],
+    "schedule": [
+      {
+        "phase": "always",
+        "zone_id": "dungeon_floor1"
+      }
+    ]
+  }
+]

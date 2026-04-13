@@ -108,7 +108,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         if feature("npc_system"):
             from entities.npc import NPCRegistry
             self.npc_registry = NPCRegistry()
-            self.npc_registry.load_from_file(DATA_DIR / "npcs" / "npcs.json")
+            self.npc_registry.load_from_dir(DATA_DIR / "npcs")
 
         if feature("quest_system"):
             from entities.quest import QuestRegistry

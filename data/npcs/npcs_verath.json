@@ -1,385 +1,5 @@
 [
   {
-    "template_id": "torven_blacksmith",
-    "npc_id": "torven_blacksmith",
-    "name": "Torven",
-    "role": "blacksmith",
-    "zone_id": "village_start",
-    "description": "A barrel-chested blacksmith with soot-stained hands and the careful eyes of someone who fixes broken things for a living.",
-    "flavor_text": "He's had that anvil since before the Fracture. It still rings true.",
-    "starting_disposition": 5.0,
-    "appears_requires": {},
-    "disposition_hooks": {
-      "default": "root",
-      "hostile": "hostile"
-    },
-    "dialogue_nodes": {
-      "root": {
-        "node_id": "root",
-        "npc_text": "Torven looks up from the anvil. 'Got work to do. What do you need?'",
-        "smart_observation": "You notice the wall rack behind him â€” one hook empty, the leather hanging worn from long use. Whatever went there, he reached for it often.",
-        "smart_threshold": 9,
-        "perception_reveal": "There's dried blood on his knuckles. Not fresh â€” he's been taking on heavy work to keep busy. Something's weighing on him.",
-        "perception_threshold": 7,
-        "options": [
-          {
-            "option_id": "buy_weapons",
-            "label": "What do you have in stock?",
-            "requires": {},
-            "npc_response": "'Standard kit. Iron sword, leather armor, a few shields. Nothing fancy â€” but nothing that'll snap when you need it.' He gestures toward the rack.",
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "ask_about_work",
-            "label": "Looks like you've been busy.",
-            "requires": {},
-            "npc_response": "'Three batches of new classifications this month. Every one of them needs a kit.' He sets down his hammer. 'Business is good. That doesn't mean I'm happy.'",
-            "disposition_change": 3.0,
-            "leads_to_node": "torven_work",
-            "memory_event_type": "chitchat",
-            "memory_summary": "Player made small talk about workload."
-          },
-          {
-            "option_id": "ask_about_hammer",
-            "label": "That empty hook on the wall â€” something's missing.",
-            "requires": {
-              "stat_gates": [
-                {
-                  "stat": "INT",
-                  "threshold": 9,
-                  "gate_type": "soft",
-                  "soft_base_chance": 0.0,
-                  "soft_coefficient": 0.0,
-                  "fail_message": "You don't notice anything unusual."
-                }
-              ],
-              "flags_absent": [
-                "torven_hammer_returned"
-              ]
-            },
-            "npc_response": "His jaw tightens. 'My journeyman hammer. I've had it fifteen years â€” I tracked the Goblin Looters that took it into the dungeon, but...' He looks at his hands. 'I'm a smith. Not an adventurer.'",
-            "leads_to_node": "hammer_quest_offer",
-            "memory_event_type": "noticed_hammer",
-            "memory_summary": "Player noticed the missing hammer without being told."
-          },
-          {
-            "option_id": "return_hammer",
-            "label": "I found your journeyman hammer. Here.",
-            "requires": {
-              "items": [
-                "torven_hammer"
-              ],
-              "flags_absent": [
-                "torven_paid_reward"
-              ]
-            },
-            "npc_response": "He goes very still. Then he takes it with both hands, turns it over, finds the double-lobe stamp. 'You actually...' He sets it back on its hook without another word. Then: 'Thank you. Name your price for the trouble.'",
-            "triggers": [
-              "flag:torven_hammer_returned"
-            ],
-            "disposition_change": 25.0,
-            "leads_to_node": "hammer_reward",
-            "memory_event_type": "hammer_returned",
-            "memory_summary": "Player returned the journeyman hammer."
-          },
-          {
-            "option_id": "show_void_shard",
-            "label": "What do you know about this? [Show void shard]",
-            "requires": {
-              "items": [
-                "void_shard"
-              ]
-            },
-            "npc_response": "He goes very still. 'Where did you get that.' Not a question. He leans forward slightly, then stops himself. 'Put it away. Don't show it around registration checkpoints â€” the System can't read those, which means it can't track who has them.'",
-            "disposition_change": 8.0,
-            "leads_to_node": "void_shard_talk",
-            "memory_event_type": "showed_void_shard",
-            "memory_summary": "Player showed Torven a void shard."
-          },
-          {
-            "option_id": "ask_about_crafting",
-            "label": "Could you teach me to make basic things?",
-            "requires": {
-              "flags_absent": [
-                "crafter"
-              ]
-            },
-            "npc_response": "Torven wipes his hands on his apron. 'Basic crafting? Mixing salves, brewing simple compounds? Sure. You're no smith, but anyone can learn to work with their hands.' He gives a brief rundown of the basics. You feel like you could make something useful now.",
-            "triggers": [
-              "flag:crafter"
-            ],
-            "disposition_change": 2.0,
-            "leads_to_node": "root",
-            "memory_event_type": "taught_crafting",
-            "memory_summary": "Torven taught the player basic crafting."
-          },
-          {
-            "option_id": "leave",
-            "label": "Never mind. I'll come back.",
-            "requires": {},
-            "npc_response": "'Door's always open.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "shop": {
-        "node_id": "shop",
-        "npc_text": "'Iron Sword â€” 50g, proper balance, forged it myself. Leather Armor â€” 40g. Health Potion â€” 25g. Mana Potion â€” 30g. What'll it be?'",
-        "options": [
-          {
-            "option_id": "buy_sword",
-            "label": "Buy Iron Sword (50g)",
-            "requires": {},
-            "npc_response": "'Good choice. Try not to let goblins chip it.'",
-            "triggers": [
-              "buy_item:iron_sword:5000"
-            ],
-            "disposition_change": 2.0,
-            "leads_to_node": "shop",
-            "memory_event_type": "purchase",
-            "memory_summary": "Player purchased an iron sword."
-          },
-          {
-            "option_id": "buy_armor",
-            "label": "Buy Leather Armor (40g)",
-            "requires": {},
-            "npc_response": "'Good fit for your frame. Keep it oiled.'",
-            "triggers": [
-              "buy_item:leather_armor:4000"
-            ],
-            "disposition_change": 2.0,
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "buy_health",
-            "label": "Buy Health Potion (25g)",
-            "requires": {},
-            "npc_response": "'Two-day shelf life once opened. Don't wait too long.'",
-            "triggers": [
-              "buy_item:health_potion:2500"
-            ],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "buy_mana",
-            "label": "Buy Mana Potion (30g)",
-            "requires": {},
-            "npc_response": "'Brew's from the alchemist on the east road. Better than it tastes.'",
-            "triggers": [
-              "buy_item:mana_potion:3000"
-            ],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "leave_shop",
-            "label": "Nothing right now. Thanks.",
-            "requires": {},
-            "npc_response": "'Come back when you've got coin and wounds to show for it.'",
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "torven_work": {
-        "node_id": "torven_work",
-        "npc_text": "'You know what's funny? Three years after the Fracture, people are still surprised the System gave them a class they didn't expect. Like they thought they'd get a say in it.'",
-        "smart_observation": "He's not really talking about the new adventurers. He's talking about himself.",
-        "smart_threshold": 10,
-        "options": [
-          {
-            "option_id": "ask_your_class",
-            "label": "What did you get? When you were classified?",
-            "requires": {},
-            "npc_response": "'Blacksmith. Rank C. Which... fits, I suppose. But the Rank C surprised me. That means the System thought I was going somewhere. I'm not sure where.'",
-            "disposition_change": 5.0,
-            "leads_to_node": "root",
-            "memory_event_type": "personal_talk",
-            "memory_summary": "Player asked about Torven's classification."
-          },
-          {
-            "option_id": "back_to_topic",
-            "label": "About that empty hook on the rack...",
-            "requires": {},
-            "npc_response": "'Yeah.' He exhales. 'I wasn't going to bring it up, but...'",
-            "leads_to_node": "hammer_quest_offer"
-          },
-          {
-            "option_id": "leave_work",
-            "label": "I'll leave you to it.",
-            "requires": {},
-            "npc_response": "'Appreciated.'",
-            "disposition_change": 2.0,
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "hammer_quest_offer": {
-        "node_id": "hammer_quest_offer",
-        "npc_text": "'My journeyman hammer. Fifteen years with it. Three days ago, a Goblin Looter patrol came up into the market district â€” unusual, but they do it sometimes â€” and one of them grabbed it while I had my back turned. I tracked them to the dungeon entrance before I admitted to myself I'm not built for that kind of work.'",
-        "options": [
-          {
-            "option_id": "accept_hammer_quest",
-            "label": "I can look for it.",
-            "requires": {},
-            "npc_response": "'I'd appreciate that more than I'm going to say out loud. It's got a double-lobe stamp mark on the head with a V between the lobes â€” my journeyman mark. You'll recognize it.'",
-            "triggers": [
-              "start_quest:blacksmith_hammer",
-              "flag:torven_gave_hammer_quest"
-            ],
-            "disposition_change": 15.0,
-            "leads_to_node": "quest_accepted",
-            "memory_event_type": "quest_given",
-            "memory_summary": "Player accepted the hammer retrieval quest."
-          },
-          {
-            "option_id": "decline_hammer_quest",
-            "label": "Can't make promises. Maybe later.",
-            "requires": {},
-            "npc_response": "'Right. No, that's fair.' He goes back to work. 'If you change your mind â€” or if you happen to see it.'",
-            "disposition_change": -3.0,
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "quest_accepted": {
-        "node_id": "quest_accepted",
-        "npc_text": "'The Goblin Looters tend to keep shiny things. Should be in their sleeping area, near their territory on the first floor. And...' He hesitates. 'Thank you.'",
-        "options": [
-          {
-            "option_id": "leave_with_quest",
-            "label": "I'll bring it back.",
-            "requires": {},
-            "npc_response": "'Don't die doing it. That would make the whole thing worse.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "hammer_returned": {
-        "node_id": "hammer_returned",
-        "npc_text": "Torven's hands close around the hammer. He doesn't say anything for a moment. Just weighs it, checks the stamp mark, weighs it again.",
-        "options": [
-          {
-            "option_id": "collect_reward",
-            "label": "I think that's yours.",
-            "requires": {
-              "items": [
-                "torven_hammer"
-              ]
-            },
-            "npc_response": "'40g. And my work rate for you is half-price, permanent. That's not a deal â€” that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
-            "triggers": [
-              "flag:torven_hammer_returned",
-              "give_gold:40"
-            ],
-            "disposition_change": 25.0,
-            "leads_to_node": "__exit__",
-            "memory_event_type": "quest_completed",
-            "memory_summary": "Player returned the journeyman hammer. Deep gratitude."
-          }
-        ]
-      },
-      "hammer_reward": {
-        "node_id": "hammer_reward",
-        "npc_text": "'I said name your price. Don't be modest â€” I've had that hammer fifteen years and I intend to have it fifteen more.' He opens a small lockbox. 'Forty gold. And if you need work done, you come to me first.'",
-        "options": [
-          {
-            "option_id": "accept_reward",
-            "label": "Forty gold is fair. Thank you.",
-            "requires": {},
-            "npc_response": "'Smart. Come back when something needs fixing.'",
-            "triggers": [
-              "give_gold:4000",
-              "flag:torven_paid_reward"
-            ],
-            "leads_to_node": "__exit__"
-          },
-          {
-            "option_id": "decline_reward",
-            "label": "Keep it. Glad it's back where it belongs.",
-            "requires": {},
-            "npc_response": "A long pause. 'I won't argue. But you've got credit here whenever you need it.'",
-            "triggers": [
-              "flag:torven_paid_reward",
-              "flag:torven_owes_favour"
-            ],
-            "disposition_change": 15.0,
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "void_shard_talk": {
-        "node_id": "void_shard_talk",
-        "npc_text": "'I've seen one before. Once, years before the Fracture â€” my old master had a piece he kept wrapped in cloth in a locked drawer. Never explained it.' He pauses. 'The System can't read it. Means it can't track you when you're near it, either. That's useful to some people and very dangerous around others.'",
-        "smart_observation": "He's choosing his words more carefully than a blacksmith usually needs to.",
-        "smart_threshold": 10,
-        "options": [
-          {
-            "option_id": "ask_void_detail",
-            "label": "What was your master's piece used for?",
-            "requires": {
-              "stat_gates": [
-                {
-                  "stat": "INT",
-                  "threshold": 10,
-                  "gate_type": "hard"
-                }
-              ]
-            },
-            "npc_response": "'He never told me. But after the Fracture, he burned it. Said some tools are only useful when you're trying to stay invisible, and once the System has everyone catalogued, being invisible stops being useful and starts being suspicious.'",
-            "triggers": [
-              "flag:knows_void_shard_history"
-            ],
-            "disposition_change": 5.0,
-            "leads_to_node": "root",
-            "memory_event_type": "shared_void_lore",
-            "memory_summary": "Shared history of void shard with player."
-          },
-          {
-            "option_id": "thanks_shard_info",
-            "label": "That's worth knowing. Thank you.",
-            "requires": {},
-            "npc_response": "'Be careful with it.'",
-            "triggers": [
-              "flag:torven_warned_about_void"
-            ],
-            "disposition_change": 3.0,
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "hostile": {
-        "node_id": "hostile",
-        "npc_text": "Torven sets down his tools slowly and looks at you with the particular stillness of a large man deciding whether something is worth his time. 'I'm going to need you to leave.'",
-        "options": [
-          {
-            "option_id": "leave_hostile",
-            "label": "Fine.",
-            "requires": {},
-            "npc_response": "'Door's that way.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      }
-    },
-    "quest_seeds": [
-      {
-        "quest_template_id": "blacksmith_hammer",
-        "trigger_flag": "",
-        "trigger_disposition_min": -10.0,
-        "already_given_flag": "torven_gave_hammer_quest"
-      }
-    ],
-    "schedule": [
-      {
-        "phase": "day",
-        "zone_id": "village_start"
-      },
-      {
-        "phase": "night",
-        "zone_id": "verath_market"
-      }
-    ]
-  },
-  {
     "template_id": "sylara_guildmaster",
     "npc_id": "sylara_guildmaster",
     "name": "Sylara",
@@ -688,272 +308,6 @@
         "trigger_flag": "contract_dungeon_survey",
         "trigger_disposition_min": -20.0,
         "already_given_flag": "sylara_gave_survey_quest"
-      }
-    ]
-  },
-  {
-    "template_id": "mira_innkeeper",
-    "npc_id": "mira_innkeeper",
-    "name": "Mira",
-    "role": "innkeeper",
-    "zone_id": "village_start",
-    "description": "The innkeeper of the Iron Compass â€” sharp-eyed, quick with an opinion, and the best source of gossip in Verath that isn't the Guild board.",
-    "flavor_text": "She named the inn after a compass that survived the Fracture pointing the wrong direction. She says that's more honest than one that pretends nothing changed.",
-    "starting_disposition": 10.0,
-    "appears_requires": {},
-    "disposition_hooks": {
-      "default": "root",
-      "friendly": "friendly_root",
-      "hostile": "cold"
-    },
-    "dialogue_nodes": {
-      "root": {
-        "node_id": "root",
-        "npc_text": "'Welcome to the Iron Compass. Room's 5g a night, ale's 2s, and information varies by quality.'",
-        "smart_observation": "She's watching the door with more attention than innkeepers usually give to foot traffic. She's looking for someone specific.",
-        "smart_threshold": 8,
-        "perception_reveal": "Two of the three patrons at the tables glanced at their belt pouches when you walked in. Something's been taken recently and they know it.",
-        "perception_threshold": 7,
-        "options": [
-          {
-            "option_id": "ask_rumors",
-            "label": "What's the gossip lately?",
-            "requires": {},
-            "npc_response": "'Let me think.' She wipes the counter without looking at it. 'Three Rank C classifications in the latest batch â€” that's high for a town like Verath. And there's been a man sitting at that corner table three evenings running, ordered water each time. No System profile that I can read.'",
-            "disposition_change": 2.0,
-            "leads_to_node": "rumors",
-            "memory_event_type": "asked_rumors",
-            "memory_summary": "Player asked for gossip. Mentioned the Rank C batch and the man with no profile."
-          },
-          {
-            "option_id": "rent_room",
-            "label": "I'll take a room for the night. (5g)",
-            "requires": {},
-            "npc_response": "'Room three, top of the stairs. Breakfast at dawn if you're up.'",
-            "triggers": [
-              "give_item:room_key",
-              "give_gold:-5"
-            ],
-            "disposition_change": 3.0,
-            "leads_to_node": "room_rented",
-            "memory_event_type": "rented_room",
-            "memory_summary": "Player rented a room for the night."
-          },
-          {
-            "option_id": "ask_about_thefts",
-            "label": "There's been trouble lately, hasn't there.",
-            "requires": {
-              "stat_gates": [
-                {
-                  "stat": "PERCEPTION",
-                  "threshold": 7,
-                  "gate_type": "hidden",
-                  "hidden_hint_threshold": 2,
-                  "hint_text": "Something about the way the other patrons are sitting..."
-                }
-              ]
-            },
-            "npc_response": "'You noticed.' She stops wiping. 'Three guests this week. Small things â€” a coin purse, a ring, a carved bone token. Happens while they're at the shared bath. Whoever it is knows the schedule.'",
-            "disposition_change": 5.0,
-            "leads_to_node": "theft_reveal",
-            "memory_event_type": "noticed_thefts",
-            "memory_summary": "Player detected signs of the theft problem without being told."
-          },
-          {
-            "option_id": "leave",
-            "label": "Just passing through.",
-            "requires": {},
-            "npc_response": "'Door's always open.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "friendly_root": {
-        "node_id": "friendly_root",
-        "npc_text": "'There you are. Usual table's free if you want it.' She's already setting a cup down. 'What do you need?'",
-        "options": [
-          {
-            "option_id": "ask_rumors_friendly",
-            "label": "Anything new I should know?",
-            "requires": {},
-            "npc_response": "'Heard back from my cousin in the next town â€” they've had irregularities with their dungeon too. Different kind, but similar in that the System isn't explaining them clearly. It's not just Verath.'",
-            "triggers": [
-              "flag:knows_regional_irregularities"
-            ],
-            "disposition_change": 2.0,
-            "leads_to_node": "root",
-            "memory_event_type": "shared_regional_info",
-            "memory_summary": "Shared news about dungeon irregularities in neighboring town."
-          },
-          {
-            "option_id": "check_on_quest",
-            "label": "Any progress on finding out about the thefts?",
-            "requires": {
-              "flags": [
-                "mira_gave_theft_quest"
-              ]
-            },
-            "npc_response": "'Still watching the patterns. I think it's someone who knows which guests are staying short-term â€” they don't hit anyone who's been here more than three days. That narrows it.'",
-            "triggers": [
-              "flag:theft_clue_short_stay"
-            ],
-            "leads_to_node": "root",
-            "memory_event_type": "quest_update",
-            "memory_summary": "Player checked in on theft investigation. Shared short-stay pattern clue."
-          },
-          {
-            "option_id": "leave_friendly",
-            "label": "Just checking in. I'll get back to it.",
-            "requires": {},
-            "npc_response": "'Come back when you've got something to tell me.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "rumors": {
-        "node_id": "rumors",
-        "npc_text": "'The Rank C batch is the one I keep thinking about. Usually the System spaces those out â€” gives them time to develop before clustering them in a city. Three at once suggests it's responding to something. Some kind of need, or threshold.'",
-        "smart_observation": "She's thought about this more than casual gossip. She has a theory she's not sharing yet.",
-        "smart_threshold": 9,
-        "perception_reveal": "She glances at the corner table when she mentions the man with no profile. He's already gone, but the absence is where she keeps looking.",
-        "perception_threshold": 8,
-        "options": [
-          {
-            "option_id": "ask_about_profiler",
-            "label": "The man with no System profile â€” tell me more.",
-            "requires": {
-              "stat_gates": [
-                {
-                  "stat": "PERCEPTION",
-                  "threshold": 8,
-                  "gate_type": "hidden",
-                  "hidden_hint_threshold": 2,
-                  "hint_text": "Something about the way she looks toward that empty corner..."
-                }
-              ]
-            },
-            "npc_response": "'Left last night. No check-out, just gone. But when he was here â€” three nights â€” I tried to read his profile. Nothing. Not blocked, not encrypted. Just absent. Like the System doesn't know he exists.'",
-            "triggers": [
-              "flag:heard_about_wanderer",
-              "flag:can_see_wanderer"
-            ],
-            "disposition_change": 3.0,
-            "leads_to_node": "root",
-            "memory_event_type": "shared_wanderer_info",
-            "memory_summary": "Told player about the man with no System profile."
-          },
-          {
-            "option_id": "ask_rank_c_theory",
-            "label": "A threshold for what?",
-            "requires": {
-              "stat_gates": [
-                {
-                  "stat": "INT",
-                  "threshold": 9,
-                  "gate_type": "hard"
-                }
-              ]
-            },
-            "npc_response": "'I'm an innkeeper, not a scholar. But the Fracture changed what the System needs from people. Three Rank C designations at once suggests it needs something specific from this area. I just don't know what.'",
-            "triggers": [
-              "flag:knows_rank_c_theory"
-            ],
-            "leads_to_node": "root",
-            "memory_event_type": "shared_theory",
-            "memory_summary": "Shared theory about the Rank C clustering with a perceptive player."
-          },
-          {
-            "option_id": "leave_rumors",
-            "label": "That's plenty to think about.",
-            "requires": {},
-            "npc_response": "'Check back if you hear anything interesting.'",
-            "triggers": [
-              "flag:heard_verath_rumors"
-            ],
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "theft_reveal": {
-        "node_id": "theft_reveal",
-        "npc_text": "'I can't go to the Guard â€” half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay 25g to know who it is. Not for punishment. I just want them to stop.'",
-        "options": [
-          {
-            "option_id": "accept_theft_quest",
-            "label": "I can look into it.",
-            "requires": {},
-            "npc_response": "'Good. Talk to the guests â€” the morning slot is Aldric the merchant, midday is the Riel twins, evenings vary. The thefts happen during the bath schedule. Someone knows when the rooms are empty.'",
-            "triggers": [
-              "start_quest:theft_investigation",
-              "flag:mira_gave_theft_quest"
-            ],
-            "disposition_change": 12.0,
-            "leads_to_node": "quest_briefing",
-            "memory_event_type": "quest_given",
-            "memory_summary": "Gave theft investigation quest to player."
-          },
-          {
-            "option_id": "decline_theft",
-            "label": "Not really my kind of work.",
-            "requires": {},
-            "npc_response": "'Fair enough. Offer stands if you change your mind.'",
-            "disposition_change": -2.0,
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "quest_briefing": {
-        "node_id": "quest_briefing",
-        "npc_text": "'One more thing: whoever's doing this is patient. They're not taking obviously valuable things â€” just things that won't be missed immediately. That takes observation. Or access to information about the guests.'",
-        "options": [
-          {
-            "option_id": "note_and_leave",
-            "label": "I'll report back when I have something.",
-            "requires": {},
-            "npc_response": "'Appreciated. I'll keep the usual table free for you.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "room_rented": {
-        "node_id": "room_rented",
-        "npc_text": "'Breakfast at dawn, candle's included. If you need anything before that, knock on the bar counter â€” I'm a light sleeper.'",
-        "options": [
-          {
-            "option_id": "leave_room",
-            "label": "Thank you. Good night.",
-            "requires": {},
-            "npc_response": "'Night.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "cold": {
-        "node_id": "cold",
-        "npc_text": "Mira meets your eyes with the practiced blankness of someone who has asked difficult people to leave before. 'I'm going to need you to order something or leave the premises.'",
-        "options": [
-          {
-            "option_id": "leave_cold",
-            "label": "I'll leave.",
-            "requires": {},
-            "npc_response": "'Thank you.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      }
-    },
-    "quest_seeds": [
-      {
-        "quest_template_id": "theft_investigation",
-        "trigger_flag": "",
-        "trigger_disposition_min": 0.0,
-        "already_given_flag": "mira_gave_theft_quest"
-      }
-    ],
-    "schedule": [
-      {
-        "phase": "always",
-        "zone_id": "village_start"
       }
     ]
   },
@@ -1535,292 +889,6 @@
     "quest_seeds": []
   },
   {
-    "template_id": "dungeon_vendor",
-    "npc_id": "dungeon_vendor",
-    "name": "Pell",
-    "role": "traveling vendor",
-    "zone_id": "dungeon_floor1",
-    "description": "A wiry woman with too many belt pouches and the calmly exhausted look of someone who has made a living selling potions to people who should have bought more before they came in.",
-    "flavor_text": "She set up outside the dungeon entrance three days after the Fracture and never left. Business has been consistent.",
-    "starting_disposition": 5.0,
-    "appears_requires": {},
-    "disposition_hooks": {
-      "default": "root",
-      "hostile": "hostile"
-    },
-    "dialogue_nodes": {
-      "root": {
-        "node_id": "root",
-        "npc_text": "Pell looks up from her folding table, which is covered in neat rows of glass vials and herb bundles. 'You're going in or coming out?' She doesn't actually wait for the answer. 'Either way, you could use supplies.'",
-        "options": [
-          {
-            "option_id": "browse_stock",
-            "label": "What are you selling?",
-            "requires": {},
-            "npc_response": "'Everything the dungeon eats through. Vials, herb bundles, potions. Clean materials — I source from the upper forest road.' She gestures at the table. 'Prices are fair because I don't have competition.'",
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "ask_about_dungeon",
-            "label": "Seen anything unusual down here lately?",
-            "requires": {},
-            "npc_response": "'Usual rotation: goblin scouts, slimes, the occasional wolf. Nothing unusual on floor one.' A pause. 'Floor two's a different topic. I've seen what comes back out from the teams that go there. Or I've seen what doesn't.'",
-            "disposition_change": 2.0,
-            "leads_to_node": "dungeon_talk",
-            "memory_event_type": "dungeon_query",
-            "memory_summary": "Player asked about dungeon activity."
-          },
-          {
-            "option_id": "ask_about_void_crystal",
-            "label": "Do you buy void crystals?",
-            "requires": {
-              "items": ["void_crystal"]
-            },
-            "npc_response": "She pauses. 'Where did you get one of those in the first dungeon floor?' She doesn't take it. 'I don't buy those. They don't play nice with standard inventory. But a scholar in the Spire might pay well — ask for Vael, third floor.'",
-            "disposition_change": 3.0,
-            "leads_to_node": "root",
-            "triggers": ["flag:knows_vael_spire"],
-            "memory_event_type": "void_crystal_shown",
-            "memory_summary": "Player showed Pell a void crystal. Directed to Vael at the Spire."
-          },
-          {
-            "option_id": "leave",
-            "label": "Just passing through.",
-            "requires": {},
-            "npc_response": "'Come back when you're bleeding.' She turns back to her inventory.",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "shop": {
-        "node_id": "shop",
-        "npc_text": "'Empty Vial — 2s. Herb Bundle — 3s. Health Potion — 25s. Mana Potion — 30s. Everything's clearly labelled.' She taps the folding table. 'No refunds on opened vials.'",
-        "options": [
-          {
-            "option_id": "buy_empty_vial",
-            "label": "Buy Empty Vial (2s)",
-            "requires": {},
-            "npc_response": "'Good base for salve-work. You know what you're doing?'",
-            "triggers": ["buy_item:empty_vial:200"],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "buy_herb_bundle",
-            "label": "Buy Herb Bundle (3s)",
-            "requires": {},
-            "npc_response": "'Mixed forest herbs. Solid for basic alchemy.'",
-            "triggers": ["buy_item:herb_bundle:300"],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "buy_health_potion",
-            "label": "Buy Health Potion (25s)",
-            "requires": {},
-            "npc_response": "'Brewed myself. It works — I've tested it.'",
-            "triggers": ["buy_item:health_potion:2500"],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "buy_mana_potion",
-            "label": "Buy Mana Potion (30s)",
-            "requires": {},
-            "npc_response": "'The casters always ask first. Second batch of the week.'",
-            "triggers": ["buy_item:mana_potion:3000"],
-            "leads_to_node": "shop"
-          },
-          {
-            "option_id": "leave_shop",
-            "label": "Nothing today. Thanks.",
-            "requires": {},
-            "npc_response": "'Come back after the monsters have a go at you.'",
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "dungeon_talk": {
-        "node_id": "dungeon_talk",
-        "npc_text": "'I've been here three years. Floor one's predictable — bad, but predictable. The second floor went quiet about a month before the survey teams went missing. No activity at the border. That's not normal. Something down there cleared the approach.'",
-        "smart_observation": "She says this with the matter-of-fact calm of someone who has thought about it enough that the fear has been replaced by analysis.",
-        "smart_threshold": 9,
-        "options": [
-          {
-            "option_id": "ask_more_floor2",
-            "label": "What do you think is down there?",
-            "requires": {},
-            "npc_response": "'I don't speculate. I sell potions.' She straightens a row of vials. 'If you're planning on finding out, buy the health potion.'",
-            "triggers": ["flag:knows_dungeon_floors"],
-            "leads_to_node": "root"
-          },
-          {
-            "option_id": "back_to_shop",
-            "label": "All right. What do you have in stock?",
-            "requires": {},
-            "npc_response": "'Now we're talking.'",
-            "leads_to_node": "shop"
-          }
-        ]
-      },
-      "hostile": {
-        "node_id": "hostile",
-        "npc_text": "Pell slides everything on the table out of your reach without a word. Her expression says the conversation is over.",
-        "options": [
-          {
-            "option_id": "leave_hostile",
-            "label": "Fine.",
-            "requires": {},
-            "npc_response": "'Dungeon's that way.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      }
-    },
-    "quest_seeds": [],
-    "schedule": [
-      {
-        "phase": "always",
-        "zone_id": "dungeon_floor1"
-      }
-    ]
-  },
-  {
-    "template_id": "guild_clerk",
-    "npc_id": "guild_clerk",
-    "name": "Nara",
-    "role": "guild clerk",
-    "zone_id": "village_start",
-    "description": "The Guild's registration clerk — young, precise, with the particular efficiency of someone who processes a dozen new classifications a day and has stopped being surprised by any of them.",
-    "flavor_text": "She remembers every adventurer who walked through this door. It's not a skill. It's just a thing that happened when you process enough paperwork.",
-    "starting_disposition": 3.0,
-    "appears_requires": {},
-    "disposition_hooks": {
-      "default": "root",
-      "hostile": "hostile"
-    },
-    "dialogue_nodes": {
-      "root": {
-        "node_id": "root",
-        "npc_text": "The clerk — Nara, according to the small nameplate — looks up from a stack of registration forms and marks your place in the queue with a practiced eye. 'Classification registered. How can I help?'",
-        "options": [
-          {
-            "option_id": "ask_about_guild_ranks",
-            "label": "How does advancement work in the Guild?",
-            "requires": {},
-            "npc_response": "'Guild rank mirrors System rank — F through S. Completing contracts is the primary path. Rank E unlocks: dungeon contracts above floor one, limited equipment borrowing, and access to the restricted briefing board.' She says this without looking up from the register. 'Rank D and above get housing stipends, but that's not relevant to you yet.'",
-            "leads_to_node": "rank_info",
-            "memory_event_type": "rank_query",
-            "memory_summary": "New classification asked about Guild rank advancement."
-          },
-          {
-            "option_id": "ask_about_current_contracts",
-            "label": "What contracts are currently posted?",
-            "requires": {},
-            "npc_response": "'Board out front is current. The dungeon survey is still open — floor one documentation. Wolf pelts for Maren. Missing person search.' She hesitates just slightly. 'The board doesn't reflect everything Sylara's working on. Some things don't get posted publicly.'",
-            "disposition_change": 1.0,
-            "leads_to_node": "contracts_info",
-            "memory_event_type": "contracts_query",
-            "memory_summary": "Player asked about active contracts."
-          },
-          {
-            "option_id": "ask_about_floor2_clerk",
-            "label": "Has the Guild said anything about the dungeon's second floor?",
-            "requires": {
-              "flags": ["knows_second_floor_warning"]
-            },
-            "npc_response": "'Officially: under review, access suspended pending safety assessment.' She lowers her voice. 'Unofficially: two survey teams didn't come back. Sylara's written four incident reports in two weeks. That's four more than a typical month.' She goes back to her paperwork. 'I didn't say any of that.'",
-            "disposition_change": 5.0,
-            "triggers": ["flag:knows_dungeon_floors"],
-            "leads_to_node": "root",
-            "memory_event_type": "floor2_disclosed",
-            "memory_summary": "Disclosed unofficial floor two situation to player."
-          },
-          {
-            "option_id": "ask_about_classification",
-            "label": "I'm not sure what my classification means yet.",
-            "requires": {},
-            "npc_response": "'Standard processing delay. The System assigns class designations post-Rite, but the full skill tree can take a few days to resolve. Your class description should be in your System window.' A pause. 'If it shows Unclassified for more than a week, come back and we'll escalate.'",
-            "leads_to_node": "root",
-            "memory_event_type": "class_query",
-            "memory_summary": "Player asked about classification status."
-          },
-          {
-            "option_id": "leave",
-            "label": "That's all. Thank you.",
-            "requires": {},
-            "npc_response": "'Good luck with your first contract.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      },
-      "rank_info": {
-        "node_id": "rank_info",
-        "npc_text": "'Most new classifications stay at Rank F for two to three months. Fast-track is about six weeks if you're clearing contracts consistently. The record from this district is nine days.' A small pause. 'We don't recommend that pace.'",
-        "options": [
-          {
-            "option_id": "ask_nine_days",
-            "label": "Nine days? Who did it in nine days?",
-            "requires": {},
-            "npc_response": "'Classification designation: [REDACTED]. System profile sealed post-incident.' She closes the ledger with finality. 'Take your time with Rank F.'",
-            "disposition_change": 3.0,
-            "leads_to_node": "root",
-            "memory_event_type": "record_query",
-            "memory_summary": "Player asked about the nine-day advancement record."
-          },
-          {
-            "option_id": "back_from_rank",
-            "label": "Understood. Anything else I should know?",
-            "requires": {},
-            "npc_response": "'Read the contract terms before you sign. And don't go to floor two.'",
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "contracts_info": {
-        "node_id": "contracts_info",
-        "npc_text": "'The board is current as of this morning. Sylara reviews and approves new postings personally. If you complete a contract, bring the documentation here or directly to Sylara for verification and reward processing.'",
-        "options": [
-          {
-            "option_id": "ask_about_reward_processing",
-            "label": "How are rewards paid out?",
-            "requires": {},
-            "npc_response": "'Gold transfers through the System register within the hour of verification. Some contracts have supplementary item rewards — those are physical and distributed directly.' She straightens a stack of papers. 'Any disputes go through Sylara. Not me.'",
-            "leads_to_node": "root"
-          },
-          {
-            "option_id": "back_from_contracts",
-            "label": "Good to know. Thanks.",
-            "requires": {},
-            "npc_response": "'You're welcome.'",
-            "leads_to_node": "root"
-          }
-        ]
-      },
-      "hostile": {
-        "node_id": "hostile",
-        "npc_text": "Nara closes the register in front of her and looks at you with the professional stillness of someone who has dealt with difficult people all day and has exactly no patience left. 'I'm going to need you to step back from the desk.'",
-        "options": [
-          {
-            "option_id": "leave_hostile",
-            "label": "Fine.",
-            "requires": {},
-            "npc_response": "'Thank you.'",
-            "leads_to_node": "__exit__"
-          }
-        ]
-      }
-    },
-    "quest_seeds": [],
-    "schedule": [
-      {
-        "phase": "day",
-        "zone_id": "village_start"
-      },
-      {
-        "phase": "night",
-        "zone_id": "village_start"
-      }
-    ]
-  },
-  {
     "template_id": "spire_scholar",
     "npc_id": "spire_scholar",
     "name": "Vael",
@@ -1851,7 +919,9 @@
             "npc_response": "'The official record says: a destabilization event in the arcane substrate of the northern continent. My research says: something punctured through.' He picks up his pen again. 'Not in. Through. From somewhere else. The System came with it — or came because of it. We don't have consensus on which.'",
             "disposition_change": 3.0,
             "leads_to_node": "fracture_lore",
-            "triggers": ["flag:fracture_data_recorded"],
+            "triggers": [
+              "flag:fracture_data_recorded"
+            ],
             "memory_event_type": "fracture_query",
             "memory_summary": "New classification asked about the Fracture's origin."
           },
@@ -1869,7 +939,9 @@
             "option_id": "show_void_crystal_vael",
             "label": "I have a void crystal. I was told you might be interested.",
             "requires": {
-              "items": ["void_crystal"]
+              "items": [
+                "void_crystal"
+              ]
             },
             "npc_response": "He goes very still. 'May I?' He examines it without taking it, leaning forward. 'Floor one. That's unusual — void crystal formation at that depth suggests a fracture resonance point nearby. Somewhere the boundary between layers is thin.' He straightens. 'I'll pay five hundred silver for it, and I'll tell you what I find.'",
             "disposition_change": 15.0,
@@ -1893,7 +965,9 @@
             "npc_response": "'The System reads potential pathways, not current capabilities. It's not measuring what you are — it's measuring what you're structurally suited to become. Divergent classifications happen when the potential map doesn't match any established template.' A pause. 'Those cases are rare and extremely interesting from a research perspective.'",
             "disposition_change": 8.0,
             "leads_to_node": "class_lore",
-            "triggers": ["flag:understands_system_classification"],
+            "triggers": [
+              "flag:understands_system_classification"
+            ],
             "memory_event_type": "class_mechanics_query",
             "memory_summary": "Explained System classification mechanics to an INT-10+ player."
           },
@@ -1914,12 +988,16 @@
             "option_id": "share_findings",
             "label": "I found something in the dungeon that didn't read correctly on my compass.",
             "requires": {
-              "flags": ["explored_unmapped_passage"]
+              "flags": [
+                "explored_unmapped_passage"
+              ]
             },
             "npc_response": "'Tell me everything.' He pulls out a fresh sheet of notes. 'Location, System response, any physical properties you noticed. This is exactly the kind of data I need.'",
             "disposition_change": 10.0,
             "leads_to_node": "root",
-            "triggers": ["flag:vael_received_anomaly_report"],
+            "triggers": [
+              "flag:vael_received_anomaly_report"
+            ],
             "memory_event_type": "anomaly_reported",
             "memory_summary": "Player reported a compass anomaly in the unmapped dungeon passage."
           },
@@ -1954,7 +1032,9 @@
             "npc_response": "A long pause. 'That's the question, isn't it. The instruments measured an inflow, not an explosion. Something came from outside the substrate boundary.' He meets your eyes. 'The System is not from Aethoria. I believe it arrived with whatever caused the Fracture. What it is — or who controls it — I don't know yet.'",
             "disposition_change": 15.0,
             "leads_to_node": "root",
-            "triggers": ["flag:knows_system_external_origin"],
+            "triggers": [
+              "flag:knows_system_external_origin"
+            ],
             "memory_event_type": "deep_lore_shared",
             "memory_summary": "Shared theory about the System's external origin with a perceptive player."
           },
@@ -1978,7 +1058,9 @@
             "requires": {},
             "npc_response": "'Pre-Fracture arcane nodes, partially crystallized. The material itself is inert — it doesn't do anything on its own. What it does is refuse System interaction. That's the part that makes people nervous.' He pauses. 'Also the part that makes it extremely useful if you need to act without the System knowing.'",
             "disposition_change": 5.0,
-            "triggers": ["flag:void_research_shared"],
+            "triggers": [
+              "flag:void_research_shared"
+            ],
             "leads_to_node": "root"
           },
           {
@@ -1998,7 +1080,9 @@
             "option_id": "sell_void_crystal",
             "label": "Deal. Take it.",
             "requires": {
-              "items": ["void_crystal"]
+              "items": [
+                "void_crystal"
+              ]
             },
             "npc_response": "He takes the crystal with both hands and sets it in a padded case. 'Thank you. I'll have results within the week. Come back and ask for me by name.'",
             "triggers": [
@@ -2029,7 +1113,9 @@
             "requires": {},
             "npc_response": "'In real-time, probably. It's cataloguing behavioral data constantly. Whether it acts on that data before the divergence resolves is unclear. What's clear is: the final classification often surprises the individual. The System seems to wait until the pattern is complete.' He looks at you steadily. 'I mention this because your profile reads as... still in progress.'",
             "disposition_change": 8.0,
-            "triggers": ["flag:vael_flagged_divergence"],
+            "triggers": [
+              "flag:vael_flagged_divergence"
+            ],
             "leads_to_node": "root",
             "memory_event_type": "divergence_noted",
             "memory_summary": "Noted player's profile appears to be a divergent classification in progress."
