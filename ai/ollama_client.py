@@ -89,6 +89,7 @@ class OllamaClient:
                         "temperature": temperature,
                         "num_predict": 800,
                     },
+                    timeout=timeout,
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
                 data = json.loads(raw)
@@ -132,6 +133,7 @@ class OllamaClient:
                     "temperature": temperature,
                     "num_predict": max_tokens,
                 },
+                timeout=timeout,
             )
             raw = response.get("response", "") if isinstance(response, dict) else response.response
             self._record_usage(response)

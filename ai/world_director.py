@@ -2,13 +2,19 @@
 WorldDirector — Rule-based AI director that analyzes world state and submits
 targeted generation tasks to the BackgroundGenerator.
 
-The Director runs on a longer interval (every 30 turns) and decides WHAT to
-generate next based on gaps, story arcs, and balance.
+The Director runs on a longer interval (every DIRECTOR_INTERVAL turns, or every
+5 minutes wall-clock) and decides WHAT to generate next.
+
+IMPORTANT: The Director never calls Ollama directly. It builds a lightweight
+world summary on the main thread (pure Python) and submits a "director_analysis"
+task to the BackgroundGenerator queue. The actual LLM call runs in the BG worker
+thread, keeping the main game loop fully non-blocking.
 """
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING, Any
+import time as _time
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from ai.background_generator import BackgroundGenerator
@@ -22,6 +28,7 @@ class WorldDirector:
     """
     Analyses world state and decides what the background generator should
     create next. Runs on a long interval to provide strategic direction.
+    All Ollama calls happen in the BackgroundGenerator worker thread.
     """
 
     def __init__(
@@ -31,21 +38,21 @@ class WorldDirector:
         lore_data: dict,
     ) -> None:
         self._bg = bg_generator
-        self._client = ollama_client
+        self._client = ollama_client   # kept for potential future use; not called on main thread
         self._lore = lore_data
-        self._plan: list[dict] = []   # queued director targets
+        self._plan: list[dict] = []
         self._last_directed_turn: int = -1
         self._wall_clock_interval: float = 300.0
-        self._last_wall_clock_run: float = 0.0
+        # Initialise to NOW so the wall-clock check doesn't fire on turn 1
+        self._last_wall_clock_run: float = _time.monotonic()
 
     def tick(self, state: "GameState", turn: int) -> None:
-        """Called each game loop. Directs on wall-clock timer (5 min) or every DIRECTOR_INTERVAL turns."""
-        import time as _time
+        """Called each game loop. Non-blocking — submits tasks to background thread."""
         from config import DIRECTOR_INTERVAL
 
         now = _time.monotonic()
 
-        # Update the bg generator's context on every tick (cheap)
+        # Update the bg generator's context on every tick (cheap, always runs)
         if self._bg:
             flags = [k for k in state.player.flags if not k.startswith("_")][:10]
             zone_name = state.current_scene_id.replace("_", " ").title()
@@ -56,42 +63,43 @@ class WorldDirector:
                 flags=flags,
             )
 
-        # Turn-based fallback: fire every DIRECTOR_INTERVAL turns even if wall-clock hasn't triggered
+        # Decide whether to fire this tick
+        should_fire = False
         if (turn > 0
                 and turn != self._last_directed_turn
                 and turn % DIRECTOR_INTERVAL == 0):
-            self._last_directed_turn = turn
-            self._last_wall_clock_run = now   # prevent double-fire on same cycle
-            logger.info(f"WorldDirector firing (turn-based) at turn {turn}")
-            self._analyze_and_direct(state)
+            should_fire = True
+        elif now - self._last_wall_clock_run >= self._wall_clock_interval:
+            should_fire = True
+
+        if not should_fire:
             return
 
-        # Wall-clock director analysis every 5 minutes
-        if now - self._last_wall_clock_run < self._wall_clock_interval:
-            return
-        self._last_wall_clock_run = now
-
-        logger.info(f"WorldDirector firing at turn {turn} (wall-clock interval)")
-        self._analyze_and_direct(state)
-
-    def _analyze_and_direct(self, state: "GameState") -> None:
-        """Build a world summary, call the Director LLM, queue generation tasks."""
+        # Build summary on main thread (pure Python, very fast)
         summary = self._build_world_summary(state)
-        plan = self._call_director(summary)
-        if not plan:
-            # Fallback: submit a lore entry without LLM direction
-            flags = [k for k in state.player.flags if not k.startswith("_")][:6]
-            self._bg.submit_lore_entry(context_flags=flags, player_flags=flags)
-            return
+        flags = [k for k in state.player.flags if not k.startswith("_")][:6]
 
-        for target in plan.get("targets", [])[:3]:  # max 3 per cycle
-            self._dispatch_target(target, state)
+        # Submit to background thread — never block main thread
+        if self._bg:
+            submitted = self._bg._submit({
+                "type": "director_analysis",
+                "summary": summary,
+                "fallback_flags": flags,
+                "zone_id": state.current_scene_id,
+                "player_level": state.player.level,
+            })
+            if submitted:
+                self._last_directed_turn = turn
+                self._last_wall_clock_run = now
+                logger.info(f"WorldDirector submitted analysis task at turn {turn}")
+            else:
+                logger.debug("WorldDirector: BG queue full, skipping this cycle")
 
     def _build_world_summary(self, state: "GameState") -> dict:
+        """Build a lightweight world summary dict. Pure Python — no I/O."""
         player = state.player
         flags = [k for k in player.flags if not k.startswith("_")]
 
-        # Count known content gaps
         active_quests = len(player.active_quest_ids)
         completed_flags = [f for f in flags if "completed" in f or "done" in f or "defeated" in f]
 
@@ -107,78 +115,5 @@ class WorldDirector:
                 "needs_more_quests": active_quests < 2,
                 "needs_lore": "fracture_data_recorded" not in flags,
                 "needs_faction_content": "faction_joined" not in flags,
-            }
+            },
         }
-
-    def _call_director(self, summary: dict) -> dict | None:
-        system_prompt = (
-            "You are the WORLD DIRECTOR for Aethoria, a post-Fracture LitRPG world. "
-            "Analyze the world summary and decide what content to generate next. "
-            "Return ONLY valid JSON, no explanation.\n"
-            "JSON format:\n"
-            '{"priority": "story"|"world"|"mechanics", '
-            '"targets": [{"type": "quest"|"rumor"|"lore"|"world_event"|"npc_branch", '
-            '"goal": "short description", "zone": "zone_id or null"}]}'
-        )
-        user_prompt = (
-            f"World summary: {summary}\n\n"
-            "Choose 1-2 targets to generate next. "
-            "Prioritize what is missing or would most enrich the player's current experience. "
-            "Be specific about the goal — reference actual world context."
-        )
-        try:
-            result = self._client.generate_json(
-                prompt=user_prompt,
-                system_prompt=system_prompt,
-                temperature=0.7,
-            )
-            if result and "targets" in result:
-                return result
-        except Exception as e:
-            logger.warning(f"Director LLM call failed: {e}")
-        return None
-
-    def _dispatch_target(self, target: dict, state: "GameState") -> None:
-        ttype = target.get("type", "")
-        goal  = target.get("goal", "")
-        zone  = target.get("zone") or state.current_scene_id
-        player = state.player
-        flags = [k for k in player.flags if not k.startswith("_")][:8]
-
-        if ttype == "quest":
-            self._bg.submit_quest(
-                zone_id=zone,
-                npc_hint=goal[:60],
-                player=player,
-            )
-        elif ttype == "rumor":
-            self._bg.submit_rumor(
-                zone_id=zone,
-                context_flags=flags + [goal[:40]],
-                player_level=player.level,
-            )
-        elif ttype == "lore":
-            self._bg.submit_lore_entry(
-                context_flags=flags + [goal[:40]],
-                player_flags=flags,
-            )
-        elif ttype == "world_event":
-            scene = None  # we don't have registry here, use zone as name
-            self._bg.submit_world_event(
-                zone_id=zone,
-                zone_name=zone.replace("_", " ").title(),
-                player_level=player.level,
-                context_flags=flags + [goal[:40]],
-            )
-        elif ttype == "npc_branch":
-            npc_id = zone  # zone field repurposed as npc_id hint
-            self._bg.submit_npc_branch(
-                npc_id=npc_id or "torven_blacksmith",
-                npc_name=npc_id.replace("_", " ").title() if npc_id else "Torven",
-                player_profile={
-                    "level": player.level,
-                    "alignment": player.alignment,
-                    "active_class": player.active_class or "Unclassified",
-                },
-            )
-        logger.info(f"Director dispatched: {ttype} — {goal[:50]}")

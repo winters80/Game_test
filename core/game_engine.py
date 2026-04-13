@@ -1987,6 +1987,13 @@ class GameEngine:
                                 f"  [dim_text][ {r.narrative} ][/dim_text]"
                             )
 
+                # ── Director analysis result (silent — targets already queued) ─
+                elif rtype == "director_fired":
+                    logger.debug(
+                        f"Director analysis integrated: "
+                        f"{result.get('target_count', 0)} target(s) queued"
+                    )
+
                 # ── World events, rumors, lore, area activity ─────────────────
                 elif rtype in ("world_event", "rumor", "lore_entry", "area_activity"):
                     event_text = result.get("event_text", "").strip()
