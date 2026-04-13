@@ -8,7 +8,7 @@ The System appeared during the Fracture and rewrote the rules of the world. Most
 
 ## What Is This?
 
-SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy (LitRPG / "Apocalypse Breaker" style). The defining mechanic: when you take unexpected paths — unusual stat combinations, refusing the System's assignments, carrying rare catalyst items — an on-device AI (Ollama) generates a unique class, skills, and narrative tailored to your specific playthrough.
+SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The defining mechanic: when you take unexpected paths — unusual stat combinations, refusing the System's assignments, carrying rare catalyst items — an on-device AI (Ollama) generates a unique class, skills, and narrative tailored to your specific playthrough.
 
 **No two divergent paths produce the same class.**
 
