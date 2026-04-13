@@ -140,13 +140,22 @@ class BackgroundGenerator:
             "context_flags": context_flags,
         })
 
-    def update_context(self, zone_id: str, zone_name: str, player_level: int, flags: list[str]) -> None:
+    def submit_guild_tick(self, world_db: object, guild_registry: object) -> bool:
+        """Queue a guild simulation tick. Returns False if queue full."""
+        return self._submit({
+            "type": "guild_tick",
+            "world_db": world_db,
+            "guild_registry": guild_registry,
+        })
+
+    def update_context(self, zone_id: str, zone_name: str, player_level: int, flags: list[str], turn: int = 0) -> None:
         """Update the autonomous generator's world context. Called from game loop."""
         self._autonomous_context = {
             "zone_id": zone_id,
             "zone_name": zone_name,
             "player_level": player_level,
             "flags": flags,
+            "turn": turn,
         }
 
     def _submit(self, task: dict) -> bool:
@@ -316,6 +325,7 @@ class BackgroundGenerator:
         if t == "rumor":         return self._gen_rumor_task(task)
         if t == "lore_entry":    return self._gen_lore_entry(task)
         if t == "area_activity": return self._gen_area_activity(task)
+        if t == "guild_tick":    return self._gen_guild_tick(task)
         return None
 
     def _gen_quest(self, task: dict) -> dict | None:
@@ -508,6 +518,27 @@ class BackgroundGenerator:
                 }
         except Exception as exc:
             logger.warning(f"BG lore_entry error: {exc}")
+        return None
+
+    def _gen_guild_tick(self, task: dict) -> dict | None:
+        """Run one guild simulation tick in the background thread."""
+        try:
+            from systems.guilds import guild_sim
+            world_db = task.get("world_db")
+            guild_registry = task.get("guild_registry")
+            if world_db is None:
+                return None
+            turn = self._autonomous_context.get("turn", 0)
+            results = guild_sim.tick(
+                world_db=world_db,
+                guild_registry=guild_registry,
+                ai_generator=self._content_gen,
+                turn=turn,
+            )
+            if results:
+                return {"type": "guild_tick_results", "results": results}
+        except Exception as exc:
+            logger.warning(f"BG guild tick error: {exc}")
         return None
 
     def _gen_area_activity(self, task: dict) -> dict | None:

@@ -27,7 +27,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 4
+DB_SCHEMA_VERSION = 5
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -179,6 +179,66 @@ CREATE TABLE IF NOT EXISTS world_events (
     generated_turn INTEGER DEFAULT 0,
     shown          INTEGER DEFAULT 0
 );
+
+-- ── Guild Runtime State ───────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS guild_state (
+    guild_id             TEXT PRIMARY KEY,
+    template_id          TEXT NOT NULL,
+    name                 TEXT NOT NULL,
+    founding_turn        INTEGER NOT NULL,
+    founding_reason      TEXT DEFAULT '',
+    founder_entity_id    TEXT DEFAULT '',
+    headquarters_zone_id TEXT NOT NULL,
+    current_leader_id    TEXT DEFAULT '',
+    archetype            TEXT NOT NULL,
+    lifecycle_state      TEXT NOT NULL DEFAULT 'active',
+    morale               INTEGER NOT NULL DEFAULT 50,
+    stability            INTEGER NOT NULL DEFAULT 50,
+    influence            INTEGER NOT NULL DEFAULT 10,
+    secrecy              INTEGER NOT NULL DEFAULT 50,
+    wealth               INTEGER NOT NULL DEFAULT 0,
+    current_focus        TEXT NOT NULL DEFAULT 'idle',
+    tick_last_updated    INTEGER NOT NULL DEFAULT 0,
+    is_player_founded    INTEGER NOT NULL DEFAULT 0,
+    is_hidden            INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS guild_members (
+    guild_id             TEXT NOT NULL,
+    entity_id            TEXT NOT NULL,
+    entity_type          TEXT NOT NULL,
+    rank_id              TEXT NOT NULL,
+    standing             INTEGER NOT NULL DEFAULT 0,
+    loyalty              INTEGER NOT NULL DEFAULT 50,
+    ambition             INTEGER NOT NULL DEFAULT 50,
+    joined_turn          INTEGER NOT NULL,
+    last_promotion_turn  INTEGER,
+    PRIMARY KEY (guild_id, entity_id),
+    FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS guild_relations (
+    guild_id_1        TEXT NOT NULL,
+    guild_id_2        TEXT NOT NULL,
+    stance            TEXT NOT NULL DEFAULT 'neutral',
+    trust             INTEGER NOT NULL DEFAULT 50,
+    hostility         INTEGER NOT NULL DEFAULT 0,
+    tension           INTEGER NOT NULL DEFAULT 0,
+    last_changed_turn INTEGER DEFAULT 0,
+    PRIMARY KEY (guild_id_1, guild_id_2)
+);
+
+CREATE TABLE IF NOT EXISTS guild_projects (
+    project_id      TEXT PRIMARY KEY,
+    guild_id        TEXT NOT NULL,
+    project_type    TEXT NOT NULL,
+    target_id       TEXT DEFAULT '',
+    progress        INTEGER NOT NULL DEFAULT 0,
+    risk            INTEGER NOT NULL DEFAULT 10,
+    lead_entity_id  TEXT DEFAULT '',
+    started_turn    INTEGER NOT NULL,
+    FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
+);
 """
 
 
@@ -274,6 +334,64 @@ class WorldDatabase:
                     npc_hint       TEXT DEFAULT '',
                     generated_turn INTEGER DEFAULT 0,
                     shown          INTEGER DEFAULT 0
+                );
+            """)
+        if from_version < 5:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS guild_state (
+                    guild_id             TEXT PRIMARY KEY,
+                    template_id          TEXT NOT NULL,
+                    name                 TEXT NOT NULL,
+                    founding_turn        INTEGER NOT NULL,
+                    founding_reason      TEXT DEFAULT '',
+                    founder_entity_id    TEXT DEFAULT '',
+                    headquarters_zone_id TEXT NOT NULL,
+                    current_leader_id    TEXT DEFAULT '',
+                    archetype            TEXT NOT NULL,
+                    lifecycle_state      TEXT NOT NULL DEFAULT 'active',
+                    morale               INTEGER NOT NULL DEFAULT 50,
+                    stability            INTEGER NOT NULL DEFAULT 50,
+                    influence            INTEGER NOT NULL DEFAULT 10,
+                    secrecy              INTEGER NOT NULL DEFAULT 50,
+                    wealth               INTEGER NOT NULL DEFAULT 0,
+                    current_focus        TEXT NOT NULL DEFAULT 'idle',
+                    tick_last_updated    INTEGER NOT NULL DEFAULT 0,
+                    is_player_founded    INTEGER NOT NULL DEFAULT 0,
+                    is_hidden            INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS guild_members (
+                    guild_id             TEXT NOT NULL,
+                    entity_id            TEXT NOT NULL,
+                    entity_type          TEXT NOT NULL,
+                    rank_id              TEXT NOT NULL,
+                    standing             INTEGER NOT NULL DEFAULT 0,
+                    loyalty              INTEGER NOT NULL DEFAULT 50,
+                    ambition             INTEGER NOT NULL DEFAULT 50,
+                    joined_turn          INTEGER NOT NULL,
+                    last_promotion_turn  INTEGER,
+                    PRIMARY KEY (guild_id, entity_id),
+                    FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
+                );
+                CREATE TABLE IF NOT EXISTS guild_relations (
+                    guild_id_1        TEXT NOT NULL,
+                    guild_id_2        TEXT NOT NULL,
+                    stance            TEXT NOT NULL DEFAULT 'neutral',
+                    trust             INTEGER NOT NULL DEFAULT 50,
+                    hostility         INTEGER NOT NULL DEFAULT 0,
+                    tension           INTEGER NOT NULL DEFAULT 0,
+                    last_changed_turn INTEGER DEFAULT 0,
+                    PRIMARY KEY (guild_id_1, guild_id_2)
+                );
+                CREATE TABLE IF NOT EXISTS guild_projects (
+                    project_id      TEXT PRIMARY KEY,
+                    guild_id        TEXT NOT NULL,
+                    project_type    TEXT NOT NULL,
+                    target_id       TEXT DEFAULT '',
+                    progress        INTEGER NOT NULL DEFAULT 0,
+                    risk            INTEGER NOT NULL DEFAULT 10,
+                    lead_entity_id  TEXT DEFAULT '',
+                    started_turn    INTEGER NOT NULL,
+                    FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
                 );
             """)
         self._conn.execute(
@@ -733,3 +851,218 @@ class WorldDatabase:
                 "SELECT * FROM world_events ORDER BY id DESC LIMIT ?", (limit,)
             ).fetchall()
         return [dict(r) for r in rows]
+
+    # ── Guild State ───────────────────────────────────────────────────────────
+
+    def add_guild_state(
+        self, guild_id: str, template_id: str, name: str, founding_turn: int,
+        headquarters_zone_id: str, archetype: str,
+        founder_entity_id: str = "", founding_reason: str = "",
+        is_player_founded: int = 0,
+    ) -> None:
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO guild_state
+               (guild_id, template_id, name, founding_turn, founding_reason,
+                founder_entity_id, headquarters_zone_id, archetype,
+                tick_last_updated, is_player_founded)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (guild_id, template_id, name, founding_turn, founding_reason,
+             founder_entity_id, headquarters_zone_id, archetype,
+             founding_turn, is_player_founded),
+        )
+        self._conn.commit()
+
+    def get_guild_state(self, guild_id: str) -> dict | None:
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT * FROM guild_state WHERE guild_id = ?", (guild_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def get_all_guild_states(self) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute("SELECT * FROM guild_state").fetchall()
+        return [dict(r) for r in rows]
+
+    def update_guild_state(self, guild_id: str, **fields) -> None:
+        """Update any subset of guild_state fields. Uses keyword arguments."""
+        assert self._conn
+        if not fields:
+            return
+        allowed = {
+            "name", "current_leader_id", "archetype", "lifecycle_state",
+            "morale", "stability", "influence", "secrecy", "wealth",
+            "current_focus", "tick_last_updated", "is_hidden",
+            "founding_reason", "founder_entity_id",
+        }
+        set_parts = []
+        values = []
+        for k, v in fields.items():
+            if k in allowed:
+                set_parts.append(f"{k} = ?")
+                values.append(v)
+        if not set_parts:
+            return
+        values.append(guild_id)
+        self._conn.execute(
+            f"UPDATE guild_state SET {', '.join(set_parts)} WHERE guild_id = ?",
+            values,
+        )
+        self._conn.commit()
+
+    # ── Guild Members ─────────────────────────────────────────────────────────
+
+    def add_guild_member(
+        self, guild_id: str, entity_id: str, entity_type: str,
+        rank_id: str, joined_turn: int,
+        loyalty: int = 50, ambition: int = 50,
+    ) -> None:
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO guild_members
+               (guild_id, entity_id, entity_type, rank_id, joined_turn, loyalty, ambition)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(guild_id, entity_id) DO NOTHING""",
+            (guild_id, entity_id, entity_type, rank_id, joined_turn, loyalty, ambition),
+        )
+        self._conn.commit()
+
+    def get_guild_members(self, guild_id: str) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute(
+            "SELECT * FROM guild_members WHERE guild_id = ?", (guild_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_member(self, guild_id: str, entity_id: str) -> dict | None:
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT * FROM guild_members WHERE guild_id = ? AND entity_id = ?",
+            (guild_id, entity_id),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def update_member(self, guild_id: str, entity_id: str, **fields) -> None:
+        assert self._conn
+        allowed = {"rank_id", "standing", "loyalty", "ambition", "last_promotion_turn"}
+        set_parts = []
+        values = []
+        for k, v in fields.items():
+            if k in allowed:
+                set_parts.append(f"{k} = ?")
+                values.append(v)
+        if not set_parts:
+            return
+        values.extend([guild_id, entity_id])
+        self._conn.execute(
+            f"UPDATE guild_members SET {', '.join(set_parts)} WHERE guild_id = ? AND entity_id = ?",
+            values,
+        )
+        self._conn.commit()
+
+    def remove_guild_member(self, guild_id: str, entity_id: str) -> None:
+        assert self._conn
+        self._conn.execute(
+            "DELETE FROM guild_members WHERE guild_id = ? AND entity_id = ?",
+            (guild_id, entity_id),
+        )
+        self._conn.commit()
+
+    # ── Guild Relations ───────────────────────────────────────────────────────
+
+    def set_guild_relation(
+        self, guild_id_1: str, guild_id_2: str, stance: str = "neutral",
+        trust: int = 50, hostility: int = 0, tension: int = 0, turn: int = 0,
+    ) -> None:
+        assert self._conn
+        # Normalise key order
+        a, b = sorted([guild_id_1, guild_id_2])
+        self._conn.execute(
+            """INSERT INTO guild_relations
+               (guild_id_1, guild_id_2, stance, trust, hostility, tension, last_changed_turn)
+               VALUES (?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(guild_id_1, guild_id_2) DO UPDATE SET
+                 stance = excluded.stance,
+                 trust = excluded.trust,
+                 hostility = excluded.hostility,
+                 tension = excluded.tension,
+                 last_changed_turn = excluded.last_changed_turn""",
+            (a, b, stance, trust, hostility, tension, turn),
+        )
+        self._conn.commit()
+
+    def get_guild_relation(self, guild_id_1: str, guild_id_2: str) -> dict | None:
+        assert self._conn
+        a, b = sorted([guild_id_1, guild_id_2])
+        row = self._conn.execute(
+            "SELECT * FROM guild_relations WHERE guild_id_1 = ? AND guild_id_2 = ?",
+            (a, b),
+        ).fetchone()
+        return dict(row) if row else None
+
+    def update_guild_relation(self, guild_id_1: str, guild_id_2: str, **fields) -> None:
+        assert self._conn
+        a, b = sorted([guild_id_1, guild_id_2])
+        allowed = {"stance", "trust", "hostility", "tension", "last_changed_turn"}
+        set_parts = []
+        values = []
+        for k, v in fields.items():
+            if k in allowed:
+                set_parts.append(f"{k} = ?")
+                values.append(v)
+        if not set_parts:
+            return
+        values.extend([a, b])
+        self._conn.execute(
+            f"UPDATE guild_relations SET {', '.join(set_parts)} WHERE guild_id_1 = ? AND guild_id_2 = ?",
+            values,
+        )
+        self._conn.commit()
+
+    # ── Guild Projects ────────────────────────────────────────────────────────
+
+    def add_guild_project(
+        self, project_id: str, guild_id: str, project_type: str,
+        started_turn: int, target_id: str = "", risk: int = 10,
+        lead_entity_id: str = "",
+    ) -> None:
+        assert self._conn
+        self._conn.execute(
+            """INSERT INTO guild_projects
+               (project_id, guild_id, project_type, target_id, risk,
+                lead_entity_id, started_turn)
+               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+            (project_id, guild_id, project_type, target_id, risk,
+             lead_entity_id, started_turn),
+        )
+        self._conn.commit()
+
+    def get_guild_projects(self, guild_id: str) -> list[dict]:
+        assert self._conn
+        rows = self._conn.execute(
+            "SELECT * FROM guild_projects WHERE guild_id = ?", (guild_id,)
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_project(self, project_id: str) -> dict | None:
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT * FROM guild_projects WHERE project_id = ?", (project_id,)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def update_project(self, project_id: str, progress: int) -> None:
+        assert self._conn
+        self._conn.execute(
+            "UPDATE guild_projects SET progress = ? WHERE project_id = ?",
+            (progress, project_id),
+        )
+        self._conn.commit()
+
+    def complete_project(self, project_id: str) -> None:
+        assert self._conn
+        self._conn.execute(
+            "DELETE FROM guild_projects WHERE project_id = ?", (project_id,)
+        )
+        self._conn.commit()

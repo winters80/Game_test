@@ -85,3 +85,7 @@ class GuildRegistry:
 
     def auction_guilds(self) -> list[GuildDefinition]:
         return [g for g in self._guilds.values() if g.is_auction_guild]
+
+    def register(self, guild: GuildDefinition) -> None:
+        """Register a runtime-created or AI-generated guild template."""
+        self._guilds[guild.guild_id] = guild

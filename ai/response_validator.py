@@ -94,3 +94,69 @@ class AIDynamicOptionsResponse(BaseModel):
     @classmethod
     def cap_options(cls, v: list) -> list:
         return v[:4]  # max 4 dynamic options
+
+
+# ── Guild AI response models ──────────────────────────────────────────────────
+
+class AIGuildRankResponse(BaseModel):
+    rank_id: str
+    name: str
+    standing_required: int
+    title: str = ""
+    description: str = ""
+
+    @field_validator("rank_id")
+    @classmethod
+    def normalize_id(cls, v: str) -> str:
+        return v.lower().replace(" ", "_").replace("-", "_")
+
+
+class AIGuildPerkResponse(BaseModel):
+    perk_id: str
+    name: str
+    description: str
+    rank_required: str
+    stat_bonuses: dict[str, int] = {}
+    skill_unlocks: list[str] = []
+
+    @field_validator("perk_id")
+    @classmethod
+    def normalize_id(cls, v: str) -> str:
+        return v.lower().replace(" ", "_").replace("-", "_")
+
+    @field_validator("skill_unlocks")
+    @classmethod
+    def cap_skills(cls, v: list) -> list:
+        return v[:3]
+
+    @field_validator("stat_bonuses")
+    @classmethod
+    def cap_bonus(cls, v: dict) -> dict:
+        return {k: min(v[k], 5) for k in v}  # cap +5 per stat, no exploit
+
+
+class AIGuildTemplateResponse(BaseModel):
+    guild_id: str
+    name: str
+    description: str
+    flavor_text: str = ""
+    archetype: str
+    ranks: list[AIGuildRankResponse]
+    perks: list[AIGuildPerkResponse]
+
+    @field_validator("guild_id")
+    @classmethod
+    def normalize_id(cls, v: str) -> str:
+        return "gen_" + v.lower().replace(" ", "_").replace("-", "_")[:30]
+
+    @field_validator("ranks")
+    @classmethod
+    def validate_ranks(cls, v: list) -> list:
+        if len(v) < 2:
+            raise ValueError("Guild needs at least 2 ranks")
+        return v[:6]
+
+    @field_validator("perks")
+    @classmethod
+    def cap_perks(cls, v: list) -> list:
+        return v[:4]

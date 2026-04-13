@@ -194,6 +194,57 @@ Return JSON in this exact format:
 }}"""
 
 
+def build_guild_intent_prompt(
+    guild: object,  # GuildState
+    member: object,  # GuildMember
+    eligible_actions: list[str],
+) -> str:
+    """Build a prompt asking AI to propose a guild intent for an NPC member."""
+    return (
+        f"You are {member.entity_id}, a member of the guild '{guild.name}' "
+        f"(archetype: {guild.archetype}, stability: {guild.stability}/100, "
+        f"morale: {guild.morale}/100, wealth: {guild.wealth}). "
+        f"Your loyalty is {member.loyalty}/100 and ambition is {member.ambition}/100. "
+        f"Your current rank is '{member.rank_id}'. "
+        f"\n\nChoose ONE action from this list: {eligible_actions}. "
+        f"\n\nRespond with a JSON object matching one of these schemas:\n"
+        f'- attempt_coup: {{"intent": "attempt_coup", "actor_id": "{member.entity_id}", "guild_id": "{guild.guild_id}"}}\n'
+        f'- found_splinter_guild: {{"intent": "found_splinter_guild", "actor_id": "{member.entity_id}", "parent_guild_id": "{guild.guild_id}", "name": "New Guild Name", "initial_supporters": [], "new_focus": "idle"}}\n'
+        f'- leak_secrets: {{"intent": "leak_secrets", "actor_id": "{member.entity_id}", "guild_id": "{guild.guild_id}", "target_guild_id": "TARGET_ID", "severity": 20}}\n'
+        f'- steal_resources: {{"intent": "steal_resources", "actor_id": "{member.entity_id}", "guild_id": "{guild.guild_id}", "amount": 50}}\n'
+        f'- sabotage_project: {{"intent": "sabotage_project", "actor_id": "{member.entity_id}", "guild_id": "{guild.guild_id}", "project_id": "PROJECT_ID"}}\n'
+        f"\nDo NOT include 'success', 'outcome', or 'result' fields. The engine adjudicates."
+    )
+
+
+def build_guild_template_prompt(
+    name: str,
+    archetype: str,
+    zone_id: str,
+    founding_reason: str,
+    seed_traits: list[str],
+) -> str:
+    """Build a prompt to generate a full guild template (ranks + perks)."""
+    traits_str = ", ".join(seed_traits) if seed_traits else "none specified"
+    return (
+        f"Create a guild template for a new {archetype} guild called '{name}'. "
+        f"Founded in the zone '{zone_id}'. Reason: {founding_reason or 'unspecified'}. "
+        f"Defining traits: {traits_str}.\n\n"
+        f"Provide 3-5 ranks (with increasing standing_required values: 0, 25, 50, 75, 95) "
+        f"and 2-4 perks. "
+        f"Perks may only grant stat_bonuses (max +3 per stat) or skill_unlocks referencing real skill IDs. "
+        f"Do not invent item IDs or non-existent skills.\n\n"
+        f"Respond with JSON matching this exact schema:\n"
+        f'{{"guild_id": "unique_snake_case_id", '
+        f'"name": "{name}", '
+        f'"description": "lore description max 80 words", '
+        f'"flavor_text": "tagline max 15 words", '
+        f'"archetype": "{archetype}", '
+        f'"ranks": [{{"rank_id": "id", "name": "Name", "standing_required": 0, "title": "Title", "description": "desc"}}], '
+        f'"perks": [{{"perk_id": "id", "name": "Name", "description": "desc", "rank_required": "rank_id", "stat_bonuses": {{}}, "skill_unlocks": []}}]}}'
+    )
+
+
 def build_dynamic_options_prompt(
     question: str,
     scene_title: str,
