@@ -15,7 +15,11 @@
           "option_id": "go_left_goblins",
           "label": "Take the wide tunnel. Fight the goblins.",
           "expected": true,
-          "requires": {"flags_absent": ["goblins_defeated"]},
+          "requires": {
+            "flags_absent": [
+              "goblins_defeated"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "goblin_scout_node"
         },
@@ -23,7 +27,11 @@
           "option_id": "goblins_cleared",
           "label": "The goblin tunnel is cleared. Search the area.",
           "expected": true,
-          "requires": {"flags": ["goblins_defeated"]},
+          "requires": {
+            "flags": [
+              "goblins_defeated"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "after_goblins"
         },
@@ -31,16 +39,26 @@
           "option_id": "go_right_unmapped",
           "label": "Take the narrow unmapped passage. See what the System doesn't know about.",
           "expected": false,
-          "requires": {"flags_absent": ["explored_unmapped_passage"]},
+          "requires": {
+            "flags_absent": [
+              "explored_unmapped_passage"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "unmapped_passage",
-          "triggers": ["flag:explored_unmapped_passage"]
+          "triggers": [
+            "flag:explored_unmapped_passage"
+          ]
         },
         {
           "option_id": "go_right_revisit",
           "label": "Revisit the unmapped passage.",
           "expected": true,
-          "requires": {"flags": ["explored_unmapped_passage"]},
+          "requires": {
+            "flags": [
+              "explored_unmapped_passage"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "unmapped_revisit"
         },
@@ -50,6 +68,21 @@
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "crystal_chamber"
+        },
+        {
+          "option_id": "go_foraging",
+          "label": "Search the entrance area for crafting materials.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "herb_foraging"
+        },
+        {
+          "option_id": "talk_pell_vendor",
+          "label": "Talk to Pell, the vendor at the entrance.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "root",
+          "triggers": ["talk_npc:dungeon_vendor"]
         },
         {
           "option_id": "return_village",
@@ -69,16 +102,25 @@
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "after_goblins",
-          "triggers": ["combat:goblin_patrol", "flag:goblins_defeated"]
+          "triggers": [
+            "combat:goblin_patrol",
+            "flag:goblins_defeated"
+          ]
         },
         {
           "option_id": "sneak_past",
           "label": "Try to sneak past them quietly.",
-          "requires": {"min_stats": {"AGI": 8}},
+          "requires": {
+            "min_stats": {
+              "AGI": 8
+            }
+          },
           "expected": false,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "sneak_success",
-          "triggers": ["flag:sneaked_past_goblins"]
+          "triggers": [
+            "flag:sneaked_past_goblins"
+          ]
         }
       ]
     },
@@ -89,16 +131,26 @@
           "option_id": "examine_pack",
           "label": "Check what's in the stolen pack.",
           "expected": true,
-          "requires": {"flags_absent": ["checked_stolen_pack"]},
+          "requires": {
+            "flags_absent": [
+              "checked_stolen_pack"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "stolen_pack",
-          "triggers": ["flag:checked_stolen_pack"]
+          "triggers": [
+            "flag:checked_stolen_pack"
+          ]
         },
         {
           "option_id": "pack_already_looted",
           "label": "The pack is already empty — you searched it last time.",
           "expected": true,
-          "requires": {"flags": ["checked_stolen_pack"]},
+          "requires": {
+            "flags": [
+              "checked_stolen_pack"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
         },
@@ -120,7 +172,12 @@
           "expected": false,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:ancient_tome", "flag:found_ancient_tome", "give_item:torven_hammer", "give_item:health_potion"]
+          "triggers": [
+            "give_item:ancient_tome",
+            "flag:found_ancient_tome",
+            "give_item:torven_hammer",
+            "give_item:health_potion"
+          ]
         },
         {
           "option_id": "take_hammer_only",
@@ -128,7 +185,10 @@
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:torven_hammer", "give_item:health_potion"]
+          "triggers": [
+            "give_item:torven_hammer",
+            "give_item:health_potion"
+          ]
         },
         {
           "option_id": "leave_tome",
@@ -136,7 +196,9 @@
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:health_potion"]
+          "triggers": [
+            "give_item:health_potion"
+          ]
         }
       ]
     },
@@ -159,23 +221,38 @@
           "option_id": "take_void_shard",
           "label": "Take the void shard.",
           "expected": false,
-          "requires": {"flags_absent": ["found_void_shard"]},
+          "requires": {
+            "flags_absent": [
+              "found_void_shard"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:void_shard", "flag:found_void_shard"]
+          "triggers": [
+            "give_item:void_shard",
+            "flag:found_void_shard"
+          ]
         },
         {
           "option_id": "leave_void_shard",
           "label": "Leave it. You don't touch things the System can't explain.",
           "expected": true,
-          "requires": {"flags_absent": ["found_void_shard"]},
+          "requires": {
+            "flags_absent": [
+              "found_void_shard"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
         },
         {
           "option_id": "void_shard_taken",
           "label": "The alcove is empty — you already claimed the shard.",
-          "requires": {"flags": ["found_void_shard"]},
+          "requires": {
+            "flags": [
+              "found_void_shard"
+            ]
+          },
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
@@ -189,10 +266,16 @@
           "option_id": "note_carvings",
           "label": "Study the tool marks more carefully.",
           "expected": false,
-          "requires": {"flags_absent": ["noticed_alcove_carvings"]},
+          "requires": {
+            "flags_absent": [
+              "noticed_alcove_carvings"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["flag:noticed_alcove_carvings"]
+          "triggers": [
+            "flag:noticed_alcove_carvings"
+          ]
         },
         {
           "option_id": "leave_passage",
@@ -207,18 +290,45 @@
       "text": "The chamber is lit by a cluster of blue crystals growing from the ceiling. At its center: a stone platform with a softly glowing mana crystal the size of your fist.\n\nThis is clearly a resource node — the Guild would pay well for confirmed locations.",
       "options": [
         {
+          "option_id": "fight_crystal_spiders",
+          "label": "Investigate the web-covered alcove. [Crystal Spiders]",
+          "expected": false,
+          "requires": {
+            "flags_absent": [
+              "crystal_spiders_cleared"
+            ]
+          },
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "crystal_chamber",
+          "triggers": [
+            "combat:crystal_spider_den",
+            "flag:crystal_spiders_cleared"
+          ]
+        },
+        {
           "option_id": "mark_location",
           "label": "Mark the location for the Guild survey.",
           "expected": true,
-          "requires": {"flags_absent": ["survey_mana_node"]},
+          "requires": {
+            "flags_absent": [
+              "survey_mana_node"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["flag:survey_mana_node", "give_gold:1500"]
+          "triggers": [
+            "flag:survey_mana_node",
+            "give_gold:1500"
+          ]
         },
         {
           "option_id": "location_marked",
           "label": "Location already marked. The crystal pulses steadily.",
-          "requires": {"flags": ["survey_mana_node"]},
+          "requires": {
+            "flags": [
+              "survey_mana_node"
+            ]
+          },
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
@@ -227,15 +337,27 @@
           "option_id": "take_crystal",
           "label": "Take the mana crystal for yourself.",
           "expected": false,
-          "requires": {"flags_absent": ["took_guild_resource"]},
+          "requires": {
+            "flags_absent": [
+              "took_guild_resource"
+            ]
+          },
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root",
-          "triggers": ["give_item:mana_potion", "flag:took_guild_resource", "alignment:-5"]
+          "triggers": [
+            "give_item:mana_potion",
+            "flag:took_guild_resource",
+            "alignment:-5"
+          ]
         },
         {
           "option_id": "crystal_taken",
           "label": "The platform is empty — you already took the crystal.",
-          "requires": {"flags": ["took_guild_resource"]},
+          "requires": {
+            "flags": [
+              "took_guild_resource"
+            ]
+          },
           "expected": true,
           "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
@@ -265,7 +387,61 @@
           "expected": false,
           "leads_to": "dungeon_floor2",
           "leads_to_node": "root",
-          "triggers": ["flag:descended_to_floor2", "flag:ignored_system_warning"]
+          "triggers": [
+            "flag:descended_to_floor2",
+            "flag:ignored_system_warning"
+          ]
+        }
+      ]
+    },
+    "herb_foraging": {
+      "node_id": "herb_foraging",
+      "text": "Near the dungeon entrance, patches of glowing fungi and hardy medicinal herbs grow where light filters in from the cracks above. The damp stone floor is riddled with root systems. A crafter's eye would find useful material here.",
+      "options": [
+        {
+          "option_id": "forage_herbs",
+          "label": "Forage for herbs and materials.",
+          "expected": true,
+          "requires": {
+            "flags_absent": [
+              "foraged_dungeon_entrance"
+            ]
+          },
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "herb_foraging",
+          "triggers": [
+            "give_item:forest_herb",
+            "give_item:forest_herb",
+            "give_item:empty_vial",
+            "flag:foraged_dungeon_entrance"
+          ]
+        },
+        {
+          "option_id": "forage_again",
+          "label": "Check if anything has regrown. [Needs 10 turns to respawn]",
+          "expected": true,
+          "requires": {
+            "flags": [
+              "foraged_dungeon_entrance"
+            ],
+            "flags_absent": [
+              "foraged_dungeon_again"
+            ]
+          },
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "herb_foraging",
+          "triggers": [
+            "give_item:forest_herb",
+            "give_item:herb_bundle",
+            "flag:foraged_dungeon_again"
+          ]
+        },
+        {
+          "option_id": "leave_foraging",
+          "label": "Head back inside.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root"
         }
       ]
     }

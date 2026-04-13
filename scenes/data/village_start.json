@@ -177,7 +177,7 @@
       ]
     },
     "guild_entrance": {
-      "text": "The Adventurers' Guild is a low-ceilinged hall that smells of leather and pine resin. Sylara — silver-haired, Guild insignia on her shoulder — looks up from behind the counter.",
+      "text": "The Adventurers' Guild is a low-ceilinged hall that smells of leather and pine resin. Sylara — silver-haired, Guild insignia on her shoulder — looks up from behind the counter. Nara, the registration clerk, is at the side desk.",
       "options": [
         {
           "option_id": "talk_to_sylara",
@@ -186,6 +186,14 @@
           "leads_to": "__stay__",
           "leads_to_node": "guild_entrance",
           "triggers": ["talk_npc:sylara_guildmaster"]
+        },
+        {
+          "option_id": "talk_to_nara",
+          "label": "Speak with Nara, the clerk.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "guild_entrance",
+          "triggers": ["talk_npc:guild_clerk"]
         },
         {
           "option_id": "leave_guild",

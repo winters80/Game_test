@@ -73,7 +73,15 @@
     "item_type": "ACCESSORY",
     "description": "A coin that always lands on the side you need, not the side you expect. Passively boosts luck.",
     "flavor_text": "Heads or tails? Yes.",
-    "stats_bonus": {"STR": 0, "INT": 0, "AGI": 0, "LCK": 5, "VIT": 0, "WIS": 0, "END": 0},
+    "stats_bonus": {
+      "STR": 0,
+      "INT": 0,
+      "AGI": 0,
+      "LCK": 5,
+      "VIT": 0,
+      "WIS": 0,
+      "END": 0
+    },
     "combo_catalyst": true,
     "value_gold": 0,
     "weight": 0.1
@@ -237,6 +245,75 @@
     "effect_type": "camp_fuel",
     "effect_value": 1,
     "unidentified_name": "Bundle of Wood",
+    "stackable": true
+  },
+  {
+    "item_id": "forest_herb",
+    "name": "Forest Herb",
+    "rarity": "COMMON",
+    "item_type": "MATERIAL",
+    "description": "A fragrant medicinal herb found near dungeon entrances and forest clearings. Used in basic healing preparations.",
+    "flavor_text": "Smells like rain and green things.",
+    "value_gold": 3,
+    "weight": 0.1,
+    "stackable": true
+  },
+  {
+    "item_id": "empty_vial",
+    "name": "Empty Vial",
+    "rarity": "COMMON",
+    "item_type": "MATERIAL",
+    "description": "A small glass vial. Essential for storing alchemical preparations.",
+    "flavor_text": "Only useful when filled with something.",
+    "value_gold": 2,
+    "weight": 0.1,
+    "stackable": true
+  },
+  {
+    "item_id": "mountain_root",
+    "name": "Mountain Root",
+    "rarity": "UNCOMMON",
+    "item_type": "MATERIAL",
+    "description": "A gnarled root from high-altitude plants. Has strong regenerative properties when combined with herbs.",
+    "flavor_text": "Takes ten years to grow. Worth every year.",
+    "value_gold": 15,
+    "weight": 0.3,
+    "stackable": true
+  },
+  {
+    "item_id": "void_crystal",
+    "name": "Void Crystal Fragment",
+    "rarity": "RARE",
+    "item_type": "MATERIAL",
+    "description": "A small crystal shard that pulses with captured System energy. Found deep in the dungeon. The System cannot fully catalogue it.",
+    "flavor_text": "Cold to the touch. Gets colder the more arcane energy surrounds it.",
+    "value_gold": 80,
+    "weight": 0.2,
+    "stackable": true,
+    "combo_catalyst": true
+  },
+  {
+    "item_id": "herb_bundle",
+    "name": "Herb Bundle",
+    "rarity": "COMMON",
+    "item_type": "MATERIAL",
+    "description": "A wrapped bundle of dried mixed herbs. The standard alchemical base ingredient.",
+    "flavor_text": "The alchemist on the east road sells these by the bundle.",
+    "value_gold": 8,
+    "weight": 0.3,
+    "stackable": true
+  },
+  {
+    "item_id": "cooked_meat",
+    "name": "Cooked Meat",
+    "rarity": "COMMON",
+    "item_type": "MATERIAL",
+    "description": "Freshly cooked meat. Can be preserved as trail rations or eaten directly.",
+    "flavor_text": "Best eaten warm.",
+    "effect_type": "heal_hp",
+    "effect_value": 8,
+    "value_gold": 5,
+    "weight": 0.4,
     "stackable": true
   }
 ]

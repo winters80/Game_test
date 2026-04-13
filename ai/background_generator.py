@@ -385,9 +385,14 @@ class BackgroundGenerator:
         zone  = target.get("zone") or zone_id
 
         if ttype == "quest":
+            # Director doesn't have a player reference — generate a world_event hint
+            # instead of a broken quest task (player=None silently fails in _gen_quest).
+            # The actual quest can be generated when the player is in the relevant zone.
             self._submit({
-                "type": "quest", "zone_id": zone,
-                "npc_hint": goal[:60], "player": None,
+                "type": "world_event", "zone_id": zone,
+                "zone_name": zone.replace("_", " ").title(),
+                "player_level": player_level,
+                "context_flags": flags + [f"quest_seed:{goal[:40]}"],
             })
         elif ttype in ("rumor", "lore"):
             key = "rumor" if ttype == "rumor" else "lore_entry"

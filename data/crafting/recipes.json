@@ -3,8 +3,14 @@
     "recipe_id": "basic_health_salve",
     "name": "Basic Health Salve",
     "ingredients": [
-      {"item_id": "forest_herb", "qty": 2},
-      {"item_id": "empty_vial",  "qty": 1}
+      {
+        "item_id": "forest_herb",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
     ],
     "output_item_id": "health_potion",
     "output_qty": 1,
@@ -14,9 +20,18 @@
     "recipe_id": "major_health_brew",
     "name": "Major Health Brew",
     "ingredients": [
-      {"item_id": "forest_herb",    "qty": 4},
-      {"item_id": "mountain_root",  "qty": 1},
-      {"item_id": "empty_vial",     "qty": 1}
+      {
+        "item_id": "forest_herb",
+        "qty": 4
+      },
+      {
+        "item_id": "mountain_root",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
     ],
     "output_item_id": "health_potion_major",
     "output_qty": 1,
@@ -26,8 +41,14 @@
     "recipe_id": "mana_concentrate",
     "name": "Mana Concentrate",
     "ingredients": [
-      {"item_id": "void_crystal", "qty": 1},
-      {"item_id": "empty_vial",   "qty": 1}
+      {
+        "item_id": "void_crystal",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
     ],
     "output_item_id": "mana_potion",
     "output_qty": 1,
@@ -37,8 +58,14 @@
     "recipe_id": "traveler_stew_recipe",
     "name": "Traveler's Stew",
     "ingredients": [
-      {"item_id": "bread",        "qty": 1},
-      {"item_id": "roasted_meat", "qty": 1}
+      {
+        "item_id": "bread",
+        "qty": 1
+      },
+      {
+        "item_id": "roasted_meat",
+        "qty": 1
+      }
     ],
     "output_item_id": "traveler_stew",
     "output_qty": 1,
@@ -47,28 +74,47 @@
   {
     "recipe_id": "craft_antidote",
     "name": "Brew Antidote",
-    "ingredients": [{"item_id": "herb_bundle", "quantity": 2}],
+    "ingredients": [
+      {
+        "item_id": "herb_bundle",
+        "qty": 2
+      }
+    ],
     "output_item_id": "antidote",
-    "output_quantity": 1,
     "required_skill": "alchemy",
-    "craft_station": "alchemy_lab"
+    "craft_station": "alchemy_lab",
+    "output_qty": 1
   },
   {
     "recipe_id": "craft_stamina_potion",
     "name": "Brew Stamina Potion",
-    "ingredients": [{"item_id": "herb_bundle", "quantity": 1}, {"item_id": "rations", "quantity": 1}],
+    "ingredients": [
+      {
+        "item_id": "herb_bundle",
+        "qty": 1
+      },
+      {
+        "item_id": "rations",
+        "qty": 1
+      }
+    ],
     "output_item_id": "stamina_potion",
-    "output_quantity": 1,
     "required_skill": "alchemy",
-    "craft_station": "alchemy_lab"
+    "craft_station": "alchemy_lab",
+    "output_qty": 1
   },
   {
     "recipe_id": "craft_rations",
     "name": "Prepare Rations",
-    "ingredients": [{"item_id": "cooked_meat", "quantity": 2}],
+    "ingredients": [
+      {
+        "item_id": "cooked_meat",
+        "qty": 2
+      }
+    ],
     "output_item_id": "rations",
-    "output_quantity": 3,
     "required_skill": null,
-    "craft_station": "campfire"
+    "craft_station": "campfire",
+    "output_qty": 3
   }
 ]

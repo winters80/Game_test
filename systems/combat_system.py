@@ -86,6 +86,7 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "attack": 4, "defense": 1,
         "xp_reward": 10, "gold_reward": 300,
         "rank": "F",
+        "loot_table": [("forest_herb", 0.4), ("empty_vial", 0.2)],
     },
     "goblin_looter": {
         "enemy_id": "goblin_looter",
@@ -94,6 +95,7 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "attack": 5, "defense": 2,
         "xp_reward": 15, "gold_reward": 800,
         "rank": "F",
+        "loot_table": [("forest_herb", 0.5), ("empty_vial", 0.35), ("herb_bundle", 0.2)],
     },
     "dungeon_slime": {
         "enemy_id": "dungeon_slime",
@@ -102,6 +104,45 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "attack": 3, "defense": 0,
         "xp_reward": 12, "gold_reward": 200,
         "rank": "F",
+        "loot_table": [("herb_bundle", 0.3), ("empty_vial", 0.4)],
+    },
+    "dungeon_wolf": {
+        "enemy_id": "dungeon_wolf",
+        "name": "Dungeon Wolf",
+        "max_hp": 28, "current_hp": 28,
+        "attack": 7, "defense": 2,
+        "xp_reward": 18, "gold_reward": 0,
+        "rank": "F",
+        "loot_table": [("cooked_meat", 0.6), ("cooked_meat", 0.3)],
+    },
+    "crystal_spider": {
+        "enemy_id": "crystal_spider",
+        "name": "Crystal Spider",
+        "max_hp": 18, "current_hp": 18,
+        "attack": 6, "defense": 1,
+        "xp_reward": 20, "gold_reward": 100,
+        "rank": "F",
+        "status_on_hit": ("poison", 0.30),
+        "loot_table": [("void_crystal", 0.15), ("empty_vial", 0.4)],
+    },
+    "corrupted_golem": {
+        "enemy_id": "corrupted_golem",
+        "name": "Corrupted Golem",
+        "max_hp": 55, "current_hp": 55,
+        "attack": 12, "defense": 6,
+        "xp_reward": 60, "gold_reward": 500,
+        "rank": "E",
+        "loot_table": [("mountain_root", 0.4), ("void_crystal", 0.2)],
+    },
+    "fracture_wraith": {
+        "enemy_id": "fracture_wraith",
+        "name": "Fracture Wraith",
+        "max_hp": 40, "current_hp": 40,
+        "attack": 10, "defense": 3,
+        "xp_reward": 45, "gold_reward": 0,
+        "rank": "E",
+        "status_on_hit": ("bleed", 0.20),
+        "loot_table": [("void_crystal", 0.25)],
     },
     "unknown_creature": {
         "enemy_id": "unknown_creature",
@@ -110,6 +151,16 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "attack": 18, "defense": 8,
         "xp_reward": 150, "gold_reward": 0,
         "rank": "C",
+        "loot_table": [("void_crystal", 0.5), ("mountain_root", 0.3)],
+    },
+    "street_thugs": {
+        "enemy_id": "street_thugs",
+        "name": "Street Thugs",
+        "max_hp": 22, "current_hp": 22,
+        "attack": 6, "defense": 2,
+        "xp_reward": 20, "gold_reward": 400,
+        "rank": "F",
+        "loot_table": [],
     },
 }
 
@@ -125,13 +176,30 @@ def spawn_enemy(enemy_id: str) -> Enemy | None:
 
 def spawn_encounter(encounter_id: str) -> list[Enemy]:
     encounters: dict[str, list[str]] = {
-        "goblin_patrol": ["goblin_scout", "goblin_scout", "goblin_looter"],
-        "single_slime": ["dungeon_slime"],
-        "unknown_creature": ["unknown_creature"],
+        "goblin_patrol":      ["goblin_scout", "goblin_scout", "goblin_looter"],
+        "single_slime":       ["dungeon_slime"],
+        "wolf_pack":          ["dungeon_wolf", "dungeon_wolf"],
+        "crystal_spider_den": ["crystal_spider", "crystal_spider", "crystal_spider"],
+        "corrupted_golem":    ["corrupted_golem"],
+        "fracture_wraith":    ["fracture_wraith", "fracture_wraith"],
+        "unknown_creature":   ["unknown_creature"],
+        "street_thugs":       ["street_thugs"],
     }
     ids = encounters.get(encounter_id, [])
     enemies = [spawn_enemy(eid) for eid in ids]
     return [e for e in enemies if e is not None]
+
+
+def roll_loot(enemies: list[Enemy]) -> list[str]:
+    """Roll loot drops from all defeated enemies. Returns list of item_ids."""
+    import random
+    loot: list[str] = []
+    for e in enemies:
+        tmpl = ENEMY_TEMPLATES.get(e.enemy_id, {})
+        for item_id, chance in tmpl.get("loot_table", []):
+            if random.random() < chance:
+                loot.append(item_id)
+    return loot
 
 
 @dataclass

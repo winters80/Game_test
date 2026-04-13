@@ -180,7 +180,7 @@
       }
     },
     "mages_spire": {
-      "text": "The Mages' Spire is the most beautiful building in Verath — white stone that seems to generate its own light, arcane formulae carved in spiraling patterns up every surface. The foyer is quiet in the way libraries are quiet: a productive silence, not an empty one.\n\nAt the reception desk, Sylara — silver hair, Guild insignia on her shoulder — looks up. If you've met her before, recognition crosses her face. Here, she's not the local guild contact. She's the Guildmaster.",
+      "text": "The Mages' Spire is the most beautiful building in Verath — white stone that seems to generate its own light, arcane formulae carved in spiraling patterns up every surface. The foyer is quiet in the way libraries are quiet: a productive silence, not an empty one.\n\nAt the reception desk, Sylara — silver hair, Guild insignia on her shoulder — looks up. If you've met her before, recognition crosses her face. Here, she's not the local guild contact. She's the Guildmaster. On the third floor, a researcher with ink-stained hands is bent over a wide spread of diagrams.",
       "options": [
         {
           "option_id": "talk_sylara_guildmaster",
@@ -189,6 +189,25 @@
           "leads_to": "__stay__",
           "leads_to_node": "mages_spire",
           "triggers": ["talk_npc:sylara_guildmaster"]
+        },
+        {
+          "option_id": "talk_vael_scholar",
+          "label": "Go upstairs and approach the researcher.",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "mages_spire",
+          "triggers": ["talk_npc:spire_scholar"]
+        },
+        {
+          "option_id": "talk_vael_directed",
+          "label": "Ask for Vael. [Pell mentioned him]",
+          "expected": false,
+          "requires": {
+            "flags": ["knows_vael_spire"]
+          },
+          "leads_to": "__stay__",
+          "leads_to_node": "mages_spire",
+          "triggers": ["talk_npc:spire_scholar"]
         },
         {
           "option_id": "read_research_board",

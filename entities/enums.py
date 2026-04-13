@@ -33,6 +33,7 @@ class ItemType(str, Enum):
     CONSUMABLE = "CONSUMABLE"
     KEY_ITEM = "KEY_ITEM"
     LIFE_TOKEN = "LIFE_TOKEN"          # purchasable from auction house
+    MATERIAL = "MATERIAL"              # crafting ingredient, not usable directly
 
 
 class EffectType(str, Enum):
