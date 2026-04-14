@@ -20,8 +20,8 @@ class OllamaClient:
         self.model = model
         self.base_url = base_url
         self._client = None
-        self._client_timeout: int = 30   # tracks which timeout the cached client was built with
-        self._default_timeout: int = 30  # used when no per-call timeout is specified
+        self._client_timeout: int = 120   # tracks which timeout the cached client was built with
+        self._default_timeout: int = 120  # used when no per-call timeout is specified
         # Cumulative token counters for this session
         self.tokens_prompt: int = 0
         self.tokens_generated: int = 0
@@ -74,7 +74,7 @@ class OllamaClient:
         prompt: str,
         system_prompt: str,
         temperature: float = 0.4,
-        timeout: int = 30,
+        timeout: int = 120,
         max_retries: int = 3,
     ) -> dict[str, Any]:
         client = self._get_client(timeout)
@@ -122,7 +122,7 @@ class OllamaClient:
         system_prompt: str,
         temperature: float = 0.85,
         max_tokens: int = 400,
-        timeout: int = 20,
+        timeout: int = 120,
     ) -> str:
         client = self._get_client(timeout)
         logger.debug(

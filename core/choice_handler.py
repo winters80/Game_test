@@ -172,7 +172,7 @@ class ChoiceHandlerMixin:
                     prompt=prompt,
                     system_prompt=system_prompt,
                     temperature=0.75,
-                    timeout=15,
+                    timeout=120,
                     max_retries=1,
                 )
             if isinstance(result, list):
