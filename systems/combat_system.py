@@ -285,7 +285,7 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
             if not target.is_alive:
                 total_xp += target.xp_reward
                 total_gold += target.gold_reward
-                all_loot.extend(target.loot_table)
+                all_loot.extend(roll_loot([target]))
 
         # Tick status effects and apply DoT to enemies, then let alive enemies attack
         for i, enemy in enumerate(enemies):

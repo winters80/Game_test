@@ -20,8 +20,10 @@ logger = logging.getLogger(__name__)
 
 
 class ContentGenerator:
-    def __init__(self, ollama_client: OllamaClient, lore_data: dict, model: str) -> None:
+    def __init__(self, ollama_client: OllamaClient, lore_data: dict, model: str,
+                 fast_client: OllamaClient | None = None) -> None:
         self.client = ollama_client
+        self.fast_client = fast_client or ollama_client  # smaller model for interactive calls
         self.lore_data = lore_data
         self.system_prompt = build_system_prompt(lore_data)
         self.model = model
@@ -137,10 +139,9 @@ class ContentGenerator:
         from ai.prompt_builder import build_dynamic_options_prompt
         from ai.response_validator import AIDynamicOptionsResponse
 
-        player_stats = player.stats.model_dump()
+        player_stats = {k: v for k, v in player.stats.model_dump().items() if v}
         player_stats["level"] = player.level
-        player_stats["perception"] = player.perception
-        player_flags = [k for k in player.flags.keys() if not k.startswith("_")][:15]
+        player_flags = [k for k in player.flags.keys() if not k.startswith("_")][:6]
 
         prompt = build_dynamic_options_prompt(
             question=question,
@@ -152,11 +153,14 @@ class ContentGenerator:
             lore_data=self.lore_data,
         )
 
+        _sys = "You write player action options for a fantasy text RPG. Return ONLY valid JSON. No commentary."
         try:
-            raw = self.client.generate_json(
+            raw = self.fast_client.generate_json(
                 prompt=prompt,
-                system_prompt=self.system_prompt,
+                system_prompt=_sys,
                 temperature=0.8,
+                num_predict=300,
+                max_retries=1,
             )
             return AIDynamicOptionsResponse.model_validate(raw)
         except Exception as e:

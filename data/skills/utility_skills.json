@@ -101,5 +101,28 @@
     "description": "Enter a rage state: +20% damage, -10% defense for 5 turns.",
     "spell_type": "physical",
     "effects": [{"effect_type": "damage", "base_value": 15.0, "scaling_stat": "STR", "scaling_coefficient": 2.5}]
+  },
+  {
+    "skill_id": "holy_light",
+    "name": "Holy Light",
+    "rarity": "UNCOMMON",
+    "description": "Channel divine radiance to heal yourself or an ally, restoring HP based on your Wisdom.",
+    "flavor_text": "The light does not ask if you deserve it.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 15,
+    "cooldown_turns": 2,
+    "effects": [{"effect_type": "heal", "scaling_stat": "WIS", "base_value": 10.0, "scaling_coefficient": 2.0}]
+  },
+  {
+    "skill_id": "divine_ward",
+    "name": "Divine Ward",
+    "rarity": "COMMON",
+    "description": "Passively reduces incoming damage through a divine barrier sustained by Endurance and Wisdom.",
+    "flavor_text": "Faith is armor for those who know how to wear it.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "buff", "scaling_stat": "END", "base_value": 3.0, "scaling_coefficient": 0.5},
+                {"effect_type": "buff", "scaling_stat": "WIS", "base_value": 2.0, "scaling_coefficient": 0.3}]
   }
 ]

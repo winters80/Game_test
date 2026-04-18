@@ -48,7 +48,8 @@
           "option_id": "back_to_floor1",
           "label": "Climb back up to Floor 1.",
           "expected": true,
-          "leads_to": null,
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "root",
           "triggers": ["flag:return_to_floor1"]
         }
       ]

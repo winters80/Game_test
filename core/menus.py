@@ -405,16 +405,47 @@ class GameMenusMixin:
                 if self.ai_generator is None:
                     renderer.print_system_message("AI system is offline.", style="dim_text")
                 else:
-                    stats = self.ai_generator.client.token_summary()
+                    # Collect stats from every distinct OllamaClient instance.
+                    # Slow client = self.ai_generator.client; fast client may be the same
+                    # object (when no fast model is configured) or a separate instance.
+                    seen: dict[int, tuple[str, dict]] = {}
+                    slow_client = self.ai_generator.client
+                    fast_client = getattr(self.ai_generator, "fast_client", slow_client)
+                    seen[id(slow_client)] = (slow_client.model, slow_client.token_summary())
+                    if id(fast_client) not in seen:
+                        seen[id(fast_client)] = (fast_client.model, fast_client.token_summary())
+
                     renderer.console.print()
                     renderer.console.print("  [system_msg][ OLLAMA TOKEN USAGE — THIS SESSION ][/system_msg]")
-                    renderer.console.print(f"  Calls made       : [gold]{stats['calls']}[/gold]")
-                    renderer.console.print(f"  Prompt tokens    : [gold]{stats['prompt_tokens']:,}[/gold]")
-                    renderer.console.print(f"  Generated tokens : [gold]{stats['generated_tokens']:,}[/gold]")
-                    renderer.console.print(f"  Total tokens     : [gold]{stats['total_tokens']:,}[/gold]")
-                    renderer.console.print(f"  Model            : [dim_text]{self.ai_generator.model if self.ai_generator else 'N/A'}[/dim_text]")
-                    bg_stats = f"  BG tasks queued  : [dim_text]{self._bg_generator._task_queue.qsize() if self._bg_generator else 0}[/dim_text]"
-                    renderer.console.print(bg_stats)
+
+                    grand_calls = 0
+                    grand_prompt = 0
+                    grand_gen = 0
+                    for idx, (model_name, stats) in enumerate(seen.values()):
+                        role = "primary" if idx == 0 else "fast"
+                        renderer.console.print()
+                        renderer.console.print(
+                            f"  [subtitle]» {model_name}[/subtitle] [dim_text]({role})[/dim_text]"
+                        )
+                        renderer.console.print(f"    Calls made       : [gold]{stats['calls']}[/gold]")
+                        renderer.console.print(f"    Prompt tokens    : [gold]{stats['prompt_tokens']:,}[/gold]")
+                        renderer.console.print(f"    Generated tokens : [gold]{stats['generated_tokens']:,}[/gold]")
+                        renderer.console.print(f"    Total tokens     : [gold]{stats['total_tokens']:,}[/gold]")
+                        grand_calls  += stats['calls']
+                        grand_prompt += stats['prompt_tokens']
+                        grand_gen    += stats['generated_tokens']
+
+                    if len(seen) > 1:
+                        renderer.console.print()
+                        renderer.console.print("  [system_msg]» combined[/system_msg]")
+                        renderer.console.print(f"    Calls made       : [gold]{grand_calls}[/gold]")
+                        renderer.console.print(f"    Prompt tokens    : [gold]{grand_prompt:,}[/gold]")
+                        renderer.console.print(f"    Generated tokens : [gold]{grand_gen:,}[/gold]")
+                        renderer.console.print(f"    Total tokens     : [gold]{grand_prompt + grand_gen:,}[/gold]")
+
+                    renderer.console.print()
+                    bg_q = self._bg_generator._task_queue.qsize() if self._bg_generator else 0
+                    renderer.console.print(f"  BG tasks queued    : [dim_text]{bg_q}[/dim_text]")
                     renderer.console.print()
                 renderer.prompt_any_key()
 
@@ -479,8 +510,8 @@ class GameMenusMixin:
             renderer.console.print("\n  [system_msg][ FEATURE FLAGS ][/system_msg]\n")
             flag_choices = []
             for flag, enabled in FEATURES.items():
-                status = "[green]ON [/green]" if enabled else "[red]OFF[/red]"
-                flag_choices.append(f"  {status}  {flag}")
+                status = "ON " if enabled else "OFF"
+                flag_choices.append(f"  [{status}]  {flag}")
             flag_choices.append("← Back")
 
             selected = questionary.select("Toggle flag:", choices=flag_choices).ask()
@@ -552,6 +583,8 @@ class GameMenusMixin:
             default=self.state.player.name.lower().replace(" ", "_"),
         ).ask()
         if slot:
+            import re
+            slot = re.sub(r'[^a-z0-9_]', '', slot.lower().replace(" ", "_")) or "save"
             path = save_game(self.state, slot, SAVES_DIR)
             logger.info(
                 "Game saved: slot=%s player=%s level=%d scene=%s turn=%d",

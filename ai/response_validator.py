@@ -65,6 +65,20 @@ class AIQuestResponse(BaseModel):
     guild_rewards: dict[str, float] = {}     # {guild_id: standing_delta}
     flavor_text: str = ""
 
+    @field_validator("reward_items", mode="before")
+    @classmethod
+    def coerce_reward_items(cls, v: list) -> list:
+        """Model sometimes returns [{"item_id": "x", "quantity": 1}] — extract the id."""
+        coerced = []
+        for item in v:
+            if isinstance(item, str):
+                coerced.append(item)
+            elif isinstance(item, dict):
+                item_id = item.get("item_id") or item.get("id") or item.get("name")
+                if item_id:
+                    coerced.append(str(item_id))
+        return coerced
+
 
 class AIDynamicOption(BaseModel):
     """A single AI-generated situational option."""
@@ -79,10 +93,20 @@ class AIDynamicOption(BaseModel):
     def normalize_id(cls, v: str) -> str:
         return "ai_" + v.lower().replace(" ", "_").replace("-", "_")[:30]
 
-    @field_validator("triggers")
+    @field_validator("triggers", mode="before")
     @classmethod
     def cap_triggers(cls, v: list) -> list:
-        return v[:8]
+        coerced = []
+        for t in v[:8]:
+            if isinstance(t, str):
+                coerced.append(t)
+            elif isinstance(t, dict):
+                # Model returned {"flag": "X"} or {"type":"flag","value":"X"} — reconstruct
+                if "flag" in t:
+                    coerced.append(f"flag:{t['flag']}")
+                elif "type" in t and "value" in t:
+                    coerced.append(f"{t['type']}:{t['value']}")
+        return coerced
 
 
 class AIDynamicOptionsResponse(BaseModel):

@@ -62,7 +62,8 @@
           "option_id": "leave_city",
           "label": "Leave Verath. Back to the road.",
           "expected": true,
-          "leads_to": null
+          "leads_to": "village_start",
+          "leads_to_node": "root"
         }
       ]
     },

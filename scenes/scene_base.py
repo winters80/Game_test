@@ -233,7 +233,26 @@ class Scene:
 
             elif trigger.startswith("rest_camp:"):
                 rest_type = trigger[10:]  # "full" or "short"
-                state.player.set_flag(f"_pending_rest_camp:{rest_type}")
+                if rest_type == "full":
+                    state.player.current_hp = state.player.max_hp
+                    state.player.current_mp = state.player.max_mp
+                    bus.publish(Event("SYSTEM_MSG", {
+                        "message": "You rest at camp. HP and MP fully restored."
+                    }))
+                elif rest_type == "short":
+                    restore_hp = state.player.max_hp // 2
+                    restore_mp = state.player.max_mp // 2
+                    state.player.current_hp = min(
+                        state.player.max_hp,
+                        state.player.current_hp + restore_hp,
+                    )
+                    state.player.current_mp = min(
+                        state.player.max_mp,
+                        state.player.current_mp + restore_mp,
+                    )
+                    bus.publish(Event("SYSTEM_MSG", {
+                        "message": "You take a short rest. HP and MP partially restored."
+                    }))
 
             elif trigger.startswith("rest_inn:"):
                 # rest_inn:COST_COPPER — pay copper, full HP/MP restore + well-rested buff

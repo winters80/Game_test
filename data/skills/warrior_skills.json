@@ -70,5 +70,30 @@
     "mp_cost": 12,
     "cooldown_turns": 4,
     "effects": [{"effect_type": "damage", "scaling_stat": "STR", "base_value": 8.0, "scaling_coefficient": 1.8}]
+  },
+  {
+    "skill_id": "aimed_shot",
+    "name": "Aimed Shot",
+    "rarity": "UNCOMMON",
+    "description": "A carefully aimed ranged attack that deals damage scaling with Agility and Wisdom.",
+    "flavor_text": "Patience is the first weapon.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 5,
+    "cooldown_turns": 1,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "AGI", "base_value": 7.0, "scaling_coefficient": 1.6},
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 3.0, "scaling_coefficient": 0.8}
+    ]
+  },
+  {
+    "skill_id": "hunters_mark",
+    "name": "Hunter's Mark",
+    "rarity": "UNCOMMON",
+    "description": "Mark an enemy, causing all damage they take to be increased for 3 turns.",
+    "flavor_text": "Once you are marked, the hunt is already over.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 8,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "debuff", "scaling_stat": "WIS", "base_value": 5.0, "scaling_coefficient": 1.0}]
   }
 ]
