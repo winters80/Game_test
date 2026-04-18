@@ -573,6 +573,140 @@ def main() -> None:
     except Exception as e:
         fail("feature() helper broken", e)
 
+    # ── 10. Quest System Lifecycle ────────────────────────────────────────────
+    section("10. Quest System Lifecycle")
+    try:
+        from entities.quest import QuestRegistry
+        from systems import quest_system as qs
+        from core.event_bus import bus, Event
+
+        quest_reg = QuestRegistry()
+        quest_reg.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
+        ok(f"Quest templates loaded: {len(quest_reg._quests)}")
+
+        # Sanity: blacksmith_hammer is the canonical wired quest
+        hammer = quest_reg.get("blacksmith_hammer")
+        assert hammer is not None, "blacksmith_hammer template missing"
+        assert len(hammer.stages) == 2, "blacksmith_hammer should have 2 stages"
+        ok("blacksmith_hammer template has expected 2-stage shape")
+
+        # Build an isolated test save
+        test_player = Player(name="QuestTester", base_class="warrior")
+        test_player.gold = 0
+        test_player.experience = 0
+
+        test_state = new_game_state(test_player, SAVES_DIR, "_quest_test_")
+        test_state.current_scene_id = "village_start"
+        test_state.turn_number = 1
+
+        # ─ Lifecycle 1: start_quest ───────────────────────────────────────────
+        starting_active = list(test_player.active_quest_ids)
+        instance_id = qs.start_quest("blacksmith_hammer", "torven_blacksmith", test_state, quest_reg)
+        assert instance_id, "start_quest returned no instance_id"
+        assert instance_id in test_player.active_quest_ids, "instance_id not added to player.active_quest_ids"
+        row = test_state.world_db.get_quest(instance_id)
+        assert row and row["current_state"] == "find_hammer", f"expected stage 'find_hammer', got {row}"
+        ok(f"start_quest created instance at stage 'find_hammer' (id={instance_id[:8]}...)")
+
+        # ─ Lifecycle 2: stage 1 completion via tick_quests (has_item) ────────
+        test_player.add_item("torven_hammer", 1)
+        # Capture any QUEST_ADVANCED event
+        advanced_events: list[Event] = []
+        def _capture_advanced(e: Event) -> None: advanced_events.append(e)
+        bus.subscribe("QUEST_ADVANCED", _capture_advanced)
+
+        qs.tick_quests(test_state, quest_reg)
+        bus.flush()
+
+        row = test_state.world_db.get_quest(instance_id)
+        assert row and row["current_state"] == "return_hammer", \
+            f"expected advance to 'return_hammer', got {row['current_state'] if row else 'None'}"
+        assert any(e.data.get("new_stage") == "return_hammer" for e in advanced_events), \
+            "QUEST_ADVANCED event with new_stage='return_hammer' not fired"
+        ok("tick_quests advanced quest to 'return_hammer' on has_item condition")
+
+        # The on_advance_triggers should have set 'hammer_found' flag
+        assert test_player.has_flag("hammer_found"), "stage on_advance_triggers did not fire flag:hammer_found"
+        ok("Stage on_advance_triggers fired (flag:hammer_found set)")
+
+        # ─ Lifecycle 3: terminal stage completion → quest_complete ───────────
+        completed_events: list[Event] = []
+        def _capture_completed(e: Event) -> None: completed_events.append(e)
+        bus.subscribe("QUEST_COMPLETED", _capture_completed)
+
+        gold_before = test_player.gold
+        xp_before = test_player.experience
+        test_player.flags["torven_hammer_returned"] = True
+        qs.tick_quests(test_state, quest_reg)
+        bus.flush()
+
+        assert instance_id not in test_player.active_quest_ids, "Completed quest still in active_quest_ids"
+        assert instance_id in test_player.completed_quest_ids, "Completed quest not in completed_quest_ids"
+        ok("tick_quests completed quest on terminal-stage flag condition")
+
+        assert any(e.data.get("title") == hammer.title for e in completed_events), \
+            "QUEST_COMPLETED event not fired with correct title"
+        ok(f"QUEST_COMPLETED event fired ({len(completed_events)} event(s))")
+
+        # ─ Lifecycle 4: rewards applied ──────────────────────────────────────
+        gold_gained = test_player.gold - gold_before
+        xp_gained = test_player.experience - xp_before
+        # Quest reward_gold is in "gold units"; player.gold is in copper (×100).
+        expected_copper = hammer.reward_gold * 100
+        assert gold_gained == expected_copper, \
+            f"Expected {expected_copper} copper ({hammer.reward_gold}g) reward, got {gold_gained}"
+        assert xp_gained == hammer.reward_xp, \
+            f"Expected {hammer.reward_xp} xp reward, got {xp_gained}"
+        ok(f"Rewards applied — gold +{gold_gained} copper ({hammer.reward_gold}g), xp +{xp_gained}")
+
+        for reward_flag in hammer.reward_flags:
+            assert test_player.has_flag(reward_flag), f"Reward flag '{reward_flag}' not set"
+        if hammer.reward_flags:
+            ok(f"Reward flags set: {hammer.reward_flags}")
+
+        # ─ Lifecycle 5: NPC dialogue path is wired (start_quest trigger) ─────
+        npc_reg2 = NPCRegistry()
+        npc_reg2.load_from_dir(DATA_DIR / "npcs")
+        torven = npc_reg2.get("torven_blacksmith")
+        assert torven, "torven_blacksmith NPC template missing"
+        # Find the accept option in hammer_quest_offer node
+        accept_node = torven.dialogue_nodes.get("hammer_quest_offer", {})
+        accept_opts = accept_node.get("options", []) if isinstance(accept_node, dict) else accept_node.options
+        found_trigger = False
+        for opt in accept_opts:
+            triggers = opt.get("triggers", []) if isinstance(opt, dict) else opt.triggers
+            if any("start_quest:blacksmith_hammer" in t for t in triggers):
+                found_trigger = True
+                break
+        assert found_trigger, "Torven dialogue missing start_quest:blacksmith_hammer trigger"
+        ok("NPC dialogue wires start_quest:blacksmith_hammer (Torven hammer_quest_offer)")
+
+        # ─ Lifecycle 6: get_active_quest_summaries shape ─────────────────────
+        # Start a fresh quest to test summaries on an active one
+        new_id = qs.start_quest("blacksmith_hammer", None, test_state, quest_reg)
+        summaries = qs.get_active_quest_summaries(test_state, quest_reg)
+        assert summaries, "get_active_quest_summaries returned empty list with active quest"
+        s = summaries[0]
+        for key in ("instance_id", "title", "objective", "turns_active"):
+            assert key in s, f"summary missing key '{key}'"
+        ok(f"get_active_quest_summaries returns proper shape ({len(summaries)} entry)")
+
+        # ─ Cleanup ────────────────────────────────────────────────────────────
+        close_game(test_state)
+        # Remove the test save artefacts
+        for ext in (".db", ".json"):
+            p = SAVES_DIR / f"_quest_test_{ext}"
+            if p.exists():
+                p.unlink()
+        # Also handle the case where slot file exists without underscore prefix
+        for p in SAVES_DIR.glob("_quest_test_*"):
+            try: p.unlink()
+            except OSError: pass
+
+    except Exception as e:
+        fail("Quest system lifecycle broken", e)
+        traceback.print_exc()
+
     _report()
 
 

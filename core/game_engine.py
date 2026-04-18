@@ -409,6 +409,8 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                 extra.insert(2, "[C] Craft")
         if feature("guild_system"):
             extra.insert(-1, "[G] Found a Guild")
+        if feature("quest_system") and self.quest_registry:
+            extra.insert(3, "[J] Quest Journal")
         choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extra
         answer = questionary.select("Choose:", choices=choice_labels).ask()
 
@@ -438,6 +440,9 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
             return None
         if answer.startswith("[G]"):
             self._found_guild_menu()
+            return None
+        if answer.startswith("[J]"):
+            self._quests_menu()
             return None
 
         # Parse number
