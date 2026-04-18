@@ -38,7 +38,8 @@
           "option_id": "leave_dungeon",
           "label": "Turn back. Climb out of the dungeon.",
           "expected": true,
-          "leads_to": null
+          "leads_to": "village_start",
+          "leads_to_node": "root"
         }
       ]
     },

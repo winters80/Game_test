@@ -6,28 +6,28 @@
     "root": {
       "text": "The Fracture Core is exposed. Raw dimensional energy bleeds from the wound in reality. The System terminal behind you is still running the break signal. All you have to do now is push it through.",
       "options": [
-        {"option_id": "broadcast_signal", "label": "Amplify the signal through the Core -- end the System", "leads_to": "the_break", "triggers": [], "requires": {}, "expected": true},
-        {"option_id": "warn_others_first", "label": "Take a moment -- warn anyone who will listen about what comes next", "leads_to": "last_preparations", "triggers": ["alignment:+5"], "requires": {}, "expected": true},
-        {"option_id": "face_system_alone", "label": "Dismiss the Breakers -- face the System alone", "leads_to": "the_break", "triggers": ["alignment:-10"], "requires": {}, "expected": false}
+        {"option_id": "broadcast_signal", "label": "Amplify the signal through the Core -- end the System", "leads_to": "ending_destroy", "leads_to_node": "the_break", "triggers": [], "requires": {}, "expected": true},
+        {"option_id": "warn_others_first", "label": "Take a moment -- warn anyone who will listen about what comes next", "leads_to": "ending_destroy", "leads_to_node": "last_preparations", "triggers": ["alignment:+5"], "requires": {}, "expected": true},
+        {"option_id": "face_system_alone", "label": "Dismiss the Breakers -- face the System alone", "leads_to": "ending_destroy", "leads_to_node": "the_break", "triggers": ["alignment:-10"], "requires": {}, "expected": false}
       ]
     },
     "last_preparations": {
       "text": "You take sixty seconds. You transmit what you know about the Fracture's true origin to every receiver in range. The System terminal pulses. Time is running out.",
       "options": [
-        {"option_id": "proceed_to_break", "label": "Proceed -- push the signal through", "leads_to": "the_break", "triggers": [], "requires": {}, "expected": true},
-        {"option_id": "final_hesitation", "label": "Hesitate one last time -- is there another way?", "leads_to": "root", "triggers": ["alignment:+5"], "requires": {}, "expected": false}
+        {"option_id": "proceed_to_break", "label": "Proceed -- push the signal through", "leads_to": "ending_destroy", "leads_to_node": "the_break", "triggers": [], "requires": {}, "expected": true},
+        {"option_id": "final_hesitation", "label": "Hesitate one last time -- is there another way?", "leads_to": "ending_destroy", "leads_to_node": "root", "triggers": ["alignment:+5"], "requires": {}, "expected": false}
       ]
     },
     "the_break": {
       "text": "You push through.\n\nThe System breaks.\n\nNot a loud sound. A silence -- the silence of ten thousand interface panels going dark simultaneously across a continent. Class ratings: offline. Alignment tracking: offline. Life token registers: offline. Death records: sealed.\n\nThe Fracture wound pulses once, massively, and closes. The tear that started everything three years ago knits shut.\n\nYou are standing in a cave. It is just a cave now.",
       "options": [
-        {"option_id": "emerge", "label": "Walk out into whatever world comes next", "leads_to": "victory_destroy", "triggers": ["flag:system_destroyed", "flag:game_complete_destroy", "flag:game_complete"], "requires": {}, "expected": true}
+        {"option_id": "emerge", "label": "Walk out into whatever world comes next", "leads_to": "ending_destroy", "leads_to_node": "victory_destroy", "triggers": ["flag:system_destroyed", "flag:game_complete_destroy", "flag:game_complete"], "requires": {}, "expected": true}
       ]
     },
     "victory_destroy": {
       "text": "The world without the System is not the world before the Fracture. That world is gone. What exists now is something new -- chaotic, frightening, and genuinely free.\n\nIn Verath, the Crown scrambles without System backing. The Shadow Network publishes everything. It causes riots in fourteen cities.\n\nPeople die who would not have died under the System. People live who would have been erased.\n\nYou walk out of the dungeon into morning light. No status display over your head. No class rating. No alignment score. No life counter.\n\nJust you, and the world, and whatever you choose to do next.\n\n[ END -- BREAKER PATH ]\n[ The System is gone. The story is just beginning. ]",
       "options": [
-        {"option_id": "continue_to_end", "label": "[ Step into the new world. ]", "leads_to": null, "triggers": [], "requires": {}, "expected": true}
+        {"option_id": "continue_to_end", "label": "[ Step into the new world. ]", "leads_to": "__stay__", "triggers": [], "requires": {}, "expected": true}
       ]
     }
   }

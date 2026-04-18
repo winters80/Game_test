@@ -253,7 +253,7 @@ class CombatHandlerMixin:
         if loot_drops and feature("world_db"):
             from systems import inventory_system
             for item_id in loot_drops:
-                inventory_system.add_item(player, item_id, self.item_registry)
+                inventory_system.pick_up_item(player, item_id, self.item_registry)
                 bus.publish(Event("ITEM_FOUND", {"item_id": item_id,
                     "item_name": self.item_registry.get(item_id).name if self.item_registry.get(item_id) else item_id,
                     "rarity": getattr(self.item_registry.get(item_id), "rarity", "COMMON")}))

@@ -9,7 +9,8 @@
         {
           "option_id": "speak_to_system",
           "label": "Step forward and speak to the System directly",
-          "leads_to": "negotiate_system",
+          "leads_to": "ending_rule",
+          "leads_to_node": "negotiate_system",
           "triggers": [],
           "requires": {},
           "expected": true
@@ -17,7 +18,8 @@
         {
           "option_id": "hesitate_consider",
           "label": "Hesitate — consider the weight of what you are about to do",
-          "leads_to": "the_cost",
+          "leads_to": "ending_rule",
+          "leads_to_node": "the_cost",
           "triggers": [],
           "requires": {},
           "expected": true
@@ -25,7 +27,8 @@
         {
           "option_id": "last_doubt",
           "label": "Reconsider — look back toward the tunnels",
-          "leads_to": "root",
+          "leads_to": "ending_rule",
+          "leads_to_node": "root",
           "triggers": ["alignment:+5"],
           "requires": {},
           "expected": false
@@ -38,7 +41,8 @@
         {
           "option_id": "proceed_just",
           "label": "Proceed with the intent to make it just",
-          "leads_to": "negotiate_system",
+          "leads_to": "ending_rule",
+          "leads_to_node": "negotiate_system",
           "triggers": ["alignment:+10"],
           "requires": {},
           "expected": true
@@ -46,7 +50,8 @@
         {
           "option_id": "proceed_power",
           "label": "Proceed — justice is a luxury, power is what endures",
-          "leads_to": "negotiate_system",
+          "leads_to": "ending_rule",
+          "leads_to_node": "negotiate_system",
           "triggers": ["alignment:-10"],
           "requires": {},
           "expected": false
@@ -59,7 +64,8 @@
         {
           "option_id": "accept_rulership",
           "label": "Accept full rulership — become the System's voice in flesh",
-          "leads_to": "victory_rule",
+          "leads_to": "ending_rule",
+          "leads_to_node": "victory_rule",
           "triggers": ["flag:accepted_system_throne", "flag:game_complete_rule", "flag:game_complete"],
           "requires": {},
           "expected": true
@@ -67,7 +73,8 @@
         {
           "option_id": "demand_reforms",
           "label": "Demand reforms first — the System serves people, not the reverse",
-          "leads_to": "victory_rule",
+          "leads_to": "ending_rule",
+          "leads_to_node": "victory_rule",
           "triggers": ["flag:demanded_reforms", "flag:game_complete_rule", "flag:game_complete", "alignment:+15"],
           "requires": {},
           "expected": true
@@ -75,7 +82,8 @@
         {
           "option_id": "seize_by_force",
           "label": "Take control by force — no negotiations, no conditions",
-          "leads_to": "victory_rule",
+          "leads_to": "ending_rule",
+          "leads_to_node": "victory_rule",
           "triggers": ["flag:seized_by_force", "flag:game_complete_rule", "flag:game_complete", "alignment:-20"],
           "requires": {},
           "expected": false
@@ -88,7 +96,7 @@
         {
           "option_id": "continue_to_end",
           "label": "[ The story of your rule begins now. ]",
-          "leads_to": null,
+          "leads_to": "__stay__",
           "triggers": ["give_gold:500000"],
           "requires": {},
           "expected": true

@@ -67,5 +67,55 @@
     "mp_cost": 30,
     "cooldown_turns": 8,
     "effects": [{"effect_type": "debuff", "scaling_stat": "WIS", "base_value": 0.0, "scaling_coefficient": 0.0}]
+  },
+  {
+    "skill_id": "perfect_slash",
+    "name": "Perfect Slash",
+    "rarity": "RARE",
+    "description": "A melee strike infused with arcane force, dealing hybrid physical and magic damage scaling with Strength and Intelligence.",
+    "flavor_text": "Steel and sorcery. Neither alone is sufficient.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 12,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 8.0, "scaling_coefficient": 1.5},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 6.0, "scaling_coefficient": 1.2}
+    ]
+  },
+  {
+    "skill_id": "void_infusion",
+    "name": "Void Infusion",
+    "rarity": "UNCOMMON",
+    "description": "Passively infuses all your attacks with void energy, adding bonus dark damage scaling with Intelligence.",
+    "flavor_text": "You stopped fighting with weapons a long time ago.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [{"effect_type": "damage", "scaling_stat": "INT", "base_value": 3.0, "scaling_coefficient": 0.7}]
+  },
+  {
+    "skill_id": "shadow_bolt",
+    "name": "Shadow Bolt",
+    "rarity": "UNCOMMON",
+    "description": "Launch a bolt of concentrated darkness at an enemy, dealing dark damage and applying a chance to fear.",
+    "flavor_text": "Fear is not a side effect. It is the point.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 9.0, "scaling_coefficient": 1.9},
+      {"effect_type": "debuff", "scaling_stat": null, "base_value": 1.0, "scaling_coefficient": 0.0}
+    ]
+  },
+  {
+    "skill_id": "phantom_step",
+    "name": "Phantom Step",
+    "rarity": "RARE",
+    "description": "Blink forward through shadow, teleporting a short distance and granting a brief evasion buff on arrival.",
+    "flavor_text": "Here, then not, then somewhere else. The gap between is yours.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 15,
+    "cooldown_turns": 4,
+    "effects": [{"effect_type": "buff", "scaling_stat": "AGI", "base_value": 6.0, "scaling_coefficient": 1.0}]
   }
 ]

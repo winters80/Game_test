@@ -1,0 +1,12 @@
+[
+  {
+    "item_id": "crystal_shard",
+    "name": "Void Crystal Shard",
+    "rarity": "RARE",
+    "item_type": "MATERIAL",
+    "description": "A fragment broken from a void-crystal formation in the dungeon depths. The System classifies it as ANOMALOUS.",
+    "flavor_text": "It hums at a frequency you feel in your fillings.",
+    "combo_catalyst": true,
+    "value_gold": 150
+  }
+]

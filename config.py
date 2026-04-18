@@ -13,8 +13,10 @@ SAVE_VERSION = 3   # bump when Player schema or world_db schema changes
 AI_ENABLED = True
 OLLAMA_BASE_URL = "http://localhost:11434"
 OLLAMA_MODEL = "mistral-nemo"          # Primary: 12B, good JSON + creative writing
+OLLAMA_FAST_MODEL = "gemma3:1b"        # Small model for interactive (dynamic options). Set "" to use primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"
-OLLAMA_TIMEOUT_JSON = 30               # seconds for structured generation
+OLLAMA_TIMEOUT_JSON = 60               # seconds for structured generation (primary model)
+OLLAMA_TIMEOUT_FAST = 15              # seconds for fast-model interactive calls
 OLLAMA_TIMEOUT_TEXT = 20               # seconds for narrative generation
 OLLAMA_MAX_RETRIES = 3
 OLLAMA_TEMP_JSON = 0.4                 # lower = more consistent structured output

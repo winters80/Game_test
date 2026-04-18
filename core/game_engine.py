@@ -22,7 +22,7 @@ from systems import class_system, level_system, combat_system, inventory_system
 from persistence.save_manager import save_game, load_game, list_saves, new_game_state, close_game
 from ui import renderer
 from ui.notifications import setup_notification_listeners
-from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, feature, GUILD_SIM_INTERVAL
+from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_FAST_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, OLLAMA_TIMEOUT_FAST, feature, GUILD_SIM_INTERVAL
 from entities.enums import SkillType
 from core.menus import GameMenusMixin
 from core.combat_handler import CombatHandlerMixin
@@ -141,7 +141,14 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
             from ai.content_generator import ContentGenerator
             client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
             if client.is_available():
-                self.ai_generator = ContentGenerator(client, self.lore_data, OLLAMA_MODEL)
+                fast_model = OLLAMA_FAST_MODEL or OLLAMA_MODEL
+                fast_client = (
+                    OllamaClient(model=fast_model, base_url=OLLAMA_BASE_URL,
+                                 default_timeout=OLLAMA_TIMEOUT_FAST)
+                    if fast_model != OLLAMA_MODEL else client
+                )
+                self.ai_generator = ContentGenerator(client, self.lore_data, OLLAMA_MODEL,
+                                                     fast_client=fast_client)
                 if feature("world_db"):
                     from config import BG_GEN_ENABLED
                     if BG_GEN_ENABLED:
@@ -219,7 +226,8 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         if not name or not name.strip():
             name = "Wanderer"
         player = Player(name=name.strip())
-        slot_name = player.name.lower().replace(" ", "_")
+        import re
+        slot_name = re.sub(r'[^a-z0-9_]', '', player.name.lower().replace(" ", "_")) or "save"
         self.state = new_game_state(player, SAVES_DIR, slot_name)
         self.state.skill_registry = self.skill_registry
         self.state.current_scene_id = "prologue"
@@ -231,6 +239,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
     # ── Game Loop ──────────────────────────────────────────────────────────────
 
     def _game_loop(self) -> None:
+        from utils.logging_setup import log_player_error
         self._running = True
         try:
             while self._running and self.state:
@@ -302,7 +311,23 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                 choice = self._prompt_choice(options)
                 if choice is None:
                     continue
-                self._handle_choice(choice)
+                try:
+                    self._handle_choice(choice)
+                except KeyboardInterrupt:
+                    raise
+                except Exception as exc:
+                    log_player_error(
+                        "choice_crash",
+                        exc=exc,
+                        player=self.state.player,
+                        scene_id=self.state.current_scene_id,
+                        node_id=self.state.current_node_id,
+                        option_id=choice.option_id,
+                        turn=self.state.player.turn_count,
+                    )
+                    logger.error("Unhandled error in _handle_choice: %s", exc, exc_info=True)
+                    from ui import renderer
+                    renderer.print_error("Something went wrong. The System logged the anomaly.")
         finally:
             # Always close the world DB cleanly on exit, crash, or KeyboardInterrupt
             if self.state:
@@ -550,14 +575,27 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
 
         # Call AI with spinner
         result = None
-        with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
-            result = self.ai_generator.generate_dynamic_options(
-                question=question,
-                scene_title=scene_title,
-                scene_text=scene_text,
-                current_options=option_labels,
+        try:
+            with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
+                result = self.ai_generator.generate_dynamic_options(
+                    question=question,
+                    scene_title=scene_title,
+                    scene_text=scene_text,
+                    current_options=option_labels,
+                    player=self.state.player,
+                )
+        except Exception as exc:
+            from utils.logging_setup import log_player_error
+            log_player_error(
+                "dynamic_query_crash",
+                exc=exc,
                 player=self.state.player,
+                scene_id=self.state.current_scene_id,
+                node_id=self.state.current_node_id,
+                turn=self.state.player.turn_count,
+                extra={"question": question[:120]},
             )
+            logger.error("Dynamic query exception: %s", exc, exc_info=True)
 
         if not result:
             logger.warning(

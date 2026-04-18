@@ -64,6 +64,12 @@ class BackgroundGenerator(DirectorGenerators, WorldContentGenerators, EntityCont
     def start(self) -> None:
         if not self._running:
             self._running = True
+            # Python threads cannot be restarted — always recreate
+            if self._thread.is_alive():
+                self._thread.join(timeout=2.0)  # wait briefly for old thread to exit
+            self._thread = threading.Thread(
+                target=self._worker, daemon=True, name="AI-BG"
+            )
             self._thread.start()
             logger.info("BackgroundGenerator started.")
 

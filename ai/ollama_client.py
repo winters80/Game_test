@@ -16,12 +16,13 @@ class OllamaParseError(Exception):
 
 
 class OllamaClient:
-    def __init__(self, model: str, base_url: str = "http://localhost:11434") -> None:
+    def __init__(self, model: str, base_url: str = "http://localhost:11434",
+                 default_timeout: int = 120) -> None:
         self.model = model
         self.base_url = base_url
         self._client = None
-        self._client_timeout: int = 120   # tracks which timeout the cached client was built with
-        self._default_timeout: int = 120  # used when no per-call timeout is specified
+        self._client_timeout: int = default_timeout
+        self._default_timeout: int = default_timeout
         # Cumulative token counters for this session
         self.tokens_prompt: int = 0
         self.tokens_generated: int = 0
@@ -76,6 +77,7 @@ class OllamaClient:
         temperature: float = 0.4,
         timeout: int = 120,
         max_retries: int = 3,
+        num_predict: int = 800,
     ) -> dict[str, Any]:
         client = self._get_client(timeout)
         last_error: Exception | None = None
@@ -83,8 +85,8 @@ class OllamaClient:
         for attempt in range(max_retries):
             try:
                 logger.debug(
-                    "generate_json attempt=%d model=%s temp=%.2f prompt_chars=%d",
-                    attempt + 1, self.model, temperature, len(prompt),
+                    "generate_json attempt=%d model=%s temp=%.2f prompt_chars=%d num_predict=%d",
+                    attempt + 1, self.model, temperature, len(prompt), num_predict,
                 )
                 response = client.generate(
                     model=self.model,
@@ -93,7 +95,7 @@ class OllamaClient:
                     format="json",
                     options={
                         "temperature": temperature,
-                        "num_predict": 800,
+                        "num_predict": num_predict,
                     },
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response

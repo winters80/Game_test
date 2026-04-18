@@ -10,6 +10,7 @@ from core.event_bus import bus, Event
 from systems import class_system
 from scenes.scene_base import SceneOption
 from ui import renderer
+from utils.logging_setup import log_player_error
 
 if TYPE_CHECKING:
     pass
@@ -30,7 +31,20 @@ class ChoiceHandlerMixin:
 
         # Process triggers
         if scene:
-            scene.process_triggers(option.triggers, self.state)
+            try:
+                scene.process_triggers(option.triggers, self.state)
+            except Exception as exc:
+                log_player_error(
+                    "trigger_crash",
+                    exc=exc,
+                    player=player,
+                    scene_id=self.state.current_scene_id,
+                    node_id=self.state.current_node_id,
+                    option_id=option.option_id,
+                    turn=player.turn_count,
+                    extra={"triggers": str(option.triggers)},
+                )
+                logger.error("Trigger processing failed: %s", exc, exc_info=True)
 
         # Handle special triggers that need engine context
         for trigger in option.triggers:
@@ -89,6 +103,15 @@ class ChoiceHandlerMixin:
                 renderer.print_scene_text([f"» {option.narrative}"])
                 renderer.print_divider()
                 narrative_text = option.narrative
+            elif self.ai_generator:
+                # Follow-up options have no pre-written narrative — generate one on the spot
+                narrative_text = self._generate_action_narrative(option.label)
+                if narrative_text:
+                    renderer.print_divider()
+                    renderer.print_scene_text([f"» {narrative_text}"])
+                    renderer.print_divider()
+                else:
+                    renderer.print_system_message("Action taken.", style="dim_text")
             else:
                 renderer.print_system_message("Action taken.", style="dim_text")
             # Remove just this option so it can't be spammed; keep others
@@ -145,6 +168,36 @@ class ChoiceHandlerMixin:
 
         self.state.mark_dirty()
 
+    def _generate_action_narrative(self, action_label: str) -> str:
+        """
+        Generate a single-sentence outcome for a follow-up AI option that has no narrative.
+        Uses the fast client with a tiny token budget for near-instant response.
+        Returns empty string on failure.
+        """
+        try:
+            scene = self.scene_registry.get(self.state.current_scene_id)
+            scene_title = scene.title if scene else self.state.current_scene_id
+            node = scene.get_node(self.state.current_node_id) if scene else {}
+            scene_text = node.get("text", "")[:150]
+            prompt = (
+                f'Scene: {scene_title}. {scene_text}\n'
+                f'Player action: "{action_label}"\n'
+                'Describe the outcome in one vivid sentence (max 25 words). '
+                'Return ONLY a JSON object: {"narrative": "..."}'
+            )
+            with renderer.show_ai_thinking_spinner(""):
+                raw = self.ai_generator.fast_client.generate_json(
+                    prompt=prompt,
+                    system_prompt="You write one-sentence action outcomes for a fantasy RPG. Return only valid JSON.",
+                    temperature=0.8,
+                    num_predict=80,
+                    max_retries=1,
+                )
+            return str(raw.get("narrative", "")).strip()
+        except Exception as e:
+            logger.warning("Action narrative generation failed: %s", e)
+            return ""
+
     def _generate_ai_followup(self, narrative_text: str) -> list[str]:
         """
         Ask the AI for 2-3 immediate follow-up options given a narrative outcome.
@@ -168,11 +221,11 @@ class ChoiceHandlerMixin:
                 "Return ONLY a valid JSON array of 2-3 short option strings. No explanation."
             )
             with renderer.show_ai_thinking_spinner("Generating follow-up options..."):
-                result = self.ai_generator.client.generate_json(
+                result = self.ai_generator.fast_client.generate_json(
                     prompt=prompt,
                     system_prompt=system_prompt,
                     temperature=0.75,
-                    timeout=120,
+                    num_predict=200,
                     max_retries=1,
                 )
             if isinstance(result, list):

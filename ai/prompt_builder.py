@@ -262,44 +262,11 @@ def build_dynamic_options_prompt(
     flags_str = ", ".join(player_flags[:12]) or "none"
     world_name = lore_data.get("world_name", "Aethoria")
 
-    return f"""
-The player is in scene: {scene_title}
-Scene text: {scene_text[:300]}
-
-Current choices available:
-{options_str}
-
+    return f"""Scene: {scene_title}
+Context: {scene_text[:200]}
 Player stats: {stats_str}
-Active flags: {flags_str}
+Flags: {flags_str}
+Question: "{question}"
 
-The player asks: "{question}"
-
-Generate 1-4 new situational options that address this question. These options should:
-- Be creative and grounded in the scene context
-- Use realistic stat checks if the action requires ability
-- Include specific triggers (e.g. "combat:enemy_id", "flag:action_done", "give_gold:50")
-- NOT duplicate existing options
-- Feel like a skilled GM adding depth to the encounter
-
-Available trigger types:
-- flag:FLAG_NAME — sets a player flag
-- combat:ENEMY_ID — starts combat (use existing IDs: goblin_scout, goblin_looter, dungeon_slime)
-- give_gold:N — gives N copper (100 = 1 gold)
-- give_item:ITEM_ID — gives item
-- give_skill:SKILL_ID — grants a skill
-- alignment:+N or alignment:-N — shifts alignment
-
-Return ONLY valid JSON matching this schema:
-{{
-  "situation_text": "A narrative paragraph (2-4 sentences) explaining what the player can see or do given their question. Be specific about what's possible.",
-  "options": [
-    {{
-      "option_id": "unique_snake_case_id",
-      "label": "Short action label (max 60 chars)",
-      "narrative": "What happens if they choose this (1 sentence)",
-      "triggers": ["flag:example_flag"],
-      "requires": {{}}
-    }}
-  ]
-}}
-"""
+Return ONLY JSON with 1-2 options:
+{{"situation_text":"1-2 sentence description","options":[{{"option_id":"snake_id","label":"Short label","narrative":"1 sentence outcome","triggers":[]}}]}}"""

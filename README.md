@@ -101,7 +101,7 @@ All game content lives in JSON files. Restart the game to pick up changes.
 Create `scenes/data/my_scene.json`. The filename stem becomes the scene ID. See `scenes/data/village_start.json` for the full node/option schema.
 
 ### New NPC
-Add a template to `data/npcs/npcs.json`. Enable `"npc_system": true` in `config.FEATURES` if not already on.
+Add a template to any file in `data/npcs/`. Enable `"npc_system": true` in `config.FEATURES` if not already on.
 
 ### New quest
 Add a template to `data/quests/quest_templates.json`. Trigger it from a scene or NPC with `"start_quest:template_id"`.
@@ -177,12 +177,40 @@ If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back 
 # Run syntax checks (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Run integration tests
-python test_runs.py
+# Run the automated character test suite
+# Validates all registries, scene graph links, triggers, 3 character playthroughs, and save/load
+python -X utf8 test_characters.py
 
 # Start a feature branch
 git checkout -b feature/guild-system
 # Enable the flag, build, test, then disable before merging if not ready
 ```
 
+The test suite (`test_characters.py`) covers:
+- All skills, items, classes, and NPC data load without errors
+- Every scene `leads_to` reference points to a real scene and node
+- Every `give_item` / `give_skill` trigger references a real ID
+- Three simulated character playthroughs (warrior, divergent, mage) including save/load round-trip
+- Player model: flags, stats, alignment, inventory
+
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, and AI integration contracts.
+
+---
+
+## Roadmap
+
+| Feature | Status |
+|---------|--------|
+| Core game loop, scenes, classes, skills | ✅ Complete |
+| AI-generated unique classes (Ollama) | ✅ Complete |
+| Background AI world generation | ✅ Complete |
+| NPC system (memory, stat-gated dialogue) | ✅ Complete |
+| Species + alignment systems | ✅ Complete |
+| Stat gating | ✅ Complete |
+| Interactive AI situational options (`[?]`) | ✅ Complete |
+| Quest system (state machine + AI quest generation) | 🔲 Planned |
+| Guild system | 🔲 Planned |
+| Faction system + political ascension | 🔲 Planned |
+| Auction house + life token economy | 🔲 Planned |
+| 9-lives death mechanic | 🔲 Planned |
+| Crafting system | 🔲 Planned |
