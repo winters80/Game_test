@@ -157,6 +157,7 @@ def advance_quest(
     bus.publish(Event("QUEST_ADVANCED", {
         "quest_id": instance_id,
         "template_id": row["template_id"],
+        "title": template.title,
         "new_stage": stage.next_stage_id,
     }))
     return False

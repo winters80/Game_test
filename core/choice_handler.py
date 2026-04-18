@@ -85,6 +85,23 @@ class ChoiceHandlerMixin:
                 from systems import quest_system as qs
                 qs.start_quest(quest_id, None, self.state, self.quest_registry)
                 bus.flush()
+            elif trigger.startswith("advance_quest:") and feature("quest_system") and self.quest_registry:
+                # Format: advance_quest:TEMPLATE_ID  OR  advance_quest:TEMPLATE_ID:STAGE_ID
+                # Resolves template_id → currently-active instance, then advances.
+                payload = trigger[len("advance_quest:"):]
+                parts = payload.split(":", 1)
+                template_id = parts[0]
+                target_stage = parts[1] if len(parts) > 1 else None
+                self._advance_quest_by_template(template_id, target_stage)
+                bus.flush()
+            elif trigger.startswith("complete_quest:") and feature("quest_system") and self.quest_registry:
+                # Format: complete_quest:TEMPLATE_ID[:OUTCOME]   (outcome defaults to "success")
+                payload = trigger[len("complete_quest:"):]
+                parts = payload.split(":", 1)
+                template_id = parts[0]
+                outcome = parts[1] if len(parts) > 1 else "success"
+                self._complete_quest_by_template(template_id, outcome)
+                bus.flush()
 
         # Apply pending species (set by scene_base as _pending_species:<id>)
         if feature("species_system") and self.species_registry:
@@ -262,6 +279,54 @@ class ChoiceHandlerMixin:
             if bg_data:
                 apply_background(player, bg_data, self.item_registry)
             del player.flags[flag]
+
+    def _find_active_instance_for_template(self, template_id: str) -> str | None:
+        """Return the instance_id of an active quest matching template_id, or None."""
+        if not self.state.world_db:
+            return None
+        try:
+            for row in self.state.world_db.get_active_quests():
+                if row.get("template_id") == template_id:
+                    return row.get("instance_id")
+        except Exception as e:
+            logger.warning("Quest lookup failed for template '%s': %s", template_id, e)
+        return None
+
+    def _advance_quest_by_template(self, template_id: str, target_stage: str | None) -> None:
+        """
+        Advance the active quest matching template_id. If target_stage is given,
+        jump directly to that stage; otherwise advance one stage along the chain.
+        """
+        instance_id = self._find_active_instance_for_template(template_id)
+        if not instance_id:
+            logger.debug("advance_quest: no active instance for template '%s'", template_id)
+            return
+        from systems import quest_system as qs
+        if target_stage and self.state.world_db:
+            # Direct jump — write new stage, then let advance_quest handle terminal check
+            self.state.world_db.advance_quest(instance_id, target_stage)
+            template = self.quest_registry.get(template_id)
+            if template and template.get_stage(target_stage):
+                bus.publish(Event("QUEST_ADVANCED", {
+                    "quest_id": instance_id,
+                    "template_id": template_id,
+                    "new_stage": target_stage,
+                }))
+                # If the jumped-to stage is terminal, complete it
+                stage = template.get_stage(target_stage)
+                if stage and stage.next_stage_id is None:
+                    qs.complete_quest(instance_id, "success", self.state, self.quest_registry)
+        else:
+            qs.advance_quest(instance_id, self.state, self.quest_registry)
+
+    def _complete_quest_by_template(self, template_id: str, outcome: str) -> None:
+        """Complete the active quest matching template_id with the given outcome."""
+        instance_id = self._find_active_instance_for_template(template_id)
+        if not instance_id:
+            logger.debug("complete_quest: no active instance for template '%s'", template_id)
+            return
+        from systems import quest_system as qs
+        qs.complete_quest(instance_id, outcome, self.state, self.quest_registry)
 
     def _assign_class(self, class_id: str) -> None:
         ok, msg = class_system.assign_base_class(

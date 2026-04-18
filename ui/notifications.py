@@ -122,6 +122,11 @@ def notify_quest_failed(console: "Console", title: str) -> None:
     _system_notify(console, ["OBJECTIVE FAILED", title.upper()], style="system_warning", pause=1.0)
 
 
+def notify_quest_advanced(console: "Console", title: str, new_stage: str) -> None:
+    stage_clean = new_stage.replace("_", " ").upper()
+    _system_notify(console, ["OBJECTIVE UPDATED", title.upper(), stage_clean], style="system_msg", pause=0.7)
+
+
 def notify_guild_joined(console: "Console", guild_name: str, rank_name: str) -> None:
     _system_notify(
         console,
@@ -261,6 +266,13 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
     def on_quest_failed(event: Event) -> None:
         notify_quest_failed(console, event.data.get("title", "Unknown Quest"))
 
+    def on_quest_advanced(event: Event) -> None:
+        notify_quest_advanced(
+            console,
+            event.data.get("title", "Quest"),
+            event.data.get("new_stage", "?"),
+        )
+
     def on_guild_joined(event: Event) -> None:
         notify_guild_joined(
             console,
@@ -309,6 +321,7 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
     bus.subscribe("QUEST_STARTED", on_quest_started)
     bus.subscribe("QUEST_COMPLETED", on_quest_completed)
     bus.subscribe("QUEST_FAILED", on_quest_failed)
+    bus.subscribe("QUEST_ADVANCED", on_quest_advanced)
     bus.subscribe("GUILD_JOINED", on_guild_joined)
     bus.subscribe("GUILD_RANK_CHANGED", on_guild_rank_changed)
     bus.subscribe("FACTION_RANK_CHANGED", on_faction_rank_changed)

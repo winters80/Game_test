@@ -265,6 +265,129 @@ class GameMenusMixin:
 
         self.state.mark_dirty()
 
+    # ── Quest journal ─────────────────────────────────────────────────────────
+
+    def _quests_menu(self) -> None:
+        """
+        Quest Journal — shows active quest objectives + completed quests.
+        Drill into a quest to see full description, stage, rewards, turns elapsed.
+        """
+        if not feature("quest_system") or not self.quest_registry:
+            renderer.print_system_message("Quest system is disabled.", style="dim_text")
+            renderer.prompt_any_key()
+            return
+
+        from systems import quest_system as qs
+
+        player = self.state.player
+
+        while True:
+            renderer.clear()
+            renderer.print_title()
+            renderer.print_status_bar(player, self.item_registry)
+            renderer.print_divider()
+            renderer.console.print("  [system_msg][ QUEST JOURNAL ][/system_msg]")
+            renderer.console.print()
+
+            active = qs.get_active_quest_summaries(self.state, self.quest_registry)
+            completed_ids = list(player.completed_quest_ids)
+
+            if not active and not completed_ids:
+                renderer.console.print("  [dim_text]No quests yet. Talk to NPCs to find work.[/dim_text]")
+                renderer.console.print()
+                renderer.prompt_any_key()
+                return
+
+            choices: list[str] = []
+            label_to_instance: dict[str, str] = {}
+
+            if active:
+                renderer.console.print("  [subtitle]Active[/subtitle]")
+                for s in active:
+                    label = f"  ● {s['title']}  [dim_text]— {s['objective']}[/dim_text]"
+                    renderer.console.print(label)
+                    pick = f"● {s['title']}"
+                    choices.append(pick)
+                    label_to_instance[pick] = s["instance_id"]
+                renderer.console.print()
+
+            if completed_ids:
+                renderer.console.print("  [subtitle]Completed[/subtitle]")
+                completed_count = 0
+                for instance_id in completed_ids[-5:]:  # show last 5
+                    row = self.state.world_db.get_quest(instance_id) if self.state.world_db else None
+                    template = self.quest_registry.get(row["template_id"]) if row else None
+                    if template:
+                        renderer.console.print(f"  [dim_text]✓ {template.title}[/dim_text]")
+                        completed_count += 1
+                if completed_count == 0:
+                    renderer.console.print("  [dim_text](none readable)[/dim_text]")
+                renderer.console.print()
+
+            choices.append("← Close")
+            answer = questionary.select("Inspect quest:", choices=choices).ask()
+            if answer is None or answer == "← Close":
+                break
+
+            instance_id = label_to_instance.get(answer)
+            if instance_id:
+                self._quest_detail(instance_id)
+
+    def _quest_detail(self, instance_id: str) -> None:
+        """Show full quest detail — description, current objective, rewards, NPC, turns elapsed."""
+        if not self.state.world_db:
+            return
+        row = self.state.world_db.get_quest(instance_id)
+        if not row:
+            renderer.print_system_message("Quest not found.", style="system_warning")
+            renderer.prompt_any_key()
+            return
+        template = self.quest_registry.get(row["template_id"]) if self.quest_registry else None
+        if not template:
+            renderer.print_system_message("Quest template missing.", style="system_warning")
+            renderer.prompt_any_key()
+            return
+
+        stage = template.get_stage(row["current_state"])
+        turns_active = self.state.turn_number - row.get("accepted_turn", 0)
+
+        renderer.clear()
+        renderer.print_title()
+        renderer.print_divider()
+        renderer.console.print(f"  [title]{template.title}[/title]")
+        renderer.console.print()
+        if template.description:
+            renderer.console.print(f"  [scene_text]{template.description}[/scene_text]")
+            renderer.console.print()
+
+        if stage:
+            renderer.console.print(f"  [subtitle]Current objective[/subtitle]")
+            renderer.console.print(f"    » {stage.objective_text}")
+            renderer.console.print()
+
+        renderer.console.print(f"  [subtitle]Status[/subtitle]")
+        renderer.console.print(f"    Stage      : [highlight]{row['current_state']}[/highlight]")
+        renderer.console.print(f"    Turns open : [dim_text]{turns_active}[/dim_text]")
+        if template.giver_npc_id:
+            renderer.console.print(f"    Given by   : [dim_text]{template.giver_npc_id}[/dim_text]")
+        if template.time_limit_turns:
+            remaining = max(0, template.time_limit_turns - turns_active)
+            renderer.console.print(f"    Time limit : [system_warning]{remaining} turns left[/system_warning]")
+        renderer.console.print()
+
+        # Rewards summary
+        reward_bits = []
+        if template.reward_gold:    reward_bits.append(f"[gold]{template.reward_gold} gold[/gold]")
+        if template.reward_xp:      reward_bits.append(f"[xp]{template.reward_xp} xp[/xp]")
+        if template.reward_items:   reward_bits.append(f"{len(template.reward_items)} item(s)")
+        if template.reward_alignment: reward_bits.append(f"alignment {template.reward_alignment:+.1f}")
+        if reward_bits:
+            renderer.console.print(f"  [subtitle]Rewards on completion[/subtitle]")
+            renderer.console.print("    " + "   ".join(reward_bits))
+            renderer.console.print()
+
+        renderer.prompt_any_key()
+
     # ── Admin bots panel ──────────────────────────────────────────────────────
 
     def _admin_bots_panel(self) -> None:
