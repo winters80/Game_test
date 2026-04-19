@@ -128,21 +128,23 @@ In `config.py`, the `FEATURES` dict lets you enable/disable systems without remo
 
 ```python
 FEATURES = {
-    "species_system":   True,   # Species + evolution
-    "alignment_system": True,   # Moral alignment tracking
-    "npc_system":       True,   # NPCs with memory and stat-gated dialogue
-    "quest_system":     True,   # Quest state machine
-    "stat_gating":      True,   # INT/Perception-gated options
-    "world_db":         True,   # SQLite world state (required by NPC/quest)
-    "guild_system":     False,  # Not yet implemented
-    "faction_system":   False,  # Not yet implemented
-    "auction_house":    False,  # Not yet implemented
-    "lives_system":     False,  # 9-lives death mechanic
-    "crafting_system":  False,  # Not yet implemented
+    "species_system":     True,   # Species selection + evolution paths
+    "alignment_system":   True,   # Alignment float + alignment-gated content
+    "npc_system":         True,   # Named NPCs with memory + stat-gated dialogue
+    "quest_system":       True,   # Quest state machine + completion tracking
+    "guild_system":       True,   # Guild membership, ranks, perks
+    "faction_system":     True,   # Faction politics, standing, ascension
+    "auction_house":      True,   # Auction listings, competing guilds, life tokens
+    "lives_system":       True,   # 9-lives death mechanic (replaces instant game-over)
+    "crafting_system":    True,   # Recipe + material crafting
+    "stat_gating":        True,   # INT/Perception/LCK/WIS content gates
+    "world_db":           True,   # SQLite world state (required by npc/quest systems)
+    "synergy_system":     True,   # Stat synergy bonuses in combat
+    "bot_system":         True,   # AI-driven autonomous bot agents
 }
 ```
 
-Enable order matters: `world_db` must be `True` before `npc_system`, `quest_system`, or `faction_system`.
+Enable order matters: `world_db` must be `True` before `npc_system`, `quest_system`, or `faction_system`. All other systems can be toggled independently.
 
 ---
 
@@ -178,20 +180,43 @@ If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back 
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Run the automated character test suite
-# Validates all registries, scene graph links, triggers, 3 character playthroughs, and save/load
+# Validates registries, scene graph, triggers, character playthroughs, save/load,
+# inventory, combat, BG-thread lifecycle, feature flags, and quest lifecycle
 python -X utf8 test_characters.py
 
+# Run the dedicated quest test suite
+# 14 sections covering schema integrity, NPC giver references, lifecycles for
+# 1-/3-/4-stage quests, concurrent quests, failure conditions, time limits,
+# AI quest DB round-trip, and trigger format resolution
+python -X utf8 test_quests.py
+
 # Start a feature branch
-git checkout -b feature/guild-system
-# Enable the flag, build, test, then disable before merging if not ready
+git checkout -b feature/my-feature
+# Enable the flag (if any), build, test, then disable before merging if not ready
 ```
 
-The test suite (`test_characters.py`) covers:
+`test_characters.py` (47 checks across 10 sections) covers:
 - All skills, items, classes, and NPC data load without errors
 - Every scene `leads_to` reference points to a real scene and node
 - Every `give_item` / `give_skill` trigger references a real ID
 - Three simulated character playthroughs (warrior, divergent, mage) including save/load round-trip
-- Player model: flags, stats, alignment, inventory
+- Player model edge cases, inventory API, combat (auto-resolve + loot)
+- Background generator thread lifecycle (start/stop/restart)
+- Feature-flag toggling
+- Quest lifecycle: start → tick advance → completion → rewards
+
+`test_quests.py` (53 checks across 14 sections) covers:
+- Schema integrity for every quest template (stage chains, terminal stages, conditions)
+- NPC giver references resolve and dialogue triggers reference real templates
+- Reward references (items, factions, guilds) point to real entities
+- Full lifecycles for 2-stage, 3-stage, and 4-stage quests
+- Three concurrent quests where partial completion doesn't disturb others
+- Failure conditions and time-limit expiration both fail the quest correctly
+- AI quest data DB round-trip (`store_ai_quest` → `get_quest` → JSON intact)
+- Event payload shapes (`QUEST_STARTED` / `QUEST_ADVANCED` / `QUEST_COMPLETED`)
+- Trigger format resolution (`advance_quest:TEMPLATE_ID`, `complete_quest:TEMPLATE_ID`)
+
+Both suites run automatically via the `.git/hooks/pre-push` git hook before every push.
 
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, and AI integration contracts.
 
@@ -199,18 +224,38 @@ See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax
 
 ## Roadmap
 
-| Feature | Status |
-|---------|--------|
-| Core game loop, scenes, classes, skills | ✅ Complete |
-| AI-generated unique classes (Ollama) | ✅ Complete |
-| Background AI world generation | ✅ Complete |
-| NPC system (memory, stat-gated dialogue) | ✅ Complete |
-| Species + alignment systems | ✅ Complete |
-| Stat gating | ✅ Complete |
-| Interactive AI situational options (`[?]`) | ✅ Complete |
-| Quest system (state machine + AI quest generation) | 🔲 Planned |
-| Guild system | 🔲 Planned |
-| Faction system + political ascension | 🔲 Planned |
-| Auction house + life token economy | 🔲 Planned |
-| 9-lives death mechanic | 🔲 Planned |
-| Crafting system | 🔲 Planned |
+### Current stage: **Phase 3 — Quest system shipped, polish & content next**
+
+The full feature surface from the original design is now wired and player-facing. The
+project moves from "build new systems" into "deepen existing ones" — more quest content,
+more NPCs that offer them, and richer AI integration on top of the working backbone.
+
+| Feature | Status | Notes |
+|---------|--------|-------|
+| Core game loop, scenes, classes, skills | ✅ Shipped | |
+| AI-generated unique classes (Ollama) | ✅ Shipped | Divergence ≥ 30 triggers generation |
+| Background AI world generation | ✅ Shipped | Worker thread; non-blocking |
+| Dual-model Ollama (slow + fast) | ✅ Shipped | `mistral-nemo` + `gemma3:1b` |
+| NPC system (memory, stat-gated dialogue) | ✅ Shipped | |
+| Species + alignment systems | ✅ Shipped | |
+| Stat gating | ✅ Shipped | |
+| Interactive AI situational options (`[?]`) | ✅ Shipped | Uses fast model |
+| WorldDirector (off-thread) | ✅ Shipped | Submits to BG queue, never blocks |
+| **Quest system (state machine + UI + tests)** | ✅ **Shipped** | 9 templates, `[J] Quest Journal`, `start_quest:` / `advance_quest:` / `complete_quest:` triggers |
+| Guild system | ✅ Shipped | Membership, ranks, perks, found-a-guild flow |
+| Faction system | ✅ Shipped | Standing, rank changes, `update_faction:` trigger |
+| Auction house + life tokens | ✅ Shipped | Listings, bids, life-token purchase |
+| 9-lives death mechanic | ✅ Shipped | Replaces instant game over |
+| Crafting system | ✅ Shipped | Recipes + materials, `[C] Craft` menu |
+| Bot agents (autonomous AI players) | ✅ Shipped | Inspectable via admin panel |
+| Test suite (`test_characters` + `test_quests`) | ✅ Shipped | 100 checks, runs on every push |
+
+### Next up — content & polish
+
+| Item | Why |
+|------|-----|
+| Wire more NPCs to existing quest templates | Six of the nine templates have no NPC giver path — `dungeon_survey`, `verath_courier`, `fracture_investigation` and the `null`-giver faction quests need dialogue hooks |
+| Surface dynamic AI quest generation | `ContentGenerator.generate_quest()` works but isn't called — should fire when an NPC's `quest_seeds` is empty and disposition is high |
+| Quest seeds → dialogue option synthesis | `npc_system.get_available_quest_seeds()` exists but has no callers — should inject "I might have work for you" options dynamically |
+| Migration test for save format v2 → v3 | Forward-only for now; needs round-trip coverage as fields evolve |
+| Pre-push hook installer | The hook is local-only; collaborators need a `scripts/install-hooks.sh` |
