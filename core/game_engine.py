@@ -1,10 +1,7 @@
 from __future__ import annotations
 
-import json
 import logging
 import time
-from pathlib import Path
-from typing import TYPE_CHECKING
 
 import questionary
 
@@ -21,35 +18,12 @@ from scenes.scene_base import SceneOption
 from systems import class_system, level_system, combat_system, inventory_system
 from persistence.save_manager import save_game, load_game, list_saves, new_game_state, close_game
 from ui import renderer
-from ui.notifications import setup_notification_listeners
-from config import SAVES_DIR, DATA_DIR, AI_ENABLED, OLLAMA_MODEL, OLLAMA_FAST_MODEL, OLLAMA_BASE_URL, OLLAMA_MAX_RETRIES, OLLAMA_TIMEOUT_FAST, feature, GUILD_SIM_INTERVAL
+from config import SAVES_DIR, DATA_DIR, feature, GUILD_SIM_INTERVAL
 from entities.enums import SkillType
 from core.menus import GameMenusMixin
 from core.combat_handler import CombatHandlerMixin
 from core.dialogue_handler import DialogueHandlerMixin
 from core.choice_handler import ChoiceHandlerMixin
-
-if TYPE_CHECKING:
-    pass
-
-
-# ── Bot goal cycling ──────────────────────────────────────────────────────────
-
-_BOT_GOAL_CYCLE: dict[str, str] = {
-    "explore": "trade",
-    "trade":   "rest",
-    "rest":    "explore",
-    "combat":  "rest",
-    "idle":    "explore",
-}
-
-
-def _advance_bot_goal(bot: "Any") -> None:
-    """Cycle the bot's current goal and trim memory to last 10 entries."""
-    from typing import Any as _Any  # noqa: F401 (type hint only)
-    bot.current_goal = _BOT_GOAL_CYCLE.get(bot.current_goal, "explore")
-    if len(bot.memory) > 20:
-        bot.memory = bot.memory[-10:]
 
 
 class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, ChoiceHandlerMixin):
@@ -82,105 +56,14 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self._setup_notifications()
 
     def _load_data(self) -> None:
-        self.class_registry.load_from_file(DATA_DIR / "classes" / "base_classes.json")
-        self.class_registry.load_from_file(DATA_DIR / "classes" / "combo_classes.json")
-        self.skill_registry.load_from_dir(DATA_DIR / "skills")
-        self.item_registry.load_from_dir(DATA_DIR / "items")
-        self.scene_registry.load_from_dir(Path(__file__).parent.parent / "scenes" / "data")
-
-        from systems.world_zones import load_zones
-        load_zones(DATA_DIR)
-
-        lore_path = DATA_DIR / "world" / "lore_fragments.json"
-        if lore_path.exists():
-            self.lore_data = json.loads(lore_path.read_text(encoding="utf-8"))
-
-        msg_path = DATA_DIR / "world" / "system_messages.json"
-        if msg_path.exists():
-            self.system_messages = json.loads(msg_path.read_text(encoding="utf-8"))
-
-        if feature("species_system"):
-            from entities.species import SpeciesRegistry
-            from systems.species_system import load_backgrounds
-            self.species_registry = SpeciesRegistry()
-            self.species_registry.load_from_file(DATA_DIR / "species" / "species_definitions.json")
-            self.backgrounds = load_backgrounds(DATA_DIR)
-
-        if feature("npc_system"):
-            from entities.npc import NPCRegistry
-            self.npc_registry = NPCRegistry()
-            self.npc_registry.load_from_dir(DATA_DIR / "npcs")
-
-        if feature("quest_system"):
-            from entities.quest import QuestRegistry
-            self.quest_registry = QuestRegistry()
-            self.quest_registry.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
-
-        if feature("guild_system"):
-            from systems.guilds.guild_loader import load_guild_registry
-            self.guild_registry = load_guild_registry(DATA_DIR)
-
-        if feature("faction_system"):
-            from entities.faction import FactionRegistry
-            self.faction_registry = FactionRegistry()
-            self.faction_registry.load_from_file(DATA_DIR / "factions" / "faction_definitions.json")
-
-        if feature("bot_system"):
-            from systems.bot_system import BotRegistry, BotManager
-            bot_registry = BotRegistry()
-            bot_path = DATA_DIR / "bots" / "bot_templates.json"
-            if bot_path.exists():
-                bot_registry.load_from_file(bot_path)
-            self._bot_manager = BotManager()
-            self._bot_manager.load_from_templates(bot_registry)
+        """Thin delegate — real logic lives in core/bootstrap.load_registries."""
+        from core.bootstrap import load_registries
+        load_registries(self)
 
     def _setup_ai(self) -> None:
-        # Always create an AIService — empty when AI is disabled — so systems
-        # have a stable boundary object whose .is_available reflects reality.
-        from ai.ai_service import AIService
-        self.ai_service = AIService()
-
-        if not AI_ENABLED:
-            return
-        try:
-            from ai.ollama_client import OllamaClient
-            from ai.content_generator import ContentGenerator
-            client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
-            if client.is_available():
-                fast_model = OLLAMA_FAST_MODEL or OLLAMA_MODEL
-                fast_client = (
-                    OllamaClient(model=fast_model, base_url=OLLAMA_BASE_URL,
-                                 default_timeout=OLLAMA_TIMEOUT_FAST)
-                    if fast_model != OLLAMA_MODEL else client
-                )
-                self.ai_generator = ContentGenerator(client, self.lore_data, OLLAMA_MODEL,
-                                                     fast_client=fast_client)
-                if feature("world_db"):
-                    from config import BG_GEN_ENABLED
-                    if BG_GEN_ENABLED:
-                        from ai.background_generator import BackgroundGenerator
-                        self._bg_generator = BackgroundGenerator(self.ai_generator)
-                        self._bg_generator.start()
-                if self._bg_generator and self.ai_generator:
-                    from ai.world_director import WorldDirector
-                    self._world_director = WorldDirector(
-                        self._bg_generator,
-                        self.ai_generator.client,
-                        self.ai_generator.lore_data,
-                    )
-                    logger.info("WorldDirector initialized.")
-                # AIService is the boundary non-AI packages use. Wire it once,
-                # share it with all systems. Safe even when bg_generator is None.
-                from ai.ai_service import AIService
-                self.ai_service = AIService(
-                    content_generator=self.ai_generator,
-                    background_generator=self._bg_generator,
-                )
-                renderer.print_success("AI system online. Ollama connected.")
-            else:
-                renderer.console.print("  [dim_text]Ollama not available — AI features disabled.[/dim_text]")
-        except Exception as e:
-            renderer.console.print(f"  [dim_text]AI setup failed: {e} — continuing without AI.[/dim_text]")
+        """Thin delegate — real logic lives in core/bootstrap.setup_ai."""
+        from core.bootstrap import setup_ai
+        setup_ai(self)
 
     def _setup_notifications(self) -> None:
         setup_notification_listeners(renderer.console, self.system_messages)
@@ -721,220 +604,9 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
             renderer.prompt_any_key()
 
     def _integrate_background_content(self) -> None:
-        """Poll background generator results and integrate into live game state."""
-        if not self._bg_generator:
-            return
-        results = self._bg_generator.poll_results()
-        if not results:
-            return
-
-        for result in results:
-            try:
-                rtype = result.get("type")
-
-                # ── Quests ────────────────────────────────────────────────────
-                if rtype == "quest" and feature("quest_system") and self.quest_registry:
-                    template = result.get("template")
-                    if template:
-                        self.quest_registry.register(template)
-                        if feature("world_db") and self.state.world_db:
-                            self.state.world_db.store_bg_content(
-                                "quest", template.template_id,
-                                template.model_dump(),
-                                zone_id=self.state.current_scene_id,
-                                generated_turn=self.state.player.turn_count,
-                            )
-                        renderer.console.print(
-                            f"\n  [system_msg][ NEW QUEST AVAILABLE ][/system_msg]  "
-                            f"[scene_text]{template.title}[/scene_text]"
-                        )
-
-                # ── Zone narrative ────────────────────────────────────────────
-                elif rtype == "narrative":
-                    zone_id = result.get("zone_id", "")
-                    text    = result.get("text", "")
-                    if zone_id and text:
-                        scene = self.scene_registry.get(zone_id)
-                        if scene:
-                            scene.entrance_text = [text]
-                        if feature("world_db") and self.state.world_db:
-                            self.state.world_db.store_bg_content(
-                                "narrative", zone_id,
-                                {"zone_id": zone_id, "text": text},
-                                zone_id=zone_id,
-                                generated_turn=self.state.player.turn_count,
-                            )
-
-                # ── NPC branch ────────────────────────────────────────────────
-                elif rtype == "npc_branch" and feature("npc_system") and self.npc_registry:
-                    npc_id = result.get("npc_id", "")
-                    node   = result.get("node", {})
-                    if npc_id and node:
-                        npc = self.npc_registry.get(npc_id)
-                        if npc and hasattr(npc, "dialogue_nodes") and node.get("node_id"):
-                            from entities.npc import NPCDialogueNode
-                            try:
-                                npc.dialogue_nodes[node["node_id"]] = NPCDialogueNode.model_validate(node)
-                            except Exception:
-                                logger.warning(
-                                    "Failed to validate AI-generated NPC dialogue node npc=%s node=%s",
-                                    npc_id, node.get("node_id"), exc_info=True,
-                                )
-                        if feature("world_db") and self.state.world_db:
-                            self.state.world_db.store_bg_content(
-                                "npc_branch", npc_id, node,
-                                generated_turn=self.state.player.turn_count,
-                            )
-
-                # ── Bot action ────────────────────────────────────────────────
-                elif rtype == "bot_action" and feature("bot_system") and self._bot_manager:
-                    bot_id = result.get("bot_id", "")
-                    action = result.get("action", "")
-                    target = result.get("target", "")
-                    bot    = self._bot_manager.get(bot_id)
-                    if bot and action:
-                        event_text: str | None = None
-                        # Track zone changes so we can announce arrivals/departures
-                        # relative to the player's current zone.
-                        prev_zone = bot.current_zone_id
-                        player_zone = self.state.current_scene_id
-                        if action == "move_zone":
-                            from systems.world_zones import is_adjacent, get_connected
-                            if is_adjacent(bot.current_zone_id, target):
-                                event_text = (
-                                    f"{bot.name} was spotted traveling toward "
-                                    f"{target.replace('_', ' ').title()}."
-                                )
-                                bot.current_zone_id = target
-                            else:
-                                adj = get_connected(bot.current_zone_id)
-                                if adj:
-                                    bot.current_zone_id = adj[0]
-                        # Announce arrival/departure when a bot crosses the
-                        # boundary of the player's current zone — gives bots a
-                        # presence beyond the static "Also here" footer.
-                        if action == "move_zone" and prev_zone != bot.current_zone_id:
-                            if bot.current_zone_id == player_zone:
-                                renderer.console.print(
-                                    f"\n  [dim_text]✦  {bot.name} has arrived in the area.[/dim_text]"
-                                )
-                            elif prev_zone == player_zone:
-                                renderer.console.print(
-                                    f"\n  [dim_text]✦  {bot.name} has left, "
-                                    f"heading to {bot.current_zone_id.replace('_', ' ').title()}.[/dim_text]"
-                                )
-                        elif action == "trade":
-                            cost = min(50, bot.gold)
-                            bot.gold -= cost
-                            bot.memory.append(
-                                f"Traded at {target} for {cost}g"
-                                f" (turn {self.state.player.turn_count})"
-                            )
-                            event_text = (
-                                f"{bot.name} completed a trade deal in "
-                                f"{target.replace('_', ' ').title()}."
-                            )
-                        elif action == "rest":
-                            bot.current_goal = "idle"
-                        elif action == "craft":
-                            bot.memory.append(
-                                f"Crafted at {target}"
-                                f" (turn {self.state.player.turn_count})"
-                            )
-                            event_text = (
-                                f"{bot.name} was seen working at a crafting bench in "
-                                f"{bot.current_zone_id.replace('_', ' ').title()}."
-                            )
-                        elif action == "talk_npc":
-                            bot.memory.append(
-                                f"Spoke with {target}"
-                                f" (turn {self.state.player.turn_count})"
-                            )
-                            event_text = (
-                                f"{bot.name} was overheard talking to "
-                                f"{target.replace('_', ' ').title()} in "
-                                f"{bot.current_zone_id.replace('_', ' ').title()}."
-                            )
-                        # Goal cycling every 10 turns of inactivity
-                        if self.state.player.turn_count - bot.turn_last_acted >= 10:
-                            _advance_bot_goal(bot)
-                        bot.turn_last_acted = self.state.player.turn_count
-                        # If the bot acted IN the player's current zone, surface
-                        # the action immediately so the player sees them moving
-                        # through the world — not just as a footer name.
-                        if event_text and bot.current_zone_id == player_zone:
-                            renderer.console.print(
-                                f"\n  [dim_text][ HERE ][/dim_text]  "
-                                f"[italic scene_text]{event_text}[/italic scene_text]"
-                            )
-                        if feature("world_db") and self.state.world_db:
-                            self._bot_manager.save_to_db(self.state.world_db)
-                            if event_text:
-                                self.state.world_db.store_world_event(
-                                    event_type="area_activity",
-                                    event_text=event_text,
-                                    zone_id=bot.current_zone_id,
-                                    title="",
-                                    npc_hint=bot.bot_id,
-                                    generated_turn=self.state.player.turn_count,
-                                )
-
-                # ── Guild tick results ────────────────────────────────────────
-                elif rtype == "guild_tick_results":
-                    for r in result.get("results", []):
-                        if r.success and r.narrative:
-                            renderer.console.print(
-                                f"  [dim_text][ {r.narrative} ][/dim_text]"
-                            )
-
-                # ── Director analysis result (silent — targets already queued) ─
-                elif rtype == "director_fired":
-                    logger.debug(
-                        f"Director analysis integrated: "
-                        f"{result.get('target_count', 0)} target(s) queued"
-                    )
-
-                # ── World events, rumors, lore, area activity ─────────────────
-                elif rtype in ("world_event", "rumor", "lore_entry", "area_activity"):
-                    event_text = result.get("event_text", "").strip()
-                    r_zone_id  = result.get("zone_id", "")
-                    title      = result.get("title", "")
-                    npc_hint   = result.get("npc_hint", "")
-                    if not event_text:
-                        continue
-
-                    # Persist to world_db
-                    if feature("world_db") and self.state.world_db:
-                        self.state.world_db.store_world_event(
-                            event_type=rtype,
-                            event_text=event_text,
-                            zone_id=r_zone_id or self.state.current_scene_id,
-                            title=title,
-                            npc_hint=npc_hint,
-                            generated_turn=self.state.player.turn_count,
-                        )
-
-                    # Visual feedback based on type
-                    if rtype == "world_event":
-                        renderer.console.print(
-                            f"\n  [system_msg][ WORLD ][/system_msg]  [scene_text]{event_text}[/scene_text]"
-                        )
-                    elif rtype == "rumor":
-                        renderer.console.print(
-                            f"\n  [dim_text][ RUMOUR ][/dim_text]  [italic scene_text]{event_text}[/italic scene_text]"
-                        )
-                    elif rtype == "lore_entry":
-                        renderer.console.print(
-                            f"\n  [gold][ LORE ][/gold]  [scene_text]{event_text}[/scene_text]"
-                        )
-                    elif rtype == "area_activity":
-                        renderer.console.print(
-                            f"\n  [dim_text][ {(r_zone_id or 'nearby').upper()} ][/dim_text]  "
-                            f"[scene_text]{event_text}[/scene_text]"
-                        )
-
-            except Exception as exc:
-                logger.warning(f"Content integration error: {exc}")
+        """Thin delegate — real logic lives in core/background_integrator.py."""
+        from core.background_integrator import integrate_results
+        integrate_results(self)
 
     def _maybe_submit_background_task(self) -> None:
         """Submit background generation tasks at configured intervals."""

@@ -281,3 +281,4 @@ more NPCs that offer them, and richer AI integration on top of the working backb
 - **AI class generation off the main thread** — `AIService.submit_class_generation_async()` returns a `Future`; the Class Awakening scene can poll it while the Rich spinner animates.
 - **Bots surface in-world** — arrivals/departures and same-zone actions print to the player's view, not just the admin panel.
 - **Pre-push hook installer** — `scripts/install-hooks.sh` (POSIX) and `.ps1` (Windows) for collaborators.
+- **`core/game_engine.py` slimmed 1049 → 721 lines.** `_load_data` and `_setup_ai` extracted to `core/bootstrap.py`; the 200-line BG result drain extracted to `core/background_integrator.py`. The extraction also caught and fixed a tangled elif chain that was making bot trade/rest/craft/talk_npc actions silently fall through.
