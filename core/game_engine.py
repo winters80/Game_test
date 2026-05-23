@@ -14,7 +14,7 @@ from entities.item import ItemRegistry
 from scenes.scene_registry import SceneRegistry
 from scenes.scene_base import SceneOption
 from ui import renderer
-from config import feature, GUILD_SIM_INTERVAL
+from config import feature
 from core.menus import GameMenusMixin
 from core.combat_handler import CombatHandlerMixin
 from core.dialogue_handler import DialogueHandlerMixin
@@ -346,113 +346,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         integrate_results(self)
 
     def _maybe_submit_background_task(self) -> None:
-        """Submit background generation tasks at configured intervals."""
-        if not self._bg_generator or not self.state:
-            return
-
-        # Always update autonomous context so worker thread has current state
-        zone_id   = self.state.current_scene_id
-        scene     = self.scene_registry.get(zone_id)
-        zone_name = scene.title if scene else zone_id.replace("_", " ").title()
-        context_flags = [k for k in self.state.player.flags if not k.startswith("_")][:10]
-        self._bg_generator.update_context(
-            zone_id=zone_id,
-            zone_name=zone_name,
-            player_level=self.state.player.level,
-            flags=context_flags,
-            turn=self.state.player.turn_count,
-        )
-
-        from config import BG_GEN_INTERVAL
-
-        player = self.state.player
-        turn = player.turn_count
-
-        # Fire at turn 1 (first real turn) and every BG_GEN_INTERVAL turns after
-        if turn < 1 or (turn > 1 and turn % BG_GEN_INTERVAL != 0):
-            return
-
-        zone_id       = self.state.current_scene_id
-        scene         = self.scene_registry.get(zone_id)
-        zone_name     = scene.title if scene else zone_id
-        context_flags = [k for k in player.flags if not k.startswith("_")][:8]
-        player_level  = player.level
-
-        # ── Always: world event for the current zone ──────────────────────────
-        self._bg_generator.submit_world_event(
-            zone_id=zone_id,
-            zone_name=zone_name,
-            player_level=player_level,
-            context_flags=context_flags,
-        )
-
-        # ── Rotate through deeper content types ───────────────────────────────
-        rotation = (turn // max(BG_GEN_INTERVAL, 1)) % 5
-
-        if rotation == 0:
-            # AI quest tailored to player's current situation
-            self._bg_generator.submit_quest(
-                zone_id=zone_id,
-                npc_hint="a contact in the area",
-                player=player,
-            )
-        elif rotation == 1:
-            # Refresh zone entrance narrative
-            bg_narrative_flag = f"_bg_narrative_submitted:{zone_id}"
-            if not player.has_flag(bg_narrative_flag):
-                player.set_flag(bg_narrative_flag)
-            self._bg_generator.submit_zone_narrative(zone_id, zone_name, context_flags)
-        elif rotation == 2:
-            # Local rumour
-            self._bg_generator.submit_rumor(
-                zone_id=zone_id,
-                context_flags=context_flags,
-                player_level=player_level,
-            )
-        elif rotation == 3:
-            # Lore entry
-            self._bg_generator.submit_lore_entry(
-                context_flags=context_flags,
-                player_flags=context_flags,
-            )
-        else:
-            # Area activity texture
-            self._bg_generator.submit_area_activity(
-                zone_id=zone_id,
-                zone_name=zone_name,
-                context_flags=context_flags,
-            )
-
-        # ── NPC branch enrichment ─────────────────────────────────────────────
-        if turn % (BG_GEN_INTERVAL * 3) == 0 and feature("npc_system") and self.npc_registry:
-            player_profile = {
-                "level": player_level,
-                "alignment": player.alignment,
-                "active_class": player.active_class or player.base_class or "Unclassified",
-            }
-            # Pick a visible NPC to enrich
-            for npc_id in ("torven_blacksmith", "mira_innkeeper", "sylara_guildmaster"):
-                npc = self.npc_registry.get(npc_id)
-                if npc:
-                    self._bg_generator.submit_npc_branch(npc_id, npc.name, player_profile)
-                    break
-
-        # ── Guild simulation tick ─────────────────────────────────────────────
-        if feature("guild_system") and self.guild_registry and turn % GUILD_SIM_INTERVAL == 0:
-            self._bg_generator.submit_guild_tick(
-                world_db=self.state.world_db,
-                guild_registry=self.guild_registry,
-            )
-
-        # ── Bot decisions ─────────────────────────────────────────────────────
-        if feature("bot_system") and self._bot_manager:
-            world_context = {"player_zone": zone_id, "turn": turn}
-            for bot in self._bot_manager.all():
-                bot_profile = {
-                    "name": bot.name,
-                    "personality_seed": bot.personality_seed,
-                    "current_goal": bot.current_goal,
-                    "current_zone_id": bot.current_zone_id,
-                }
-                self._bg_generator.submit_bot_decision(bot.bot_id, bot_profile, world_context)
+        """Thin delegate — real logic lives in core/bg_scheduler.py."""
+        from core.bg_scheduler import maybe_submit_tasks
+        maybe_submit_tasks(self)
 

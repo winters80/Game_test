@@ -1315,6 +1315,79 @@ def main() -> None:
         fail("Further game_engine extraction broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("20. BG Scheduler Extraction")
+    try:
+        from core import bg_scheduler as _bs2
+
+        assert callable(_bs2.maybe_submit_tasks)
+        assert callable(_bs2._build_context)
+        assert callable(_bs2._submit_rotation_slot)
+        ok("core.bg_scheduler exposes maybe_submit_tasks + helpers")
+
+        # 20a. maybe_submit_tasks is a no-op when there is no _bg_generator
+        class _NoOpEngine:
+            _bg_generator = None
+            state = None
+        _bs2.maybe_submit_tasks(_NoOpEngine())  # must not raise
+        ok("maybe_submit_tasks no-ops cleanly when no BG generator")
+
+        # 20b. Rotation cycles deterministically across 5 slots
+        from config import BG_GEN_INTERVAL
+        calls: list[tuple[str, dict]] = []
+
+        class _FakeBG:
+            def __init__(self): self.calls = calls
+            def submit_world_event(self, **kw): self.calls.append(("world_event", kw))
+            def submit_quest(self, **kw): self.calls.append(("quest", kw))
+            def submit_zone_narrative(self, *a, **kw):
+                self.calls.append(("zone_narrative", {"args": a}))
+            def submit_rumor(self, **kw): self.calls.append(("rumor", kw))
+            def submit_lore_entry(self, **kw): self.calls.append(("lore_entry", kw))
+            def submit_area_activity(self, **kw): self.calls.append(("area_activity", kw))
+            def submit_npc_branch(self, *a, **kw): self.calls.append(("npc_branch", {"args": a}))
+            def submit_guild_tick(self, **kw): self.calls.append(("guild_tick", kw))
+            def submit_bot_decision(self, *a, **kw): self.calls.append(("bot_decision", {"args": a}))
+            def update_context(self, **kw): pass
+
+        class _SchedScene:
+            title = "Test Zone"
+        class _SchedSceneReg:
+            def get(self, _zid): return _SchedScene()
+        class _SchedState:
+            current_scene_id = "test_zone"
+            world_db = None
+            def __init__(self, turn):
+                self.player = Player(name="SchedTest", base_class="warrior")
+                self.player.turn_count = turn
+        class _SchedEngine:
+            def __init__(self, turn):
+                self._bg_generator = _FakeBG()
+                self.state = _SchedState(turn)
+                self.scene_registry = _SchedSceneReg()
+                self.npc_registry = None
+                self.guild_registry = None
+                self._bot_manager = None
+
+        # Verify each rotation slot fires the corresponding submitter.
+        # Rotation formula: (turn // BG_GEN_INTERVAL) % 5
+        # → pick turn = (slot + 5) * BG_GEN_INTERVAL so slot 0 → quest, etc.
+        seen_slots: list[str] = []
+        for slot in range(5):
+            turn = (slot + 5) * max(BG_GEN_INTERVAL, 1)
+            calls.clear()
+            eng_s = _SchedEngine(turn)
+            _bs2._submit_rotation_slot(eng_s, _bs2._build_context(eng_s))
+            assert calls, f"Slot {slot} (turn {turn}) submitted nothing"
+            seen_slots.append(calls[0][0])
+        assert seen_slots == [
+            "quest", "zone_narrative", "rumor", "lore_entry", "area_activity",
+        ], f"Rotation did not cycle through 5 types in order: {seen_slots}"
+        ok("Rotation slot 0..4 cycles through quest / narrative / rumor / lore / area")
+    except Exception as e:
+        fail("BG scheduler extraction broken", e)
+        traceback.print_exc()
+
     _report()
 
 
