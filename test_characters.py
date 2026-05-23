@@ -1302,15 +1302,17 @@ def main() -> None:
         assert opt2.locked is True, "Option should be locked when required flag absent"
         ok("_convert_ai_option locks options when required flag absent")
 
-        # 19g. game_engine.py shrank — soft assertion that it stayed under 600 lines
+        # 19g. game_engine.py shrank — soft assertion. After 6 extraction PRs
+        # the file is ~165 lines; 250 leaves headroom for the occasional small
+        # addition without letting accidental re-bloat slip through.
         from pathlib import Path as _Path
         gepath = _Path(__file__).parent / "core" / "game_engine.py"
         line_count = sum(1 for _ in gepath.open(encoding="utf-8"))
-        assert line_count < 600, (
+        assert line_count < 250, (
             f"core/game_engine.py grew back to {line_count} lines — "
             f"if you added a method, consider extracting it into a focused module"
         )
-        ok(f"core/game_engine.py stays slim ({line_count} lines, <600 budget)")
+        ok(f"core/game_engine.py stays slim ({line_count} lines, <250 budget)")
     except Exception as e:
         fail("Further game_engine extraction broken", e)
         traceback.print_exc()
@@ -1490,6 +1492,59 @@ def main() -> None:
         ok("_render_listings renders a populated listing without raising")
     except Exception as e:
         fail("Auction UI extraction broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("23. Final game_engine.py Extractions (render/rest/endings)")
+    try:
+        from ui import scene_renderer as _sr
+        from systems import rest_system as _rs
+        from systems import faction_endings as _fe
+
+        assert callable(_sr.render_scene)
+        assert callable(_sr._render_bots_present)
+        ok("ui.scene_renderer exposes render_scene + _render_bots_present")
+
+        assert callable(_rs.handle_rest)
+        ok("systems.rest_system exposes handle_rest")
+
+        assert callable(_fe.update_faction_standing)
+        assert callable(_fe.check_ending_paths)
+        ok("systems.faction_endings exposes update_faction_standing + check_ending_paths")
+
+        # 23a. _INTRO_SCENES constant exists and contains expected entries
+        assert "prologue" in _sr._INTRO_SCENES
+        assert "character_creation" in _sr._INTRO_SCENES
+        ok("scene_renderer._INTRO_SCENES suppresses status bar on prologue + character_creation")
+
+        # 23b. faction_endings.update_faction_standing no-ops when registry absent
+        class _NoFactionEngine:
+            faction_registry = None
+        _fe.update_faction_standing(_NoFactionEngine(), "any_id", 1.0)  # must not raise
+        ok("update_faction_standing no-ops cleanly when faction_registry is None")
+
+        # 23c. check_ending_paths skips early if the notified flag is already set
+        class _FlagPlayer:
+            def __init__(self): self._flags = {"ending_path_notified": True}
+            def has_flag(self, k): return self._flags.get(k, False)
+            def set_flag(self, k, v=True): self._flags[k] = v
+        class _FlagState:
+            def __init__(self): self.player = _FlagPlayer()
+        class _NotifiedEngine:
+            def __init__(self):
+                self.state = _FlagState()
+                self.faction_registry = None  # would crash if check_political_path called
+        _fe.check_ending_paths(_NotifiedEngine())  # must not raise (early-returns)
+        ok("check_ending_paths returns early when ending_path_notified flag set")
+
+        # 23d. game_engine.py is now genuinely tiny — sanity check on the budget
+        from pathlib import Path as _Path2
+        ge = _Path2(__file__).parent / "core" / "game_engine.py"
+        ge_lines = sum(1 for _ in ge.open(encoding="utf-8"))
+        assert ge_lines < 200, f"core/game_engine.py at {ge_lines} lines, expected <200"
+        ok(f"core/game_engine.py is genuinely a coordinator ({ge_lines} lines)")
+    except Exception as e:
+        fail("Final game_engine extractions broken", e)
         traceback.print_exc()
 
     _report()
