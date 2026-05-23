@@ -122,6 +122,7 @@ def build_quest_generation_prompt(
 ) -> str:
     """Build a prompt for dynamic quest generation based on player profile."""
     from config import ALIGNMENT_LABELS
+    from systems.economy import quest_reward_bounds, gear_price_hint
 
     # Derive alignment label
     alignment_label = "Neutral"
@@ -135,6 +136,11 @@ def build_quest_generation_prompt(
 
     world_name = lore_data.get("world_name", "Aethoria")
     capital = lore_data.get("capital", "Verath")
+
+    # Level-scaled reward bounds + an honest economy hint so the LLM doesn't
+    # propose rewards that would bankrupt a village or insult a lord.
+    (g_min, g_max), (x_min, x_max) = quest_reward_bounds(player.level, "standard")
+    economy_hint = gear_price_hint(player.level)
 
     return f"""Generate a quest for a LitRPG game set in the world of {world_name}.
 Capital city: {capital}. The System appeared 3 years ago during the Fracture.
@@ -153,14 +159,22 @@ PLAYER PROFILE:
   Inventory items: {inventory_str}
   Flags set: {list(player.flags.keys())[:8]}
 
+ECONOMY CONTEXT (use these bounds, do not invent your own):
+  {economy_hint}
+  For this player (level {player.level}) the reward MUST be in this range:
+    reward_gold: between {g_min} and {g_max} gold pieces
+    reward_xp:   between {x_min} and {x_max} XP
+  Pick the LOW end for short courier/errand quests, the MIDDLE for standard
+  retrieval / investigation quests, and the HIGH end only for genuinely
+  multi-stage and dangerous work. NEVER exceed these bounds — values
+  outside the range will be clamped silently.
+
 REQUIREMENTS:
 - Create a 2-3 stage quest that fits this player's profile and alignment
 - Quest must feel personal to this character's background and choices
 - Use existing world lore: faction politics, the dungeon, guild rivalries
 - stages must have completion_condition as {{"has_flag": "flag_name"}} or {{"has_item": "item_id"}}
 - Flags should be snake_case like "completed_verath_errand"
-- reward_gold should be 50-300 based on difficulty
-- reward_xp should be 100-500 based on difficulty
 - If player is evil-aligned, quest can have morally gray objectives
 - faction_rewards and guild_rewards: use faction/guild IDs like "iron_vanguard", "shadow_network", "mages_conclave", "silver_fangs"
 - Return ONLY valid JSON matching the schema exactly

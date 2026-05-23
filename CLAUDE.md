@@ -190,6 +190,29 @@ Non-AI packages **must** depend on `ai.ai_service.AIService`, never on
 Systems (`class_system`, `quest_system`, `guilds/guild_sim`) all take
 `ai_service` as a typed parameter and use `ai_service.is_available` to gate.
 
+### Economy guard rails
+
+All quest rewards — hand-crafted and AI-generated — are denominated in
+**gold pieces** at the template level. `quest_system._apply_rewards`
+multiplies by `COPPER_PER_GOLD` (100) when applying to `player.gold`
+(which stores copper).
+
+`systems/economy.py` is the single source of truth for "how much gold/XP
+should a level-N quest of difficulty D pay?":
+
+- `recommended_quest_reward(level, difficulty) → (gold, xp)`
+- `quest_reward_bounds(level, difficulty) → ((g_min, g_max), (x_min, x_max))`
+- `clamp_quest_reward(proposed_gold, proposed_xp, level, difficulty)` —
+  called on every AI-generated quest before storage so a hallucinating
+  model can't drop 5000g on a level-1 player
+
+Tier multipliers: `trivial 0.5×, standard 1.0×, hard 2.0×, epic 4.0×`.
+Base per level: `BASE_GOLD_PER_LEVEL = 20g`, `BASE_XP_PER_LEVEL_REWARD = 50`.
+
+The AI quest prompt embeds the level-scaled range and a one-line
+gear-price hint (`gear_price_hint()`) so the LLM sees the local economy
+before proposing rewards.
+
 ### When AI is called
 1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30). Triggered by `systems/class_system.resolve_combo_class()` via `ai_service.generate_class()`.
 2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
