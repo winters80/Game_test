@@ -218,6 +218,16 @@ git checkout -b feature/my-feature
 
 Both suites run automatically via the `.git/hooks/pre-push` git hook before every push.
 
+To install the hook locally (collaborators run this once after cloning):
+
+```bash
+# macOS / Linux / Git Bash
+./scripts/install-hooks.sh
+
+# Windows / PowerShell
+.\scripts\install-hooks.ps1
+```
+
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, and AI integration contracts.
 
 ---
@@ -264,3 +274,10 @@ more NPCs that offer them, and richer AI integration on top of the working backb
 - **AI quest generation wired into NPC dialogue.** Picks up `quest_seeds` with `ai_dynamic` templates AND implicitly offers an AI quest when an NPC has no seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN`. `« Is there any work I could take on? »` option injects dynamically.
 - **Save migration v2 → v3 is no longer a silent no-op.** `_migrate` now runs explicit per-version functions, validates the result against the Player model, and raises `SaveMigrationError` when a step is missing.
 - **`AIService` facade.** Single boundary `systems/` imports for AI generation — centralises try/except, fallback paths, and `is_available` gating. Systems no longer call `ContentGenerator` directly.
+- **Quest reward currency cap** — `reward_gold` is now hard-bounded to ≤ `MAX_QUEST_REWARD_GOLD` (5000). Hallucinating LLMs get clamped; content authors typing copper by mistake get a loud `ValidationError`.
+- **Class resolver Layer 2 short-circuit fixed** — no longer grants combos when item/flag requirements are missing.
+- **Trigger processing extracted from `Scene`** — `scenes/option_logic.py` holds the free functions; `Scene` shrank from 295 → 72 lines.
+- **`world_db.py` split into per-table repos** — `persistence/repos/{npc,quest,faction,auction,death,world_state,ai_content,bot,guild_db}_repo.py`. `WorldDatabase` shrank from 1100 → 787 lines and is now a thin facade.
+- **AI class generation off the main thread** — `AIService.submit_class_generation_async()` returns a `Future`; the Class Awakening scene can poll it while the Rich spinner animates.
+- **Bots surface in-world** — arrivals/departures and same-zone actions print to the player's view, not just the admin panel.
+- **Pre-push hook installer** — `scripts/install-hooks.sh` (POSIX) and `.ps1` (Windows) for collaborators.

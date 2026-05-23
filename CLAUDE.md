@@ -24,7 +24,7 @@ The game is a Python terminal LitRPG. **Static content** (class definitions, ski
 | `data/` | All static content definitions (JSON) |
 | `core/` | Engine (game loop), event bus, game state |
 | `ui/` | All Rich rendering — **only files under `ui/` import `rich`** |
-| `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite API) |
+| `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite facade), repos/* (per-table query modules) |
 | `saves/` | Runtime save files — gitignored except `.gitkeep` |
 
 ---

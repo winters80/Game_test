@@ -22,6 +22,7 @@ poll its result in the engine's normal background-result drain.
 from __future__ import annotations
 
 import logging
+from concurrent.futures import Future, ThreadPoolExecutor
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -45,6 +46,16 @@ class AIService:
     ) -> None:
         self._gen = content_generator
         self._bg = background_generator
+        # Lazy: only spawn the thread pool if the caller actually uses the
+        # async class-generation path. Keeps a tight idle footprint when AI
+        # is unavailable.
+        self._class_executor: "ThreadPoolExecutor | None" = None
+
+    def shutdown(self) -> None:
+        """Release the class-gen executor thread. Safe to call multiple times."""
+        if self._class_executor is not None:
+            self._class_executor.shutdown(wait=False, cancel_futures=True)
+            self._class_executor = None
 
     # ── Availability ─────────────────────────────────────────────────────────
 
@@ -72,6 +83,52 @@ class AIService:
             return self._gen.generate_class(player, divergence, class_registry)
         except Exception:
             logger.warning("AI class generation failed", exc_info=True)
+            return None
+
+    def submit_class_generation_async(
+        self,
+        player: "Player",
+        divergence: "DivergenceResult",
+        class_registry: "ClassRegistry",
+    ) -> "Future[ClassDefinition | None] | None":
+        """
+        Run AI class generation on a worker thread. Returns a Future the
+        caller can wait on with a timeout, or None if AI is unavailable.
+
+        Wait on the future with ``await_class_result()`` rather than calling
+        ``.result(timeout)`` directly — the helper centralises the
+        spinner / timeout / cancel handling.
+        """
+        if self._gen is None:
+            return None
+        if self._class_executor is None:
+            self._class_executor = ThreadPoolExecutor(
+                max_workers=1, thread_name_prefix="ai-class",
+            )
+        return self._class_executor.submit(
+            self.generate_class, player, divergence, class_registry,
+        )
+
+    @staticmethod
+    def await_class_result(
+        future: "Future[ClassDefinition | None] | None",
+        timeout: float = 60.0,
+    ) -> "ClassDefinition | None":
+        """
+        Block the calling thread until the class-generation future resolves or
+        the timeout expires. Returns the generated class, or None if the AI
+        failed, timed out, or was never available.
+
+        The Rich spinner (started by the caller) keeps animating during the
+        wait because ``rich.Live`` refreshes from its own internal thread.
+        """
+        if future is None:
+            return None
+        try:
+            return future.result(timeout=timeout)
+        except Exception:
+            logger.warning("AI class generation timed out or failed", exc_info=True)
+            future.cancel()
             return None
 
     # ── Quest generation ─────────────────────────────────────────────────────

@@ -347,6 +347,8 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                 close_game(self.state)
             if self._bg_generator:
                 self._bg_generator.stop()
+            if self.ai_service is not None:
+                self.ai_service.shutdown()
 
     def _render_scene(self) -> None:
         renderer.clear()
@@ -792,6 +794,10 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                     bot    = self._bot_manager.get(bot_id)
                     if bot and action:
                         event_text: str | None = None
+                        # Track zone changes so we can announce arrivals/departures
+                        # relative to the player's current zone.
+                        prev_zone = bot.current_zone_id
+                        player_zone = self.state.current_scene_id
                         if action == "move_zone":
                             from systems.world_zones import is_adjacent, get_connected
                             if is_adjacent(bot.current_zone_id, target):
@@ -804,6 +810,19 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                                 adj = get_connected(bot.current_zone_id)
                                 if adj:
                                     bot.current_zone_id = adj[0]
+                        # Announce arrival/departure when a bot crosses the
+                        # boundary of the player's current zone — gives bots a
+                        # presence beyond the static "Also here" footer.
+                        if action == "move_zone" and prev_zone != bot.current_zone_id:
+                            if bot.current_zone_id == player_zone:
+                                renderer.console.print(
+                                    f"\n  [dim_text]✦  {bot.name} has arrived in the area.[/dim_text]"
+                                )
+                            elif prev_zone == player_zone:
+                                renderer.console.print(
+                                    f"\n  [dim_text]✦  {bot.name} has left, "
+                                    f"heading to {bot.current_zone_id.replace('_', ' ').title()}.[/dim_text]"
+                                )
                         elif action == "trade":
                             cost = min(50, bot.gold)
                             bot.gold -= cost
@@ -840,6 +859,14 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                         if self.state.player.turn_count - bot.turn_last_acted >= 10:
                             _advance_bot_goal(bot)
                         bot.turn_last_acted = self.state.player.turn_count
+                        # If the bot acted IN the player's current zone, surface
+                        # the action immediately so the player sees them moving
+                        # through the world — not just as a footer name.
+                        if event_text and bot.current_zone_id == player_zone:
+                            renderer.console.print(
+                                f"\n  [dim_text][ HERE ][/dim_text]  "
+                                f"[italic scene_text]{event_text}[/italic scene_text]"
+                            )
                         if feature("world_db") and self.state.world_db:
                             self._bot_manager.save_to_db(self.state.world_db)
                             if event_text:

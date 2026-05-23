@@ -1,0 +1,30 @@
+#!/bin/sh
+# System Breaker — run test suites before push
+# Installed by scripts/install-hooks.sh / scripts/install-hooks.ps1
+cd "$(git rev-parse --show-toplevel)"
+
+echo ""
+echo "  Running test_characters.py..."
+echo ""
+python -X utf8 test_characters.py
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "  test_characters.py failed. Push aborted."
+    echo "  Fix the issues above, then push again."
+    echo ""
+    exit 1
+fi
+
+echo ""
+echo "  Running test_quests.py..."
+echo ""
+python -X utf8 test_quests.py
+if [ $? -ne 0 ]; then
+    echo ""
+    echo "  test_quests.py failed. Push aborted."
+    echo "  Fix the issues above, then push again."
+    echo ""
+    exit 1
+fi
+
+exit 0
