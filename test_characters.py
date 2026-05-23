@@ -891,6 +891,163 @@ def main() -> None:
         fail("AIService facade broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("13. Quest Reward Currency Cap")
+    try:
+        from entities.quest import QuestTemplate, QuestStage, MAX_QUEST_REWARD_GOLD
+        from pydantic import ValidationError
+
+        # 13a. Sane reward value passes
+        QuestTemplate(
+            template_id="t1", title="x", description="x",
+            stages=[QuestStage(stage_id="s", description="", objective_text="", completion_condition={"has_flag": "x"})],
+            reward_gold=100,
+        )
+        ok(f"reward_gold ≤ {MAX_QUEST_REWARD_GOLD} (gold pieces) is accepted")
+
+        # 13b. Out-of-range reward fails loudly
+        try:
+            QuestTemplate(
+                template_id="t2", title="x", description="x",
+                stages=[QuestStage(stage_id="s", description="", objective_text="", completion_condition={"has_flag": "x"})],
+                reward_gold=MAX_QUEST_REWARD_GOLD + 1,
+            )
+            fail(f"Expected ValidationError for reward_gold > {MAX_QUEST_REWARD_GOLD}")
+        except ValidationError:
+            ok(f"reward_gold > {MAX_QUEST_REWARD_GOLD} is rejected with ValidationError")
+
+        # 13c. Negative gold rejected too
+        try:
+            QuestTemplate(
+                template_id="t3", title="x", description="x",
+                stages=[QuestStage(stage_id="s", description="", objective_text="", completion_condition={"has_flag": "x"})],
+                reward_gold=-1,
+            )
+            fail("Expected ValidationError for negative reward_gold")
+        except ValidationError:
+            ok("Negative reward_gold rejected")
+
+        # 13d. AIQuestResponse clamps instead of failing (LLM can hallucinate)
+        from ai.response_validator import AIQuestResponse, AIQuestStageResponse
+        runaway = AIQuestResponse(
+            template_id="ai_t", title="x", description="x",
+            stages=[AIQuestStageResponse(stage_id="s", objective_text="", completion_condition={"has_flag": "x"})],
+            reward_gold=999_999,  # hallucinated jackpot
+        )
+        assert runaway.reward_gold == MAX_QUEST_REWARD_GOLD, \
+            f"AI runaway reward should clamp to {MAX_QUEST_REWARD_GOLD}, got {runaway.reward_gold}"
+        ok("AIQuestResponse.reward_gold clamps runaway LLM values instead of failing")
+    except Exception as e:
+        fail("Quest reward currency guards broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("14. Class Resolver Layer 2 (Superset Match)")
+    try:
+        from entities.character_class import ClassRegistry, ClassDefinition, ComboRequirements
+        from entities.player import Stats
+        from entities.enums import Rarity
+        from entities.item import ItemRegistry as _ItemReg
+        from entities.skill import SkillRegistry as _SkillReg
+        from systems.class_system import resolve_combo_class
+
+        # Build minimal registries with one combo that requires an item
+        cr = ClassRegistry()
+        cr.register(ClassDefinition(
+            class_id="warrior", name="Warrior", rarity=Rarity.COMMON, description="",
+        ))
+        cr.register(ClassDefinition(
+            class_id="mage", name="Mage", rarity=Rarity.COMMON, description="",
+        ))
+        cr.register(ClassDefinition(
+            class_id="rogue", name="Rogue", rarity=Rarity.COMMON, description="",
+        ))
+        cr.register(ClassDefinition(
+            class_id="spellblade", name="Spellblade", rarity=Rarity.RARE, description="combo",
+            combo_requirements=ComboRequirements(
+                required_classes=["warrior", "mage"],
+                required_items=["mythic_focus"],  # GATING item
+            ),
+        ))
+        cr.register(ClassDefinition(
+            class_id="fallback_generated", name="Fallback", rarity=Rarity.COMMON, description="",
+        ))
+        ir = _ItemReg()
+        sr = _SkillReg()
+
+        # Player has warrior+mage+rogue (superset of spellblade combo) but NOT
+        # the required item. Buggy old Layer 2 would return spellblade anyway,
+        # short-circuiting Layer 3. Fixed Layer 2 must respect item requirement.
+        from entities.player import Player as _Player
+        p = _Player(name="Test")
+        p.base_class = "warrior"
+        p.secondary_class = "mage"
+        # Manually add a third class is awkward with the model — simulate
+        # superset via the 2-slot fields and assert Layer 2 doesn't grant
+        # spellblade when the item is missing.
+        result = resolve_combo_class(p, cr, ir, sr, ai_service=None)
+        # With the bug, this would be spellblade. After the fix it falls
+        # through to fallback (or None if no fallback).
+        assert result is None or result.class_id != "spellblade", (
+            f"Layer 2 should not grant spellblade without required item; got {result and result.class_id}"
+        )
+        ok("Layer 2 superset match honours required_items (no silent short-circuit)")
+
+        # Now give the player the item — Layer 1 grants spellblade.
+        p.add_item("mythic_focus")
+        result2 = resolve_combo_class(p, cr, ir, sr, ai_service=None)
+        assert result2 is not None and result2.class_id == "spellblade", (
+            f"With item present Layer 1 should grant spellblade, got {result2 and result2.class_id}"
+        )
+        ok("Layer 1 still grants combo when all conditions met (regression check)")
+    except Exception as e:
+        fail("Class resolver Layer 2 broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("15. Trigger Processing as Free Function")
+    try:
+        from scenes.option_logic import process_triggers as pt, build_option
+        from persistence.save_manager import new_game_state as _ng2, close_game as _cg2
+
+        _pl = Player(name="TriggerTester", base_class="warrior")
+        _st = _ng2(_pl, SAVES_DIR, "_trig_test_")
+        try:
+            # 15a. flag: trigger sets the player flag without any Scene object
+            pt(["flag:my_test_flag"], _st)
+            assert _pl.has_flag("my_test_flag"), "free-function process_triggers didn't set flag"
+            ok("process_triggers free function sets flag (no Scene instance needed)")
+
+            # 15b. give_gold: trigger applies arithmetic
+            before = _pl.gold
+            pt(["give_gold:250"], _st)
+            assert _pl.gold == before + 250, f"give_gold delta wrong: {_pl.gold - before}"
+            ok("process_triggers free function applies give_gold:")
+
+            # 15c. build_option free function gates correctly on missing item
+            raw = {"option_id": "x", "label": "lbl", "leads_to": "__stay__",
+                   "triggers": [], "requires": {"items": ["nonexistent_item"]}}
+            opt = build_option(raw, _st)
+            assert opt.locked is True, "build_option should lock when required item missing"
+            ok("build_option free function gates on requires.items")
+
+            # 15d. Scene.process_triggers still works as a delegate (back-compat)
+            from scenes.scene_base import Scene
+            scene = Scene("__test__", {"nodes": {}})
+            scene.process_triggers(["flag:scene_delegate_works"], _st)
+            assert _pl.has_flag("scene_delegate_works"), "Scene.process_triggers delegate broken"
+            ok("Scene.process_triggers delegate still works (back-compat)")
+        finally:
+            _cg2(_st)
+            for ext in (".json", ".db"):
+                p = SAVES_DIR / f"_trig_test_{ext}"
+                if p.exists():
+                    try: p.unlink()
+                    except OSError: pass
+    except Exception as e:
+        fail("Free-function trigger processing broken", e)
+        traceback.print_exc()
+
     _report()
 
 

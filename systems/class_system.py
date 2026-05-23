@@ -51,9 +51,18 @@ def resolve_combo_class(
 ) -> ClassDefinition | None:
     """
     3-layer class resolution:
-    1. Exact combo match (JSON lookup)
-    2. Pattern match (partial requirements)
-    3. AI generation if divergence score >= threshold
+    1. Exact combo match — player's class set equals combo's required set AND
+       all level / stat / item / flag conditions are met.
+    2. Superset match — combo's required classes are a subset of the player's
+       (player has extra classes too). Item / flag / stat / level conditions
+       STILL apply: if a player has the right classes but lacks the catalyst
+       item the combo demands, they correctly fall through to Layer 3.
+    3. AI generation when divergence score ≥ DIVERGENCE_THRESHOLD.
+
+    Previously Layer 2 ignored item/flag requirements, which silently
+    short-circuited AI generation for any player whose classes happened to be
+    a superset of an existing combo. That bug is fixed: Layer 2 now demands
+    the same full requirement check as Layer 1.
 
     ``ai_service`` is an AIService instance. None disables Layer 3.
     """
@@ -61,7 +70,7 @@ def resolve_combo_class(
     if not player_classes:
         return None
 
-    # Layer 1: Exact match — all required classes present AND all conditions met
+    # Layer 1: Exact match — required class set == player's class set
     for cls in class_registry.combo_classes():
         req = cls.combo_requirements
         if not req:
@@ -70,13 +79,18 @@ def resolve_combo_class(
             if _check_combo_conditions(player, cls, item_registry):
                 return cls
 
-    # Layer 2: Pattern match — subset of classes matches, ignore item/flag requirements
+    # Layer 2: Superset match — player has extra classes beyond the combo's
+    # required set, but the combo's own requirements (items, flags, level,
+    # stats) must still all be met. A strict-subset check + full condition
+    # check prevents this layer from masking the player's actual divergence.
     for cls in class_registry.combo_classes():
         req = cls.combo_requirements
         if not req:
             continue
-        if set(req.required_classes).issubset(player_classes):
-            return cls  # best-effort match without full requirements
+        req_set = set(req.required_classes)
+        if req_set and req_set < player_classes:  # strict subset
+            if _check_combo_conditions(player, cls, item_registry):
+                return cls
 
     # Layer 3: AI generation (via AIService — handles exceptions + unavailability)
     divergence = compute_divergence_score(player, class_registry, item_registry)

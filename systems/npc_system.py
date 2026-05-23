@@ -188,12 +188,11 @@ def _evaluate_dialogue_option(
     disposition: float,
 ) -> "SceneOption":
     """
-    Adapt an NPCDialogueOption into a SceneOption using scene_base's gate logic.
-    Also checks min_disposition requirement.
+    Adapt an NPCDialogueOption into a SceneOption using the shared option-gate
+    logic from scenes/option_logic.py. Also checks min_disposition requirement.
     """
-    from scenes.scene_base import Scene
+    from scenes.option_logic import build_option
 
-    # Build a synthetic raw option dict compatible with _build_option
     raw = {
         "option_id": opt.option_id,
         "label": opt.label,
@@ -203,10 +202,7 @@ def _evaluate_dialogue_option(
         "triggers": opt.triggers,
         "requires": opt.requires,
     }
-
-    # Use a minimal Scene to access _build_option
-    dummy_scene = Scene("__npc__", {"nodes": {}})
-    scene_opt = dummy_scene._build_option(raw, state)
+    scene_opt = build_option(raw, state)
 
     # Additional disposition check (not part of scene gate system)
     min_disp = opt.requires.get("min_disposition")
@@ -252,9 +248,8 @@ def apply_option_effects(
             scene_triggers.append(trigger)
 
     if scene_triggers:
-        from scenes.scene_base import Scene
-        dummy = Scene("__npc__", {"nodes": {}})
-        dummy.process_triggers(scene_triggers, state)
+        from scenes.option_logic import process_triggers as _pt
+        _pt(scene_triggers, state)
 
     result.engine_triggers = engine_triggers
 

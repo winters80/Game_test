@@ -143,9 +143,8 @@ def advance_quest(
 
     # Fire on_advance_triggers for this stage
     if stage.on_advance_triggers:
-        from scenes.scene_base import Scene
-        dummy = Scene("__quest__", {"nodes": {}})
-        dummy.process_triggers(stage.on_advance_triggers, state)
+        from scenes.option_logic import process_triggers as _pt
+        _pt(stage.on_advance_triggers, state)
 
     # Terminal stage → complete
     if stage.next_stage_id is None:
@@ -200,6 +199,7 @@ def complete_quest(
 
 def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
     """Grant gold, XP, items, flags, and alignment from a completed quest."""
+    from config import COPPER_PER_GOLD
     from systems import level_system
     from systems.alignment_system import apply_alignment_shift
     from core.event_bus import Event, bus
@@ -207,7 +207,9 @@ def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
     player = state.player
 
     if template.reward_gold:
-        player.gold += template.reward_gold * 100   # template stores gold, player stores copper
+        # template.reward_gold is denominated in GOLD PIECES (see QuestTemplate
+        # field doc). Player wallet stores copper. Convert via COPPER_PER_GOLD.
+        player.gold += template.reward_gold * COPPER_PER_GOLD
 
     if template.reward_xp:
         leveled_up = level_system.add_experience(player, template.reward_xp)
