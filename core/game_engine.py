@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import logging
 
-import questionary
-
 from core.event_bus import bus
 
 logger = logging.getLogger(__name__)
@@ -182,58 +180,9 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
             bus.flush()
 
     def _show_auction_house(self) -> None:
-        """Interactive auction house UI."""
-        from systems import auction_system
-        auction_system.seed_initial_listings(self.state, self.guild_registry)
-
-        while True:
-            listings = auction_system.get_listings_display(self.state)
-            renderer.clear()
-            renderer.print_title()
-            renderer.console.print("\n  [system_msg][ AUCTION HOUSE ][/system_msg]\n")
-
-            if not listings:
-                renderer.console.print("  [dim_text]No active listings.[/dim_text]\n")
-            else:
-                renderer.console.print(f"  {'Item':<25} {'Bid':>8} {'Turns':>6}  {'Guild'}")
-                renderer.console.print("  " + "-" * 55)
-                for lst in listings:
-                    renderer.console.print(
-                        f"  [{lst['listing_id'][:6]}] {lst['item']:<20} {lst['current_bid']:>8,} Shards  "
-                        f"{lst['turns_left']:>4} turns  {lst['guild']}"
-                    )
-
-            price = auction_system.get_life_token_price(self.state)
-            renderer.console.print(f"\n  Life token market price: [gold]{price:,} Shards[/gold]")
-            renderer.console.print(f"  Your Shards: [gold]{self.state.player.gold:,}[/gold]")
-
-            choices = ["Buy life token (direct)", "Bid on listing", "Leave auction house"]
-            action = questionary.select("Auction house:", choices=choices).ask()
-
-            if action is None or action == "Leave auction house":
-                break
-            elif action == "Buy life token (direct)":
-                ok, msg = auction_system.buy_life_token_direct(self.state)
-                renderer.print_system_message(msg, style="system_msg" if ok else "system_warning")
-                bus.flush()
-                renderer.prompt_any_key()
-            elif action == "Bid on listing" and listings:
-                listing_ids = [f"{l['listing_id'][:6]} — {l['item']} (current: {l['current_bid']:,})" for l in listings]
-                listing_ids.append("← Back")
-                selected = questionary.select("Select listing:", choices=listing_ids).ask()
-                if selected and selected != "← Back":
-                    idx = listing_ids.index(selected)
-                    chosen = listings[idx]
-                    min_bid = chosen["current_bid"] + 1
-                    bid_str = questionary.text(f"Enter bid amount (min {min_bid:,}):").ask()
-                    try:
-                        bid_amount = int(bid_str or "0")
-                        ok, msg = auction_system.place_player_bid(chosen["listing_id"], bid_amount, self.state)
-                        renderer.print_system_message(msg, style="system_msg" if ok else "system_warning")
-                        bus.flush()
-                    except ValueError:
-                        renderer.print_error("Invalid bid amount.")
-                    renderer.prompt_any_key()
+        """Thin delegate — real logic lives in ui/auction_ui.py."""
+        from ui.auction_ui import show_auction_house
+        show_auction_house(self)
 
     def _handle_situation_query(self, current_options: list) -> None:
         """Thin delegate — real logic lives in core/situation_query.py."""
