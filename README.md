@@ -16,7 +16,7 @@ Built with:
 - Python 3.11 + Pydantic v2 (all data models)
 - [Rich](https://github.com/Textualize/rich) for terminal UI
 - [questionary](https://github.com/tmbo/questionary) for arrow-key menus
-- [Ollama](https://ollama.ai) (`mistral-nemo` 12B) for AI content generation
+- [Ollama](https://ollama.ai) — **two models** working together (see below) for AI content generation
 - SQLite for world state (NPC memory, quests, factions)
 
 ---
@@ -25,28 +25,53 @@ Built with:
 
 ### 1. Prerequisites
 
-- Python 3.11+
-- [Ollama](https://ollama.ai) installed and running (optional but recommended)
+- **Python 3.11+**
+- **[Ollama](https://ollama.ai)** installed and running locally. Optional, but the game is much richer with it on.
+
+### 2. Pull the Ollama models
+
+The game uses a **dual-model setup**:
+
+| Model | Role | Size | Required? |
+|---|---|---|---|
+| `mistral-nemo` | **Primary** — heavy generation: classes, quests, NPC dialogue branches, world events | ~7 GB | recommended |
+| `gemma3:1b` | **Fast** — interactive calls (the «Ask about this situation» prompt, anything player-facing where latency matters) | ~800 MB | recommended |
 
 ```bash
-# Install Ollama model (optional — game works without it)
 ollama pull mistral-nemo
+ollama pull gemma3:1b
 ```
 
-### 2. Install dependencies
+Both fall back gracefully:
+- If only `mistral-nemo` is pulled, the fast model alias points back to the primary (slower interactive prompts, still works)
+- If Ollama isn't running at all, every AI call returns a fallback (hand-crafted classes, static dialogue, no dynamic quests). The game stays fully playable.
+
+### 3. Install Python dependencies
 
 ```bash
 cd Game_Test
 pip install -r requirements.txt
 ```
 
-### 3. Run the game
+### 4. Run the game
 
 ```bash
 python main.py
 ```
 
-That's it. The game detects Ollama automatically on startup. If it's not running, all content falls back to hand-crafted static dialogue and pre-written classes.
+You'll see `AI system online. Ollama connected.` on the title screen if everything is wired correctly. If Ollama isn't reachable you'll see `Ollama not available — AI features disabled.` and the game will continue with the static fallback path.
+
+### 5. (Optional) Install the pre-push test hook
+
+If you plan to push commits, install the local git hook that runs the test suite before every push:
+
+```bash
+# macOS / Linux / Git Bash
+./scripts/install-hooks.sh
+
+# Windows / PowerShell
+.\scripts\install-hooks.ps1
+```
 
 ---
 
@@ -163,72 +188,94 @@ Both files must be present to load a save. The game handles migration automatica
 All AI settings are in `config.py`:
 
 ```python
-AI_ENABLED = True                  # Set False to disable all Ollama calls
-OLLAMA_MODEL = "mistral-nemo"      # Primary model (12B)
-OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"
-DIVERGENCE_THRESHOLD = 30          # Score needed to trigger AI class generation
+AI_ENABLED = True                          # master switch — set False to disable all Ollama calls
+OLLAMA_BASE_URL = "http://localhost:11434" # default Ollama port
+OLLAMA_MODEL = "mistral-nemo"              # PRIMARY — used for heavy generation (classes, quests, NPC branches)
+OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries. Set "" to reuse primary.
+OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"  # used if primary fails to load
+
+OLLAMA_TIMEOUT_JSON = 60   # seconds for structured (JSON) generation on primary
+OLLAMA_TIMEOUT_FAST = 15   # seconds for fast-model interactive calls
+OLLAMA_TIMEOUT_TEXT = 20   # seconds for free-form narrative generation
+OLLAMA_MAX_RETRIES = 3
+
+DIVERGENCE_THRESHOLD = 30          # score that triggers AI class generation
+AI_QUEST_DISPOSITION_MIN = 30.0    # NPC disposition needed for an implicit AI-quest offer
 ```
 
-If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back to the nearest pre-written class from `data/classes/combo_classes.json`.
+If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back to the nearest pre-written class from `data/classes/combo_classes.json`. NPC dialogue uses its `dialogue_hooks["default"]`. The dynamic quest path simply skips its option.
+
+### Verifying the AI is wired up
+
+After a fresh install you can do a non-interactive sanity check without launching the game:
+
+```bash
+python -c "from ai.ollama_client import OllamaClient; print(OllamaClient(model='mistral-nemo').is_available())"
+```
+
+Prints `True` if Ollama is reachable and the model is pulled.
 
 ---
 
 ## Development
 
 ```bash
-# Run syntax checks (no game launch needed)
+# Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Run the automated character test suite
-# Validates registries, scene graph, triggers, character playthroughs, save/load,
-# inventory, combat, BG-thread lifecycle, feature flags, and quest lifecycle
-python -X utf8 test_characters.py
+# Main test suite — runs on every push via the pre-push hook
+python -X utf8 test_characters.py     # 111 checks across 23 sections
+python -X utf8 test_quests.py         #  60 checks across 15 sections
 
-# Run the dedicated quest test suite
-# 14 sections covering schema integrity, NPC giver references, lifecycles for
-# 1-/3-/4-stage quests, concurrent quests, failure conditions, time limits,
-# AI quest DB round-trip, and trigger format resolution
-python -X utf8 test_quests.py
+# Supplementary suites — run manually
+python -X utf8 test_runs.py                       # 74 checks (older run suite)
+python -X utf8 tests/test_db_migrations.py        # 10 checks (SQLite schema)
+python -X utf8 tests/test_background_tick.py      #  9 checks (BG worker)
+python -X utf8 tests/test_guild_betrayal.py       # 22 checks
+python -X utf8 tests/test_guild_founding.py       # 10 checks
+
+# Headless smoke test — bootstrap the engine without launching the UI
+python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstrap(); print('OK')"
 
 # Start a feature branch
 git checkout -b feature/my-feature
-# Enable the flag (if any), build, test, then disable before merging if not ready
 ```
 
-`test_characters.py` (47 checks across 10 sections) covers:
-- All skills, items, classes, and NPC data load without errors
-- Every scene `leads_to` reference points to a real scene and node
-- Every `give_item` / `give_skill` trigger references a real ID
-- Three simulated character playthroughs (warrior, divergent, mage) including save/load round-trip
-- Player model edge cases, inventory API, combat (auto-resolve + loot)
+**Combined test count: 296 checks across 7 test files.**
+
+`test_characters.py` (111 checks, 23 sections) covers:
+- Registry loading (skills, items, classes, NPCs, scenes)
+- Scene-graph link / trigger validation
+- Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
+- Player model edge cases, inventory API, combat (auto-resolve + loot, lvl-up)
 - Background generator thread lifecycle (start/stop/restart)
 - Feature-flag toggling
 - Quest lifecycle: start → tick advance → completion → rewards
+- Save migration v1 → v2 → v3 (with `SaveMigrationError` for missing steps)
+- AIService facade (sync + async class-gen Future, exception handling)
+- Quest reward currency cap (validates `MAX_QUEST_REWARD_GOLD = 5000`)
+- Class resolver Layer 2 superset-match bug fix regression guard
+- Free-function trigger processing (`scenes/option_logic.py`)
+- Every extracted module's exports (game_engine, bootstrap, integrator, etc.)
+- Bot action handlers all fire (regression guard for the elif-chain bug)
+- Hotkey table integrity in `input_handler`
+- Soft budget guard: `core/game_engine.py` must stay under 250 lines
 
-`test_quests.py` (53 checks across 14 sections) covers:
+`test_quests.py` (60 checks, 15 sections) covers:
 - Schema integrity for every quest template (stage chains, terminal stages, conditions)
-- NPC giver references resolve and dialogue triggers reference real templates
+- NPC giver references resolve; dialogue triggers reference real templates
 - Reward references (items, factions, guilds) point to real entities
 - Full lifecycles for 2-stage, 3-stage, and 4-stage quests
 - Three concurrent quests where partial completion doesn't disturb others
-- Failure conditions and time-limit expiration both fail the quest correctly
-- AI quest data DB round-trip (`store_ai_quest` → `get_quest` → JSON intact)
-- Event payload shapes (`QUEST_STARTED` / `QUEST_ADVANCED` / `QUEST_COMPLETED`)
-- Trigger format resolution (`advance_quest:TEMPLATE_ID`, `complete_quest:TEMPLATE_ID`)
+- Failure conditions + time-limit expiration both fail the quest correctly
+- AI quest data DB round-trip
+- Event payload shapes
+- Trigger format resolution
+- Dialogue quest-seed injection (concrete seeds, `ai_dynamic` seeds, implicit AI offers)
 
-Both suites run automatically via the `.git/hooks/pre-push` git hook before every push.
+Both main suites run automatically via `.git/hooks/pre-push` before every push.
 
-To install the hook locally (collaborators run this once after cloning):
-
-```bash
-# macOS / Linux / Git Bash
-./scripts/install-hooks.sh
-
-# Windows / PowerShell
-.\scripts\install-hooks.ps1
-```
-
-See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, and AI integration contracts.
+See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, the `AIService` boundary contract, and the directory map.
 
 ---
 
