@@ -1148,6 +1148,90 @@ def main() -> None:
         fail("world_db repo split broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("18. game_engine.py Extractions (bootstrap + integrator)")
+    try:
+        # 18a. Bootstrap module is importable and exposes the two free functions
+        from core import bootstrap as _bs
+        assert callable(_bs.load_registries), "bootstrap.load_registries missing"
+        assert callable(_bs.setup_ai), "bootstrap.setup_ai missing"
+        ok("core.bootstrap exposes load_registries + setup_ai")
+
+        # 18b. background_integrator module is importable
+        from core import background_integrator as _bi
+        assert callable(_bi.integrate_results), "background_integrator.integrate_results missing"
+        ok("core.background_integrator exposes integrate_results")
+
+        # 18c. GameEngine still constructs cleanly (no broken imports)
+        from core.game_engine import GameEngine as _GE
+        eng = _GE()
+        assert eng.class_registry is not None
+        assert eng.ai_service is None  # not bootstrapped yet
+        ok("GameEngine constructs without bootstrap")
+
+        # 18d. integrate_results is a no-op when _bg_generator is None
+        class _Stub:
+            _bg_generator = None
+        _bi.integrate_results(_Stub())  # must not raise
+        ok("integrate_results no-ops cleanly when no BG generator")
+
+        # 18e. Bot-action dispatch structural fix:
+        # Previously the trade/rest/craft/talk_npc branches accidentally
+        # elif-chained off the arrival-announcement guard. Verify each
+        # action handler now fires independently.
+        seen_actions: list[str] = []
+
+        class _FakeBot:
+            def __init__(self):
+                self.bot_id = "b1"
+                self.name = "TestBot"
+                self.current_zone_id = "zone_a"
+                self.gold = 100
+                self.memory: list[str] = []
+                self.current_goal = "explore"
+                self.turn_last_acted = 0
+
+        class _FakeBotMgr:
+            def __init__(self, bot): self.bot = bot
+            def get(self, bid): return self.bot
+            def save_to_db(self, *_a, **_k): pass
+
+        class _FakePlayer:
+            turn_count = 5
+
+        class _FakeState:
+            current_scene_id = "elsewhere"  # NOT the bot's zone
+            world_db = None
+            player = _FakePlayer()
+
+        class _FakeEngine:
+            _bot_manager = _FakeBotMgr(_FakeBot())
+            state = _FakeState()
+
+        for act in ["trade", "rest", "craft", "talk_npc"]:
+            eng_inst = _FakeEngine()
+            eng_inst._bot_manager = _FakeBotMgr(_FakeBot())  # fresh bot per action
+            _bi._handle_bot_action(eng_inst, {
+                "type": "bot_action",
+                "bot_id": "b1",
+                "action": act,
+                "target": "some_target",
+            })
+            # Each action should leave a turn_last_acted bump (proves the
+            # handler ran, not just that we silently skipped).
+            assert eng_inst._bot_manager.bot.turn_last_acted == 5, \
+                f"action '{act}' did not run handler (turn_last_acted not updated)"
+            seen_actions.append(act)
+        assert seen_actions == ["trade", "rest", "craft", "talk_npc"]
+        ok("Bot-action handlers all fire (trade/rest/craft/talk_npc no longer dead branches)")
+
+        # 18f. World-event dispatcher handles unknown types gracefully
+        _bi._dispatch(_FakeEngine(), {"type": "nonsense_type"})  # must not raise
+        ok("Unknown background result types are ignored, not raised")
+    except Exception as e:
+        fail("game_engine extraction broken", e)
+        traceback.print_exc()
+
     _report()
 
 

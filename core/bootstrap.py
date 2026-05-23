@@ -1,0 +1,163 @@
+"""
+Engine bootstrap — registry loading and AI wiring.
+
+Extracted from ``core/game_engine.py`` so that the engine's ``__init__`` is the
+only place that allocates registries, and ``bootstrap.py`` is the only place
+that decides *what gets loaded* from config / feature flags / disk.
+
+Both functions take the GameEngine instance as a parameter and assign to its
+public attributes. They are not methods on the engine — keeping them free
+functions makes the data loading + AI wiring trivially unit-testable (pass a
+stub object) and prevents new responsibilities from accreting on the engine.
+"""
+from __future__ import annotations
+
+import json
+import logging
+from pathlib import Path
+from typing import TYPE_CHECKING
+
+from config import (
+    AI_ENABLED, DATA_DIR, OLLAMA_BASE_URL, OLLAMA_FAST_MODEL, OLLAMA_MODEL,
+    OLLAMA_TIMEOUT_FAST, feature,
+)
+from ui import renderer
+
+if TYPE_CHECKING:
+    from core.game_engine import GameEngine
+
+logger = logging.getLogger(__name__)
+
+
+def load_registries(engine: "GameEngine") -> None:
+    """Populate all of the engine's registries from JSON on disk.
+
+    Always loads: classes (base + combo), skills, items, scenes, zones,
+    lore_fragments, system_messages.
+
+    Feature-gated: species + backgrounds, NPCs, quests, guilds, factions,
+    bot templates.
+    """
+    engine.class_registry.load_from_file(DATA_DIR / "classes" / "base_classes.json")
+    engine.class_registry.load_from_file(DATA_DIR / "classes" / "combo_classes.json")
+    engine.skill_registry.load_from_dir(DATA_DIR / "skills")
+    engine.item_registry.load_from_dir(DATA_DIR / "items")
+    engine.scene_registry.load_from_dir(
+        Path(__file__).parent.parent / "scenes" / "data"
+    )
+
+    from systems.world_zones import load_zones
+    load_zones(DATA_DIR)
+
+    lore_path = DATA_DIR / "world" / "lore_fragments.json"
+    if lore_path.exists():
+        engine.lore_data = json.loads(lore_path.read_text(encoding="utf-8"))
+
+    msg_path = DATA_DIR / "world" / "system_messages.json"
+    if msg_path.exists():
+        engine.system_messages = json.loads(msg_path.read_text(encoding="utf-8"))
+
+    if feature("species_system"):
+        from entities.species import SpeciesRegistry
+        from systems.species_system import load_backgrounds
+        engine.species_registry = SpeciesRegistry()
+        engine.species_registry.load_from_file(
+            DATA_DIR / "species" / "species_definitions.json"
+        )
+        engine.backgrounds = load_backgrounds(DATA_DIR)
+
+    if feature("npc_system"):
+        from entities.npc import NPCRegistry
+        engine.npc_registry = NPCRegistry()
+        engine.npc_registry.load_from_dir(DATA_DIR / "npcs")
+
+    if feature("quest_system"):
+        from entities.quest import QuestRegistry
+        engine.quest_registry = QuestRegistry()
+        engine.quest_registry.load_from_file(
+            DATA_DIR / "quests" / "quest_templates.json"
+        )
+
+    if feature("guild_system"):
+        from systems.guilds.guild_loader import load_guild_registry
+        engine.guild_registry = load_guild_registry(DATA_DIR)
+
+    if feature("faction_system"):
+        from entities.faction import FactionRegistry
+        engine.faction_registry = FactionRegistry()
+        engine.faction_registry.load_from_file(
+            DATA_DIR / "factions" / "faction_definitions.json"
+        )
+
+    if feature("bot_system"):
+        from systems.bot_system import BotRegistry, BotManager
+        bot_registry = BotRegistry()
+        bot_path = DATA_DIR / "bots" / "bot_templates.json"
+        if bot_path.exists():
+            bot_registry.load_from_file(bot_path)
+        engine._bot_manager = BotManager()
+        engine._bot_manager.load_from_templates(bot_registry)
+
+
+def setup_ai(engine: "GameEngine") -> None:
+    """Wire up Ollama clients, ContentGenerator, BackgroundGenerator,
+    WorldDirector, and the AIService facade on the engine.
+
+    Always creates an AIService (empty when AI is disabled) so callers have a
+    stable boundary object whose ``.is_available`` reflects reality.
+    """
+    from ai.ai_service import AIService
+
+    # Empty placeholder — replaced below if Ollama is reachable.
+    engine.ai_service = AIService()
+
+    if not AI_ENABLED:
+        return
+
+    try:
+        from ai.ollama_client import OllamaClient
+        from ai.content_generator import ContentGenerator
+        client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
+        if not client.is_available():
+            renderer.console.print(
+                "  [dim_text]Ollama not available — AI features disabled.[/dim_text]"
+            )
+            return
+
+        fast_model = OLLAMA_FAST_MODEL or OLLAMA_MODEL
+        fast_client = (
+            OllamaClient(
+                model=fast_model, base_url=OLLAMA_BASE_URL,
+                default_timeout=OLLAMA_TIMEOUT_FAST,
+            )
+            if fast_model != OLLAMA_MODEL else client
+        )
+        engine.ai_generator = ContentGenerator(
+            client, engine.lore_data, OLLAMA_MODEL, fast_client=fast_client,
+        )
+
+        if feature("world_db"):
+            from config import BG_GEN_ENABLED
+            if BG_GEN_ENABLED:
+                from ai.background_generator import BackgroundGenerator
+                engine._bg_generator = BackgroundGenerator(engine.ai_generator)
+                engine._bg_generator.start()
+
+        if engine._bg_generator and engine.ai_generator:
+            from ai.world_director import WorldDirector
+            engine._world_director = WorldDirector(
+                engine._bg_generator,
+                engine.ai_generator.client,
+                engine.ai_generator.lore_data,
+            )
+            logger.info("WorldDirector initialized.")
+
+        engine.ai_service = AIService(
+            content_generator=engine.ai_generator,
+            background_generator=engine._bg_generator,
+        )
+        renderer.print_success("AI system online. Ollama connected.")
+    except Exception as e:
+        renderer.console.print(
+            f"  [dim_text]AI setup failed: {e} — continuing without AI.[/dim_text]"
+        )
