@@ -1463,6 +1463,35 @@ def main() -> None:
         fail("Input handler extraction broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("22. Auction UI Extraction")
+    try:
+        from ui import auction_ui as _au
+
+        assert callable(_au.show_auction_house)
+        assert callable(_au._render_listings)
+        assert callable(_au._render_status)
+        assert callable(_au._buy_life_token)
+        assert callable(_au._bid_on_listing)
+        ok("ui.auction_ui exposes show_auction_house + render/buy/bid helpers")
+
+        # 22a. _render_listings handles an empty list without raising
+        _au._render_listings([])
+        ok("_render_listings handles empty listing list without raising")
+
+        # 22b. _render_listings handles a populated listing dict
+        _au._render_listings([{
+            "listing_id": "abc12345",
+            "item": "Test Sword",
+            "current_bid": 999,
+            "turns_left": 5,
+            "guild": "Test Guild",
+        }])
+        ok("_render_listings renders a populated listing without raising")
+    except Exception as e:
+        fail("Auction UI extraction broken", e)
+        traceback.print_exc()
+
     _report()
 
 
