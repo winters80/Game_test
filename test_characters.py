@@ -1232,6 +1232,89 @@ def main() -> None:
         fail("game_engine extraction broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("19. game_engine.py Further Extractions (situation/menu/loop)")
+    try:
+        # 19a. situation_query module exposes its single entry point
+        from core import situation_query as _sq
+        assert callable(_sq.handle_situation_query)
+        assert callable(_sq._convert_ai_option)
+        ok("core.situation_query exposes handle_situation_query + _convert_ai_option")
+
+        # 19b. menu_flow module exposes its three entry points
+        from core import menu_flow as _mf
+        assert callable(_mf.main_menu)
+        assert callable(_mf.load_game_menu)
+        assert callable(_mf.new_game)
+        ok("core.menu_flow exposes main_menu + load_game_menu + new_game")
+
+        # 19c. game_loop module exposes run_game_loop + _per_turn_ticks helper
+        from core import game_loop as _gl
+        assert callable(_gl.run_game_loop)
+        assert callable(_gl._per_turn_ticks)
+        ok("core.game_loop exposes run_game_loop + _per_turn_ticks")
+
+        # 19d. situation_query short-circuits cleanly when AI is unavailable
+        class _StubState:
+            current_scene_id = "x"
+            current_node_id = "root"
+            player = Player(name="StubP", base_class="warrior")
+        class _StubEngine:
+            ai_generator = None  # AI offline
+            state = _StubState()
+            scene_registry = None
+
+        # Suppress the "press any key" prompt for the headless test.
+        from ui import renderer as _rdr
+        _orig_prompt = _rdr.prompt_any_key
+        _rdr.prompt_any_key = lambda *a, **kw: None
+        try:
+            _sq.handle_situation_query(_StubEngine(), [])
+        finally:
+            _rdr.prompt_any_key = _orig_prompt
+        ok("handle_situation_query returns early when ai_generator is None")
+
+        # 19e. _convert_ai_option locks options when stats fail
+        class _AIOpt:
+            option_id = "x"
+            label = "test"
+            triggers = []
+            narrative = ""
+            requires = {"min_stats": {"STR": 999}}
+        class _StubState2:
+            current_node_id = "root"
+            player = Player(name="WeakP", base_class="warrior")
+        class _StubEngine2:
+            state = _StubState2()
+        opt = _sq._convert_ai_option(_AIOpt(), _StubEngine2())
+        assert opt.locked is True, "Option should be locked when min_stats unmet"
+        assert "STR" in opt.lock_reason, f"lock_reason should mention STR: {opt.lock_reason}"
+        ok("_convert_ai_option locks options when min_stats requirements unmet")
+
+        # 19f. _convert_ai_option locks on missing flags too
+        class _AIOpt2:
+            option_id = "y"
+            label = "test"
+            triggers = []
+            narrative = ""
+            requires = {"flags": ["unset_flag"]}
+        opt2 = _sq._convert_ai_option(_AIOpt2(), _StubEngine2())
+        assert opt2.locked is True, "Option should be locked when required flag absent"
+        ok("_convert_ai_option locks options when required flag absent")
+
+        # 19g. game_engine.py shrank — soft assertion that it stayed under 600 lines
+        from pathlib import Path as _Path
+        gepath = _Path(__file__).parent / "core" / "game_engine.py"
+        line_count = sum(1 for _ in gepath.open(encoding="utf-8"))
+        assert line_count < 600, (
+            f"core/game_engine.py grew back to {line_count} lines — "
+            f"if you added a method, consider extracting it into a focused module"
+        )
+        ok(f"core/game_engine.py stays slim ({line_count} lines, <600 budget)")
+    except Exception as e:
+        fail("Further game_engine extraction broken", e)
+        traceback.print_exc()
+
     _report()
 
 

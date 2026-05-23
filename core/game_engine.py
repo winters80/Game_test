@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import time
 
 import questionary
 
@@ -9,17 +8,13 @@ from core.event_bus import bus
 
 logger = logging.getLogger(__name__)
 from core.state_manager import GameState
-from entities.player import Player, Stats
 from entities.character_class import ClassRegistry
 from entities.skill import SkillRegistry
 from entities.item import ItemRegistry
 from scenes.scene_registry import SceneRegistry
 from scenes.scene_base import SceneOption
-from systems import class_system, level_system, combat_system, inventory_system
-from persistence.save_manager import save_game, load_game, list_saves, new_game_state, close_game
 from ui import renderer
-from config import SAVES_DIR, DATA_DIR, feature, GUILD_SIM_INTERVAL
-from entities.enums import SkillType
+from config import feature, GUILD_SIM_INTERVAL
 from core.menus import GameMenusMixin
 from core.combat_handler import CombatHandlerMixin
 from core.dialogue_handler import DialogueHandlerMixin
@@ -77,161 +72,26 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self._main_menu()
 
     def _main_menu(self) -> None:
-        saves = list_saves(SAVES_DIR)
-        choices = ["New Game"]
-        if saves:
-            choices.append("Load Game")
-        choices.append("Quit")
-
-        choice = questionary.select("", choices=choices).ask()
-
-        if choice == "New Game":
-            self._new_game()
-        elif choice == "Load Game":
-            self._load_game_menu(saves)
-        else:
-            renderer.console.print("\n  [dim_text]Farewell.[/dim_text]\n")
+        """Thin delegate — real logic lives in core/menu_flow.py."""
+        from core.menu_flow import main_menu
+        main_menu(self)
 
     def _load_game_menu(self, saves: list[str]) -> None:
-        choice = questionary.select("Select save:", choices=saves + ["← Back"]).ask()
-        if choice == "← Back":
-            self._main_menu()
-            return
-        state = load_game(choice, SAVES_DIR)
-        if state:
-            self.state = state
-            self.state.skill_registry = self.skill_registry
-            # Re-register any AI-generated skills stored in the world DB
-            for defn in getattr(self.state, "_ai_skill_defs", []):
-                from entities.skill import Skill
-                skill = Skill.model_validate(defn)
-                self.skill_registry.register(skill)
-            self.state._ai_skill_defs = []
-            renderer.print_success(f"Loaded save: {choice}")
-            self._game_loop()
-        else:
-            renderer.print_error("Failed to load save.")
-            self._main_menu()
-
-    # ── New Game ───────────────────────────────────────────────────────────────
+        """Thin delegate — real logic lives in core/menu_flow.py."""
+        from core.menu_flow import load_game_menu
+        load_game_menu(self, saves)
 
     def _new_game(self) -> None:
-        renderer.clear()
-        renderer.print_system_message("WHAT IS YOUR NAME, ADVENTURER?")
-        name = questionary.text("Name:").ask()
-        if not name or not name.strip():
-            name = "Wanderer"
-        player = Player(name=name.strip())
-        import re
-        slot_name = re.sub(r'[^a-z0-9_]', '', player.name.lower().replace(" ", "_")) or "save"
-        self.state = new_game_state(player, SAVES_DIR, slot_name)
-        self.state.skill_registry = self.skill_registry
-        self.state.current_scene_id = "prologue"
-        self.state.current_node_id = "root"
-        renderer.print_success(f"Welcome, {player.name}.")
-        time.sleep(0.5)
-        self._game_loop()
+        """Thin delegate — real logic lives in core/menu_flow.py."""
+        from core.menu_flow import new_game
+        new_game(self)
 
     # ── Game Loop ──────────────────────────────────────────────────────────────
 
     def _game_loop(self) -> None:
-        from utils.logging_setup import log_player_error
-        self._running = True
-        try:
-            while self._running and self.state:
-                bus.flush()
-                # Poll and integrate background AI content
-                self._integrate_background_content()
-                self._maybe_submit_background_task()
-                if self._world_director and self.state:
-                    self._world_director.tick(self.state, self.state.player.turn_count)
-                self.state.advance_turn()
-
-                # Buff tick — decrement buff durations
-                if self.state.player.active_buffs:
-                    from systems.buff_system import tick_buffs
-                    expired = tick_buffs(self.state.player)
-
-                # Skill cooldown tick
-                if self.state.player.skill_cooldowns:
-                    from systems.skill_system import tick_skill_cooldowns
-                    tick_skill_cooldowns(self.state.player)
-                    # Expired buffs are silently removed (no notification needed for normal buffs)
-
-                # Alignment inertia — nudge toward 0 every N turns
-                if feature("alignment_system"):
-                    from systems.alignment_system import should_apply_inertia, apply_inertia
-                    if should_apply_inertia(self.state.player.turn_count):
-                        apply_inertia(self.state.player)
-
-                # Quest tick — check silent completions and failures
-                if feature("quest_system") and self.quest_registry:
-                    from systems import quest_system
-                    quest_system.tick_quests(self.state, self.quest_registry)
-                    bus.flush()
-
-                # Auction tick — expire listings, NPC counter-bids
-                if feature("auction_house"):
-                    from systems import auction_system
-                    auction_system.tick_auction(self.state)
-
-                # Check for ending path unlock (political ascension)
-                if feature("faction_system") and self.faction_registry:
-                    self._check_ending_paths()
-
-                # Autonomous faction relation drift
-                if feature("faction_system") and feature("world_db") and self.state.world_db:
-                    from systems.faction_system import drift_faction_relations
-                    drift_changes = drift_faction_relations(
-                        self.state.world_db, self.state.player.turn_count
-                    )
-                    for fa, fb, delta in drift_changes:
-                        direction = "warmer" if delta > 0 else "cooler"
-                        self.state.world_db.store_world_event(
-                            event_type="rumor",
-                            event_text=(
-                                f"Relations between {fa.replace('_', ' ').title()} and "
-                                f"{fb.replace('_', ' ').title()} grow {direction}."
-                            ),
-                            zone_id="verath_city",
-                            title="Political Shift",
-                            npc_hint="",
-                            generated_turn=self.state.player.turn_count,
-                        )
-
-                self._render_scene()
-                options = self._get_current_options()
-                if not options:
-                    renderer.print_error("No options available. Returning to main menu.")
-                    break
-                choice = self._prompt_choice(options)
-                if choice is None:
-                    continue
-                try:
-                    self._handle_choice(choice)
-                except KeyboardInterrupt:
-                    raise
-                except Exception as exc:
-                    log_player_error(
-                        "choice_crash",
-                        exc=exc,
-                        player=self.state.player,
-                        scene_id=self.state.current_scene_id,
-                        node_id=self.state.current_node_id,
-                        option_id=choice.option_id,
-                        turn=self.state.player.turn_count,
-                    )
-                    logger.error("Unhandled error in _handle_choice: %s", exc, exc_info=True)
-                    from ui import renderer
-                    renderer.print_error("Something went wrong. The System logged the anomaly.")
-        finally:
-            # Always close the world DB cleanly on exit, crash, or KeyboardInterrupt
-            if self.state:
-                close_game(self.state)
-            if self._bg_generator:
-                self._bg_generator.stop()
-            if self.ai_service is not None:
-                self.ai_service.shutdown()
+        """Thin delegate — real logic lives in core/game_loop.py."""
+        from core.game_loop import run_game_loop
+        run_game_loop(self)
 
     def _render_scene(self) -> None:
         renderer.clear()
@@ -440,132 +300,9 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                     renderer.prompt_any_key()
 
     def _handle_situation_query(self, current_options: list) -> None:
-        """
-        Handle player's natural-language question about the current situation.
-        AI generates new situational options injected into the current node.
-        """
-        if not self.ai_generator:
-            renderer.print_system_message(
-                "The System is silent. (AI offline — enable Ollama to use this feature.)",
-                style="dim_text",
-            )
-            renderer.prompt_any_key()
-            return
-
-        renderer.console.print()
-        question = questionary.text(
-            "What do you want to know or try?",
-            instruction="(e.g. 'Can I aim for the head?' or 'Is there a way to sneak past?')"
-        ).ask()
-        if not question or not question.strip():
-            return
-
-        question = question.strip()
-        logger.info(
-            "Dynamic query: scene=%s node=%s question=%r",
-            self.state.current_scene_id, self.state.current_node_id, question,
-        )
-
-        # Get current scene context
-        scene = self.scene_registry.get(self.state.current_scene_id)
-        scene_title = scene.title if scene else self.state.current_scene_id
-        node = scene.get_node(self.state.current_node_id) if scene else {}
-        scene_text = node.get("text", "")
-        if not scene_text and scene and scene.entrance_text:
-            scene_text = " ".join(scene.entrance_text[:2])
-
-        option_labels = [opt.label for opt in current_options if not opt.locked]
-
-        # Call AI with spinner
-        result = None
-        try:
-            with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
-                result = self.ai_generator.generate_dynamic_options(
-                    question=question,
-                    scene_title=scene_title,
-                    scene_text=scene_text,
-                    current_options=option_labels,
-                    player=self.state.player,
-                )
-        except Exception as exc:
-            from utils.logging_setup import log_player_error
-            log_player_error(
-                "dynamic_query_crash",
-                exc=exc,
-                player=self.state.player,
-                scene_id=self.state.current_scene_id,
-                node_id=self.state.current_node_id,
-                turn=self.state.player.turn_count,
-                extra={"question": question[:120]},
-            )
-            logger.error("Dynamic query exception: %s", exc, exc_info=True)
-
-        if not result:
-            logger.warning(
-                "Dynamic query returned no result: scene=%s question=%r",
-                self.state.current_scene_id, question,
-            )
-            renderer.print_system_message(
-                "The System could not generate a response. Try rephrasing your question.",
-                style="dim_text",
-            )
-            renderer.prompt_any_key()
-            return
-
-        # Show situation narrative
-        renderer.print_divider()
-        renderer.print_scene_text([result.situation_text])
-        renderer.print_divider()
-
-        if not result.options:
-            renderer.print_system_message("No new options could be generated for that question.", style="dim_text")
-            renderer.prompt_any_key()
-            return
-
-        # Convert AI options to SceneOption objects
-        from scenes.scene_base import SceneOption
-
-        new_scene_options = []
-        for ai_opt in result.options:
-            # Build requires checks
-            requires = ai_opt.requires or {}
-            locked = False
-            lock_reason = ""
-
-            min_stats = requires.get("min_stats", {})
-            for stat, val in min_stats.items():
-                if getattr(self.state.player.stats, stat, 0) < val:
-                    locked = True
-                    lock_reason = f"Requires {stat} >= {val}"
-                    break
-
-            req_flags = requires.get("flags", [])
-            if not locked:
-                for flag in req_flags:
-                    if not self.state.player.has_flag(flag):
-                        locked = True
-                        lock_reason = "Condition not met"
-                        break
-
-            scene_opt = SceneOption(
-                option_id=ai_opt.option_id,
-                label=f"[AI] {ai_opt.label}",
-                leads_to="__stay__",
-                leads_to_node=self.state.current_node_id,
-                expected=False,  # always a divergence signal
-                triggers=ai_opt.triggers,
-                locked=locked,
-                lock_reason=lock_reason,
-                narrative=ai_opt.narrative,  # shown as feedback when chosen
-            )
-            new_scene_options.append(scene_opt)
-
-        # Store in state so they appear in the next render
-        state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
-        self.state._dynamic_options[state_key] = new_scene_options
-
-        renderer.console.print("  [dim_text]New options unlocked. Choose below.[/dim_text]")
-        renderer.prompt_any_key()
+        """Thin delegate — real logic lives in core/situation_query.py."""
+        from core.situation_query import handle_situation_query
+        handle_situation_query(self, current_options)
 
     def _handle_rest(self, rest_type: str = "short") -> None:
         """Handle camp rest. full=8hrs (100% HP/MP), short=2hrs (40% HP/MP). 10% ambush chance for camp."""
