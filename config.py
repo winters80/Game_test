@@ -44,6 +44,11 @@ DIVERGENCE_FLAGS = [
     "betrayed_faction",
 ]
 
+# ── AI quest offers ────────────────────────────────────────────────────────────
+# Minimum NPC disposition required before they implicitly offer an AI-generated
+# quest. Only fires when the NPC has no available pre-written quest seeds.
+AI_QUEST_DISPOSITION_MIN = 30.0
+
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP

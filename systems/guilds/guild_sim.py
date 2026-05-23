@@ -11,7 +11,7 @@ from systems.guilds.guild_models import GuildState, GuildMember, GuildIntentResu
 
 if TYPE_CHECKING:
     from persistence.world_db import WorldDatabase
-    from ai.content_generator import ContentGenerator
+    from ai.ai_service import AIService
     from systems.guilds.guild_models import GuildIntent
 
 MAX_AGENTS_PER_TICK = 3
@@ -54,21 +54,18 @@ def select_active_agents(
 def generate_npc_intent(
     guild: GuildState,
     member: GuildMember,
-    ai_generator: "ContentGenerator | None",
+    ai_service: "AIService | None",
 ) -> "GuildIntent | None":
     """Ask the AI for a structured guild intent for this NPC. Returns None if no AI."""
-    if ai_generator is None:
+    if ai_service is None or not getattr(ai_service, "is_available", False):
         return None
-    try:
-        return ai_generator.generate_guild_intent(guild, member)
-    except Exception:
-        return None
+    return ai_service.generate_guild_intent(guild, member)
 
 
 def tick(
     world_db: "WorldDatabase",
     guild_registry: object,
-    ai_generator: "ContentGenerator | None",
+    ai_service: "AIService | None",
     turn: int,
     max_agents: int = MAX_AGENTS_PER_TICK,
 ) -> list[GuildIntentResult]:
@@ -90,7 +87,7 @@ def tick(
         if not member:
             continue
 
-        intent = generate_npc_intent(guild, member, ai_generator)
+        intent = generate_npc_intent(guild, member, ai_service)
         if intent:
             result = guild_engine.adjudicate_intent(intent, guild, members, world_db, turn)
             results.append(result)

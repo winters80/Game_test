@@ -346,3 +346,74 @@ def get_available_quest_seeds(
         available.append(seed)
 
     return available
+
+
+def build_quest_seed_options(
+    npc: "NPCTemplate",
+    state: "GameState",
+    quest_registry: object,
+    disposition: float,
+    ai_enabled: bool,
+    ai_quest_disposition_min: float,
+) -> list[tuple]:
+    """
+    Build synthetic dialogue options for quest seeds available at the NPC's
+    root node. Returns a list of (SceneOption, NPCQuestSeed | None) pairs.
+
+    A None seed means the option is an *implicit* AI quest offer — used when
+    the NPC has no other seeds available and disposition is high enough.
+
+    This is a pure function (no I/O, no AI calls). The caller is responsible
+    for invoking start_quest / generate_ai_quest when the player picks an
+    option whose option_id starts with "__qseed__".
+    """
+    from scenes.scene_base import SceneOption
+
+    seeds = get_available_quest_seeds(npc, state)
+
+    # Templates already wired manually in hand-written dialogue triggers —
+    # skip those to avoid duplicate offers.
+    already_wired: set[str] = set()
+    for node in npc.dialogue_nodes.values():
+        for opt in node.options:
+            for trigger in opt.triggers:
+                if trigger.startswith("start_quest:"):
+                    already_wired.add(trigger[len("start_quest:"):])
+
+    pairs: list[tuple] = []
+    for idx, seed in enumerate(seeds):
+        tid = seed.quest_template_id
+        if tid == "ai_dynamic":
+            if not ai_enabled:
+                continue
+            label = "« Is there any work I could take on? »"
+        else:
+            if tid in already_wired:
+                continue
+            template = quest_registry.get(tid) if quest_registry else None
+            if not template:
+                continue
+            label = f"« {template.title} »"
+        pairs.append((
+            SceneOption(option_id=f"__qseed__{idx}", label=label, leads_to="__stay__"),
+            seed,
+        ))
+
+    # Implicit AI offer when no other seeds are available
+    if (
+        not pairs
+        and ai_enabled
+        and disposition >= ai_quest_disposition_min
+    ):
+        offered_flag = f"_ai_offered_{npc.npc_id}"
+        if not state.player.has_flag(offered_flag):
+            pairs.append((
+                SceneOption(
+                    option_id="__qseed__ai_implicit",
+                    label="« Is there any work I could take on? »",
+                    leads_to="__stay__",
+                ),
+                None,
+            ))
+
+    return pairs

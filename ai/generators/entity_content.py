@@ -95,15 +95,20 @@ class EntityContentGenerators:
         """Run one guild simulation tick in the background thread."""
         try:
             from systems.guilds import guild_sim
+            from ai.ai_service import AIService
             world_db       = task.get("world_db")
             guild_registry = task.get("guild_registry")
             if world_db is None:
                 return None
             turn = self._autonomous_context.get("turn", 0)
+            # Wrap the content generator in an AIService so guild_sim sees a
+            # consistent boundary regardless of whether this runs on the BG
+            # thread or is called directly from the engine in a test.
+            ai_service = AIService(content_generator=self._content_gen)
             results = guild_sim.tick(
                 world_db=world_db,
                 guild_registry=guild_registry,
-                ai_generator=self._content_gen,
+                ai_service=ai_service,
                 turn=turn,
             )
             if results:

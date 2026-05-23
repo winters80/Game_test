@@ -518,6 +518,20 @@ class WorldDatabase:
         )
         self._conn.commit()
 
+    def get_ai_quest_definition(self, instance_id: str) -> dict | None:
+        """Return the stored AI-generated quest template JSON for this instance, or None."""
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT definition FROM ai_quest_data WHERE instance_id = ?",
+            (instance_id,),
+        ).fetchone()
+        if not row:
+            return None
+        try:
+            return json.loads(row["definition"])
+        except (json.JSONDecodeError, KeyError, IndexError):
+            return None
+
     def get_quest(self, instance_id: str) -> dict[str, Any] | None:
         assert self._conn
         row = self._conn.execute(

@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 import questionary
 
-from config import DATA_DIR, feature
+from config import AI_QUEST_DISPOSITION_MIN, DATA_DIR, feature
 from core.event_bus import bus, Event
 from ui import renderer
 
@@ -64,7 +64,19 @@ class DialogueHandlerMixin:
             renderer.print_title()
             renderer.print_npc_dialogue(npc.name, npc.description, resolved.display_text)
 
-            options = resolved.options
+            options = list(resolved.options)
+
+            # Inject dynamic quest-seed options at the disposition-hook root only
+            # (avoid duplicating them on every sub-node of the conversation).
+            seed_pairs: list[tuple] = []  # list[(SceneOption, NPCQuestSeed | None)]
+            if (
+                feature("quest_system")
+                and self.quest_registry is not None
+                and current_node == npc_system.get_disposition_hook(npc, disposition)
+            ):
+                seed_pairs = self._build_quest_seed_options(npc, disposition)
+                options.extend(opt for opt, _ in seed_pairs)
+
             if not options:
                 break
 
@@ -98,6 +110,18 @@ class DialogueHandlerMixin:
 
             if not chosen_opt_scene:
                 break
+
+            # ── Synthetic quest-seed option ───────────────────────────────────
+            if chosen_opt_scene.option_id.startswith("__qseed__"):
+                key = chosen_opt_scene.option_id[len("__qseed__"):]
+                seed = next(
+                    (s for opt, s in seed_pairs if opt.option_id == chosen_opt_scene.option_id),
+                    None,
+                )
+                self._handle_quest_seed_chosen(seed, npc, key)
+                bus.flush()
+                # Stay on the same node; the offer is a side-effect, not navigation.
+                continue
 
             # Find the raw NPCDialogueOption matching the chosen SceneOption
             node_data = npc.dialogue_nodes.get(current_node)
@@ -201,6 +225,90 @@ class DialogueHandlerMixin:
             current_node = next_node
 
         self.state.mark_dirty()
+        renderer.prompt_any_key()
+
+    # ── Quest-seed dialogue injection ─────────────────────────────────────────
+
+    def _build_quest_seed_options(self, npc, disposition: float) -> list[tuple]:
+        """Thin wrapper that hands NPC + state to the pure builder in npc_system."""
+        from systems import npc_system
+        return npc_system.build_quest_seed_options(
+            npc=npc,
+            state=self.state,
+            quest_registry=self.quest_registry,
+            disposition=disposition,
+            ai_enabled=(self.ai_generator is not None),
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+
+    def _handle_quest_seed_chosen(self, seed, npc, key: str) -> None:
+        """Process the player choosing a synthetic quest-seed option."""
+        from systems import quest_system as qs
+
+        # Implicit AI offer (empty seeds + high disposition)
+        if seed is None and key == "ai_implicit":
+            self._offer_ai_quest(npc, implicit=True)
+            return
+
+        # Explicit "ai_dynamic" seed
+        if seed is not None and seed.quest_template_id == "ai_dynamic":
+            self._offer_ai_quest(npc, implicit=False, seed=seed)
+            return
+
+        # Concrete pre-written quest template
+        if seed is None:
+            return
+        instance_id = qs.start_quest(
+            seed.quest_template_id, npc.npc_id, self.state, self.quest_registry,
+        )
+        if instance_id:
+            template = self.quest_registry.get(seed.quest_template_id)
+            title = template.title if template else seed.quest_template_id
+            renderer.print_npc_response(npc.name, f"Good. Here's what I need: {title}.")
+            if seed.already_given_flag:
+                self.state.player.set_flag(seed.already_given_flag)
+        else:
+            renderer.print_npc_response(npc.name, "Hm — looks like that's already on your list.")
+        renderer.prompt_any_key()
+
+    def _offer_ai_quest(self, npc, implicit: bool, seed=None) -> None:
+        """Call the AI quest generator with a spinner; flag the NPC as offered."""
+        from systems import quest_system as qs
+
+        # Always set the offered flag, even on failure, so we don't spam attempts
+        offered_flag = (
+            seed.already_given_flag if (seed and seed.already_given_flag)
+            else f"_ai_offered_{npc.npc_id}"
+        )
+
+        instance_id = None
+        try:
+            with renderer.show_ai_thinking_spinner(f"{npc.name} considers your offer..."):
+                instance_id = qs.generate_ai_quest(
+                    giver_npc_id=npc.npc_id,
+                    npc_name=npc.name,
+                    npc_role=npc.role,
+                    state=self.state,
+                    ai_service=getattr(self, "ai_service", None),
+                )
+        except Exception:
+            logger.warning("AI quest offer failed", exc_info=True)
+
+        self.state.player.set_flag(offered_flag)
+
+        if instance_id:
+            # Pull the freshly stored AI quest title for the in-character reply
+            title = "a small matter"
+            if self.state.world_db:
+                ai_def = self.state.world_db.get_ai_quest_definition(instance_id)
+                if ai_def:
+                    title = ai_def.get("title", title)
+            renderer.print_npc_response(npc.name, f"Aye — there is something. {title}.")
+        else:
+            renderer.print_npc_response(
+                npc.name,
+                "Hmph. Nothing comes to mind right now. Try again later.",
+            )
         renderer.prompt_any_key()
 
     def _join_guild(self, guild_id: str) -> None:

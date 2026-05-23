@@ -308,17 +308,20 @@ def generate_ai_quest(
     npc_name: str,
     npc_role: str,
     state: "GameState",
-    ai_generator: object,
+    ai_service: object,
 ) -> str | None:
     """
     Use AI to generate a dynamic quest and start it. Returns instance_id or None.
     Falls back gracefully if AI is unavailable.
+
+    ``ai_service`` is an AIService instance. None or an unavailable service
+    returns None without exception.
     """
-    if ai_generator is None:
+    if ai_service is None or not getattr(ai_service, "is_available", False):
         return None
 
-    template = ai_generator.generate_quest(
-        state.player, giver_npc_id, npc_name, npc_role
+    template = ai_service.generate_quest(
+        state.player, giver_npc_id, npc_name, npc_role,
     )
     if not template:
         return None

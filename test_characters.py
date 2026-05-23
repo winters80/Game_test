@@ -707,6 +707,190 @@ def main() -> None:
         fail("Quest system lifecycle broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("11. Save Migration (v1 → v2 → v3)")
+    try:
+        import json as _json
+        from persistence.save_manager import (
+            _migrate, _v1_to_v2, _v2_to_v3, SaveMigrationError, load_game,
+        )
+        from config import SAVE_VERSION
+
+        # 11a. Synthetic v1 save (minimal player blob, no v2/v3 fields)
+        v1_save = {
+            "save_version": 1,
+            "player": {
+                "name": "Legacy",
+                "base_class": "warrior",
+                "stats": {"STR": 8, "INT": 5, "AGI": 5, "LCK": 5, "VIT": 5, "WIS": 5, "END": 5},
+                # Intentionally missing: species_id, alignment, lives, quest IDs, etc.
+            },
+            "current_scene_id": "village_start",
+            "current_node_id": "root",
+            "generated_content_cache": {},
+        }
+        migrated = _migrate(v1_save.copy(), from_version=1, to_version=SAVE_VERSION)
+        assert migrated["save_version"] == SAVE_VERSION, \
+            f"Migrated save_version wrong: {migrated['save_version']}"
+        assert migrated["player"]["species_id"] == "human", "v1→v2 didn't set species_id"
+        assert migrated["player"]["lives_remaining"] == 9, "v1→v2 didn't set lives_remaining"
+        assert migrated["player"]["identified_items"] == {}, "v2→v3 didn't set identified_items"
+        assert migrated["player"]["active_buffs"] == [], "v2→v3 didn't set active_buffs"
+        ok("v1 → v3 migration fills all defaulted fields explicitly")
+
+        # 11b. Migrated player blob validates against current Player model
+        from entities.player import Player as _Player
+        _Player.model_validate(migrated["player"])
+        ok("Migrated v1 save validates against current Player schema")
+
+        # 11c. Synthetic v2 save migrates forward
+        v2_save = {
+            "save_version": 2,
+            "player": {
+                "name": "Tester",
+                "base_class": "mage",
+                "stats": {"STR": 5, "INT": 8, "AGI": 5, "LCK": 5, "VIT": 5, "WIS": 5, "END": 5},
+                "species_id": "elf",
+                "alignment": 10.0,
+                "lives_remaining": 5,
+                "lives_used": 4,
+                # Intentionally missing v3 fields
+            },
+            "turn_number": 42,
+            "current_scene_id": "verath_city",
+            "current_node_id": "root",
+            "generated_content_cache": {},
+        }
+        migrated2 = _migrate(v2_save.copy(), from_version=2, to_version=SAVE_VERSION)
+        assert migrated2["player"]["alignment"] == 10.0, "v2 data lost"
+        assert migrated2["player"]["lives_remaining"] == 5, "v2 data lost"
+        assert "identified_items" in migrated2["player"], "v2→v3 didn't add identified_items"
+        ok("v2 → v3 migration preserves existing fields + adds v3 defaults")
+
+        # 11d. Each migrator is callable in isolation and idempotent on already-v_n data
+        d = {"player": {"species_id": "human", "lives_remaining": 9}, "turn_number": 5}
+        _v1_to_v2(d)  # should not crash even though some defaults already set
+        _v2_to_v3(d)
+        ok("Migrators are safe to re-apply (setdefault, not overwrite)")
+
+        # 11e. Unknown migration step raises clearly
+        try:
+            _migrate({"player": {"name": "x"}}, from_version=999, to_version=1000)
+            fail("Expected SaveMigrationError for unknown migration step")
+        except SaveMigrationError:
+            ok("Unknown migration step raises SaveMigrationError (no silent no-op)")
+
+        # 11f. End-to-end load_game from a synthetic v1 save on disk
+        slot = "_migration_test_"
+        v1_path = SAVES_DIR / f"{slot}.json"
+        v1_path.write_text(_json.dumps(v1_save), encoding="utf-8")
+        loaded = load_game(slot, SAVES_DIR)
+        assert loaded is not None, "load_game returned None for v1 save"
+        assert loaded.player.species_id == "human", "Loaded player lost species default"
+        assert loaded.player.lives_remaining == 9, "Loaded player lost lives default"
+        close_game(loaded)
+        ok("load_game transparently migrates a v1 file to v3 and loads cleanly")
+
+        # Cleanup
+        for ext in (".json", ".db"):
+            p = SAVES_DIR / f"{slot}{ext}"
+            if p.exists():
+                try: p.unlink()
+                except OSError: pass
+
+    except Exception as e:
+        fail("Save migration broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("12. AIService Facade")
+    try:
+        from ai.ai_service import AIService
+
+        # 12a. Empty AIService (no content generator) → is_available False, all
+        # generator methods return None without raising.
+        svc = AIService()
+        assert svc.is_available is False, "Empty service should report unavailable"
+        assert svc.has_background is False, "No BG → has_background should be False"
+        assert svc.generate_class(None, None, None) is None
+        assert svc.generate_quest(None, "", "", "") is None
+        assert svc.generate_guild_intent(None, None) is None
+        assert svc.generate_guild_template(name="x", archetype="x", zone_id="x") is None
+        assert svc.generate_narrative(None, "", "") is None
+        ok("Empty AIService is unavailable + all methods return None")
+
+        # 12b. AIService with a fake generator passes calls through unchanged.
+        class _FakeGen:
+            def __init__(self): self.calls = []
+            def generate_class(self, p, d, r):
+                self.calls.append("class"); return "CLASS_OK"
+            def generate_quest(self, p, gid, n, r):
+                self.calls.append("quest"); return "QUEST_OK"
+            def generate_guild_intent(self, g, m):
+                self.calls.append("intent"); return "INTENT_OK"
+            def generate_guild_template(self, **kw):
+                self.calls.append("guild_tpl"); return "GUILD_OK"
+            def generate_narrative(self, **kw):
+                self.calls.append("narr"); return "NARR_OK"
+
+        fake = _FakeGen()
+        svc2 = AIService(content_generator=fake)
+        assert svc2.is_available is True
+        assert svc2.generate_class(None, None, None) == "CLASS_OK"
+        assert svc2.generate_quest(None, "", "", "") == "QUEST_OK"
+        assert svc2.generate_guild_intent(None, None) == "INTENT_OK"
+        assert svc2.generate_guild_template(name="x", archetype="x", zone_id="x") == "GUILD_OK"
+        assert svc2.generate_narrative(player=None, scene_id="x", choice_description="x") == "NARR_OK"
+        assert fake.calls == ["class", "quest", "intent", "guild_tpl", "narr"]
+        ok("AIService passes all 5 generation methods through to the wrapped generator")
+
+        # 12c. Generator exceptions are caught and converted to None.
+        class _BrokenGen:
+            def generate_class(self, *a, **kw): raise RuntimeError("ollama exploded")
+            def generate_quest(self, *a, **kw): raise TimeoutError("timeout")
+            def generate_guild_intent(self, *a, **kw): raise ValueError("bad json")
+            def generate_guild_template(self, **kw): raise OSError("connection refused")
+            def generate_narrative(self, **kw): raise RuntimeError("bad")
+
+        svc3 = AIService(content_generator=_BrokenGen())
+        assert svc3.generate_class(None, None, None) is None
+        assert svc3.generate_quest(None, "", "", "") is None
+        assert svc3.generate_guild_intent(None, None) is None
+        assert svc3.generate_guild_template(name="x", archetype="x", zone_id="x") is None
+        assert svc3.generate_narrative(player=None, scene_id="x", choice_description="x") is None
+        ok("AIService swallows generator exceptions and returns None")
+
+        # 12d. submit_quest_async returns False without a BG generator.
+        assert svc2.submit_quest_async("zone", "hint", None) is False
+        ok("submit_quest_async returns False when no BG generator wired")
+
+        # 12e. systems/quest_system.generate_ai_quest accepts ai_service and
+        # short-circuits when unavailable.
+        from systems import quest_system as _qs
+        # Reuse the player/state from earlier — fresh isolated save.
+        from persistence.save_manager import new_game_state as _ng, close_game as _cg
+        _p = Player(name="ServiceTester", base_class="warrior")
+        _state = _ng(_p, SAVES_DIR, "_aisvc_test_")
+        _state.turn_number = 1
+        try:
+            result = _qs.generate_ai_quest(
+                giver_npc_id="x", npc_name="X", npc_role="x",
+                state=_state, ai_service=AIService(),  # empty → unavailable
+            )
+            assert result is None, "generate_ai_quest must return None when AIService unavailable"
+            ok("quest_system.generate_ai_quest short-circuits on empty AIService")
+        finally:
+            _cg(_state)
+            for ext in (".json", ".db"):
+                p = SAVES_DIR / f"_aisvc_test_{ext}"
+                if p.exists():
+                    try: p.unlink()
+                    except OSError: pass
+
+    except Exception as e:
+        fail("AIService facade broken", e)
+        traceback.print_exc()
+
     _report()
 
 

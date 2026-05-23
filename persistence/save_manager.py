@@ -45,6 +45,12 @@ def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
 
     # ── Migrate old saves to current schema ───────────────────────────────────
     file_version = raw.get("save_version", 1)
+    if file_version > SAVE_VERSION:
+        raise SaveMigrationError(
+            f"Save file '{slot_name}.json' is from a newer game version "
+            f"(v{file_version} > v{SAVE_VERSION}). Refusing to load — "
+            "downgrade is not supported."
+        )
     if file_version < SAVE_VERSION:
         raw = _migrate(raw, file_version, SAVE_VERSION)
 
@@ -91,23 +97,109 @@ def close_game(state: GameState) -> None:
 
 # ── Migrations ────────────────────────────────────────────────────────────────
 
+
+class SaveMigrationError(Exception):
+    """Raised when a save file cannot be safely migrated to the current schema."""
+
+
 def _migrate(data: dict[str, Any], from_version: int, to_version: int) -> dict[str, Any]:
+    """
+    Apply migrations sequentially from ``from_version`` up to ``to_version``.
+
+    Each step is a small, explicit function (``_vN_to_vN+1``). After all
+    migrations run, the resulting player blob is validated against the current
+    Player model — this surfaces silent schema drift early (e.g. someone added
+    a required-no-default field without also defining its migrator).
+    """
     logger.info(f"Migrating save from v{from_version} to v{to_version}")
-    if from_version == 1 and to_version >= 2:
-        data = _v1_to_v2(data)
-    if from_version < 3:
-        data["save_version"] = 3
+
+    migrators = {
+        1: _v1_to_v2,
+        2: _v2_to_v3,
+    }
+
+    v = from_version
+    while v < to_version:
+        migrator = migrators.get(v)
+        if migrator is None:
+            raise SaveMigrationError(
+                f"No migrator defined for save_version {v} → {v + 1}. "
+                "Add a _v{v}_to_v{v+1}() function in persistence/save_manager.py."
+            )
+        try:
+            data = migrator(data)
+        except Exception as e:
+            raise SaveMigrationError(
+                f"Migration v{v} → v{v + 1} failed: {e}"
+            ) from e
+        v += 1
+
+    # Final guard: confirm the migrated player blob matches the current model.
+    # If this raises, a field was added to Player without a default AND no
+    # migrator was written to fill it in — the loudest possible signal.
+    try:
+        Player.model_validate(data["player"])
+    except Exception as e:
+        raise SaveMigrationError(
+            f"Migrated save (v{to_version}) does not validate against the "
+            f"current Player schema. A field was likely added without a default "
+            f"or a migration was skipped. Details: {e}"
+        ) from e
+
     return data
 
 
 def _v1_to_v2(data: dict[str, Any]) -> dict[str, Any]:
     """
-    v1 → v2: Add species, alignment, lives, guild, faction fields to player.
-    All new fields have defaults in the Pydantic model so model_validate handles them.
-    We only need to bump the version number.
+    v1 → v2: Player gained species_id, gender, alignment, lives_remaining/used,
+    guild_memberships, faction_standing_cache, active/completed_quest_ids,
+    evolution_stage, background_id, perception_bonus, last_safe_zone_id; and
+    the top-level dict gained turn_number plus a paired SQLite .db file.
+
+    Every new player field has a default on the Pydantic model, so Pydantic
+    will fill them in automatically. We still set them explicitly here so the
+    file on disk after migration is self-describing.
     """
     data["save_version"] = 2
-    # Ensure turn_number exists (wasn't in v1)
+
     if "turn_number" not in data:
         data["turn_number"] = 0
+
+    player = data.get("player", {})
+    player.setdefault("species_id", "human")
+    player.setdefault("gender", "unspecified")
+    player.setdefault("alignment", 0.0)
+    player.setdefault("lives_remaining", 9)
+    player.setdefault("lives_used", 0)
+    player.setdefault("guild_memberships", {})
+    player.setdefault("faction_standing_cache", {})
+    player.setdefault("active_quest_ids", [])
+    player.setdefault("completed_quest_ids", [])
+    player.setdefault("evolution_stage", 0)
+    player.setdefault("background_id", None)
+    player.setdefault("perception_bonus", 0)
+    player.setdefault("last_safe_zone_id", "village_start")
+    data["player"] = player
+    return data
+
+
+def _v2_to_v3(data: dict[str, Any]) -> dict[str, Any]:
+    """
+    v2 → v3: Player gained identified_items, background_narrative,
+    active_buffs, skill_cooldowns, play_time_seconds; the SQLite world_db
+    schema also advanced (see DB_SCHEMA_VERSION in persistence/world_db.py).
+
+    All new player fields have safe defaults. We set them explicitly so that
+    a re-saved file is self-describing and not relying on Pydantic to refill
+    them on every load.
+    """
+    data["save_version"] = 3
+
+    player = data.get("player", {})
+    player.setdefault("identified_items", {})
+    player.setdefault("background_narrative", "")
+    player.setdefault("active_buffs", [])
+    player.setdefault("skill_cooldowns", {})
+    player.setdefault("play_time_seconds", 0)
+    data["player"] = player
     return data
