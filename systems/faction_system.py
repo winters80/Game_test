@@ -20,14 +20,9 @@ if TYPE_CHECKING:
     from persistence.world_db import WorldDatabase
 
 
-RANK_ORDER = ["outsider", "known", "ally", "trusted", "champion", "commander",
-              "aware", "asset", "operative", "inner_circle", "architect",
-              "acquainted", "scholar", "associate", "fellow", "council_voice",
-              "recognized", "favored", "noble_friend", "lord", "ruler_candidate",
-              "sympathizer", "resistor", "breaker", "herald", "the_break",
-              "marked", "initiate", "deathless", "eternal",
-              "punter", "regular", "fence", "broker",
-              "buyer", "member", "preferred", "patron"]
+# Rank order is per-faction and lives on FactionDefinition.ranks (sorted by
+# standing_required). Comparisons go through faction.rank_for_standing(); a
+# global rank list across all factions doesn't make sense and isn't used.
 
 # How much rival faction standing is reduced per point gained with a faction
 RIVAL_STANDING_PENALTY_RATE = 0.3

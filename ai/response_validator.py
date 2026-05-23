@@ -57,6 +57,9 @@ class AIQuestResponse(BaseModel):
     title: str
     description: str
     stages: list[AIQuestStageResponse]
+    # GOLD PIECES (not copper) — see entities/quest.py for the unit contract.
+    # Clamped to MAX_QUEST_REWARD_GOLD so a hallucinating model can't drop a
+    # six-figure jackpot on the player.
     reward_gold: int = 0
     reward_xp: int = 0
     reward_items: list[str] = []
@@ -64,6 +67,17 @@ class AIQuestResponse(BaseModel):
     faction_rewards: dict[str, float] = {}   # {faction_id: standing_delta}
     guild_rewards: dict[str, float] = {}     # {guild_id: standing_delta}
     flavor_text: str = ""
+
+    @field_validator("reward_gold", mode="before")
+    @classmethod
+    def clamp_reward_gold(cls, v):
+        """Clamp to the same ceiling QuestTemplate enforces (gold pieces)."""
+        from entities.quest import MAX_QUEST_REWARD_GOLD
+        try:
+            v_int = int(v)
+        except (TypeError, ValueError):
+            return 0
+        return max(0, min(v_int, MAX_QUEST_REWARD_GOLD))
 
     @field_validator("reward_items", mode="before")
     @classmethod
