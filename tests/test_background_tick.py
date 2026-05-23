@@ -73,7 +73,7 @@ try:
     db.add_guild_member("g_tick", "npc_lead", "npc", "leader", 0, loyalty=20, ambition=90)
 
     before = db.get_guild_state("g_tick")
-    results_tick = tick(world_db=db, guild_registry=None, ai_generator=None, turn=10)
+    results_tick = tick(world_db=db, guild_registry=None, ai_service=None, turn=10)
 
     after = db.get_guild_state("g_tick")
 
@@ -102,8 +102,10 @@ try:
     db.update_guild_state("g_steal", wealth=200, stability=40, current_leader_id="npc_thief")
     db.add_guild_member("g_steal", "npc_thief", "npc", "leader", 0, loyalty=15, ambition=95)
 
-    # Mock AI that always returns a StealResourcesIntent
+    # Mock AIService — guild_sim.tick now expects an AIService-shaped object
+    # with is_available + generate_guild_intent (renamed in PR #10).
     class MockAI:
+        is_available = True
         def generate_guild_intent(self, guild, member):
             return StealResourcesIntent(
                 actor_id=member.entity_id,
@@ -112,7 +114,7 @@ try:
             )
 
     before_wealth = db.get_guild_state("g_steal")["wealth"]
-    results_mock = tick(world_db=db, guild_registry=None, ai_generator=MockAI(), turn=15)
+    results_mock = tick(world_db=db, guild_registry=None, ai_service=MockAI(), turn=15)
 
     check("tick() returns at least 1 result with mock AI",
           len(results_mock) >= 1, str(len(results_mock)))
