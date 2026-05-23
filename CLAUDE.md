@@ -18,12 +18,12 @@ The game is a Python terminal LitRPG. **Static content** (class definitions, ski
 |------|---------|
 | `config.py` | All constants, feature flags, balance values — change here, never in game logic |
 | `entities/` | Pydantic v2 data models + Registry classes (load JSON → in-memory dict) |
-| `systems/` | Pure-function game logic — no I/O, no rendering, no direct Ollama calls |
-| `ai/` | Ollama integration — client, prompt builders, response validators, content generator |
+| `systems/` | Pure-function game logic — no I/O, no rendering, no direct Ollama calls. Systems that need AI take an `ai_service: AIService` parameter |
+| `ai/` | Ollama integration — client, prompt builders, response validators, content generator, `AIService` facade |
 | `scenes/data/*.json` | Scene definitions — all game narrative and choice trees |
 | `data/` | All static content definitions (JSON) |
 | `core/` | Engine (game loop), event bus, game state |
-| `ui/` | All Rich rendering — **only `ui/renderer.py` imports `rich`** |
+| `ui/` | All Rich rendering — **only files under `ui/` import `rich`** |
 | `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite API) |
 | `saves/` | Runtime save files — gitignored except `.gitkeep` |
 
@@ -179,10 +179,21 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 
 ## AI Integration Contract
 
+### The `AIService` boundary
+Non-AI packages **must** depend on `ai.ai_service.AIService`, never on
+`ContentGenerator` directly. AIService:
+- Returns `None` on failure (caller supplies its own fallback path)
+- Centralises try/except + logging for every generation method
+- Exposes `is_available` so systems can skip work when Ollama is offline
+- Provides `submit_quest_async()` for callers that can tolerate a queued result
+
+Systems (`class_system`, `quest_system`, `guilds/guild_sim`) all take
+`ai_service` as a typed parameter and use `ai_service.is_available` to gate.
+
 ### When AI is called
-1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30). Triggered by `systems/class_system.resolve_combo_class()`.
+1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30). Triggered by `systems/class_system.resolve_combo_class()` via `ai_service.generate_class()`.
 2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
-3. **Quest generation** *(quest_system)* — when NPC's `quest_seeds` contains `"ai_dynamic"`.
+3. **Quest generation** *(quest_system)* — fired from `dialogue_handler` when the player picks an injected `« Is there any work I could take on? »` option. Triggered by an explicit `"ai_dynamic"` seed on the NPC, **or implicitly** when the NPC has no available seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN` (default 30) and `_ai_offered_{npc_id}` flag is unset.
 4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
 
 ### AI response schemas (validated by `ai/response_validator.py`)

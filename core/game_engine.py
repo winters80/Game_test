@@ -68,6 +68,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self.lore_data: dict = {}
         self.state: GameState | None = None
         self.ai_generator = None
+        self.ai_service = None  # AIService facade — the boundary systems depend on
         self._bg_generator = None
         self._world_director = None
         self._bot_manager = None
@@ -134,6 +135,11 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
             self._bot_manager.load_from_templates(bot_registry)
 
     def _setup_ai(self) -> None:
+        # Always create an AIService — empty when AI is disabled — so systems
+        # have a stable boundary object whose .is_available reflects reality.
+        from ai.ai_service import AIService
+        self.ai_service = AIService()
+
         if not AI_ENABLED:
             return
         try:
@@ -163,6 +169,13 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                         self.ai_generator.lore_data,
                     )
                     logger.info("WorldDirector initialized.")
+                # AIService is the boundary non-AI packages use. Wire it once,
+                # share it with all systems. Safe even when bg_generator is None.
+                from ai.ai_service import AIService
+                self.ai_service = AIService(
+                    content_generator=self.ai_generator,
+                    background_generator=self._bg_generator,
+                )
                 renderer.print_success("AI system online. Ollama connected.")
             else:
                 renderer.console.print("  [dim_text]Ollama not available — AI features disabled.[/dim_text]")

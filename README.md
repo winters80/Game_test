@@ -254,8 +254,13 @@ more NPCs that offer them, and richer AI integration on top of the working backb
 
 | Item | Why |
 |------|-----|
-| Wire more NPCs to existing quest templates | Six of the nine templates have no NPC giver path — `dungeon_survey`, `verath_courier`, `fracture_investigation` and the `null`-giver faction quests need dialogue hooks |
-| Surface dynamic AI quest generation | `ContentGenerator.generate_quest()` works but isn't called — should fire when an NPC's `quest_seeds` is empty and disposition is high |
-| Quest seeds → dialogue option synthesis | `npc_system.get_available_quest_seeds()` exists but has no callers — should inject "I might have work for you" options dynamically |
-| Migration test for save format v2 → v3 | Forward-only for now; needs round-trip coverage as fields evolve |
+| Wire more NPCs to existing quest templates | Six of the nine templates still have no fixed NPC giver — `dungeon_survey`, `verath_courier`, `fracture_investigation` and the `null`-giver faction quests would benefit from explicit dialogue hooks (the implicit AI-quest path also covers them now, but hand-crafted offers play better) |
+| Move class-generation off the main thread | `class_system.resolve_combo_class` now uses `AIService` but still calls synchronously. Switch to `submit_class_generation_async` once the awakening scene can show "the System is revealing your fate..." while it polls |
 | Pre-push hook installer | The hook is local-only; collaborators need a `scripts/install-hooks.sh` |
+| Refactor `core/game_engine.py` (1000+ lines) | God-object even after the mixin split — every mixin freely reads `self.state`/`self.ai_service`/`self.quest_registry`. Composition over inheritance would help |
+
+### Recently shipped (this iteration)
+
+- **AI quest generation wired into NPC dialogue.** Picks up `quest_seeds` with `ai_dynamic` templates AND implicitly offers an AI quest when an NPC has no seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN`. `« Is there any work I could take on? »` option injects dynamically.
+- **Save migration v2 → v3 is no longer a silent no-op.** `_migrate` now runs explicit per-version functions, validates the result against the Player model, and raises `SaveMigrationError` when a step is missing.
+- **`AIService` facade.** Single boundary `systems/` imports for AI generation — centralises try/except, fallback paths, and `is_available` gating. Systems no longer call `ContentGenerator` directly.

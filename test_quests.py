@@ -540,6 +540,133 @@ def main() -> None:
     finally:
         cleanup_state(state, slot)
 
+    # ── 15. Quest-seed dialogue injection ────────────────────────────────────
+    section("15. Quest-Seed Dialogue Injection")
+    slot = "_qtest_seeds_"
+    player, state = fresh_state("SeedTester", slot)
+    try:
+        from systems import npc_system
+        from config import AI_QUEST_DISPOSITION_MIN
+
+        # 15a. NPC with a concrete seed already wired in their dialogue triggers:
+        # the seed should be suppressed to avoid double-offering.
+        torven = npc_reg.get("torven_blacksmith")
+        assert torven is not None, "torven_blacksmith missing from registry"
+        npc_system.ensure_npc_instance(torven, state)
+        disp = npc_system.get_npc_disposition(torven, state)
+        pairs = npc_system.build_quest_seed_options(
+            npc=torven, state=state, quest_registry=quest_reg,
+            disposition=disp, ai_enabled=False,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        suppressed = all(p[1] is None or p[1].quest_template_id != "blacksmith_hammer"
+                         for p in pairs)
+        assert suppressed, (
+            "blacksmith_hammer seed should be suppressed (already wired in Torven dialogue)"
+        )
+        ok("Concrete seed already wired in dialogue is suppressed from injection")
+
+        # 15b. Synthesize an NPC with a concrete seed NOT wired in dialogue —
+        # the option should be injected with the template title.
+        from entities.npc import NPCTemplate, NPCDialogueNode, NPCQuestSeed
+        loose_npc = NPCTemplate(
+            template_id="_test_loose",
+            npc_id="_test_loose",
+            name="Loose End",
+            role="quest giver",
+            zone_id="village_start",
+            description="test",
+            starting_disposition=50.0,
+            dialogue_nodes={"root": NPCDialogueNode(node_id="root", npc_text="hi", options=[])},
+            quest_seeds=[NPCQuestSeed(
+                quest_template_id="blacksmith_hammer",  # not wired in this NPC's dialogue
+                trigger_disposition_min=-10.0,
+                already_given_flag="_test_loose_offered",
+            )],
+        )
+        npc_system.ensure_npc_instance(loose_npc, state)
+        pairs = npc_system.build_quest_seed_options(
+            npc=loose_npc, state=state, quest_registry=quest_reg,
+            disposition=50.0, ai_enabled=False,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        assert len(pairs) == 1, f"Expected 1 injected option, got {len(pairs)}"
+        opt, seed = pairs[0]
+        assert opt.option_id.startswith("__qseed__"), "Synthetic option_id wrong"
+        assert "Find" in opt.label or "hammer" in opt.label.lower(), \
+            f"Option label should include quest title, got: {opt.label}"
+        assert seed is not None and seed.quest_template_id == "blacksmith_hammer"
+        ok("Concrete seed not yet wired produces titled « ... » option")
+
+        # 15c. After already_given_flag is set, the option disappears.
+        player.set_flag("_test_loose_offered")
+        pairs = npc_system.build_quest_seed_options(
+            npc=loose_npc, state=state, quest_registry=quest_reg,
+            disposition=50.0, ai_enabled=False,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        # ai_enabled is False, so no implicit fallback either
+        assert pairs == [], f"Offered seed should not re-appear; got {pairs}"
+        ok("Seed disappears after already_given_flag is set")
+
+        # 15d. Implicit AI offer fires when: no available seeds + AI enabled +
+        # disposition >= threshold + no _ai_offered_ flag.
+        empty_npc = NPCTemplate(
+            template_id="_test_empty",
+            npc_id="_test_empty",
+            name="Open To Suggestions",
+            role="merchant",
+            zone_id="village_start",
+            description="test",
+            starting_disposition=50.0,
+            dialogue_nodes={"root": NPCDialogueNode(node_id="root", npc_text="hi", options=[])},
+            quest_seeds=[],
+        )
+        npc_system.ensure_npc_instance(empty_npc, state)
+        pairs = npc_system.build_quest_seed_options(
+            npc=empty_npc, state=state, quest_registry=quest_reg,
+            disposition=50.0, ai_enabled=True,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        assert len(pairs) == 1 and pairs[0][1] is None, (
+            f"Expected one implicit-AI option (seed=None); got {pairs}"
+        )
+        assert pairs[0][0].option_id == "__qseed__ai_implicit"
+        ok("Implicit AI offer fires when seeds empty + disposition high + AI on")
+
+        # 15e. Implicit AI offer is suppressed below the disposition threshold.
+        pairs = npc_system.build_quest_seed_options(
+            npc=empty_npc, state=state, quest_registry=quest_reg,
+            disposition=0.0, ai_enabled=True,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        assert pairs == [], "Implicit AI offer should not fire below disposition threshold"
+        ok("Implicit AI offer suppressed below disposition threshold")
+
+        # 15f. Implicit AI offer is suppressed when AI is disabled.
+        pairs = npc_system.build_quest_seed_options(
+            npc=empty_npc, state=state, quest_registry=quest_reg,
+            disposition=50.0, ai_enabled=False,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        assert pairs == [], "Implicit AI offer should not fire when AI disabled"
+        ok("Implicit AI offer suppressed when AI disabled")
+
+        # 15g. Once offered (flag set), implicit option does not re-appear.
+        player.set_flag(f"_ai_offered_{empty_npc.npc_id}")
+        pairs = npc_system.build_quest_seed_options(
+            npc=empty_npc, state=state, quest_registry=quest_reg,
+            disposition=50.0, ai_enabled=True,
+            ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
+        )
+        assert pairs == [], "Implicit AI offer should not re-fire after _ai_offered_ flag"
+        ok("Implicit AI offer respects _ai_offered_ flag")
+    except Exception as e:
+        fail("Quest-seed dialogue injection broken", e)
+        traceback.print_exc()
+    finally:
+        cleanup_state(state, slot)
+
     _report()
 
 

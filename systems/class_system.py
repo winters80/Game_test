@@ -47,13 +47,15 @@ def resolve_combo_class(
     class_registry: "ClassRegistry",
     item_registry: "ItemRegistry",
     skill_registry: "SkillRegistry",
-    ai_content_generator: object | None = None,
+    ai_service: object | None = None,
 ) -> ClassDefinition | None:
     """
     3-layer class resolution:
     1. Exact combo match (JSON lookup)
     2. Pattern match (partial requirements)
     3. AI generation if divergence score >= threshold
+
+    ``ai_service`` is an AIService instance. None disables Layer 3.
     """
     player_classes = {c for c in [player.base_class, player.secondary_class] if c}
     if not player_classes:
@@ -76,11 +78,11 @@ def resolve_combo_class(
         if set(req.required_classes).issubset(player_classes):
             return cls  # best-effort match without full requirements
 
-    # Layer 3: AI generation
+    # Layer 3: AI generation (via AIService — handles exceptions + unavailability)
     divergence = compute_divergence_score(player, class_registry, item_registry)
-    if divergence.trigger_ai and ai_content_generator is not None:
+    if divergence.trigger_ai and ai_service is not None and getattr(ai_service, "is_available", False):
         bus.emit(Event("ANOMALY_DETECTED", {}))
-        generated_class = ai_content_generator.generate_class(player, divergence, class_registry)
+        generated_class = ai_service.generate_class(player, divergence, class_registry)
         if generated_class:
             class_registry.register(generated_class)
             return generated_class
