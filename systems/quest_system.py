@@ -328,6 +328,21 @@ def generate_ai_quest(
     if not template:
         return None
 
+    # Clamp the AI-proposed reward to the player-level economy. The prompt
+    # tells the LLM the right range but we don't trust it — a hallucinating
+    # model would otherwise drop 5000g on a level-1 player and break the
+    # entire item economy in one quest.
+    from systems.economy import clamp_quest_reward, infer_difficulty_from_stages
+    difficulty = infer_difficulty_from_stages(len(template.stages))
+    clamped_gold, clamped_xp = clamp_quest_reward(
+        proposed_gold=template.reward_gold,
+        proposed_xp=template.reward_xp,
+        player_level=state.player.level,
+        difficulty=difficulty,
+    )
+    template.reward_gold = clamped_gold
+    template.reward_xp = clamped_xp
+
     # Store AI quest definition in world_db
     instance_id = str(uuid.uuid4())[:8]
     initial_stage = template.initial_stage_id
