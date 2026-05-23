@@ -1048,6 +1048,106 @@ def main() -> None:
         fail("Free-function trigger processing broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("16. AIService Async Class Generation")
+    try:
+        from ai.ai_service import AIService
+
+        # 16a. submit_class_generation_async returns None when AI is unavailable
+        empty = AIService()
+        assert empty.submit_class_generation_async(None, None, None) is None
+        ok("submit_class_generation_async returns None when AI unavailable")
+
+        # 16b. await_class_result returns None for a None future (safe to call)
+        assert AIService.await_class_result(None, timeout=1.0) is None
+        ok("await_class_result handles None future without raising")
+
+        # 16c. With a fake generator, async submission returns a Future that resolves
+        from concurrent.futures import Future
+        class _FastGen:
+            def generate_class(self, p, d, r):
+                return "MOCK_CLASS_DEF"
+        svc = AIService(content_generator=_FastGen())
+        fut = svc.submit_class_generation_async(None, None, None)
+        assert isinstance(fut, Future), f"Expected Future, got {type(fut)}"
+        result = AIService.await_class_result(fut, timeout=5.0)
+        assert result == "MOCK_CLASS_DEF", f"Async result wrong: {result}"
+        ok("submit_class_generation_async returns Future that resolves via await_class_result")
+
+        # 16d. A generator that raises returns None (caught + logged)
+        class _BrokenGen:
+            def generate_class(self, p, d, r):
+                raise RuntimeError("Ollama exploded")
+        svc2 = AIService(content_generator=_BrokenGen())
+        fut2 = svc2.submit_class_generation_async(None, None, None)
+        result2 = AIService.await_class_result(fut2, timeout=5.0)
+        assert result2 is None, "Broken gen should produce None result"
+        ok("Async class gen handles generator exceptions and yields None")
+
+        # 16e. shutdown is safe to call repeatedly
+        svc.shutdown()
+        svc.shutdown()
+        svc2.shutdown()
+        ok("AIService.shutdown() is idempotent")
+    except Exception as e:
+        fail("AIService async class generation broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("17. world_db Repo Split (Round-trip via Public Methods)")
+    try:
+        from persistence.save_manager import new_game_state as _ngs, close_game as _cgs
+        _pl = Player(name="RepoRT", base_class="warrior")
+        _st = _ngs(_pl, SAVES_DIR, "_repo_split_test_")
+        try:
+            wdb = _st.world_db
+            assert wdb is not None, "Test save needs a world_db"
+
+            # NPC delegate round-trip
+            wdb.upsert_npc("test_npc_1", "tmpl", "village_start", "merchant")
+            row = wdb.get_npc("test_npc_1")
+            assert row and row["template_id"] == "tmpl", "NPC repo delegate broken"
+            ok("NPC repo delegate: upsert + get round-trip")
+
+            # Faction delegate round-trip
+            wdb.update_faction_standing("test_fac", 15.0)
+            standing, rank = wdb.get_faction_standing("test_fac")
+            assert standing == 15.0, f"Faction standing wrong: {standing}"
+            ok("Faction repo delegate: update + get round-trip")
+
+            # World flag delegate round-trip
+            wdb.set_world_flag("test_repo_flag", "yes")
+            assert wdb.get_world_flag("test_repo_flag") == "yes"
+            assert wdb.has_world_flag("test_repo_flag") is True
+            ok("World-state repo delegate: flag round-trip")
+
+            # Death repo delegate
+            wdb.record_death("combat:slime", "dungeon", 5, 1, 0.0, 8)
+            assert wdb.get_death_count() == 1, "Death record didn't persist"
+            ok("Death repo delegate: record + count round-trip")
+
+            # World event repo delegate
+            wdb.store_world_event("rumor", "Test rumor text", zone_id="z1", generated_turn=1)
+            events = wdb.get_recent_events(limit=5, event_type="rumor")
+            assert any(e["event_text"] == "Test rumor text" for e in events)
+            ok("AI-content repo delegate: store_world_event + get_recent round-trip")
+
+            # Verify the repo functions are also callable directly with conn
+            from persistence.repos import npc_repo
+            direct_row = npc_repo.get_npc(wdb._conn, "test_npc_1")
+            assert direct_row and direct_row["template_id"] == "tmpl"
+            ok("Repo functions are callable directly (sqlite3.Connection arg)")
+        finally:
+            _cgs(_st)
+            for ext in (".json", ".db"):
+                p = SAVES_DIR / f"_repo_split_test_{ext}"
+                if p.exists():
+                    try: p.unlink()
+                    except OSError: pass
+    except Exception as e:
+        fail("world_db repo split broken", e)
+        traceback.print_exc()
+
     _report()
 
 

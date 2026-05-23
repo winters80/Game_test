@@ -400,245 +400,136 @@ class WorldDatabase:
         )
         self._conn.commit()
 
-    # ── NPC ───────────────────────────────────────────────────────────────────
+    # ── NPC (delegates to persistence/repos/npc_repo.py) ─────────────────────
 
     def upsert_npc(self, npc_id: str, template_id: str, zone_id: str, role: str) -> None:
+        from persistence.repos import npc_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO npc_instances (npc_id, template_id, current_zone_id, current_role)
-               VALUES (?, ?, ?, ?)
-               ON CONFLICT(npc_id) DO NOTHING""",
-            (npc_id, template_id, zone_id, role),
-        )
-        self._conn.commit()
+        npc_repo.upsert_npc(self._conn, npc_id, template_id, zone_id, role)
 
     def get_npc(self, npc_id: str) -> dict[str, Any] | None:
+        from persistence.repos import npc_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT * FROM npc_instances WHERE npc_id = ?", (npc_id,)
-        ).fetchone()
-        return dict(row) if row else None
+        return npc_repo.get_npc(self._conn, npc_id)
 
     def update_npc_disposition(self, npc_id: str, delta: float) -> None:
+        from persistence.repos import npc_repo
         assert self._conn
-        self._conn.execute(
-            """UPDATE npc_instances
-               SET disposition = MAX(-100.0, MIN(100.0, disposition + ?))
-               WHERE npc_id = ?""",
-            (delta, npc_id),
-        )
-        self._conn.commit()
+        npc_repo.update_npc_disposition(self._conn, npc_id, delta)
 
     def set_npc_state(self, npc_id: str, key: str, value: Any) -> None:
-        """Set a key in the NPC's custom_state JSON blob."""
+        from persistence.repos import npc_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT custom_state FROM npc_instances WHERE npc_id = ?", (npc_id,)
-        ).fetchone()
-        if not row:
-            return
-        state = json.loads(row["custom_state"] or "{}")
-        state[key] = value
-        self._conn.execute(
-            "UPDATE npc_instances SET custom_state = ? WHERE npc_id = ?",
-            (json.dumps(state), npc_id),
-        )
-        self._conn.commit()
+        npc_repo.set_npc_state(self._conn, npc_id, key, value)
 
     def add_npc_memory(
         self, npc_id: str, event_type: str, summary: str,
         turn_number: int = 0, alignment_snapshot: float = 0.0,
     ) -> None:
+        from persistence.repos import npc_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO npc_memory
-               (npc_id, event_type, summary, turn_number, alignment_snapshot)
-               VALUES (?, ?, ?, ?, ?)""",
-            (npc_id, event_type, summary, turn_number, alignment_snapshot),
+        npc_repo.add_npc_memory(
+            self._conn, npc_id, event_type, summary,
+            turn_number=turn_number, alignment_snapshot=alignment_snapshot,
         )
-        self._conn.commit()
 
     def get_npc_memory(self, npc_id: str, limit: int = 20) -> list[dict[str, Any]]:
+        from persistence.repos import npc_repo
         assert self._conn
-        rows = self._conn.execute(
-            """SELECT * FROM npc_memory WHERE npc_id = ?
-               ORDER BY id DESC LIMIT ?""",
-            (npc_id, limit),
-        ).fetchall()
-        return [dict(r) for r in reversed(rows)]
+        return npc_repo.get_npc_memory(self._conn, npc_id, limit=limit)
 
     def count_npc_memory(self, npc_id: str) -> int:
+        from persistence.repos import npc_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT COUNT(*) as c FROM npc_memory WHERE npc_id = ? AND is_compressed = 0",
-            (npc_id,),
-        ).fetchone()
-        return row["c"] if row else 0
+        return npc_repo.count_npc_memory(self._conn, npc_id)
 
     def compress_npc_memory(self, npc_id: str, summary: str, up_to_id: int) -> None:
-        """Replace memory rows up to up_to_id with a single compressed summary."""
+        from persistence.repos import npc_repo
         assert self._conn
-        with self.transaction() as conn:
-            conn.execute(
-                "DELETE FROM npc_memory WHERE npc_id = ? AND id <= ? AND is_compressed = 0",
-                (npc_id, up_to_id),
-            )
-            conn.execute(
-                """INSERT INTO npc_memory
-                   (npc_id, event_type, summary, is_compressed)
-                   VALUES (?, 'compressed_history', ?, 1)""",
-                (npc_id, summary),
-            )
+        npc_repo.compress_npc_memory(self._conn, npc_id, summary, up_to_id)
 
-    # ── Quests ────────────────────────────────────────────────────────────────
+    # ── Quests (delegates to persistence/repos/quest_repo.py) ────────────────
 
     def add_quest(
         self, instance_id: str, template_id: str | None,
         initial_state: str, giver_npc_id: str | None,
         turn_number: int = 0, ai_context: dict | None = None,
     ) -> None:
+        from persistence.repos import quest_repo
         assert self._conn
-        with self.transaction() as conn:
-            conn.execute(
-                """INSERT INTO quest_instances
-                   (instance_id, template_id, current_state, giver_npc_id,
-                    accepted_turn, ai_context)
-                   VALUES (?, ?, ?, ?, ?, ?)""",
-                (
-                    instance_id, template_id, initial_state, giver_npc_id,
-                    turn_number, json.dumps(ai_context or {}),
-                ),
-            )
+        quest_repo.add_quest(
+            self._conn, instance_id, template_id, initial_state, giver_npc_id,
+            turn_number=turn_number, ai_context=ai_context,
+        )
 
     def store_ai_quest(self, instance_id: str, definition: dict) -> None:
+        from persistence.repos import quest_repo
         assert self._conn
-        self._conn.execute(
-            "INSERT OR REPLACE INTO ai_quest_data VALUES (?, ?)",
-            (instance_id, json.dumps(definition)),
-        )
-        self._conn.commit()
+        quest_repo.store_ai_quest(self._conn, instance_id, definition)
 
     def get_ai_quest_definition(self, instance_id: str) -> dict | None:
-        """Return the stored AI-generated quest template JSON for this instance, or None."""
+        from persistence.repos import quest_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT definition FROM ai_quest_data WHERE instance_id = ?",
-            (instance_id,),
-        ).fetchone()
-        if not row:
-            return None
-        try:
-            return json.loads(row["definition"])
-        except (json.JSONDecodeError, KeyError, IndexError):
-            return None
+        return quest_repo.get_ai_quest_definition(self._conn, instance_id)
 
     def get_quest(self, instance_id: str) -> dict[str, Any] | None:
+        from persistence.repos import quest_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT * FROM quest_instances WHERE instance_id = ?", (instance_id,)
-        ).fetchone()
-        return dict(row) if row else None
+        return quest_repo.get_quest(self._conn, instance_id)
 
     def get_active_quests(self) -> list[dict[str, Any]]:
+        from persistence.repos import quest_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT * FROM quest_instances WHERE is_active = 1"
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return quest_repo.get_active_quests(self._conn)
 
     def advance_quest(self, instance_id: str, new_state: str) -> None:
+        from persistence.repos import quest_repo
         assert self._conn
-        self._conn.execute(
-            "UPDATE quest_instances SET current_state = ? WHERE instance_id = ?",
-            (new_state, instance_id),
-        )
-        self._conn.commit()
+        quest_repo.advance_quest(self._conn, instance_id, new_state)
 
     def complete_quest(self, instance_id: str, outcome: str, turn_number: int) -> None:
+        from persistence.repos import quest_repo
         assert self._conn
-        self._conn.execute(
-            """UPDATE quest_instances
-               SET is_active = 0, outcome = ?, completed_turn = ?
-               WHERE instance_id = ?""",
-            (outcome, turn_number, instance_id),
-        )
-        self._conn.commit()
+        quest_repo.complete_quest(self._conn, instance_id, outcome, turn_number)
 
-    # ── Factions ──────────────────────────────────────────────────────────────
+    # ── Factions (delegates to persistence/repos/faction_repo.py) ────────────
 
     def get_faction_standing(self, faction_id: str) -> tuple[float, str]:
+        from persistence.repos import faction_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT standing, rank FROM faction_standing WHERE faction_id = ?",
-            (faction_id,),
-        ).fetchone()
-        return (row["standing"], row["rank"]) if row else (0.0, "outsider")
+        return faction_repo.get_faction_standing(self._conn, faction_id)
 
     def update_faction_standing(self, faction_id: str, delta: float) -> None:
+        from persistence.repos import faction_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO faction_standing (faction_id, standing)
-               VALUES (?, ?)
-               ON CONFLICT(faction_id) DO UPDATE SET
-                 standing = MAX(-100.0, MIN(100.0, standing + excluded.standing))""",
-            (faction_id, delta),
-        )
-        self._conn.commit()
+        faction_repo.update_faction_standing(self._conn, faction_id, delta)
 
     def set_faction_rank(self, faction_id: str, rank: str) -> None:
+        from persistence.repos import faction_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO faction_standing (faction_id, rank)
-               VALUES (?, ?)
-               ON CONFLICT(faction_id) DO UPDATE SET rank = excluded.rank""",
-            (faction_id, rank),
-        )
-        self._conn.commit()
+        faction_repo.set_faction_rank(self._conn, faction_id, rank)
 
     def get_faction_relation(self, faction_a: str, faction_b: str) -> float:
+        from persistence.repos import faction_repo
         assert self._conn
-        # Normalise order so (a,b) and (b,a) are the same row
-        a, b = sorted([faction_a, faction_b])
-        row = self._conn.execute(
-            "SELECT relation FROM faction_relations WHERE faction_a = ? AND faction_b = ?",
-            (a, b),
-        ).fetchone()
-        return row["relation"] if row else 0.0
+        return faction_repo.get_faction_relation(self._conn, faction_a, faction_b)
 
     def update_faction_relation(self, faction_a: str, faction_b: str, delta: float) -> None:
+        from persistence.repos import faction_repo
         assert self._conn
-        a, b = sorted([faction_a, faction_b])
-        self._conn.execute(
-            """INSERT INTO faction_relations (faction_a, faction_b, relation)
-               VALUES (?, ?, ?)
-               ON CONFLICT(faction_a, faction_b) DO UPDATE SET
-                 relation = MAX(-100.0, MIN(100.0, relation + excluded.relation))""",
-            (a, b, delta),
-        )
-        self._conn.commit()
+        faction_repo.update_faction_relation(self._conn, faction_a, faction_b, delta)
 
     def get_all_faction_relations(self) -> list[dict]:
-        """Return all faction-to-faction relation rows."""
+        from persistence.repos import faction_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT faction_a, faction_b, relation FROM faction_relations"
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return faction_repo.get_all_faction_relations(self._conn)
 
     def set_faction_relation(self, faction_a: str, faction_b: str, relation: float) -> None:
-        """Absolute-set the relation between two factions (clamped -100..+100)."""
+        from persistence.repos import faction_repo
         assert self._conn
-        a, b = sorted([faction_a, faction_b])
-        clamped = max(-100.0, min(100.0, relation))
-        self._conn.execute(
-            """INSERT INTO faction_relations (faction_a, faction_b, relation)
-               VALUES (?, ?, ?)
-               ON CONFLICT(faction_a, faction_b) DO UPDATE SET relation = excluded.relation""",
-            (a, b, clamped),
-        )
-        self._conn.commit()
+        faction_repo.set_faction_relation(self._conn, faction_a, faction_b, relation)
 
-    # ── Auction House ─────────────────────────────────────────────────────────
+    # ── Auction House (delegates to persistence/repos/auction_repo.py) ───────
 
     def add_auction_listing(
         self, listing_id: str, auction_guild: str, item_id: str | None,
@@ -646,248 +537,139 @@ class WorldDatabase:
         expires_turn: int, seller_npc_id: str | None = None,
         reserve_price: int | None = None,
     ) -> None:
+        from persistence.repos import auction_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO auction_listings
-               (listing_id, auction_guild, item_id, item_type, quantity,
-                current_bid, minimum_bid, reserve_price, seller_npc_id, expires_turn)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (
-                listing_id, auction_guild, item_id, item_type, quantity,
-                starting_bid, starting_bid, reserve_price, seller_npc_id, expires_turn,
-            ),
+        auction_repo.add_auction_listing(
+            self._conn, listing_id, auction_guild, item_id, item_type, quantity,
+            starting_bid, expires_turn,
+            seller_npc_id=seller_npc_id, reserve_price=reserve_price,
         )
-        self._conn.commit()
 
     def place_bid(self, listing_id: str, bidder: str, amount: int, turn: int) -> bool:
-        """Place a bid. Returns True if bid was accepted (higher than current)."""
+        from persistence.repos import auction_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT current_bid, status FROM auction_listings WHERE listing_id = ?",
-            (listing_id,),
-        ).fetchone()
-        if not row or row["status"] != "active":
-            return False
-        if amount <= row["current_bid"]:
-            return False
-        with self.transaction() as conn:
-            conn.execute(
-                "UPDATE auction_listings SET current_bid = ? WHERE listing_id = ?",
-                (amount, listing_id),
-            )
-            conn.execute(
-                "INSERT INTO auction_bids (listing_id, bidder, bid_amount, bid_turn) VALUES (?, ?, ?, ?)",
-                (listing_id, bidder, amount, turn),
-            )
-        return True
+        return auction_repo.place_bid(self._conn, listing_id, bidder, amount, turn)
 
     def get_active_listings(self, item_type: str | None = None) -> list[dict[str, Any]]:
+        from persistence.repos import auction_repo
         assert self._conn
-        if item_type:
-            rows = self._conn.execute(
-                "SELECT * FROM auction_listings WHERE status = 'active' AND item_type = ?",
-                (item_type,),
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT * FROM auction_listings WHERE status = 'active'"
-            ).fetchall()
-        return [dict(r) for r in rows]
+        return auction_repo.get_active_listings(self._conn, item_type=item_type)
 
     def expire_listings(self, current_turn: int) -> list[dict[str, Any]]:
-        """Close all listings past their expiry. Returns the expired listings."""
+        from persistence.repos import auction_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT * FROM auction_listings WHERE status = 'active' AND expires_turn <= ?",
-            (current_turn,),
-        ).fetchall()
-        expired = [dict(r) for r in rows]
-        if expired:
-            ids = [r["listing_id"] for r in expired]
-            placeholders = ",".join("?" * len(ids))
-            self._conn.execute(
-                f"UPDATE auction_listings SET status = 'expired' WHERE listing_id IN ({placeholders})",
-                ids,
-            )
-            self._conn.commit()
-        return expired
+        return auction_repo.expire_listings(self._conn, current_turn)
 
-    # ── Death Records ─────────────────────────────────────────────────────────
+    # ── Death Records (delegates to persistence/repos/death_repo.py) ─────────
 
     def record_death(
         self, cause: str, zone_id: str, turn_number: int,
         level_at_death: int, alignment_at_death: float, lives_remaining: int,
     ) -> None:
+        from persistence.repos import death_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO death_records
-               (cause, zone_id, turn_number, level_at_death, alignment_at_death, lives_remaining)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (cause, zone_id, turn_number, level_at_death, alignment_at_death, lives_remaining),
+        death_repo.record_death(
+            self._conn, cause, zone_id, turn_number,
+            level_at_death, alignment_at_death, lives_remaining,
         )
-        self._conn.commit()
 
     def get_death_count(self) -> int:
+        from persistence.repos import death_repo
         assert self._conn
-        row = self._conn.execute("SELECT COUNT(*) as c FROM death_records").fetchone()
-        return row["c"] if row else 0
+        return death_repo.get_death_count(self._conn)
 
-    # ── World Flags ───────────────────────────────────────────────────────────
+    # ── World Flags + Turn Log (delegates to world_state_repo.py) ────────────
 
     def set_world_flag(self, key: str, value: str = "true", turn: int = 0) -> None:
+        from persistence.repos import world_state_repo
         assert self._conn
-        self._conn.execute(
-            "INSERT OR REPLACE INTO world_flags VALUES (?, ?, ?)",
-            (key, value, turn),
-        )
-        self._conn.commit()
+        world_state_repo.set_world_flag(self._conn, key, value=value, turn=turn)
 
     def get_world_flag(self, key: str) -> str | None:
+        from persistence.repos import world_state_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT flag_value FROM world_flags WHERE flag_key = ?", (key,)
-        ).fetchone()
-        return row["flag_value"] if row else None
+        return world_state_repo.get_world_flag(self._conn, key)
 
     def has_world_flag(self, key: str) -> bool:
         return self.get_world_flag(key) is not None
 
-    # ── Turn Log ──────────────────────────────────────────────────────────────
-
     def log_event(self, turn_number: int, event_type: str, payload: dict | None = None) -> None:
+        from persistence.repos import world_state_repo
         assert self._conn
-        self._conn.execute(
-            "INSERT INTO turn_log (turn_number, event_type, payload) VALUES (?, ?, ?)",
-            (turn_number, event_type, json.dumps(payload or {})),
-        )
-        self._conn.commit()
+        world_state_repo.log_event(self._conn, turn_number, event_type, payload=payload)
 
-    # ── AI Generated Content ──────────────────────────────────────────────────
+    # ── AI generated content + skills + world events (ai_content_repo.py) ────
 
     def store_bg_content(
         self, content_type: str, content_id: str, definition: dict,
         zone_id: str | None = None, generated_turn: int = 0,
     ) -> None:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO ai_generated_content
-               (content_type, content_id, definition, zone_id, generated_turn)
-               VALUES (?, ?, ?, ?, ?)""",
-            (content_type, content_id, json.dumps(definition), zone_id, generated_turn),
+        ai_content_repo.store_bg_content(
+            self._conn, content_type, content_id, definition,
+            zone_id=zone_id, generated_turn=generated_turn,
         )
-        self._conn.commit()
 
     def get_unintegrated_bg_content(self, content_type: str | None = None) -> list[dict[str, Any]]:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        if content_type:
-            rows = self._conn.execute(
-                "SELECT * FROM ai_generated_content WHERE integrated = 0 AND content_type = ?",
-                (content_type,),
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT * FROM ai_generated_content WHERE integrated = 0"
-            ).fetchall()
-        return [dict(r) for r in rows]
+        return ai_content_repo.get_unintegrated_bg_content(self._conn, content_type=content_type)
 
     def mark_bg_content_integrated(self, row_id: int) -> None:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        self._conn.execute(
-            "UPDATE ai_generated_content SET integrated = 1 WHERE id = ?",
-            (row_id,),
-        )
-        self._conn.commit()
-
-    # ── AI-generated skills ───────────────────────────────────────────────────────
+        ai_content_repo.mark_bg_content_integrated(self._conn, row_id)
 
     def store_ai_skill(self, skill_id: str, definition: dict, source: str, generated_turn: int) -> None:
-        """Persist an AI-generated skill definition."""
+        from persistence.repos import ai_content_repo
         assert self._conn
-        self._conn.execute(
-            "INSERT OR REPLACE INTO ai_generated_skills VALUES (?, ?, ?, ?)",
-            (skill_id, json.dumps(definition), source, generated_turn),
-        )
-        self._conn.commit()
+        ai_content_repo.store_ai_skill(self._conn, skill_id, definition, source, generated_turn)
 
     def load_ai_skills(self) -> list[dict]:
-        """Load all AI-generated skill definitions as raw dicts."""
+        from persistence.repos import ai_content_repo
         assert self._conn
-        rows = self._conn.execute("SELECT definition FROM ai_generated_skills").fetchall()
-        return [json.loads(r["definition"]) for r in rows]
-
-    # ── Bot instances ─────────────────────────────────────────────────────────────
-
-    def upsert_bot_instance(self, bot_id: str, definition: dict, current_zone_id: str, last_active_turn: int) -> None:
-        """Save or update a bot agent's state."""
-        assert self._conn
-        self._conn.execute(
-            """INSERT INTO bot_instances (bot_id, definition, current_zone_id, last_active_turn)
-               VALUES (?, ?, ?, ?)
-               ON CONFLICT(bot_id) DO UPDATE SET
-                 definition = excluded.definition,
-                 current_zone_id = excluded.current_zone_id,
-                 last_active_turn = excluded.last_active_turn""",
-            (bot_id, json.dumps(definition), current_zone_id, last_active_turn),
-        )
-        self._conn.commit()
-
-    def load_bot_instances(self) -> list[dict]:
-        """Load all bot agent rows as plain dicts."""
-        assert self._conn
-        rows = self._conn.execute("SELECT * FROM bot_instances").fetchall()
-        return [dict(r) for r in rows]
-
-    # ── World Events ──────────────────────────────────────────────────────────
+        return ai_content_repo.load_ai_skills(self._conn)
 
     def store_world_event(
-        self,
-        event_type: str,
-        event_text: str,
-        zone_id: str | None = None,
-        title: str = "",
-        npc_hint: str = "",
-        generated_turn: int = 0,
+        self, event_type: str, event_text: str, zone_id: str | None = None,
+        title: str = "", npc_hint: str = "", generated_turn: int = 0,
     ) -> None:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO world_events
-               (event_type, zone_id, event_text, title, npc_hint, generated_turn)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (event_type, zone_id, event_text, title, npc_hint, generated_turn),
+        ai_content_repo.store_world_event(
+            self._conn, event_type, event_text, zone_id=zone_id,
+            title=title, npc_hint=npc_hint, generated_turn=generated_turn,
         )
-        self._conn.commit()
 
     def get_unshown_events(self, limit: int = 10) -> list[dict[str, Any]]:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT * FROM world_events WHERE shown = 0 ORDER BY id ASC LIMIT ?",
-            (limit,),
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return ai_content_repo.get_unshown_events(self._conn, limit=limit)
 
     def mark_events_shown(self, ids: list[int]) -> None:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        if ids:
-            placeholders = ",".join("?" * len(ids))
-            self._conn.execute(
-                f"UPDATE world_events SET shown = 1 WHERE id IN ({placeholders})", ids
-            )
-            self._conn.commit()
+        ai_content_repo.mark_events_shown(self._conn, ids)
 
     def get_recent_events(self, limit: int = 20, event_type: str | None = None) -> list[dict[str, Any]]:
+        from persistence.repos import ai_content_repo
         assert self._conn
-        if event_type:
-            rows = self._conn.execute(
-                "SELECT * FROM world_events WHERE event_type = ? ORDER BY id DESC LIMIT ?",
-                (event_type, limit),
-            ).fetchall()
-        else:
-            rows = self._conn.execute(
-                "SELECT * FROM world_events ORDER BY id DESC LIMIT ?", (limit,)
-            ).fetchall()
-        return [dict(r) for r in rows]
+        return ai_content_repo.get_recent_events(self._conn, limit=limit, event_type=event_type)
 
-    # ── Guild State ───────────────────────────────────────────────────────────
+    # ── Bot instances (delegates to persistence/repos/bot_repo.py) ───────────
+
+    def upsert_bot_instance(self, bot_id: str, definition: dict, current_zone_id: str, last_active_turn: int) -> None:
+        from persistence.repos import bot_repo
+        assert self._conn
+        bot_repo.upsert_bot_instance(self._conn, bot_id, definition, current_zone_id, last_active_turn)
+
+    def load_bot_instances(self) -> list[dict]:
+        from persistence.repos import bot_repo
+        assert self._conn
+        return bot_repo.load_bot_instances(self._conn)
+
+    # ── Guild (state + members + relations + projects) → guild_db_repo.py ────
 
     def add_guild_state(
         self, guild_id: str, template_id: str, name: str, founding_turn: int,
@@ -895,209 +677,111 @@ class WorldDatabase:
         founder_entity_id: str = "", founding_reason: str = "",
         is_player_founded: int = 0,
     ) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO guild_state
-               (guild_id, template_id, name, founding_turn, founding_reason,
-                founder_entity_id, headquarters_zone_id, archetype,
-                tick_last_updated, is_player_founded)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (guild_id, template_id, name, founding_turn, founding_reason,
-             founder_entity_id, headquarters_zone_id, archetype,
-             founding_turn, is_player_founded),
+        guild_db_repo.add_guild_state(
+            self._conn, guild_id, template_id, name, founding_turn,
+            headquarters_zone_id, archetype,
+            founder_entity_id=founder_entity_id, founding_reason=founding_reason,
+            is_player_founded=is_player_founded,
         )
-        self._conn.commit()
 
     def get_guild_state(self, guild_id: str) -> dict | None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT * FROM guild_state WHERE guild_id = ?", (guild_id,)
-        ).fetchone()
-        return dict(row) if row else None
+        return guild_db_repo.get_guild_state(self._conn, guild_id)
 
     def get_all_guild_states(self) -> list[dict]:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        rows = self._conn.execute("SELECT * FROM guild_state").fetchall()
-        return [dict(r) for r in rows]
+        return guild_db_repo.get_all_guild_states(self._conn)
 
     def update_guild_state(self, guild_id: str, **fields) -> None:
-        """Update any subset of guild_state fields. Uses keyword arguments."""
+        from persistence.repos import guild_db_repo
         assert self._conn
-        if not fields:
-            return
-        allowed = {
-            "name", "current_leader_id", "archetype", "lifecycle_state",
-            "morale", "stability", "influence", "secrecy", "wealth",
-            "current_focus", "tick_last_updated", "is_hidden",
-            "founding_reason", "founder_entity_id",
-        }
-        set_parts = []
-        values = []
-        for k, v in fields.items():
-            if k in allowed:
-                set_parts.append(f"{k} = ?")
-                values.append(v)
-        if not set_parts:
-            return
-        values.append(guild_id)
-        self._conn.execute(
-            f"UPDATE guild_state SET {', '.join(set_parts)} WHERE guild_id = ?",
-            values,
-        )
-        self._conn.commit()
-
-    # ── Guild Members ─────────────────────────────────────────────────────────
+        guild_db_repo.update_guild_state(self._conn, guild_id, **fields)
 
     def add_guild_member(
         self, guild_id: str, entity_id: str, entity_type: str,
         rank_id: str, joined_turn: int,
         loyalty: int = 50, ambition: int = 50,
     ) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO guild_members
-               (guild_id, entity_id, entity_type, rank_id, joined_turn, loyalty, ambition)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(guild_id, entity_id) DO NOTHING""",
-            (guild_id, entity_id, entity_type, rank_id, joined_turn, loyalty, ambition),
+        guild_db_repo.add_guild_member(
+            self._conn, guild_id, entity_id, entity_type,
+            rank_id, joined_turn, loyalty=loyalty, ambition=ambition,
         )
-        self._conn.commit()
 
     def get_guild_members(self, guild_id: str) -> list[dict]:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT * FROM guild_members WHERE guild_id = ?", (guild_id,)
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return guild_db_repo.get_guild_members(self._conn, guild_id)
 
     def get_member(self, guild_id: str, entity_id: str) -> dict | None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT * FROM guild_members WHERE guild_id = ? AND entity_id = ?",
-            (guild_id, entity_id),
-        ).fetchone()
-        return dict(row) if row else None
+        return guild_db_repo.get_member(self._conn, guild_id, entity_id)
 
     def update_member(self, guild_id: str, entity_id: str, **fields) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        allowed = {"rank_id", "standing", "loyalty", "ambition", "last_promotion_turn"}
-        set_parts = []
-        values = []
-        for k, v in fields.items():
-            if k in allowed:
-                set_parts.append(f"{k} = ?")
-                values.append(v)
-        if not set_parts:
-            return
-        values.extend([guild_id, entity_id])
-        self._conn.execute(
-            f"UPDATE guild_members SET {', '.join(set_parts)} WHERE guild_id = ? AND entity_id = ?",
-            values,
-        )
-        self._conn.commit()
+        guild_db_repo.update_member(self._conn, guild_id, entity_id, **fields)
 
     def remove_guild_member(self, guild_id: str, entity_id: str) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            "DELETE FROM guild_members WHERE guild_id = ? AND entity_id = ?",
-            (guild_id, entity_id),
-        )
-        self._conn.commit()
-
-    # ── Guild Relations ───────────────────────────────────────────────────────
+        guild_db_repo.remove_guild_member(self._conn, guild_id, entity_id)
 
     def set_guild_relation(
         self, guild_id_1: str, guild_id_2: str, stance: str = "neutral",
         trust: int = 50, hostility: int = 0, tension: int = 0, turn: int = 0,
     ) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        # Normalise key order
-        a, b = sorted([guild_id_1, guild_id_2])
-        self._conn.execute(
-            """INSERT INTO guild_relations
-               (guild_id_1, guild_id_2, stance, trust, hostility, tension, last_changed_turn)
-               VALUES (?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(guild_id_1, guild_id_2) DO UPDATE SET
-                 stance = excluded.stance,
-                 trust = excluded.trust,
-                 hostility = excluded.hostility,
-                 tension = excluded.tension,
-                 last_changed_turn = excluded.last_changed_turn""",
-            (a, b, stance, trust, hostility, tension, turn),
+        guild_db_repo.set_guild_relation(
+            self._conn, guild_id_1, guild_id_2, stance=stance,
+            trust=trust, hostility=hostility, tension=tension, turn=turn,
         )
-        self._conn.commit()
 
     def get_guild_relation(self, guild_id_1: str, guild_id_2: str) -> dict | None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        a, b = sorted([guild_id_1, guild_id_2])
-        row = self._conn.execute(
-            "SELECT * FROM guild_relations WHERE guild_id_1 = ? AND guild_id_2 = ?",
-            (a, b),
-        ).fetchone()
-        return dict(row) if row else None
+        return guild_db_repo.get_guild_relation(self._conn, guild_id_1, guild_id_2)
 
     def update_guild_relation(self, guild_id_1: str, guild_id_2: str, **fields) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        a, b = sorted([guild_id_1, guild_id_2])
-        allowed = {"stance", "trust", "hostility", "tension", "last_changed_turn"}
-        set_parts = []
-        values = []
-        for k, v in fields.items():
-            if k in allowed:
-                set_parts.append(f"{k} = ?")
-                values.append(v)
-        if not set_parts:
-            return
-        values.extend([a, b])
-        self._conn.execute(
-            f"UPDATE guild_relations SET {', '.join(set_parts)} WHERE guild_id_1 = ? AND guild_id_2 = ?",
-            values,
-        )
-        self._conn.commit()
-
-    # ── Guild Projects ────────────────────────────────────────────────────────
+        guild_db_repo.update_guild_relation(self._conn, guild_id_1, guild_id_2, **fields)
 
     def add_guild_project(
         self, project_id: str, guild_id: str, project_type: str,
         started_turn: int, target_id: str = "", risk: int = 10,
         lead_entity_id: str = "",
     ) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            """INSERT INTO guild_projects
-               (project_id, guild_id, project_type, target_id, risk,
-                lead_entity_id, started_turn)
-               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-            (project_id, guild_id, project_type, target_id, risk,
-             lead_entity_id, started_turn),
+        guild_db_repo.add_guild_project(
+            self._conn, project_id, guild_id, project_type, started_turn,
+            target_id=target_id, risk=risk, lead_entity_id=lead_entity_id,
         )
-        self._conn.commit()
 
     def get_guild_projects(self, guild_id: str) -> list[dict]:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        rows = self._conn.execute(
-            "SELECT * FROM guild_projects WHERE guild_id = ?", (guild_id,)
-        ).fetchall()
-        return [dict(r) for r in rows]
+        return guild_db_repo.get_guild_projects(self._conn, guild_id)
 
     def get_project(self, project_id: str) -> dict | None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        row = self._conn.execute(
-            "SELECT * FROM guild_projects WHERE project_id = ?", (project_id,)
-        ).fetchone()
-        return dict(row) if row else None
+        return guild_db_repo.get_project(self._conn, project_id)
 
     def update_project(self, project_id: str, progress: int) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            "UPDATE guild_projects SET progress = ? WHERE project_id = ?",
-            (progress, project_id),
-        )
-        self._conn.commit()
+        guild_db_repo.update_project(self._conn, project_id, progress)
 
     def complete_project(self, project_id: str) -> None:
+        from persistence.repos import guild_db_repo
         assert self._conn
-        self._conn.execute(
-            "DELETE FROM guild_projects WHERE project_id = ?", (project_id,)
-        )
-        self._conn.commit()
+        guild_db_repo.complete_project(self._conn, project_id)
