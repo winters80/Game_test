@@ -140,78 +140,14 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
                 )
 
     def _get_current_options(self) -> list[SceneOption]:
-        scene = self.scene_registry.get(self.state.current_scene_id)
-        if not scene:
-            return []
-        options = scene.get_options(self.state, self.state.current_node_id)
-        # Inject any AI-generated dynamic options for this node
-        state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
-        dynamic = self.state._dynamic_options.get(state_key, [])
-        if dynamic:
-            options = list(options) + dynamic
-        return options
+        """Thin delegate — real logic lives in core/input_handler.py."""
+        from core.input_handler import get_current_options
+        return get_current_options(self)
 
     def _prompt_choice(self, options: list[SceneOption]) -> SceneOption | None:
-        renderer.print_options(options)
-
-        # Build questionary choices (skip locked ones)
-        available = [(i + 1, opt) for i, opt in enumerate(options) if not opt.locked]
-        if not available:
-            renderer.print_error("All options are locked.")
-            return None
-
-        extra = ["[?] Ask about this situation", "[K] Skills", "[I] Items & Equipment", "[L] World Log", "[S] Save game", "[A] Admin Panel", "[Q] Quit to menu"]
-        if feature("crafting_system"):
-            player = self.state.player
-            if player.has_flag("alchemist") or player.has_flag("crafter"):
-                extra.insert(2, "[C] Craft")
-        if feature("guild_system"):
-            extra.insert(-1, "[G] Found a Guild")
-        if feature("quest_system") and self.quest_registry:
-            extra.insert(3, "[J] Quest Journal")
-        choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extra
-        answer = questionary.select("Choose:", choices=choice_labels).ask()
-
-        if answer is None or answer.startswith("[Q]"):
-            self._running = False
-            return None
-        if answer.startswith("[S]"):
-            self._save_prompt()
-            return None
-        if answer.startswith("[A]"):
-            self._admin_panel()
-            return None
-        if answer.startswith("[?]"):
-            self._handle_situation_query(options)
-            return None
-        if answer.startswith("[K]"):
-            self._skills_menu()
-            return None
-        if answer.startswith("[I]"):
-            self._inventory_menu()
-            return None
-        if answer.startswith("[C]"):
-            self._craft_menu()
-            return None
-        if answer.startswith("[L]"):
-            self._lore_log()
-            return None
-        if answer.startswith("[G]"):
-            self._found_guild_menu()
-            return None
-        if answer.startswith("[J]"):
-            self._quests_menu()
-            return None
-
-        # Parse number
-        try:
-            num = int(answer.split(".")[0])
-            for i, opt in available:
-                if i == num:
-                    return opt
-        except (ValueError, IndexError):
-            pass
-        return None
+        """Thin delegate — real logic lives in core/input_handler.py."""
+        from core.input_handler import prompt_choice
+        return prompt_choice(self, options)
 
     def _update_faction_standing(self, faction_id: str, delta: float) -> None:
         """Handle update_faction:faction_id:delta trigger."""

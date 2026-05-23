@@ -1388,6 +1388,81 @@ def main() -> None:
         fail("BG scheduler extraction broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("21. Input Handler Extraction")
+    try:
+        from core import input_handler as _ih
+
+        assert callable(_ih.get_current_options)
+        assert callable(_ih.prompt_choice)
+        assert callable(_ih._build_extras)
+        ok("core.input_handler exposes get_current_options + prompt_choice + _build_extras")
+
+        # 21a. Hotkey table has the expected 10 entries
+        assert len(_ih._HOTKEYS) == 10, f"Expected 10 hotkeys, got {len(_ih._HOTKEYS)}"
+        keys = [k for k, _m, _l in _ih._HOTKEYS]
+        for required in ("[?]", "[K]", "[I]", "[J]", "[L]", "[C]", "[S]", "[A]", "[G]", "[Q]"):
+            assert required in keys, f"Hotkey {required} missing from _HOTKEYS"
+        ok("All 10 documented hotkeys present in _HOTKEYS table")
+
+        # 21b. _build_extras filters by feature flags + player flags
+        from config import FEATURES as _F
+        class _StubReg:
+            pass
+        class _IHPlayer:
+            def __init__(self):
+                self._flags: dict = {}
+            def has_flag(self, key): return self._flags.get(key, False)
+        class _IHState:
+            def __init__(self): self.player = _IHPlayer()  # per-instance, not shared
+        class _IHEngine:
+            def __init__(self):
+                self.state = _IHState()
+                self.quest_registry = None
+
+        # Save and restore feature flags
+        _saved = dict(_F)
+        try:
+            _F["crafting_system"] = False
+            _F["quest_system"]    = False
+            _F["guild_system"]    = False
+            extras = _ih._build_extras(_IHEngine())
+            assert all("[C]" not in e for e in extras), "[C] should be hidden when crafting off"
+            assert all("[J]" not in e for e in extras), "[J] should be hidden when quests off / no registry"
+            assert all("[G]" not in e for e in extras), "[G] should be hidden when guilds off"
+            ok("_build_extras hides crafting / quest / guild hotkeys when flags off")
+
+            _F["crafting_system"] = True
+            eng = _IHEngine()
+            eng.state.player._flags["alchemist"] = True
+            extras2 = _ih._build_extras(eng)
+            assert any("[C]" in e for e in extras2), "[C] should appear when crafting_system on AND alchemist flag set"
+            ok("[C] hotkey appears when crafting enabled AND player has alchemist/crafter flag")
+
+            # 21c. Crafting on but NO alchemist/crafter → [C] still hidden
+            eng2 = _IHEngine()  # fresh player, no flags
+            extras3 = _ih._build_extras(eng2)
+            assert all("[C]" not in e for e in extras3), (
+                "[C] should still be hidden when crafting_system on but player lacks alchemist/crafter flag"
+            )
+            ok("[C] hotkey hidden when crafting on but player has neither flag")
+
+            # 21d. Quest journal appears when quest_system flag + registry both present
+            _F["quest_system"] = True
+            class _IHEngine2:
+                def __init__(self):
+                    self.state = _IHState()
+                    self.quest_registry = _StubReg()  # truthy
+            extras4 = _ih._build_extras(_IHEngine2())
+            assert any("[J]" in e for e in extras4), "[J] should appear with quest_system on + registry set"
+            ok("[J] hotkey appears when quest_system on AND quest_registry present")
+        finally:
+            _F.clear()
+            _F.update(_saved)
+    except Exception as e:
+        fail("Input handler extraction broken", e)
+        traceback.print_exc()
+
     _report()
 
 
