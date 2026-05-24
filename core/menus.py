@@ -75,6 +75,16 @@ class GameMenusMixin:
         INSPECT_CHOICE = "✦ Inspect an unknown skill (System-Awakened)"
         skill_choices: list[str] = []
         skill_map: dict[str, object] = {}
+        # Show stat-points spend option whenever the player has any unspent.
+        # This used to only fire post-combat-victory, so players who leveled
+        # via quest XP would accumulate stat_points indefinitely.
+        stat_pts = player.stat_points
+        STATS_CHOICE = (
+            f"⚡ Spend stat points  ({stat_pts} pending)"
+            if stat_pts > 0 else None
+        )
+        if STATS_CHOICE:
+            skill_choices.append(STATS_CHOICE)
         if inspect_available:
             skill_choices.append(INSPECT_CHOICE)
         for group_name in ("ACTIVE", "PASSIVE", "TRIGGERED", "OTHER"):
@@ -96,6 +106,11 @@ class GameMenusMixin:
             chosen = questionary.select("Select skill to inspect:", choices=skill_choices).ask()
             if chosen is None or chosen == "← Back" or chosen.startswith("──"):
                 break
+
+            # ── Stat-points spend flow ───────────────────────────────────
+            if STATS_CHOICE and chosen == STATS_CHOICE:
+                self._spend_stat_points()
+                return self._skills_menu()
 
             # ── Inspect flow: ask the AI to materialise a new skill ──────
             if chosen == INSPECT_CHOICE:
@@ -142,7 +157,130 @@ class GameMenusMixin:
                     f"[dim_text]({uses} uses in combat)[/dim_text]"
                 )
             renderer.console.print()
-            renderer.prompt_any_key()
+
+            # Inspect existing skill — if player has Inspect passive and AI
+            # is online, offer to re-render the description with mechanical
+            # detail exposed (numbers, scaling, cooldown breakdown). Doesn't
+            # change the skill's effects, only refreshes the description.
+            if inspect_available:
+                action = questionary.select(
+                    "Action:",
+                    choices=[
+                        "← Back",
+                        "✦ Inspect mechanics (uses your Inspect passive)",
+                    ],
+                ).ask()
+                if action and action.startswith("✦"):
+                    self._inspect_existing_skill(skill)
+            else:
+                renderer.prompt_any_key()
+
+    def _inspect_existing_skill(self, skill) -> None:
+        """Show a richer, mechanically-precise description of a skill the
+        player already owns. Doesn't change the skill — just renders an
+        Inspect-flavoured tooltip computed locally from the skill's effects
+        plus the player's current stats. No AI call required.
+        """
+        from systems.skill_system import calculate_skill_damage
+        renderer.clear()
+        renderer.print_title()
+        renderer.console.print(
+            f"\n  [system_msg][ INSPECT — {skill.name.upper()} ][/system_msg]\n"
+        )
+
+        player = self.state.player
+        cur_lvl = player.skill_levels.get(skill.skill_id, 1)
+        uses    = player.skill_uses.get(skill.skill_id, 0)
+        to_next_lvl = "MASTERED" if cur_lvl >= skill.max_level else (
+            f"{5 - (uses % 5)} more uses to Lv {cur_lvl + 1}"
+        )
+
+        renderer.console.print(f"  [dim_text]{skill.description}[/dim_text]\n")
+        renderer.console.print(f"  Type           : {skill.skill_type.value}")
+        renderer.console.print(f"  Rarity         : {skill.rarity.value}")
+        if skill.mp_cost > 0:
+            mp_pct = (skill.mp_cost / player.max_mp * 100) if player.max_mp else 0
+            renderer.console.print(
+                f"  MP cost        : {skill.mp_cost}  [dim_text]({mp_pct:.0f}% of your pool)[/dim_text]"
+            )
+        if skill.cooldown_turns > 0:
+            renderer.console.print(f"  Cooldown       : {skill.cooldown_turns} combat turns")
+        renderer.console.print(f"  Mastery        : Lv {cur_lvl}/{skill.max_level}  ({uses} uses, {to_next_lvl})")
+        if skill.effects:
+            renderer.console.print("  Live values    :")
+            for eff in skill.effects:
+                stat = eff.scaling_stat or "—"
+                stat_val = getattr(player.stats, eff.scaling_stat, 0) if eff.scaling_stat else 0
+                # Show what this effect would actually compute to right now.
+                raw = eff.base_value + stat_val * eff.scaling_coefficient
+                # Apply skill-level scaling the same way calculate_skill_damage does
+                lvl_steps = max(0, cur_lvl - 1)
+                final = eff.base_value + lvl_steps * 1.0 + stat_val * eff.scaling_coefficient * (1.0 + lvl_steps * 0.10)
+                renderer.console.print(
+                    f"    [dim_text]{eff.effect_type.value.upper():<8} "
+                    f"base {eff.base_value} + {stat}({stat_val})×{eff.scaling_coefficient} "
+                    f"= [system_msg]{int(max(1, final))}[/system_msg][/dim_text]"
+                )
+            # Sanity check via the engine's own formula
+            real_dmg = calculate_skill_damage(skill, player)
+            renderer.console.print(
+                f"\n  [bright_yellow]System calculation: this skill would output {real_dmg} right now.[/bright_yellow]"
+            )
+        renderer.console.print()
+        renderer.prompt_any_key()
+
+    def _spend_stat_points(self) -> None:
+        """Interactive menu to spend pending stat_points.
+
+        Previously stat points only had a UI in the post-combat-victory
+        flow — players who leveled up via quest XP (no combat) had their
+        points pile up silently. This menu makes them spendable anywhere
+        the player opens the [K] skills menu.
+        """
+        from systems import level_system
+
+        player = self.state.player
+        while player.stat_points > 0:
+            renderer.clear()
+            renderer.print_title()
+            renderer.console.print(
+                f"\n  [system_msg][ STAT POINTS — {player.stat_points} TO SPEND ][/system_msg]\n"
+            )
+            s = player.stats
+            renderer.console.print(
+                f"  STR {s.STR}   INT {s.INT}   AGI {s.AGI}   LCK {s.LCK}\n"
+                f"  VIT {s.VIT}   WIS {s.WIS}   END {s.END}\n"
+                f"\n  HP {player.current_hp}/{player.max_hp}    "
+                f"MP {player.current_mp}/{player.max_mp}\n"
+            )
+            choices = [
+                f"STR {s.STR}  (+1 melee damage)",
+                f"INT {s.INT}  (+1 spell damage)",
+                f"AGI {s.AGI}  (+dodge, +crit chance)",
+                f"LCK {s.LCK}  (+crit chance, +loot rolls)",
+                f"VIT {s.VIT}  (+5 max HP)",
+                f"WIS {s.WIS}  (+spell scaling, +heal scaling)",
+                f"END {s.END}  (+3 max HP, +damage reduction)",
+                "← Done",
+            ]
+            choice = questionary.select(
+                f"Spend 1 point ({player.stat_points} remaining):",
+                choices=choices,
+            ).ask()
+            if choice is None or choice == "← Done":
+                break
+            stat = choice.split()[0]
+            ok_ = level_system.spend_stat_point(player, stat)
+            if not ok_:
+                renderer.print_error(f"Could not spend on {stat}.")
+                renderer.prompt_any_key()
+
+        if player.stat_points == 0:
+            renderer.print_system_message(
+                "All stat points allocated.", style="success",
+            )
+            import time as _t
+            _t.sleep(0.6)
 
     def _inspect_unknown_skill(self) -> None:
         """Player-driven AI skill generation via the Inspect passive.

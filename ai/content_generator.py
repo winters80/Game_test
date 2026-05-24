@@ -34,11 +34,17 @@ class ContentGenerator:
         divergence: "DivergenceResult",
         class_registry: "ClassRegistry",
         skill_registry: "SkillRegistry | None" = None,
+        rich_skills: bool = False,
     ) -> ClassDefinition | None:
         """Generate a unique class for a divergent player. When
         ``skill_registry`` is provided, every AI-proposed skill is also
         materialised as a real Skill object and registered — otherwise the
         class's starting_skills point to IDs that combat will silently drop.
+
+        ``rich_skills`` toggles whether each skill stub gets its own
+        contextual ``generate_skill`` AI pass. Adds significant latency
+        (3-5 extra AI calls per class). Use only when the caller can
+        absorb the wait — typically the BG-queue submission path.
         """
         standard_combos = self._get_standard_combo_names(player, class_registry)
         prompt = build_class_generation_prompt(player, divergence, standard_combos, self.lore_data)
@@ -51,7 +57,8 @@ class ContentGenerator:
             )
             ai_response = AIClassResponse.model_validate(raw)
             return self._convert_to_class_definition(
-                ai_response, player, divergence, skill_registry=skill_registry,
+                ai_response, player, divergence,
+                skill_registry=skill_registry, rich_skills=rich_skills,
             )
         except (OllamaParseError, OllamaTimeoutError, Exception) as e:
             logger.error(f"AI class generation failed: {e}")
@@ -387,7 +394,21 @@ class ContentGenerator:
         player: "Player",
         divergence: "DivergenceResult",
         skill_registry: "SkillRegistry | None" = None,
+        rich_skills: bool = False,
     ) -> ClassDefinition:
+        """Build a ClassDefinition from an AI class response.
+
+        ``rich_skills=False`` (default): each AI skill stub is converted
+        deterministically via _build_skill_from_stub (keyword-parsed
+        effect_hint). Fast — one AI call total for the class.
+
+        ``rich_skills=True``: each stub is ALSO fed back through the full
+        ``generate_skill`` pipeline using the class context. Adds 3-5
+        sequential AI calls per class (~30-60s of latency) but every
+        skill gets the same level of mechanical care a quest-reward or
+        inspect-flow skill does. Used by the BG-queue path so the slow
+        generation happens off the main thread.
+        """
         rarity = Rarity(ai_response.rarity)
 
         # Stat bonuses based on player's dominant stat
@@ -400,8 +421,32 @@ class ContentGenerator:
         # register it. Previously this method only stored skill IDs that
         # weren't backed by any registered Skill — combat silently dropped
         # them and the class's "unique skills" were invisible to the player.
+        ctx = {
+            "extra": f"Part of the AI-generated class '{ai_response.name}'. "
+                     f"Lore hook: {ai_response.lore_hook[:120]}",
+        }
         for stub in ai_response.skills:
-            built = self._build_skill_from_stub(stub, rarity, dominant_stat=dominant)
+            built: Skill | None = None
+            if rich_skills:
+                # Each stub goes through the full generate_skill pipeline
+                # using the class's lore as context. Falls back to the
+                # deterministic path if any single AI call fails.
+                try:
+                    built = self.generate_skill(
+                        player=player,
+                        name_hint=stub.name or stub.skill_id,
+                        source="class_grant",
+                        context=ctx,
+                        has_inspect=False,
+                    )
+                    if built is not None:
+                        # Force the AI to keep the stub's id so the
+                        # ClassDefinition's starting_skills list aligns.
+                        built.skill_id = stub.skill_id
+                except Exception:
+                    built = None
+            if built is None:
+                built = self._build_skill_from_stub(stub, rarity, dominant_stat=dominant)
             if skill_registry is not None and skill_registry.get(built.skill_id) is None:
                 skill_registry.register(built)
 

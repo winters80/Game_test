@@ -58,6 +58,22 @@ def notify_skill_acquired(console: "Console", skill_name: str, rarity: str, mess
     time.sleep(0.8)
 
 
+def notify_skill_leveled_up(console: "Console", skill_name: str, new_level: int, max_level: int) -> None:
+    """Player-facing celebration when a skill grows via use-count (F8)."""
+    msg = "SKILL MASTERY DEEPENS."
+    cap_note = "  (MASTERED)" if new_level >= max_level else ""
+    console.print(Panel(
+        Align.center(Text.assemble(
+            (msg + "\n", "system_msg"),
+            (f"[ {skill_name} ]", "bold bright_yellow"),
+            (f"  Lv {new_level}/{max_level}{cap_note}", "dim_text"),
+        )),
+        border_style="bright_yellow",
+        padding=(0, 4),
+    ))
+    time.sleep(0.6)
+
+
 def notify_class_assigned(console: "Console", class_name: str, rarity: str, messages: list[str]) -> None:
     msg = random.choice(messages) if messages else "CLASS DESIGNATION COMPLETE."
     color = _RARITY_COLORS.get(rarity, "white")
@@ -207,6 +223,14 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
             system_messages.get("skill_acquired", []),
         )
 
+    def on_skill_leveled_up(event: Event) -> None:
+        notify_skill_leveled_up(
+            console,
+            event.data.get("skill_name", "Unknown Skill"),
+            int(event.data.get("new_level", 1)),
+            int(event.data.get("max_level", 10)),
+        )
+
     def on_class_assigned(event: Event) -> None:
         notify_class_assigned(
             console,
@@ -248,6 +272,7 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
 
     bus.subscribe("LEVEL_UP", on_level_up)
     bus.subscribe("SKILL_ACQUIRED", on_skill_acquired)
+    bus.subscribe("SKILL_LEVELED_UP", on_skill_leveled_up)
     bus.subscribe("CLASS_ASSIGNED", on_class_assigned)
     bus.subscribe("ANOMALY_DETECTED", on_anomaly)
     bus.subscribe("ITEM_FOUND", on_item_found)

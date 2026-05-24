@@ -77,6 +77,7 @@ class AIService:
         divergence: "DivergenceResult",
         class_registry: "ClassRegistry",
         skill_registry: Any = None,
+        rich_skills: bool = False,
     ) -> "ClassDefinition | None":
         if self._gen is None:
             return None
@@ -84,6 +85,7 @@ class AIService:
             return self._gen.generate_class(
                 player, divergence, class_registry,
                 skill_registry=skill_registry,
+                rich_skills=rich_skills,
             )
         except Exception:
             logger.warning("AI class generation failed", exc_info=True)
