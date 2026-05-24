@@ -798,6 +798,56 @@ def main() -> None:
                 try: p.unlink()
                 except OSError: pass
 
+        # 11g. Full v1 → v4 round-trip from disk + save the migrated state +
+        #      reload it. Catches problems where the migrator chain produces
+        #      a model that loads but then can't be re-serialised.
+        slot2 = "_v1_roundtrip_test_"
+        v1_disk = {
+            "save_version": 1,
+            "player": {
+                "name": "Disk Tester",
+                "base_class": "rogue",
+                "stats": {"STR": 5, "INT": 5, "AGI": 8, "LCK": 6, "VIT": 5, "WIS": 5, "END": 5},
+            },
+            "current_scene_id": "village_start",
+            "current_node_id": "root",
+            "generated_content_cache": {},
+        }
+        v1_path = SAVES_DIR / f"{slot2}.json"
+        v1_path.write_text(_json.dumps(v1_disk), encoding="utf-8")
+
+        loaded = load_game(slot2, SAVES_DIR)
+        assert loaded is not None
+        assert loaded.player.skill_uses == {}, "v4 skill_uses missing on migrated player"
+        assert loaded.player.skill_levels == {}, "v4 skill_levels missing"
+
+        # Mutate + re-save
+        loaded.player.skill_uses["fireball"] = 3
+        loaded.player.skill_levels["fireball"] = 1
+        loaded.player.gold = 7777
+        save_game(loaded, slot2, SAVES_DIR)
+
+        # Re-load the migrated-then-saved file — should be v4 cleanly
+        reloaded = load_game(slot2, SAVES_DIR)
+        assert reloaded is not None
+        assert reloaded.player.gold == 7777, "Gold drift on second load"
+        assert reloaded.player.skill_uses == {"fireball": 3}, "skill_uses drift"
+        assert reloaded.player.skill_levels == {"fireball": 1}, "skill_levels drift"
+
+        # File on disk now declares v4
+        on_disk = _json.loads(v1_path.read_text(encoding="utf-8"))
+        assert on_disk["save_version"] == SAVE_VERSION, (
+            f"Saved file should be at current version {SAVE_VERSION}, got {on_disk['save_version']}"
+        )
+        ok(f"v1 disk-fixture → load → migrate → mutate → save → reload all clean "
+           f"(file now at v{SAVE_VERSION})")
+        close_game(reloaded)
+        for ext in (".json", ".db"):
+            p = SAVES_DIR / f"{slot2}{ext}"
+            if p.exists():
+                try: p.unlink()
+                except OSError: pass
+
     except Exception as e:
         fail("Save migration broken", e)
         traceback.print_exc()
@@ -822,7 +872,7 @@ def main() -> None:
         # 12b. AIService with a fake generator passes calls through unchanged.
         class _FakeGen:
             def __init__(self): self.calls = []
-            def generate_class(self, p, d, r, skill_registry=None):
+            def generate_class(self, p, d, r, skill_registry=None, rich_skills=False):
                 self.calls.append("class"); return "CLASS_OK"
             def generate_quest(self, p, gid, n, r):
                 self.calls.append("quest"); return "QUEST_OK"
@@ -846,7 +896,7 @@ def main() -> None:
 
         # 12c. Generator exceptions are caught and converted to None.
         class _BrokenGen:
-            def generate_class(self, *a, **kw): raise RuntimeError("ollama exploded")
+            def generate_class(self, *a, **kw): raise RuntimeError("ollama exploded")  # noqa: E501
             def generate_quest(self, *a, **kw): raise TimeoutError("timeout")
             def generate_guild_intent(self, *a, **kw): raise ValueError("bad json")
             def generate_guild_template(self, **kw): raise OSError("connection refused")
@@ -1065,7 +1115,7 @@ def main() -> None:
         # 16c. With a fake generator, async submission returns a Future that resolves
         from concurrent.futures import Future
         class _FastGen:
-            def generate_class(self, p, d, r, skill_registry=None):
+            def generate_class(self, p, d, r, skill_registry=None, rich_skills=False):
                 return "MOCK_CLASS_DEF"
         svc = AIService(content_generator=_FastGen())
         fut = svc.submit_class_generation_async(None, None, None)
@@ -1076,7 +1126,7 @@ def main() -> None:
 
         # 16d. A generator that raises returns None (caught + logged)
         class _BrokenGen:
-            def generate_class(self, p, d, r, skill_registry=None):
+            def generate_class(self, p, d, r, skill_registry=None, rich_skills=False):
                 raise RuntimeError("Ollama exploded")
         svc2 = AIService(content_generator=_BrokenGen())
         fut2 = svc2.submit_class_generation_async(None, None, None)

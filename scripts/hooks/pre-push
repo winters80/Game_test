@@ -3,28 +3,38 @@
 # Installed by scripts/install-hooks.sh / scripts/install-hooks.ps1
 cd "$(git rev-parse --show-toplevel)"
 
-echo ""
-echo "  Running test_characters.py..."
-echo ""
-python -X utf8 test_characters.py
-if [ $? -ne 0 ]; then
+# Runs every test file in the repo. The two main suites
+# (test_characters / test_quests) gate the core gameplay surface; the
+# supplementary tests under tests/ and test_runs.py cover migrations,
+# the background worker, and the guild simulator. All five must pass
+# before a push is allowed.
+
+run_suite() {
+    label="$1"
+    cmd="$2"
     echo ""
-    echo "  test_characters.py failed. Push aborted."
-    echo "  Fix the issues above, then push again."
+    echo "  Running $label..."
     echo ""
-    exit 1
-fi
+    eval "$cmd"
+    rc=$?
+    if [ $rc -ne 0 ]; then
+        echo ""
+        echo "  $label FAILED. Push aborted."
+        echo "  Fix the issues above, then push again."
+        echo ""
+        exit 1
+    fi
+}
+
+run_suite "test_characters.py"        "python -X utf8 test_characters.py"
+run_suite "test_quests.py"            "python -X utf8 test_quests.py"
+run_suite "test_runs.py"              "python -X utf8 test_runs.py"
+run_suite "tests/test_db_migrations"  "python -X utf8 tests/test_db_migrations.py"
+run_suite "tests/test_background_tick" "python -X utf8 tests/test_background_tick.py"
+run_suite "tests/test_guild_betrayal" "python -X utf8 tests/test_guild_betrayal.py"
+run_suite "tests/test_guild_founding" "python -X utf8 tests/test_guild_founding.py"
 
 echo ""
-echo "  Running test_quests.py..."
+echo "  ✓ All 7 test suites passed. Pushing."
 echo ""
-python -X utf8 test_quests.py
-if [ $? -ne 0 ]; then
-    echo ""
-    echo "  test_quests.py failed. Push aborted."
-    echo "  Fix the issues above, then push again."
-    echo ""
-    exit 1
-fi
-
 exit 0

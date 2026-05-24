@@ -65,6 +65,42 @@
             "memory_summary": "Player correctly deduced she was reviewing Floor 2 incident reports."
           },
           {
+            "option_id": "request_survey_contract",
+            "label": "I'd like the dungeon survey contract.",
+            "requires": {
+              "flags_absent": ["contract_dungeon_survey"]
+            },
+            "npc_response": "'Floor 1 sweep. Document creature types, patrol patterns, resource nodes. Pays 30g, standard first-contract terms. The contract's yours â€” bring me a clean report.'",
+            "triggers": [
+              "flag:contract_dungeon_survey",
+              "start_quest:dungeon_survey"
+            ],
+            "disposition_change": 3.0,
+            "leads_to_node": "root",
+            "memory_event_type": "took_contract",
+            "memory_summary": "Player took the dungeon survey contract."
+          },
+          {
+            "option_id": "request_fracture_inquiry",
+            "label": "Tell me about the Fracture anomaly â€” I'll look into it.",
+            "requires": {
+              "flags": ["knows_dungeon_floors"],
+              "flags_absent": ["started_fracture_inquiry"],
+              "stat_gates": [
+                {"stat": "INT", "threshold": 8, "gate_type": "soft", "soft_base_chance": 0.7}
+              ]
+            },
+            "npc_response": "Her eyes narrow. 'You sure? Anyone we've sent down hasn't come back the way they went down. The Mages Conclave pays 500g if you make it. They don't pay anything if you don't.' A breath. 'If you're committing, the contract is yours.'",
+            "triggers": [
+              "flag:started_fracture_inquiry",
+              "start_quest:fracture_investigation"
+            ],
+            "disposition_change": 8.0,
+            "leads_to_node": "root",
+            "memory_event_type": "took_serious_contract",
+            "memory_summary": "Player took the Fracture investigation contract."
+          },
+          {
             "option_id": "submit_survey",
             "label": "I completed the dungeon survey contract.",
             "requires": {
@@ -589,6 +625,22 @@
         "perception_reveal": "There's a second insignia under his collar â€” not the Guard's standard mark. A different faction symbol, partially visible when he turns.",
         "perception_threshold": 8,
         "options": [
+          {
+            "option_id": "ask_for_courier_work",
+            "label": "I'm reliable and I keep my mouth shut. Have any work?",
+            "requires": {
+              "flags_absent": ["started_verath_courier"]
+            },
+            "npc_response": "He measures you for a moment. 'There's a sealed letter that needs to reach the Palace District without being inspected. Eighty gold if it arrives unopened. Don't ask what's in it. Don't tell anyone who gave it to you.' He produces a small wax-sealed packet from inside his coat. 'Yes or no.'",
+            "triggers": [
+              "flag:started_verath_courier",
+              "start_quest:verath_courier"
+            ],
+            "disposition_change": 5.0,
+            "leads_to_node": "root",
+            "memory_event_type": "took_courier_job",
+            "memory_summary": "Player accepted the discreet courier job. Aldis is trusting them with something delicate."
+          },
           {
             "option_id": "ask_patrol",
             "label": "What are the patrol routes in this district?",

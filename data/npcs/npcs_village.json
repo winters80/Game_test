@@ -40,6 +40,23 @@
             "memory_summary": "Player made small talk about workload."
           },
           {
+            "option_id": "ask_for_training",
+            "label": "Teach me forge-craft. You owe me a favour.",
+            "requires": {
+              "flags": ["torven_owes_favour"],
+              "flags_absent": ["learned_torven_forge_lesson"]
+            },
+            "npc_response": "He looks you over once, slow. 'You'll never be a smith. But you've earned the right to ask, and I've got one technique that's worth more than gold. Watch.' He guides your hands through a single deliberate strike â€” the kind that finds a weak spot in iron and exploits it. 'Now you know it. Use it when it counts.'",
+            "triggers": [
+              "give_skill:torven_forge_lesson",
+              "flag:learned_torven_forge_lesson"
+            ],
+            "disposition_change": 5.0,
+            "leads_to_node": "root",
+            "memory_event_type": "taught_skill",
+            "memory_summary": "Player learned forge-strike technique from Torven."
+          },
+          {
             "option_id": "ask_about_hammer",
             "label": "That empty hook on the wall â€” something's missing.",
             "requires": {

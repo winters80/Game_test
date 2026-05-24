@@ -1347,6 +1347,105 @@ def main() -> None:
         fail("AI quest skill rewards / demo / inspect UI broken", e)
         traceback.print_exc()
 
+    # ── 21. Polish items: skill-level event + stat-points menu + trainer + quest-givers ──
+    section("21. Polish: SKILL_LEVELED_UP listener + stat menu + trainer NPC + quest givers")
+    try:
+        # 21a. SKILL_LEVELED_UP event now has a notification function
+        from ui.notifications import notify_skill_leveled_up
+        assert callable(notify_skill_leveled_up)
+        ok("ui.notifications.notify_skill_leveled_up exists")
+
+        # 21b. setup_notification_listeners subscribes to SKILL_LEVELED_UP
+        from core.event_bus import bus as _bus
+        bus_before = len(_bus._listeners.get("SKILL_LEVELED_UP", []))
+        from ui.notifications import setup_notification_listeners
+        from ui import renderer as _r
+        setup_notification_listeners(_r.console, {})
+        bus_after = len(_bus._listeners.get("SKILL_LEVELED_UP", []))
+        assert bus_after > bus_before, "setup_notification_listeners must subscribe to SKILL_LEVELED_UP"
+        ok("SKILL_LEVELED_UP listener wired by setup_notification_listeners")
+
+        # 21c. Stat-points menu method present
+        from core.menus import GameMenusMixin as _GMM
+        assert hasattr(_GMM, "_spend_stat_points"), \
+            "_spend_stat_points missing — players can't spend points outside combat"
+        ok("GameMenusMixin._spend_stat_points present (spend stat points anywhere)")
+
+        # 21d. Inspect-existing-skill helper present
+        assert hasattr(_GMM, "_inspect_existing_skill"), \
+            "_inspect_existing_skill missing — Inspect can only build new skills"
+        ok("GameMenusMixin._inspect_existing_skill present (Inspect owned skills)")
+
+        # 21e. Trainer NPC option exists on Torven
+        from entities.npc import NPCRegistry as _NR
+        npc_reg2 = _NR()
+        npc_reg2.load_from_dir(DATA_DIR / "npcs")
+        torven = npc_reg2.get("torven_blacksmith")
+        assert torven is not None
+        train_opts = [
+            o for node in torven.dialogue_nodes.values()
+            for o in node.options
+            if any(t.startswith("give_skill:torven_forge_lesson") for t in o.triggers)
+        ]
+        assert train_opts, "Torven should have a give_skill:torven_forge_lesson option"
+        # Gated by completing the hammer quest
+        gating_flags = train_opts[0].requires.get("flags", [])
+        assert "torven_owes_favour" in gating_flags, (
+            f"Trainer option should require torven_owes_favour, got {gating_flags}"
+        )
+        ok("Torven offers forge-craft training after the hammer quest (give_skill: trigger)")
+
+        # 21f. NPC dialogue path to start the 3 previously-ungivered quests
+        sylara = npc_reg2.get("sylara_guildmaster")
+        assert sylara is not None
+        sylara_starts = {
+            t[len("start_quest:"):]
+            for node in sylara.dialogue_nodes.values()
+            for o in node.options
+            for t in o.triggers
+            if t.startswith("start_quest:")
+        }
+        assert "dungeon_survey" in sylara_starts, "Sylara should offer dungeon_survey"
+        assert "fracture_investigation" in sylara_starts, "Sylara should offer fracture_investigation"
+        ok(f"Sylara dialogue starts: {sorted(sylara_starts)}")
+
+        aldis = npc_reg2.get("captain_aldis")
+        assert aldis is not None
+        aldis_starts = {
+            t[len("start_quest:"):]
+            for node in aldis.dialogue_nodes.values()
+            for o in node.options
+            for t in o.triggers
+            if t.startswith("start_quest:")
+        }
+        assert "verath_courier" in aldis_starts, "Aldis should offer verath_courier"
+        ok(f"Captain Aldis dialogue starts: {sorted(aldis_starts)}")
+
+        # 21g. AIService.generate_class accepts the rich_skills kwarg
+        from ai.ai_service import AIService
+        import inspect as _ins
+        sig = _ins.signature(AIService.generate_class)
+        assert "rich_skills" in sig.parameters, \
+            "AIService.generate_class should accept rich_skills kwarg (#3 in audit follow-up)"
+        ok("AIService.generate_class accepts rich_skills kwarg (per-skill AI gen for classes)")
+
+        # 21h. SAVE_VERSION bumped + _v3_to_v4 migrator runs sequentially
+        from config import SAVE_VERSION
+        assert SAVE_VERSION == 4
+        from persistence.save_manager import _migrate
+        # v1 → all the way to v4 in one chain
+        v1 = {"save_version": 1, "player": {"name": "x", "base_class": "warrior",
+                                            "stats": {"STR": 5, "INT": 5, "AGI": 5, "LCK": 5,
+                                                      "VIT": 5, "WIS": 5, "END": 5}}}
+        out = _migrate(v1.copy(), from_version=1, to_version=4)
+        assert out["save_version"] == 4
+        assert "skill_uses" in out["player"]
+        assert "skill_levels" in out["player"]
+        ok("v1 → v4 chained migration adds every required field along the way")
+    except Exception as e:
+        fail("Polish items (skill-level event / stat menu / trainer / givers) broken", e)
+        traceback.print_exc()
+
     _report()
 
 
