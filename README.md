@@ -223,27 +223,29 @@ Prints `True` if Ollama is reachable and the model is pulled.
 # Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Main test suite — runs on every push via the pre-push hook
-python -X utf8 test_characters.py     # 111 checks across 23 sections
-python -X utf8 test_quests.py         #  60 checks across 15 sections
-
-# Supplementary suites — run manually
-python -X utf8 test_runs.py                       # 74 checks (older run suite)
-python -X utf8 tests/test_db_migrations.py        # 10 checks (SQLite schema)
-python -X utf8 tests/test_background_tick.py      #  9 checks (BG worker)
-python -X utf8 tests/test_guild_betrayal.py       # 22 checks
-python -X utf8 tests/test_guild_founding.py       # 10 checks
+# Every push runs ALL 7 test files via the pre-push hook
+python -X utf8 test_characters.py                  # 113 checks across 23 sections
+python -X utf8 test_quests.py                      # 121 checks across 21 sections
+python -X utf8 test_runs.py                        #  74 checks (older run suite)
+python -X utf8 tests/test_db_migrations.py         #  10 checks (SQLite schema)
+python -X utf8 tests/test_background_tick.py       #   9 checks (BG worker)
+python -X utf8 tests/test_guild_betrayal.py        #  22 checks
+python -X utf8 tests/test_guild_founding.py        #  10 checks
 
 # Headless smoke test — bootstrap the engine without launching the UI
 python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstrap(); print('OK')"
+
+# Live playthrough — drives the engine the way a player would, asserts
+# quest rewards / skill generation / save round-trip end-to-end. Requires Ollama.
+python -X utf8 playthrough_smoke.py                #  24 checks
 
 # Start a feature branch
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 296 checks across 7 test files.**
+**Combined test count: 359 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (111 checks, 23 sections) covers:
+`test_characters.py` (113 checks, 23 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -251,7 +253,7 @@ git checkout -b feature/my-feature
 - Background generator thread lifecycle (start/stop/restart)
 - Feature-flag toggling
 - Quest lifecycle: start → tick advance → completion → rewards
-- Save migration v1 → v2 → v3 (with `SaveMigrationError` for missing steps)
+- Save migration v1 → v2 → v3 → v4 (with `SaveMigrationError` for missing steps + disk-fixture round-trip)
 - AIService facade (sync + async class-gen Future, exception handling)
 - Quest reward currency cap (validates `MAX_QUEST_REWARD_GOLD = 5000`)
 - Class resolver Layer 2 superset-match bug fix regression guard
@@ -261,19 +263,33 @@ git checkout -b feature/my-feature
 - Hotkey table integrity in `input_handler`
 - Soft budget guard: `core/game_engine.py` must stay under 250 lines
 
-`test_quests.py` (60 checks, 15 sections) covers:
-- Schema integrity for every quest template (stage chains, terminal stages, conditions)
+`test_quests.py` (121 checks, 21 sections) covers:
+- Schema integrity for every quest template
 - NPC giver references resolve; dialogue triggers reference real templates
 - Reward references (items, factions, guilds) point to real entities
 - Full lifecycles for 2-stage, 3-stage, and 4-stage quests
-- Three concurrent quests where partial completion doesn't disturb others
-- Failure conditions + time-limit expiration both fail the quest correctly
-- AI quest data DB round-trip
-- Event payload shapes
+- Concurrent quests, failure conditions, time-limit expiration
+- AI quest data DB round-trip + event payload shapes
 - Trigger format resolution
-- Dialogue quest-seed injection (concrete seeds, `ai_dynamic` seeds, implicit AI offers)
+- Dialogue quest-seed injection (concrete seeds, `ai_dynamic`, implicit AI offers)
+- **Economy formula** — `recommended_quest_reward(level, difficulty)` tier ladder + clamp regression
+- **Skill audit fixes** — validators on mp/cd/scaling_coefficient, dup-id resolution, `give_skill:` auto-create has effects, `_build_skill_from_stub` parses `effect_hint`
+- **Skill design (F3–F9)** — passive aggregator stacking + caps, TRIGGERED `on_attack`/`on_kill` firing, combat-turn cooldowns, skill leveling via use count, `grant_next_learnable_skill`
+- **Contextual AI skill generation** — `AISkillResponse` clamping, `_generate_or_default_skill` AI/fallback, quest `reward_skill_hints` registered + granted
+- **AI quest skill rewards** — AIQuestResponse parses/clamps/coerces `reward_skill_hints`; hand-crafted demos (`blacksmith_hammer` → 'Forge-Born Strike', `theft_investigation` → 'Hushed Step')
+- **Polish items** — `SKILL_LEVELED_UP` listener wired, stat-points menu present, `_inspect_existing_skill` helper, trainer NPC option on Torven, NPC-dialogue start paths for `dungeon_survey` / `fracture_investigation` / `verath_courier`, v1 → v4 chained migration
 
-Both main suites run automatically via `.git/hooks/pre-push` before every push.
+`playthrough_smoke.py` (24 checks) — headless live playthrough with real Ollama:
+- Engine bootstrap (registries, AIService, BG generator, WorldDirector, bot manager)
+- Character creation
+- 2-stage quest lifecycle (`blacksmith_hammer`) with reward gold/XP/flag/**AI-generated skill** assertions
+- 3-stage quest lifecycle (`theft_investigation`) + level-up cascade
+- Quest failure path
+- Save → close → load → verify gold + completed quests + flags + skill_uses persistence
+- BG task submission + scheduler tick
+- Live AI quest generation through `AIService` with level-scaled reward clamping
+
+All 7 test files run automatically via `.git/hooks/pre-push` before every push (`playthrough_smoke.py` is optional — needs Ollama).
 
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, the `AIService` boundary contract, and the directory map.
 
@@ -281,16 +297,17 @@ See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax
 
 ## Roadmap
 
-### Current stage: **Phase 3 — Quest system shipped, polish & content next**
+### Current stage: **Phase 3.5 — Audit pass complete, AI is the backbone**
 
-The full feature surface from the original design is now wired and player-facing. The
-project moves from "build new systems" into "deepen existing ones" — more quest content,
-more NPCs that offer them, and richer AI integration on top of the working backbone.
+The full feature surface is shipped AND the AI-as-co-author premise is realised
+end-to-end: classes, quests, and skills all flow through one `AIService` boundary
+with contextual prompts, Pydantic-validated outputs, and level-scaled clamping.
+The project is in maintenance / content-authoring mode.
 
 | Feature | Status | Notes |
 |---------|--------|-------|
 | Core game loop, scenes, classes, skills | ✅ Shipped | |
-| AI-generated unique classes (Ollama) | ✅ Shipped | Divergence ≥ 30 triggers generation |
+| AI-generated unique classes (Ollama) | ✅ Shipped | Divergence ≥ 30 triggers generation; opt-in `rich_skills=True` for per-skill AI gen |
 | Background AI world generation | ✅ Shipped | Worker thread; non-blocking |
 | Dual-model Ollama (slow + fast) | ✅ Shipped | `mistral-nemo` + `gemma3:1b` |
 | NPC system (memory, stat-gated dialogue) | ✅ Shipped | |
@@ -298,34 +315,70 @@ more NPCs that offer them, and richer AI integration on top of the working backb
 | Stat gating | ✅ Shipped | |
 | Interactive AI situational options (`[?]`) | ✅ Shipped | Uses fast model |
 | WorldDirector (off-thread) | ✅ Shipped | Submits to BG queue, never blocks |
-| **Quest system (state machine + UI + tests)** | ✅ **Shipped** | 9 templates, `[J] Quest Journal`, `start_quest:` / `advance_quest:` / `complete_quest:` triggers |
+| Quest system (state machine + UI + tests) | ✅ Shipped | 9 templates, `[J] Quest Journal`, `start_quest:` / `advance_quest:` / `complete_quest:` triggers |
+| **Contextual AI skill generation** | ✅ **Shipped** | `give_skill:` / quest `reward_skill_hints` / Inspect — all flow through `AIService.generate_skill` with player + source + scene context |
+| **Skill leveling via use count + auto-learn on level-up** | ✅ **Shipped** | F8/F9. Lvl 1-10 per skill, `+1 base / +10% scaling` per level |
+| **Passive skill aggregator (F3)** | ✅ **Shipped** | 9 previously-decorative passives now contribute defense / dodge / crit / utility tags with stack caps |
+| **Level-scaled quest reward economy** | ✅ **Shipped** | `systems/economy.py` — `gold = 20 × level × tier_mult`, clamped per level |
 | Guild system | ✅ Shipped | Membership, ranks, perks, found-a-guild flow |
 | Faction system | ✅ Shipped | Standing, rank changes, `update_faction:` trigger |
 | Auction house + life tokens | ✅ Shipped | Listings, bids, life-token purchase |
 | 9-lives death mechanic | ✅ Shipped | Replaces instant game over |
 | Crafting system | ✅ Shipped | Recipes + materials, `[C] Craft` menu |
-| Bot agents (autonomous AI players) | ✅ Shipped | Inspectable via admin panel |
-| Test suite (`test_characters` + `test_quests`) | ✅ Shipped | 100 checks, runs on every push |
+| Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
+| **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
+| **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 359 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 359 checks across 7 files + 24-check live playthrough |
 
-### Next up — content & polish
+### Next up — long-tail
 
 | Item | Why |
 |------|-----|
-| Wire more NPCs to existing quest templates | Six of the nine templates still have no fixed NPC giver — `dungeon_survey`, `verath_courier`, `fracture_investigation` and the `null`-giver faction quests would benefit from explicit dialogue hooks (the implicit AI-quest path also covers them now, but hand-crafted offers play better) |
-| Move class-generation off the main thread | `class_system.resolve_combo_class` now uses `AIService` but still calls synchronously. Switch to `submit_class_generation_async` once the awakening scene can show "the System is revealing your fate..." while it polls |
-| Pre-push hook installer | The hook is local-only; collaborators need a `scripts/install-hooks.sh` |
-| Refactor `core/game_engine.py` (1000+ lines) | God-object even after the mixin split — every mixin freely reads `self.state`/`self.ai_service`/`self.quest_registry`. Composition over inheritance would help |
+| Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |
+| Move class-generation off the main thread | The `Future`-based submission path exists (`AIService.submit_class_generation_async`); the Class Awakening scene still calls it synchronously |
+| Cross-skill awareness in the AI prompt | LLM sees `player.skills` but doesn't reason about which new skill would synergize best |
+| `GameEngine` mixin → composition refactor | Low priority — 165 lines, budget-guarded. Working fine. |
+| `world_db.py` further split | Per-table repos already cover queries; further splitting the facade is mechanical with low payoff |
 
-### Recently shipped (this iteration)
+### Recently shipped (audit arc — 18 PRs from #9 to #26)
 
-- **AI quest generation wired into NPC dialogue.** Picks up `quest_seeds` with `ai_dynamic` templates AND implicitly offers an AI quest when an NPC has no seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN`. `« Is there any work I could take on? »` option injects dynamically.
-- **Save migration v2 → v3 is no longer a silent no-op.** `_migrate` now runs explicit per-version functions, validates the result against the Player model, and raises `SaveMigrationError` when a step is missing.
-- **`AIService` facade.** Single boundary `systems/` imports for AI generation — centralises try/except, fallback paths, and `is_available` gating. Systems no longer call `ContentGenerator` directly.
-- **Quest reward currency cap** — `reward_gold` is now hard-bounded to ≤ `MAX_QUEST_REWARD_GOLD` (5000). Hallucinating LLMs get clamped; content authors typing copper by mistake get a loud `ValidationError`.
-- **Class resolver Layer 2 short-circuit fixed** — no longer grants combos when item/flag requirements are missing.
-- **Trigger processing extracted from `Scene`** — `scenes/option_logic.py` holds the free functions; `Scene` shrank from 295 → 72 lines.
-- **`world_db.py` split into per-table repos** — `persistence/repos/{npc,quest,faction,auction,death,world_state,ai_content,bot,guild_db}_repo.py`. `WorldDatabase` shrank from 1100 → 787 lines and is now a thin facade.
-- **AI class generation off the main thread** — `AIService.submit_class_generation_async()` returns a `Future`; the Class Awakening scene can poll it while the Rich spinner animates.
-- **Bots surface in-world** — arrivals/departures and same-zone actions print to the player's view, not just the admin panel.
-- **Pre-push hook installer** — `scripts/install-hooks.sh` (POSIX) and `.ps1` (Windows) for collaborators.
-- **`core/game_engine.py` slimmed 1049 → 165 lines (-84%) — now a genuine coordinator.** Extracted to: `core/bootstrap.py` (load_registries + setup_ai), `core/background_integrator.py` (BG result drain), `core/situation_query.py` (the AI «Ask about this situation» handler), `core/menu_flow.py` (main / load / new game menus), `core/game_loop.py` (per-turn tick loop), `core/bg_scheduler.py` (decides which AI content to submit each turn), `core/input_handler.py` (per-turn option building + hotkey dispatch via a data-driven `_HOTKEYS` table), `ui/scene_renderer.py` (per-turn scene rendering), `ui/auction_ui.py` (interactive auction house loop), `systems/rest_system.py` (camp rest with ambush rolls), `systems/faction_endings.py` (political ending path triggers). Each module is independently importable and unit-testable. The integrator extraction also caught and fixed a tangled elif chain that was making bot trade/rest/craft/talk_npc actions silently fall through. The final extraction also fixed a latent crash in `_setup_notifications` (missing import). test_characters.py Section 19 includes a soft budget guard — `game_engine.py` must stay under 250 lines.
+**AI as backbone:**
+- **Contextual AI skill generation** — `give_skill:X` (when ID unknown), quest `reward_skill_hints`, and the player-facing Inspect flow all funnel through `ai_service.generate_skill(player, name_hint, source, context, has_inspect)`. Pydantic-clamps mp/cd/scaling so a hallucinating LLM can't break the economy. Same hint + same player = different output based on `has_inspect` (rich tooltip vs in-fiction prose).
+- **AI quests propose `reward_skill_hints`** — the LLM is taught about the optional field in its prompt; the validator coerces every output shape (`["A"]`, `[{"name":"A"}]`, `"A"`).
+- **AI class generation contextual** — opt-in `rich_skills=True` puts every class skill stub through `generate_skill` instead of the deterministic builder.
+- **AI quest generation wired into NPC dialogue** — `quest_seeds` injection, plus implicit "I might have work for you" offer when disposition ≥ `AI_QUEST_DISPOSITION_MIN`.
+- **`AIService` facade** — single boundary `systems/` imports; centralises try/except, fallback paths, `is_available` gating.
+- **Async class-gen Future** — `AIService.submit_class_generation_async` returns a `Future` the awakening scene can poll while the Rich spinner animates from its own thread.
+
+**Skill system (audit + design):**
+- **Passive aggregator (F3)** — 9 previously-decorative passives (Iron Skin, Evasion, etc.) now contribute attack / defense / dodge / crit / utility-tags with hard caps (dodge 40%, crit 30%, etc.).
+- **Combat-turn cooldowns (F5)** — `reset_cooldowns_for_combat` at fight start, `tick_combat_cooldowns` per round. No more "5-CD spell refreshed by walking 5 menu steps in town".
+- **TRIGGERED skills fire (F6)** — `try_fire_trigger(player, "on_attack" / "on_kill", sr)` from `combat_system`. Filtered out of the active menu.
+- **Skill leveling (F8)** — `skill_uses` + `skill_levels` per player; every 5 uses → +1 level (capped at `max_level=10`); each level adds `+1 base` and `+10% scaling`.
+- **Auto-learn on level-up (F9)** — `grant_next_learnable_skill` walks the class's `learnable_skills` list.
+- **Skill validators (F10)** — `mp_cost`, `cooldown_turns`, `scaling_coefficient` hard-clamped against LLM hallucination.
+- **Dup skill IDs renamed** — `fireball` / `backstab` / `berserker_rage` no longer silently shadow each other across files.
+- **Inspect UI** — `[K]` menu adds "✦ Inspect an unknown skill" (when Inspect passive owned + AI online); skill detail view adds "✦ Inspect mechanics" for owned skills.
+- **`SKILL_LEVELED_UP` notification** — fires a "SKILL MASTERY DEEPENS" panel when a skill grows via use-count.
+- **Stat-points menu** — spendable from `[K]` anywhere, not just post-combat.
+
+**Quest + economy:**
+- **Level-scaled quest economy** (`systems/economy.py`) — `gold = 20 × level × tier_multiplier`; clamped both sides. AI quest reward of "250g for a level-1 player" became 30g (within L1 standard bounds).
+- **Quest reward currency cap** — `reward_gold ≤ MAX_QUEST_REWARD_GOLD` (5000) hard-bound on `QuestTemplate`.
+- **Hand-crafted demo skill rewards** — `blacksmith_hammer` rewards "Forge-Born Strike", `theft_investigation` rewards "Hushed Step".
+- **Trainer NPC pattern** — Torven offers `give_skill:torven_forge_lesson` after the hammer quest (unknown ID → AI generates contextually).
+- **NPC dialogue start paths** — Sylara now offers `dungeon_survey` + `fracture_investigation`; Captain Aldis offers `verath_courier`.
+
+**Bug fixes caught along the way:**
+- Save migration v2→v3 was a silent no-op — now explicit per-version functions + `SaveMigrationError`.
+- Class resolver Layer 2 was granting combos without checking item/flag requirements.
+- Bot action elif chain — `trade`/`rest`/`craft`/`talk_npc` were dead branches.
+- `_setup_notifications` had a missing import (latent crash).
+- `test_background_tick.py` was using stale `ai_generator=` kwarg for a month (pre-push hook only ran 2 of 7 files).
+
+**Refactors:**
+- **`core/game_engine.py` slimmed 1049 → 165 lines (-84%)** across 6 PRs. Extracted to: `core/{bootstrap,background_integrator,situation_query,menu_flow,game_loop,bg_scheduler,input_handler}.py`, `ui/{scene_renderer,auction_ui}.py`, `systems/{rest_system,faction_endings}.py`. Soft budget guard — must stay under 250 lines.
+- **`scenes/scene_base.py`: 295 → 72 lines** — trigger processing extracted to `scenes/option_logic.py`.
+- **`persistence/world_db.py`: 1103 → 787 lines** + 9 per-table repos in `persistence/repos/`.
+- **Pre-push hook gates all 7 test files** — was 2; one test sat broken for a month before this was tightened.
