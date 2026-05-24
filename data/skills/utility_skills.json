@@ -68,11 +68,11 @@
     "effects": []
   },
   {
-    "skill_id": "backstab",
-    "name": "Backstab",
+    "skill_id": "assassin_strike",
+    "name": "Assassin's Strike",
     "rarity": "UNCOMMON",
     "skill_type": "ACTIVE",
-    "description": "Attack from stealth for double damage. Requires AGI >= 10.",
+    "description": "A trained stealth-strike that ignores light armour. Hits harder than the rogue's standard backstab. Requires AGI >= 10.",
     "spell_type": "physical",
     "effects": [{"effect_type": "damage", "base_value": 20.0, "scaling_stat": "AGI", "scaling_coefficient": 2.0}]
   },
@@ -94,11 +94,11 @@
     "effects": [{"effect_type": "buff", "base_value": 5.0, "scaling_stat": "END", "scaling_coefficient": 0.5}]
   },
   {
-    "skill_id": "berserker_rage",
-    "name": "Berserker Rage",
+    "skill_id": "bloodrage_burst",
+    "name": "Bloodrage Burst",
     "rarity": "RARE",
     "skill_type": "ACTIVE",
-    "description": "Enter a rage state: +20% damage, -10% defense for 5 turns.",
+    "description": "A single explosive STR-scaling strike powered by spent vitality. Higher damage ceiling than the warrior's sustained Berserker Rage but no buff afterward.",
     "spell_type": "physical",
     "effects": [{"effect_type": "damage", "base_value": 15.0, "scaling_stat": "STR", "scaling_coefficient": 2.5}]
   },

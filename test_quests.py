@@ -783,6 +783,125 @@ def main() -> None:
         fail("Economy / quest reward scaling broken", e)
         traceback.print_exc()
 
+    # ── 17. Skill audit fixes ────────────────────────────────────────────────
+    section("17. Skill Audit Fixes (validators, dups, give_skill, AI stub)")
+    try:
+        # 17a. Pydantic floors negative mp_cost and cooldown to 0
+        from entities.skill import Skill, SkillEffect, MAX_SCALING_COEFFICIENT
+        from entities.enums import EffectType, SkillType, Rarity
+        from pydantic import ValidationError
+
+        s_neg = Skill(skill_id="t", name="T", description="", mp_cost=-50, cooldown_turns=-5)
+        assert s_neg.mp_cost == 0, f"Negative mp_cost should clamp to 0, got {s_neg.mp_cost}"
+        assert s_neg.cooldown_turns == 0
+        ok("Negative mp_cost / cooldown_turns clamped to 0 (no free-cast or no-CD exploit)")
+
+        # 17b. scaling_coefficient hard-capped
+        try:
+            SkillEffect(effect_type=EffectType.DAMAGE, base_value=10.0,
+                        scaling_coefficient=MAX_SCALING_COEFFICIENT + 1)
+            fail(f"Expected ValidationError for scaling_coefficient > {MAX_SCALING_COEFFICIENT}")
+        except ValidationError:
+            ok(f"scaling_coefficient > {MAX_SCALING_COEFFICIENT} rejected (no one-shot-anything exploit)")
+
+        # 17c. Duplicate skill_ids are gone from the actual data files
+        # (the audit caught fireball / backstab / berserker_rage colliding;
+        #  spell_skills' fireball became greater_fireball, utility's became
+        #  assassin_strike and bloodrage_burst).
+        from entities.skill import SkillRegistry
+        from pathlib import Path as _P
+        from config import DATA_DIR
+        sr_check = SkillRegistry()
+        sr_check.load_from_dir(DATA_DIR / "skills")
+        # Confirm new IDs exist
+        for new_id in ("greater_fireball", "assassin_strike", "bloodrage_burst"):
+            assert sr_check.get(new_id) is not None, f"Renamed skill {new_id} missing"
+        # Confirm canonical IDs survived
+        assert sr_check.get("fireball") is not None, "Canonical 'fireball' lost"
+        assert sr_check.get("backstab") is not None, "Canonical 'backstab' lost"
+        assert sr_check.get("berserker_rage") is not None, "Canonical 'berserker_rage' lost"
+        ok("Duplicate skill_ids renamed: greater_fireball + assassin_strike + bloodrage_burst")
+        ok(f"All {len(sr_check.all())} hand-crafted skills load distinctly (was 45 after silent shadowing, now 48)")
+
+        # 17d. give_skill: auto-create now produces a Skill WITH effects
+        from scenes.option_logic import process_triggers
+        from persistence.save_manager import new_game_state as _ng, close_game as _cg
+        _p = Player(name="SkillTest", base_class="warrior")
+        _st = _ng(_p, SAVES_DIR, "_skill_audit_")
+        _st.skill_registry = sr_check
+        try:
+            process_triggers(["give_skill:rune_of_breaking"], _st)
+            assert "rune_of_breaking" in _p.skills
+            auto = sr_check.get("rune_of_breaking")
+            assert auto is not None, "Auto-created skill not registered"
+            assert auto.effects, "Auto-created skill must have at least one effect (was cosmetic shell)"
+            assert auto.mp_cost > 0, "Auto-created skill should have an MP cost"
+            ok(f"give_skill: auto-create now produces a real skill ({auto.name}: "
+               f"mp={auto.mp_cost}, cd={auto.cooldown_turns}, effects={len(auto.effects)})")
+        finally:
+            _cg(_st)
+            for ext in (".json", ".db"):
+                p = SAVES_DIR / f"_skill_audit_{ext}"
+                if p.exists():
+                    try: p.unlink()
+                    except OSError: pass
+
+        # 17e. _build_skill_from_stub varies by effect_hint and rarity
+        from ai.content_generator import ContentGenerator
+        # Minimal fake — we only need the method, not the Ollama client
+        from ai.ollama_client import OllamaClient
+        # Bypass __init__ — we don't need a live client to test the converter
+        cg = ContentGenerator.__new__(ContentGenerator)
+
+        class _Stub:
+            def __init__(self, sid, name, hint, stype="ACTIVE"):
+                self.skill_id = sid
+                self.name = name
+                self.description = "test"
+                self.effect_hint = hint
+                self.skill_type = stype
+
+        # Heal hint → HEAL effect type
+        s_heal = cg._build_skill_from_stub(
+            _Stub("test_heal", "Mend", "heals based on WIS"), Rarity.RARE,
+        )
+        assert s_heal.effects[0].effect_type == EffectType.HEAL, \
+            f"'heals' hint should produce HEAL, got {s_heal.effects[0].effect_type}"
+        assert s_heal.effects[0].scaling_stat == "WIS", \
+            f"'WIS' hint should set scaling_stat=WIS, got {s_heal.effects[0].scaling_stat}"
+        ok("_build_skill_from_stub parses 'heals based on WIS' → HEAL+WIS scaling")
+
+        # Damage with STR
+        s_dmg = cg._build_skill_from_stub(
+            _Stub("test_dmg", "Smash", "deals STR-scaling physical damage"), Rarity.EPIC,
+        )
+        assert s_dmg.effects[0].effect_type == EffectType.DAMAGE
+        assert s_dmg.effects[0].scaling_stat == "STR"
+        assert s_dmg.effects[0].base_value > 10.0, \
+            f"EPIC rarity should have base_value > 10, got {s_dmg.effects[0].base_value}"
+        ok(f"_build_skill_from_stub respects rarity tier (EPIC base_value={s_dmg.effects[0].base_value})")
+
+        # Different stubs produce mechanically different skills (regression for F1)
+        s_a = cg._build_skill_from_stub(_Stub("a", "A", "INT-scaling fire"), Rarity.UNCOMMON)
+        s_b = cg._build_skill_from_stub(_Stub("b", "B", "AGI-scaling backstab"), Rarity.UNCOMMON)
+        s_c = cg._build_skill_from_stub(_Stub("c", "C", "heals over time, WIS"), Rarity.UNCOMMON)
+        stats_used = {s.effects[0].scaling_stat for s in (s_a, s_b, s_c)}
+        types_used = {s.effects[0].effect_type for s in (s_a, s_b, s_c)}
+        assert len(stats_used) >= 2, f"Skills should use varied stats, got {stats_used}"
+        assert EffectType.HEAL in types_used, "At least one stub should produce HEAL"
+        ok(f"Different effect_hints produce different effects: stats={stats_used}, types={types_used}")
+
+        # PASSIVE skill_type produces 0 mp_cost / 0 cooldown
+        s_pass = cg._build_skill_from_stub(
+            _Stub("test_pass", "Vigil", "INT buff", stype="PASSIVE"), Rarity.RARE,
+        )
+        assert s_pass.mp_cost == 0 and s_pass.cooldown_turns == 0, \
+            f"PASSIVE skill shouldn't have mp/cd, got mp={s_pass.mp_cost} cd={s_pass.cooldown_turns}"
+        ok("PASSIVE-type AI skill has 0 mp_cost + 0 cooldown")
+    except Exception as e:
+        fail("Skill audit fixes broken", e)
+        traceback.print_exc()
+
     _report()
 
 

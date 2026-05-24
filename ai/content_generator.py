@@ -33,7 +33,13 @@ class ContentGenerator:
         player: "Player",
         divergence: "DivergenceResult",
         class_registry: "ClassRegistry",
+        skill_registry: "SkillRegistry | None" = None,
     ) -> ClassDefinition | None:
+        """Generate a unique class for a divergent player. When
+        ``skill_registry`` is provided, every AI-proposed skill is also
+        materialised as a real Skill object and registered — otherwise the
+        class's starting_skills point to IDs that combat will silently drop.
+        """
         standard_combos = self._get_standard_combo_names(player, class_registry)
         prompt = build_class_generation_prompt(player, divergence, standard_combos, self.lore_data)
 
@@ -44,7 +50,9 @@ class ContentGenerator:
                 temperature=0.6,
             )
             ai_response = AIClassResponse.model_validate(raw)
-            return self._convert_to_class_definition(ai_response, player, divergence)
+            return self._convert_to_class_definition(
+                ai_response, player, divergence, skill_registry=skill_registry,
+            )
         except (OllamaParseError, OllamaTimeoutError, Exception) as e:
             logger.error(f"AI class generation failed: {e}")
             return None
@@ -278,6 +286,7 @@ class ContentGenerator:
         ai_response: AIClassResponse,
         player: "Player",
         divergence: "DivergenceResult",
+        skill_registry: "SkillRegistry | None" = None,
     ) -> ClassDefinition:
         rarity = Rarity(ai_response.rarity)
 
@@ -287,7 +296,15 @@ class ContentGenerator:
         bonus_stats[dominant] = 2
         bonus_stats["LCK"] = max(bonus_stats.get("LCK", 0), 1)
 
-        # Generate skill IDs for the starting skills
+        # Materialise every AI skill stub into a real Skill object and
+        # register it. Previously this method only stored skill IDs that
+        # weren't backed by any registered Skill — combat silently dropped
+        # them and the class's "unique skills" were invisible to the player.
+        for stub in ai_response.skills:
+            built = self._build_skill_from_stub(stub, rarity, dominant_stat=dominant)
+            if skill_registry is not None and skill_registry.get(built.skill_id) is None:
+                skill_registry.register(built)
+
         starting_skill_ids = [s.skill_id for s in ai_response.skills[:2]]
         learnable_skill_ids = [s.skill_id for s in ai_response.skills[2:]]
 
@@ -314,19 +331,78 @@ class ContentGenerator:
             generation_context=generation_context,
         )
 
-    def _build_skill_from_stub(self, stub: Any, rarity: Rarity) -> Skill:
-        """Convert an AI skill stub into a proper Skill object."""
+    def _build_skill_from_stub(
+        self, stub: Any, rarity: Rarity, dominant_stat: str = "LCK",
+    ) -> Skill:
+        """Convert an AI skill stub into a proper Skill object.
+
+        Parses the LLM's ``effect_hint`` (a free-text field on AISkillStub)
+        for stat names and effect kind so each generated skill is actually
+        mechanically distinct. Previously every AI skill was identical:
+        8 base damage + LCK x1.5. Now a stub with effect_hint "heals based
+        on WIS" actually produces a heal skill that scales off WIS.
+        """
+        hint = (stub.effect_hint or "").lower()
+
+        # Default effect type
+        eff_type = EffectType.DAMAGE
+        if any(k in hint for k in ("heal", "restore", "mend", "regenerat")):
+            eff_type = EffectType.HEAL
+        elif any(k in hint for k in ("shield", "ward", "barrier")):
+            eff_type = EffectType.SHIELD
+        elif any(k in hint for k in ("buff", "empower", "strengthen")):
+            eff_type = EffectType.BUFF
+        elif any(k in hint for k in ("debuff", "weaken", "slow", "stun")):
+            eff_type = EffectType.DEBUFF
+
+        # Pick a scaling stat from the hint, falling back to the player's
+        # dominant stat so the class feels tailored.
+        scaling_stat = dominant_stat
+        for candidate in ("STR", "INT", "AGI", "LCK", "VIT", "WIS", "END"):
+            if candidate.lower() in hint:
+                scaling_stat = candidate
+                break
+
+        # Rarity-tiered base values — higher rarity skills hit harder.
+        base_by_rarity = {
+            Rarity.COMMON: 6.0, Rarity.UNCOMMON: 8.0, Rarity.RARE: 12.0,
+            Rarity.EPIC: 18.0, Rarity.LEGENDARY: 25.0,
+        }
+        coeff_by_rarity = {
+            Rarity.COMMON: 1.0, Rarity.UNCOMMON: 1.3, Rarity.RARE: 1.7,
+            Rarity.EPIC: 2.2, Rarity.LEGENDARY: 2.8,
+        }
+        base = base_by_rarity.get(rarity, 8.0)
+        coeff = coeff_by_rarity.get(rarity, 1.5)
+
+        # MP cost + cooldown scale with rarity too. ACTIVE skills cost MP,
+        # PASSIVE/TRIGGERED skills don't.
+        try:
+            stype = SkillType(stub.skill_type)
+        except ValueError:
+            stype = SkillType.ACTIVE
+        mp_cost = 0 if stype != SkillType.ACTIVE else {
+            Rarity.COMMON: 5, Rarity.UNCOMMON: 8, Rarity.RARE: 12,
+            Rarity.EPIC: 18, Rarity.LEGENDARY: 25,
+        }.get(rarity, 8)
+        cooldown = 0 if stype != SkillType.ACTIVE else {
+            Rarity.COMMON: 1, Rarity.UNCOMMON: 2, Rarity.RARE: 3,
+            Rarity.EPIC: 5, Rarity.LEGENDARY: 6,
+        }.get(rarity, 2)
+
         return Skill(
             skill_id=stub.skill_id,
             name=stub.name,
             rarity=rarity,
             description=stub.description,
-            skill_type=SkillType(stub.skill_type),
+            skill_type=stype,
+            mp_cost=mp_cost,
+            cooldown_turns=cooldown,
             effects=[SkillEffect(
-                effect_type=EffectType.DAMAGE,
-                scaling_stat="LCK",
-                base_value=8.0,
-                scaling_coefficient=1.5,
+                effect_type=eff_type,
+                scaling_stat=scaling_stat,
+                base_value=base,
+                scaling_coefficient=coeff,
             )],
             is_ai_generated=True,
         )

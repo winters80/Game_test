@@ -143,13 +143,28 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             if skill_id not in state.player.skills:
                 skill = state.skill_registry.get(skill_id) if state.skill_registry else None
                 if skill is None:
-                    from entities.skill import Skill
-                    from entities.enums import Rarity
+                    # Auto-create a previously-unknown skill so a scene author
+                    # can reward `give_skill:something_new` without first
+                    # adding it to data/skills/. Comes with a sensible default
+                    # DAMAGE effect — previously this auto-create produced a
+                    # cosmetic shell with no effects, leaving the player
+                    # holding a skill that did 1 damage at most.
+                    from entities.skill import Skill, SkillEffect
+                    from entities.enums import Rarity, EffectType
                     skill = Skill(
                         skill_id=skill_id,
                         name=skill_id.replace("_", " ").title(),
                         rarity=Rarity.UNCOMMON,
                         description="An ability awakened through unconventional experience.",
+                        skill_type="ACTIVE",
+                        mp_cost=5,
+                        cooldown_turns=2,
+                        effects=[SkillEffect(
+                            effect_type=EffectType.DAMAGE,
+                            scaling_stat="LCK",
+                            base_value=8.0,
+                            scaling_coefficient=1.2,
+                        )],
                         is_ai_generated=True,
                     )
                     if state.skill_registry:
