@@ -1261,6 +1261,92 @@ def main() -> None:
         fail("Contextual AI skill generation broken", e)
         traceback.print_exc()
 
+    # ── 20. AI quest reward_skill_hints carry-through + hand-crafted demos ───
+    section("20. AI Quest Skill Rewards + Hand-Crafted Demo Hints")
+    try:
+        from ai.response_validator import AIQuestResponse
+        from ai.prompt_builder import build_quest_generation_prompt
+        from pydantic import ValidationError
+
+        # 20a. AIQuestResponse now accepts reward_skill_hints
+        with_hints = AIQuestResponse.model_validate({
+            "template_id": "test", "title": "T", "description": "x",
+            "stages": [{"stage_id": "s", "objective_text": "o",
+                        "completion_condition": {"has_flag": "x"}}],
+            "reward_skill_hints": ["Forge-Born Strike", "Echoing Hammer"],
+        })
+        assert with_hints.reward_skill_hints == ["Forge-Born Strike", "Echoing Hammer"]
+        ok("AIQuestResponse parses reward_skill_hints as list[str]")
+
+        # 20b. Capped at 2 hints — LLM can't bury the player in skill rewards
+        many = AIQuestResponse.model_validate({
+            "template_id": "test", "title": "T", "description": "x",
+            "stages": [{"stage_id": "s", "objective_text": "o",
+                        "completion_condition": {"has_flag": "x"}}],
+            "reward_skill_hints": ["A", "B", "C", "D", "E"],
+        })
+        assert len(many.reward_skill_hints) == 2, f"Cap broken: {many.reward_skill_hints}"
+        ok("AIQuestResponse caps reward_skill_hints at 2 per quest")
+
+        # 20c. Tolerates dict shape — LLM sometimes returns [{"name": "..."}]
+        dict_form = AIQuestResponse.model_validate({
+            "template_id": "test", "title": "T", "description": "x",
+            "stages": [{"stage_id": "s", "objective_text": "o",
+                        "completion_condition": {"has_flag": "x"}}],
+            "reward_skill_hints": [{"name": "Shadow Walk"}, {"hint": "Mind Spike"}],
+        })
+        assert dict_form.reward_skill_hints == ["Shadow Walk", "Mind Spike"]
+        ok("AIQuestResponse coerces dict-form skill hints to strings")
+
+        # 20d. Tolerates a single string (some LLMs forget the list)
+        bare = AIQuestResponse.model_validate({
+            "template_id": "test", "title": "T", "description": "x",
+            "stages": [{"stage_id": "s", "objective_text": "o",
+                        "completion_condition": {"has_flag": "x"}}],
+            "reward_skill_hints": "Solo Hint",
+        })
+        assert bare.reward_skill_hints == ["Solo Hint"]
+        ok("AIQuestResponse promotes a bare string hint to a single-item list")
+
+        # 20e. Empty/missing → empty list (default)
+        empty_q = AIQuestResponse.model_validate({
+            "template_id": "test", "title": "T", "description": "x",
+            "stages": [{"stage_id": "s", "objective_text": "o",
+                        "completion_condition": {"has_flag": "x"}}],
+        })
+        assert empty_q.reward_skill_hints == []
+        ok("AIQuestResponse defaults reward_skill_hints to [] when omitted")
+
+        # 20f. Prompt mentions reward_skill_hints so the LLM knows about the field
+        from entities.player import Player as _PLR
+        plr = _PLR(name="P", base_class="warrior")
+        prompt = build_quest_generation_prompt(plr, "x", "X", "x", {})
+        assert "reward_skill_hints" in prompt, "Prompt must teach the LLM about the field"
+        assert "OPTIONAL" in prompt or "Optional" in prompt or "optional" in prompt, \
+            "Prompt must signal that skill hints are opt-in"
+        ok("AI quest prompt teaches the LLM about reward_skill_hints (opt-in)")
+
+        # 20g. Hand-crafted demo: blacksmith_hammer + theft_investigation now have hints
+        bh = quest_reg.get("blacksmith_hammer")
+        ti = quest_reg.get("theft_investigation")
+        assert bh.reward_skill_hints == ["Forge-Born Strike"], (
+            f"blacksmith_hammer should award Forge-Born Strike, got {bh.reward_skill_hints}"
+        )
+        assert ti.reward_skill_hints == ["Hushed Step"], (
+            f"theft_investigation should award Hushed Step, got {ti.reward_skill_hints}"
+        )
+        ok("Hand-crafted demo: blacksmith_hammer → 'Forge-Born Strike', "
+           "theft_investigation → 'Hushed Step'")
+
+        # 20h. Inspect-flow UI bits exist on GameMenusMixin
+        from core.menus import GameMenusMixin
+        assert hasattr(GameMenusMixin, "_inspect_unknown_skill"), \
+            "GameMenusMixin._inspect_unknown_skill missing"
+        ok("GameMenusMixin._inspect_unknown_skill method present (Inspect UI hook)")
+    except Exception as e:
+        fail("AI quest skill rewards / demo / inspect UI broken", e)
+        traceback.print_exc()
+
     _report()
 
 
