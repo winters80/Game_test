@@ -18,6 +18,114 @@ class AISkillStub(BaseModel):
         return v.lower().replace(" ", "_").replace("-", "_")
 
 
+# ── Full AI-generated skill (used by give_skill: / quest rewards / inspect) ──
+
+class AISkillEffectResponse(BaseModel):
+    """Single effect within an AI-generated skill."""
+    effect_type: Literal["damage", "heal", "buff", "debuff", "shield", "drain", "summon"] = "damage"
+    scaling_stat: str | None = "LCK"   # one of STR/INT/AGI/LCK/VIT/WIS/END
+    base_value: float = 6.0
+    scaling_coefficient: float = 1.0
+
+    @field_validator("scaling_stat", mode="before")
+    @classmethod
+    def normalise_stat(cls, v):
+        if not v:
+            return None
+        v = str(v).upper().strip()
+        return v if v in {"STR", "INT", "AGI", "LCK", "VIT", "WIS", "END"} else "LCK"
+
+    @field_validator("base_value", mode="before")
+    @classmethod
+    def clamp_base(cls, v):
+        # Generous floor (we want skills to do *something*) + tight ceiling
+        # (Skill model itself enforces le=200 — this catches absurd inputs early).
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            return 6.0
+        return max(0.0, min(f, 200.0))
+
+    @field_validator("scaling_coefficient", mode="before")
+    @classmethod
+    def clamp_coeff(cls, v):
+        try:
+            f = float(v)
+        except (TypeError, ValueError):
+            return 1.0
+        return max(0.0, min(f, 10.0))
+
+
+class AISkillResponse(BaseModel):
+    """Full skill returned by ContentGenerator.generate_skill.
+
+    Used by every contextual skill-generation path (give_skill: trigger,
+    quest reward_skill_hints, inspect, future trainer NPC). The Skill model's
+    own validators apply a second pass of clamping, so the values here are
+    advisory — anything within these bounds will at least *load*.
+    """
+    skill_id: str
+    name: str
+    description: str
+    flavor_text: str = ""
+    skill_type: Literal["ACTIVE", "PASSIVE", "TRIGGERED"] = "ACTIVE"
+    spell_type: str = ""
+    trigger_condition: str | None = None
+    mp_cost: int = 0
+    cooldown_turns: int = 0
+    effects: list[AISkillEffectResponse] = []
+    max_level: int = 10
+
+    @field_validator("skill_id", mode="before")
+    @classmethod
+    def normalise_id(cls, v):
+        import re
+        # Strip everything that isn't alphanumeric or underscore so we get
+        # a clean snake_case slug regardless of LLM punctuation choices.
+        s = re.sub(r"[^a-z0-9_]+", "_", str(v).lower().replace(" ", "_").replace("-", "_"))
+        return s.strip("_")[:40] or "ai_skill"
+
+    @field_validator("mp_cost", mode="before")
+    @classmethod
+    def clamp_mp(cls, v):
+        try:
+            i = int(v)
+        except (TypeError, ValueError):
+            return 0
+        return max(0, min(i, 30))   # tight — Skill model allows 200, but in
+                                    # practice no AI skill should cost > 30
+
+    @field_validator("cooldown_turns", mode="before")
+    @classmethod
+    def clamp_cd(cls, v):
+        try:
+            i = int(v)
+        except (TypeError, ValueError):
+            return 0
+        return max(0, min(i, 10))   # tight — no AI skill should be on CD > 10
+
+    @field_validator("max_level", mode="before")
+    @classmethod
+    def clamp_maxlvl(cls, v):
+        try:
+            i = int(v)
+        except (TypeError, ValueError):
+            return 10
+        return max(1, min(i, 20))
+
+    @field_validator("effects")
+    @classmethod
+    def ensure_at_least_one_effect(cls, v):
+        # Skills with no effect are decoration. Add a default DAMAGE/LCK
+        # effect so the skill at least *does* something in combat.
+        if not v:
+            return [AISkillEffectResponse(
+                effect_type="damage", scaling_stat="LCK",
+                base_value=6.0, scaling_coefficient=1.0,
+            )]
+        return v[:3]   # cap at 3 effects per skill
+
+
 class AIClassResponse(BaseModel):
     class_id: str
     name: str

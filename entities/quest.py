@@ -59,6 +59,13 @@ class QuestTemplate(BaseModel):
     )
     reward_items: list[str] = Field(default_factory=list)
     reward_flags: list[str] = Field(default_factory=list)
+    # Hints handed to AI skill generation on quest completion. Each string is
+    # a name-anchor (e.g. "Forge-Born Strike") plus optional trailing context.
+    # The AI produces a full Skill in the player's tier, themed to the quest
+    # narrative, and grants it. Empty list = no skill reward. Hand-crafted
+    # quests typically use reward_items + reward_flags; AI-generated quests
+    # can populate this when the LLM thinks a skill would feel appropriate.
+    reward_skill_hints: list[str] = Field(default_factory=list)
     reward_xp: int = 0
     alignment_reward: float = 0.0
     faction_rewards: dict[str, float] = Field(default_factory=dict)   # {faction_id: delta}

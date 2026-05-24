@@ -143,30 +143,7 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             if skill_id not in state.player.skills:
                 skill = state.skill_registry.get(skill_id) if state.skill_registry else None
                 if skill is None:
-                    # Auto-create a previously-unknown skill so a scene author
-                    # can reward `give_skill:something_new` without first
-                    # adding it to data/skills/. Comes with a sensible default
-                    # DAMAGE effect — previously this auto-create produced a
-                    # cosmetic shell with no effects, leaving the player
-                    # holding a skill that did 1 damage at most.
-                    from entities.skill import Skill, SkillEffect
-                    from entities.enums import Rarity, EffectType
-                    skill = Skill(
-                        skill_id=skill_id,
-                        name=skill_id.replace("_", " ").title(),
-                        rarity=Rarity.UNCOMMON,
-                        description="An ability awakened through unconventional experience.",
-                        skill_type="ACTIVE",
-                        mp_cost=5,
-                        cooldown_turns=2,
-                        effects=[SkillEffect(
-                            effect_type=EffectType.DAMAGE,
-                            scaling_stat="LCK",
-                            base_value=8.0,
-                            scaling_coefficient=1.2,
-                        )],
-                        is_ai_generated=True,
-                    )
+                    skill = _generate_or_default_skill(skill_id, state)
                     if state.skill_registry:
                         state.skill_registry.register(skill)
                     if feature("world_db") and getattr(state, "world_db", None):
@@ -264,3 +241,68 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass
 
     state.mark_dirty()
+
+
+def _generate_or_default_skill(skill_id: str, state) -> "Skill":
+    """Build a Skill object for a `give_skill:` trigger whose id isn't in the
+    registry. Tries the AI generator first (richer, contextual) and falls
+    back to a deterministic default if AI is offline / fails.
+
+    Lives at module level rather than inside ``process_triggers`` so other
+    callers (future trainer NPC dialogue, inspect flow) can re-use it.
+    """
+    # ── Try AI first when an AIService is wired into the engine ─────────
+    ai_service = getattr(state, "ai_service", None)
+    if ai_service is not None and getattr(ai_service, "is_available", False):
+        # Build scene context so the LLM knows where the skill came from.
+        scene_text = ""
+        scene_title = state.current_scene_id
+        if getattr(state, "scene_registry", None) is not None:
+            scene = state.scene_registry.get(state.current_scene_id)
+            if scene is not None:
+                scene_title = scene.title
+                node = scene.get_node(state.current_node_id) if hasattr(scene, "get_node") else {}
+                scene_text = (node or {}).get("text", "")[:240]
+
+        # Inspect-aware: utility passive grants richer mechanical description
+        has_inspect = False
+        if getattr(state, "skill_registry", None) is not None:
+            try:
+                from systems.passive_system import get_passive_modifiers
+                mods = get_passive_modifiers(state.player, state.skill_registry)
+                has_inspect = "inspect" in mods.utility_tags
+            except Exception:
+                pass
+
+        ai_skill = ai_service.generate_skill(
+            player=state.player,
+            name_hint=skill_id.replace("_", " ").title(),
+            source="give_skill_trigger",
+            context={"scene_title": scene_title, "scene_text": scene_text},
+            has_inspect=has_inspect,
+        )
+        if ai_skill is not None:
+            # The AI may have picked its own slug — keep the trigger's
+            # requested id so downstream lookups still resolve.
+            ai_skill.skill_id = skill_id
+            return ai_skill
+
+    # ── Deterministic fallback (no AI / generation failed) ──────────────
+    from entities.skill import Skill, SkillEffect
+    from entities.enums import Rarity, EffectType
+    return Skill(
+        skill_id=skill_id,
+        name=skill_id.replace("_", " ").title(),
+        rarity=Rarity.UNCOMMON,
+        description="An ability awakened through unconventional experience.",
+        skill_type="ACTIVE",
+        mp_cost=5,
+        cooldown_turns=2,
+        effects=[SkillEffect(
+            effect_type=EffectType.DAMAGE,
+            scaling_stat="LCK",
+            base_value=8.0,
+            scaling_coefficient=1.2,
+        )],
+        is_ai_generated=True,
+    )

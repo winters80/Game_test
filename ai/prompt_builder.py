@@ -208,6 +208,129 @@ Return JSON in this exact format:
 }}"""
 
 
+def build_skill_generation_prompt(
+    player: "Player",
+    name_hint: str,
+    source: str,
+    context: dict,
+    has_inspect: bool,
+    lore_data: dict,
+) -> str:
+    """Build the AI prompt for a single contextual skill generation.
+
+    The AI is told who the player is, where the skill is coming from
+    (quest_reward / give_skill_trigger / inspect / npc_teach / class_grant),
+    what hint to anchor on, and whether the player has the Inspect passive
+    (which means we can expose mechanical detail in the description).
+
+    Returns a prompt string. The generator wraps the response with
+    AISkillResponse → Skill model validation, so absurd output is clamped.
+    """
+    from systems.economy import gear_price_hint  # for tier-relative context
+
+    # Tier-scaled mp/cd bounds. Lower levels get cheap fast skills; higher
+    # levels can afford bigger MP costs and longer cooldowns. Caps mirror
+    # the AISkillResponse Pydantic validators (mp_cost ≤ 30, cd ≤ 10).
+    level = max(1, player.level)
+    mp_cap = min(30, 4 + level * 2)         # L1 → 6, L5 → 14, L10 → 24, L13+ → 30
+    cd_cap = min(10, 1 + level // 2)        # L1 → 1, L5 → 3, L10 → 6, L18+ → 10
+    base_cap = min(40, 5 + level * 2)       # base damage ceiling per effect
+    coeff_cap = min(3.5, 1.0 + level * 0.2) # scaling-coefficient ceiling
+
+    skills_owned = ", ".join(player.skills[:8]) if player.skills else "none"
+    active_class = player.active_class or player.base_class or "Unclassified"
+    dominant = player.stats.dominant_stat()
+
+    # Source-specific framing — different paths feel different in-fiction.
+    source_blurbs = {
+        "quest_reward":         "The skill was earned as a quest reward.",
+        "give_skill_trigger":   "The skill emerged through a scene event.",
+        "inspect":              "The player is studying an unfamiliar ability they've witnessed.",
+        "npc_teach":            "An NPC trainer is teaching this skill.",
+        "class_grant":          "The class itself manifests this ability for the player.",
+    }
+    source_blurb = source_blurbs.get(source, "The player acquired this skill.")
+
+    # Pull narrative context the caller provides — quest title, scene
+    # description, NPC name etc. Render only the bits the LLM can use.
+    ctx_lines: list[str] = []
+    for key in ("quest_title", "quest_description", "scene_title",
+                "scene_text", "npc_name", "extra"):
+        val = context.get(key)
+        if val:
+            ctx_lines.append(f"  {key.replace('_', ' ').title()}: {str(val)[:200]}")
+    ctx_block = "\n".join(ctx_lines) if ctx_lines else "  (no extra context)"
+
+    inspect_block = (
+        "The player HAS the Inspect passive — they can see exact numbers.\n"
+        "  Be precise in the description: 'deals 12 + INT*1.5 fire damage, "
+        "8 MP, 2-turn cooldown'. The description should read like a System "
+        "tooltip a power-gamer would trust."
+        if has_inspect else
+        "The player does NOT have Inspect — keep the description in-fiction\n"
+        "  and slightly vague about exact numbers ('a searing arc of pale fire',\n"
+        "  'costs effort to channel', 'rarely usable in quick succession')."
+    )
+
+    economy = gear_price_hint(level)
+    world_name = lore_data.get("world_name", "Aethoria")
+
+    return f"""Generate a SINGLE skill for a player in {world_name}.
+
+PLAYER PROFILE:
+  Level: {level}
+  Class: {active_class}
+  Dominant stat: {dominant}
+  Skills already known: {skills_owned}
+  Alignment: {player.alignment:+.0f}
+
+SOURCE:
+  {source_blurb}
+  Name hint (anchor on this — refine if needed, do not invent something unrelated):
+    "{name_hint}"
+{ctx_block}
+
+PLAYER POWER TIER:
+  {economy}
+
+INSPECT CONTEXT:
+  {inspect_block}
+
+CONSTRAINTS (HARD — values outside these bounds will be clamped):
+  - skill_type: ACTIVE (most common) | PASSIVE (always-on bonus) | TRIGGERED (fires on event)
+  - PASSIVE skills MUST have mp_cost=0 and cooldown_turns=0
+  - TRIGGERED skills MUST set trigger_condition to one of:
+      "on_attack", "on_hit", "on_kill", "on_low_hp"
+  - ACTIVE skill mp_cost: 0 to {mp_cap}
+  - ACTIVE skill cooldown_turns: 0 to {cd_cap}
+  - effects[].base_value: 0 to {base_cap}
+  - effects[].scaling_coefficient: 0 to {coeff_cap}
+  - effects[].scaling_stat: STR / INT / AGI / LCK / VIT / WIS / END
+  - effects[].effect_type: damage / heal / buff / debuff / shield / drain
+  - 1-3 effects per skill (most have 1)
+  - The skill should feel coherent with the player's CLASS and SOURCE.
+    A blacksmith giving a quest skill produces something forge-themed.
+    A quest about shadow thieves produces stealth-flavoured skills.
+
+Return JSON ONLY in this schema:
+{{
+  "skill_id": "snake_case_id",
+  "name": "Display Name",
+  "description": "Player-facing description",
+  "flavor_text": "One-line evocative tag",
+  "skill_type": "ACTIVE",
+  "spell_type": "",
+  "trigger_condition": null,
+  "mp_cost": 8,
+  "cooldown_turns": 2,
+  "max_level": 10,
+  "effects": [
+    {{"effect_type": "damage", "scaling_stat": "INT",
+      "base_value": 12, "scaling_coefficient": 1.5}}
+  ]
+}}"""
+
+
 def build_guild_intent_prompt(
     guild: object,  # GuildState
     member: object,  # GuildMember
