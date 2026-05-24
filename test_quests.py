@@ -1462,10 +1462,15 @@ def main() -> None:
         assert "logger.info(\"generate_json parse error attempt=" in ocsrc, (
             "generate_json per-retry parse error should be INFO"
         )
-        assert "logger.error(\"generate_json exhausted all" in ocsrc, (
-            "Final exhaustion should still be ERROR — that's a real failure"
+        assert "logger.warning(\"generate_json exhausted" in ocsrc, (
+            "Final exhaustion should be WARNING — the caller decides whether "
+            "to surface a real ERROR based on whether it has a fallback path"
         )
-        ok("Ollama retry warnings demoted to INFO; only final exhaustion is ERROR")
+        assert "logger.error(\"generate_json exhausted" not in ocsrc, (
+            "generate_json exhaustion should not be ERROR — it leaks into "
+            "the player's terminal even when the caller has a graceful fallback"
+        )
+        ok("Ollama retry warnings demoted to INFO; final exhaustion is WARNING (caller decides)")
 
         # 22b. BG generation errors also demoted
         gen_dir = _PathLN(__file__).parent / "ai" / "generators"
@@ -1504,6 +1509,58 @@ def main() -> None:
         ok("Thin-response guard catches one-liner + no-options AI failures")
     except Exception as e:
         fail("UX / log noise fixes broken", e)
+        traceback.print_exc()
+
+    # ── 23. AI follow-up: narrative sanitiser + caller-side INFO ─────────────
+    section("23. AI Follow-up Narrative Sanitiser + Caller-Side INFO")
+    try:
+        from core.choice_handler import _sanitise_narrative
+
+        # 23a. Clean strings pass through unchanged
+        clean = "The blade finds its mark."
+        assert _sanitise_narrative(clean) == clean
+        ok("Clean narrative passes through unchanged")
+
+        # 23b. Trailing '"} {' (the real failure mode from the session log)
+        polluted = 'The Wolf Pelt\'s contracts shimmer with gold, revealing a perilous journey to Maren\'s distant tower."} {'
+        out = _sanitise_narrative(polluted)
+        assert '"} {' not in out, f"Trailing JSON gunk not stripped: {out!r}"
+        assert out.startswith("The Wolf Pelt"), f"Real text lost: {out!r}"
+        ok(f"Trailing '\"}}' + '{{' gunk stripped: {out!r}")
+
+        # 23c. Trailing stray brace from a half-closed object
+        half_open = 'A path opens before you.}'
+        assert _sanitise_narrative(half_open) == "A path opens before you."
+        ok("Unmatched trailing brace stripped")
+
+        # 23d. Whole-string wrapping quotes removed (but apostrophes preserved)
+        wrapped = '"It begins."'
+        assert _sanitise_narrative(wrapped) == "It begins."
+        with_apos = "It's a beginning, of sorts."
+        assert _sanitise_narrative(with_apos) == with_apos
+        ok("Wrapping quotes stripped without touching apostrophes")
+
+        # 23e. Empty / whitespace-only input returns empty
+        assert _sanitise_narrative("") == ""
+        assert _sanitise_narrative("   \n  ") == ""
+        ok("Empty input handled cleanly")
+
+        # 23f. Caller-side warnings (action narrative / follow-up) demoted to INFO
+        from pathlib import Path as _PathCH
+        ch_src = (_PathCH(__file__).parent / "core" / "choice_handler.py").read_text(encoding="utf-8")
+        assert 'logger.info("Action narrative generation failed' in ch_src, (
+            "Action narrative failure should be INFO — caller falls through "
+            "to 'Action taken.' silently"
+        )
+        assert 'logger.info("AI follow-up generation failed' in ch_src, (
+            "Follow-up generation failure should be INFO — caller falls "
+            "through with an empty list silently"
+        )
+        assert 'logger.warning("Action narrative' not in ch_src
+        assert 'logger.warning("AI follow-up' not in ch_src
+        ok("Caller-side AI-cosmetic failures logged at INFO (no terminal leak)")
+    except Exception as e:
+        fail("Narrative sanitiser / caller-side INFO broken", e)
         traceback.print_exc()
 
     _report()

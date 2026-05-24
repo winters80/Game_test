@@ -119,7 +119,12 @@ class OllamaClient:
                 last_error = e
                 logger.info("generate_json request error attempt=%d: %s", attempt + 1, e)
 
-        logger.error("generate_json exhausted all %d retries", max_retries)
+        # Demoted from ERROR → WARNING. The caller decides what to do on
+        # exhaustion (fall back gracefully vs propagate). Players don't need
+        # to see "ERROR" in their terminal for a routine retry-exhausted
+        # path that has a clean fallback. Real failures (the one that the
+        # caller has no graceful path for) should be reported by the caller.
+        logger.warning("generate_json exhausted all %d attempt(s)", max_retries)
         raise last_error or OllamaParseError("All retries exhausted")
 
     def generate_text(
