@@ -58,7 +58,7 @@ def load_game_menu(engine: "GameEngine", saves: list[str]) -> None:
         return
 
     engine.state = state
-    engine.state.skill_registry = engine.skill_registry
+    _attach_engine_handles(engine)
     # Re-register any AI-generated skills stored in the world DB
     for defn in getattr(engine.state, "_ai_skill_defs", []):
         from entities.skill import Skill
@@ -83,10 +83,21 @@ def new_game(engine: "GameEngine") -> None:
     slot_name = re.sub(r'[^a-z0-9_]', '', player.name.lower().replace(" ", "_")) or "save"
 
     engine.state = new_game_state(player, SAVES_DIR, slot_name)
-    engine.state.skill_registry = engine.skill_registry
+    _attach_engine_handles(engine)
     engine.state.current_scene_id = "prologue"
     engine.state.current_node_id = "root"
 
     renderer.print_success(f"Welcome, {player.name}.")
     time.sleep(0.5)
     engine._game_loop()
+
+
+def _attach_engine_handles(engine: "GameEngine") -> None:
+    """Stitch the engine's registries + AIService onto the GameState so
+    system-level functions (option_logic, quest_system, etc.) can reach
+    them without needing the engine reference. Keeps state-passing tidy.
+    """
+    engine.state.skill_registry = engine.skill_registry
+    engine.state.class_registry = engine.class_registry
+    engine.state.scene_registry = engine.scene_registry
+    engine.state.ai_service = engine.ai_service

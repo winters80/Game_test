@@ -135,6 +135,37 @@ class AIService:
             future.cancel()
             return None
 
+    # ── Skill generation (contextual) ────────────────────────────────────────
+
+    def generate_skill(
+        self,
+        player: "Player",
+        name_hint: str,
+        source: str,
+        context: dict | None = None,
+        has_inspect: bool = False,
+    ) -> Any:
+        """Generate a single skill in context. Returns None if AI is offline,
+        the generator fails, or the response doesn't validate.
+
+        Callers (give_skill: trigger, quest reward path, future inspect /
+        trainer flows) should fall back to a deterministic default Skill
+        when this returns None.
+        """
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_skill(
+                player=player,
+                name_hint=name_hint,
+                source=source,
+                context=context or {},
+                has_inspect=has_inspect,
+            )
+        except Exception:
+            logger.warning("AI skill generation failed", exc_info=True)
+            return None
+
     # ── Quest generation ─────────────────────────────────────────────────────
 
     def generate_quest(

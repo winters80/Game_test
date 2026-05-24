@@ -80,6 +80,102 @@ class ContentGenerator:
             logger.error(f"AI narrative generation failed: {e}")
             return None
 
+    def generate_skill(
+        self,
+        player: "Player",
+        name_hint: str,
+        source: str,
+        context: dict | None = None,
+        has_inspect: bool = False,
+    ) -> "Skill | None":
+        """Generate a single skill in context.
+
+        Used by give_skill: triggers, quest reward_skill_hints, future
+        inspect / trainer flows. The LLM gets the player's profile, the
+        source (quest / scene / etc.), and any narrative context the
+        caller can provide (quest_title, scene_text, npc_name, ...).
+        ``has_inspect`` is True when the player has the Inspect utility
+        passive — the description gets exposed mechanical numbers.
+
+        Returns a fully-built Skill, or None on failure. The caller is
+        responsible for registering the result in the SkillRegistry.
+        """
+        from ai.prompt_builder import build_skill_generation_prompt
+        from ai.response_validator import AISkillResponse
+
+        prompt = build_skill_generation_prompt(
+            player=player,
+            name_hint=name_hint,
+            source=source,
+            context=context or {},
+            has_inspect=has_inspect,
+            lore_data=self.lore_data,
+        )
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt,
+                system_prompt=self.system_prompt,
+                temperature=0.7,
+            )
+            validated = AISkillResponse.model_validate(raw)
+        except (OllamaParseError, OllamaTimeoutError, Exception) as e:
+            logger.warning(f"AI skill generation failed: {e}")
+            return None
+
+        # PASSIVE / TRIGGERED skills shouldn't have MP cost or cooldown
+        # (the AISkillResponse validator clamps the values; this enforces
+        # the type-specific rule).
+        if validated.skill_type != "ACTIVE":
+            validated.mp_cost = 0
+            validated.cooldown_turns = 0
+
+        # Convert to the engine Skill model. The Skill model has its own
+        # Pydantic validators (mp_cost ≤ 200, scaling_coefficient ≤ 10),
+        # which act as a second-layer guard.
+        from entities.enums import EffectType as _ET, Rarity as _R, SkillType as _ST
+        # Rarity scales with player level — early skills are COMMON/UNCOMMON,
+        # later ones can reach RARE/EPIC. Caller can override after.
+        if player.level >= 12:
+            rarity = _R.EPIC
+        elif player.level >= 7:
+            rarity = _R.RARE
+        elif player.level >= 3:
+            rarity = _R.UNCOMMON
+        else:
+            rarity = _R.COMMON
+
+        engine_effects = [
+            SkillEffect(
+                effect_type=_ET(eff.effect_type),
+                scaling_stat=eff.scaling_stat,
+                base_value=eff.base_value,
+                scaling_coefficient=eff.scaling_coefficient,
+            )
+            for eff in validated.effects
+        ]
+
+        try:
+            skill = Skill(
+                skill_id=validated.skill_id,
+                name=validated.name,
+                rarity=rarity,
+                description=validated.description,
+                flavor_text=validated.flavor_text,
+                spell_type=validated.spell_type,
+                skill_type=_ST(validated.skill_type),
+                trigger_condition=validated.trigger_condition,
+                mp_cost=validated.mp_cost,
+                cooldown_turns=validated.cooldown_turns,
+                effects=engine_effects,
+                max_level=validated.max_level,
+                is_ai_generated=True,
+            )
+        except Exception as e:
+            logger.warning(f"AI skill failed engine validation: {e}")
+            return None
+
+        return skill
+
     def generate_quest(
         self,
         player: "Player",

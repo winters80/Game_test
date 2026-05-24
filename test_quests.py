@@ -1062,6 +1062,205 @@ def main() -> None:
         fail("F3-F9 skill design decisions broken", e)
         traceback.print_exc()
 
+    # ── 19. Contextual AI skill generation ───────────────────────────────────
+    section("19. Contextual AI Skill Generation")
+    try:
+        from ai.response_validator import AISkillResponse, AISkillEffectResponse
+        from ai.prompt_builder import build_skill_generation_prompt
+        from pydantic import ValidationError
+
+        # 19a. AISkillResponse clamps absurd LLM values
+        runaway = AISkillResponse.model_validate({
+            "skill_id": "Test Skill ID!!!",  # gets normalised
+            "name": "Test", "description": "x",
+            "skill_type": "ACTIVE",
+            "mp_cost": 99_999,           # clamped to 30
+            "cooldown_turns": 9_999,     # clamped to 10
+            "max_level": 50,             # clamped to 20
+            "effects": [{
+                "effect_type": "damage", "scaling_stat": "lck",   # lower-case → uppercased
+                "base_value": 999_999,
+                "scaling_coefficient": 500,
+            }],
+        })
+        assert runaway.skill_id == "test_skill_id", f"id wrong: {runaway.skill_id}"
+        assert runaway.mp_cost == 30, f"mp clamp wrong: {runaway.mp_cost}"
+        assert runaway.cooldown_turns == 10, f"cd clamp wrong: {runaway.cooldown_turns}"
+        assert runaway.max_level == 20, f"max_level clamp wrong: {runaway.max_level}"
+        assert runaway.effects[0].scaling_stat == "LCK"
+        assert runaway.effects[0].base_value <= 200.0
+        assert runaway.effects[0].scaling_coefficient <= 10.0
+        ok("AISkillResponse clamps runaway LLM values across every numeric field")
+
+        # 19b. Empty effects → default DAMAGE/LCK effect inserted
+        no_eff = AISkillResponse.model_validate({
+            "skill_id": "bare", "name": "Bare", "description": "x",
+            "skill_type": "ACTIVE", "effects": [],
+        })
+        assert len(no_eff.effects) == 1, f"Should default to 1 effect, got {len(no_eff.effects)}"
+        assert no_eff.effects[0].effect_type == "damage"
+        ok("AISkillResponse defaults to one DAMAGE effect when LLM returns []")
+
+        # 19c. Effects capped at 3
+        many = AISkillResponse.model_validate({
+            "skill_id": "many", "name": "Many", "description": "x",
+            "skill_type": "ACTIVE",
+            "effects": [{"effect_type": "damage"} for _ in range(10)],
+        })
+        assert len(many.effects) == 3, f"Effects cap broken: got {len(many.effects)}"
+        ok("AISkillResponse caps effects at 3 per skill")
+
+        # 19d. Unknown effect_type rejected with ValidationError
+        try:
+            AISkillResponse.model_validate({
+                "skill_id": "bad", "name": "B", "description": "x",
+                "effects": [{"effect_type": "lol_invalid"}],
+            })
+            fail("Expected ValidationError for unknown effect_type")
+        except ValidationError:
+            ok("Unknown effect_type rejected by AISkillEffectResponse")
+
+        # 19e. Prompt embeds source-specific blurb + tier hints + has_inspect
+        from entities.player import Player as _PL
+        plyr = _PL(name="PromptTester", base_class="warrior")
+
+        prompt_quest = build_skill_generation_prompt(
+            player=plyr, name_hint="Forge-Born Strike",
+            source="quest_reward",
+            context={"quest_title": "The Journeyman Hammer",
+                     "quest_description": "Torven's hammer was stolen by goblins."},
+            has_inspect=False, lore_data={},
+        )
+        assert "quest reward" in prompt_quest.lower(), "Source blurb missing"
+        assert "Forge-Born Strike" in prompt_quest, "Name hint missing"
+        assert "Journeyman Hammer" in prompt_quest, "Quest context missing"
+        assert "does NOT have Inspect" in prompt_quest, "Inspect-off blurb missing"
+        assert "Level: 1" in prompt_quest, "Player level missing"
+        ok("Prompt embeds source / hint / quest context / inspect-off / level")
+
+        prompt_inspect_on = build_skill_generation_prompt(
+            player=plyr, name_hint="Anything",
+            source="inspect", context={},
+            has_inspect=True, lore_data={},
+        )
+        assert "HAS the Inspect passive" in prompt_inspect_on
+        ok("Prompt switches to Inspect-on blurb when has_inspect=True")
+
+        # 19f. _generate_or_default_skill falls back deterministically with no AI
+        from scenes.option_logic import _generate_or_default_skill
+        class _NoAIState:
+            ai_service = None
+            current_scene_id = "x"
+            current_node_id = "root"
+            scene_registry = None
+            skill_registry = None
+            player = _PL(name="FallbackTester", base_class="warrior")
+        fallback = _generate_or_default_skill("ember_brand", _NoAIState())
+        assert fallback.skill_id == "ember_brand"
+        assert fallback.effects, "Fallback skill should still have an effect"
+        assert fallback.mp_cost > 0
+        ok(f"_generate_or_default_skill returns usable Skill when AI off "
+           f"(mp={fallback.mp_cost}, cd={fallback.cooldown_turns}, effects={len(fallback.effects)})")
+
+        # 19g. _generate_or_default_skill uses AI when available, keeps requested id
+        class _FakeAISkill:
+            def __init__(self, skill_id, name):
+                from entities.skill import Skill, SkillEffect
+                from entities.enums import Rarity, EffectType, SkillType
+                self._real = Skill(
+                    skill_id=skill_id, name=name, rarity=Rarity.RARE,
+                    description="ai-built", skill_type=SkillType.ACTIVE,
+                    mp_cost=10, cooldown_turns=3,
+                    effects=[SkillEffect(effect_type=EffectType.DAMAGE,
+                                         scaling_stat="INT", base_value=15,
+                                         scaling_coefficient=2.0)],
+                    is_ai_generated=True,
+                )
+
+        class _FakeAISvc:
+            is_available = True
+            def __init__(self): self.calls = []
+            def generate_skill(self, player, name_hint, source, context, has_inspect):
+                self.calls.append({
+                    "name_hint": name_hint, "source": source,
+                    "context": context, "has_inspect": has_inspect,
+                })
+                # Return a Skill with a DIFFERENT id than requested — the
+                # wrapper should override with the requested skill_id so
+                # downstream lookups via `give_skill:requested_id` work.
+                return _FakeAISkill("ai_picked_different_id", "AI Picked Name")._real
+
+        fake_svc = _FakeAISvc()
+        class _AIState:
+            ai_service = fake_svc
+            current_scene_id = "village_start"
+            current_node_id = "root"
+            scene_registry = None  # exercise the "no scene registry" branch
+            skill_registry = None
+            player = _PL(name="AISkillTester", base_class="mage")
+        ai_skill = _generate_or_default_skill("rune_of_breaking", _AIState())
+        assert len(fake_svc.calls) == 1, "AI generate_skill should be called once"
+        call = fake_svc.calls[0]
+        assert call["source"] == "give_skill_trigger"
+        assert call["name_hint"] == "Rune Of Breaking"
+        assert ai_skill.skill_id == "rune_of_breaking", (
+            f"requested id should be preserved, got {ai_skill.skill_id}"
+        )
+        assert ai_skill.is_ai_generated
+        ok("_generate_or_default_skill calls AIService with scene context + preserves requested id")
+
+        # 19h. Quest reward path grants AI skills when reward_skill_hints set
+        # Import with aliases — Python's function-scope rules would otherwise
+        # make these locals and shadow earlier references in other Sections.
+        from entities.quest import QuestTemplate as _QT, QuestStage as _QS
+        from entities.skill import SkillRegistry as _SR
+        from persistence.save_manager import new_game_state as _ng, close_game as _cg
+
+        sr_quest = _SR()
+        sr_quest.load_from_dir(DATA_DIR / "skills")
+        _qp = _PL(name="SkillQuestTester", base_class="warrior")
+        _qst = _ng(_qp, SAVES_DIR, "_skill_quest_")
+        _qst.skill_registry = sr_quest
+        _qst.ai_service = None  # force fallback path so test is deterministic
+        try:
+            template = _QT(
+                template_id="test_skill_quest", title="Forge of Echoes",
+                description="A quest about reclaimed forge-magic.",
+                stages=[_QS(stage_id="s1", description="d",
+                            objective_text="o",
+                            completion_condition={"has_flag": "x"})],
+                reward_gold=10, reward_xp=20,
+                reward_skill_hints=["Echoing Hammer Strike"],
+            )
+            from systems.quest_system import _grant_quest_skill_rewards
+            _grant_quest_skill_rewards(template, _qst)
+            assert "echoing_hammer_strike" in _qp.skills, (
+                f"Quest skill hint should have been granted as a skill on the player; "
+                f"got skills={_qp.skills}"
+            )
+            granted = sr_quest.get("echoing_hammer_strike")
+            assert granted is not None and granted.name == "Echoing Hammer Strike"
+            assert granted.effects, "Granted skill must have effects"
+            ok(f"Quest reward_skill_hints → AI/fallback Skill registered + granted "
+               f"({granted.name}: {granted.skill_type})")
+        finally:
+            _cg(_qst)
+            for ext in (".json", ".db"):
+                p = SAVES_DIR / f"_skill_quest_{ext}"
+                if p.exists():
+                    try: p.unlink()
+                    except OSError: pass
+
+        # 19i. AIService.generate_skill returns None when generator absent
+        from ai.ai_service import AIService
+        empty = AIService()
+        none_skill = empty.generate_skill(player=_qp, name_hint="x", source="inspect")
+        assert none_skill is None
+        ok("AIService.generate_skill returns None when AI unavailable")
+    except Exception as e:
+        fail("Contextual AI skill generation broken", e)
+        traceback.print_exc()
+
     _report()
 
 
