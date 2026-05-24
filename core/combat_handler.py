@@ -66,13 +66,19 @@ class CombatHandlerMixin:
         _time.sleep(0.5)
 
         player = self.state.player
+        # Skill cooldowns are PER-ENCOUNTER: reset everything at the start
+        # of each combat so a 5-CD spell isn't "off cooldown" just because
+        # the player took 5 menu actions in the village. Cooldowns now tick
+        # per combat turn (see end of the loop below).
+        from systems.skill_system import reset_cooldowns_for_combat
+        reset_cooldowns_for_combat(player)
         turn = 0
         alive_enemies = [e for e in enemies if e.is_alive]
 
         # Surprise round: player gets one free attack before enemies can respond
         if surprise and alive_enemies:
             target = alive_enemies[0]
-            dmg, is_crit = combat_system.player_attack(player, target)
+            dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry)
             crit_str = " CRITICALLY" if is_crit else ""
             renderer.print_combat_action(
                 "SURPRISE!", f"You strike {target.name}{crit_str} before they react!", dmg, "system_warning"
@@ -99,10 +105,14 @@ class CombatHandlerMixin:
             renderer.console.print()
 
             # ── Choose action ─────────────────────────────────────────────────
-            # Only include ACTIVE and TRIGGERED skills — skip PASSIVE skills
+            # Only include ACTIVE skills. PASSIVE skills contribute via
+            # systems/passive_system (defense/attack bonuses, dodge, etc.).
+            # TRIGGERED skills fire automatically from combat_system on the
+            # right event (on_attack / on_kill) — showing them in the menu
+            # would let the player double-fire them.
             skills_available = [
                 sid for sid in player.skills
-                if (sk := self.skill_registry.get(sid)) and sk.skill_type != SkillType.PASSIVE
+                if (sk := self.skill_registry.get(sid)) and sk.skill_type == SkillType.ACTIVE
             ]
             action_choices = ["⚔ Basic Attack"] + [_skill_label(sid, player, self.skill_registry) for sid in skills_available] + ["🏃 Flee"]
             action = questionary.select("Your action:", choices=action_choices).ask()
@@ -137,7 +147,7 @@ class CombatHandlerMixin:
 
                 # ── Execute action ────────────────────────────────────────────
                 if action == "⚔ Basic Attack":
-                    dmg, is_crit = combat_system.player_attack(player, target)
+                    dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry)
                     crit_str = " CRITICALLY" if is_crit else ""
                     renderer.print_combat_action(
                         "You", f"strike {target.name}{crit_str} for", dmg,
@@ -198,7 +208,7 @@ class CombatHandlerMixin:
             # ── Enemy turns ───────────────────────────────────────────────────
             for enemy in alive_enemies:
                 if enemy.is_alive and player.current_hp > 0:
-                    dmg = combat_system.enemy_attack(enemy, player)
+                    dmg = combat_system.enemy_attack(enemy, player, self.skill_registry)
                     if dmg == 0:
                         renderer.print_combat_action(enemy.name, "attacks — you dodge!", style="miss")
                     else:
@@ -208,6 +218,10 @@ class CombatHandlerMixin:
                         renderer.console.print(
                             f"  [dim_text]→ Your HP: {player.current_hp}/{player.max_hp}[/dim_text]"
                         )
+
+            # End-of-round cooldown tick — F5: per combat turn, not per game-loop turn
+            from systems.skill_system import tick_combat_cooldowns
+            tick_combat_cooldowns(player)
 
             alive_enemies = [e for e in enemies if e.is_alive]
             _time.sleep(0.3)
@@ -245,7 +259,13 @@ class CombatHandlerMixin:
         # Victory
         total_xp = sum(e.xp_reward for e in enemies)
         total_gold = sum(e.gold_reward for e in enemies)
-        leveled_up = level_system.add_experience(player, total_xp)
+        # Pass registries so add_experience can auto-grant the next
+        # learnable_skill from the player's class on level-up (F9).
+        leveled_up = level_system.add_experience(
+            player, total_xp,
+            class_registry=self.class_registry,
+            skill_registry=self.skill_registry,
+        )
         player.gold += total_gold
 
         # Roll loot drops from defeated enemies

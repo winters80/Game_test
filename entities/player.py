@@ -121,6 +121,11 @@ class Player(BaseModel):
     turn_count: int = 0
     active_buffs: list[dict] = Field(default_factory=list)
     skill_cooldowns: dict[str, int] = Field(default_factory=dict)
+    # Use-count + level for skills that grow with use (LitRPG progression).
+    # skill_uses tracks raw count; skill_levels is the derived current level
+    # (capped at Skill.max_level). Both default to 0/1 on first use.
+    skill_uses: dict[str, int] = Field(default_factory=dict)
+    skill_levels: dict[str, int] = Field(default_factory=dict)
     created_at: datetime = Field(default_factory=datetime.now)
     play_time_seconds: int = 0
     last_safe_zone_id: str = "village_start"

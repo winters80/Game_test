@@ -211,32 +211,88 @@ class CombatResult:
     fled: bool = False
 
 
-def player_attack(player: "Player", enemy: Enemy) -> tuple[int, bool]:
-    """Basic attack. Returns (damage_dealt, is_critical)."""
+def player_attack(
+    player: "Player", enemy: Enemy,
+    skill_registry: "SkillRegistry | None" = None,
+) -> tuple[int, bool]:
+    """Basic attack. Returns (damage_dealt, is_critical).
+
+    Folds in PASSIVE skill bonuses (attack/crit/bonus-damage-on-hit) and any
+    TRIGGERED skills bound to ``on_attack``. Pass ``skill_registry`` to get
+    full passive contributions — without it, the function falls back to the
+    legacy stat-only formula.
+    """
+    from systems.passive_system import get_passive_modifiers, try_fire_trigger
+
+    mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
+
     base_dmg = max(1, player.stats.STR + random.randint(1, 4) - enemy.defense)
-    crit_chance = player.stats.LCK * 0.01  # 1% per LCK point
+    if mods:
+        base_dmg += mods.attack_bonus
+    crit_chance = player.stats.LCK * 0.01  # 1% per LCK
+    if mods:
+        crit_chance += mods.crit_chance
     is_crit = random.random() < crit_chance
     damage = int(base_dmg * 1.5) if is_crit else base_dmg
+
+    # PASSIVE bonus damage on every basic attack (Void Infusion etc.)
+    if mods:
+        damage += mods.bonus_damage_on_hit
+
     from systems.synergy_system import apply_synergy_bonuses
     damage, _ = apply_synergy_bonuses(player, damage, 0)
+
+    # TRIGGERED skills firing on attack (Arcane Strike)
+    if skill_registry is not None:
+        trig_bonus = try_fire_trigger(player, "on_attack", skill_registry)
+        damage += trig_bonus
+
     enemy.current_hp = max(0, enemy.current_hp - damage)
+
+    # on_kill trigger (heal / buff after dropping an enemy)
+    if skill_registry is not None and enemy.current_hp <= 0:
+        kill_bonus = try_fire_trigger(player, "on_kill", skill_registry)
+        if kill_bonus:
+            player.current_hp = min(player.max_hp, player.current_hp + kill_bonus)
+
     return damage, is_crit
 
 
 def player_skill_attack(player: "Player", skill_id: str, enemy: Enemy, skill_registry: "SkillRegistry") -> tuple[int, bool]:
-    """Use a skill. Returns (value, success)."""
+    """Use a skill. Returns (value, success).
+
+    Also bumps the skill's use count (potential level-up via
+    ``skill_system.record_skill_use``).
+    """
     skill = skill_registry.get(skill_id)
     if not skill or skill.mp_cost > player.current_mp:
         return 0, False
     player.current_mp -= skill.mp_cost
     value = calculate_skill_damage(skill, player)
     enemy.current_hp = max(0, enemy.current_hp - value)
+    # Skills grow stronger with use (LitRPG progression)
+    from systems.skill_system import record_skill_use
+    record_skill_use(player, skill_id, skill_registry)
     return value, True
 
 
-def enemy_attack(enemy: Enemy, player: "Player") -> int:
-    """Enemy attacks player. Returns damage dealt."""
+def enemy_attack(
+    enemy: Enemy, player: "Player",
+    skill_registry: "SkillRegistry | None" = None,
+) -> int:
+    """Enemy attacks player. Returns damage dealt.
+
+    PASSIVE skills apply: defense_bonus subtracts flat damage,
+    dodge_chance adds to the player's chance to dodge entirely.
+    """
+    from systems.passive_system import get_passive_modifiers
+
+    mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
+
     damage = max(1, enemy.attack + random.randint(-1, 2) - max(0, player.stats.END // 3))
+    if mods:
+        damage = max(1, damage - mods.defense_bonus)
+
     from systems.synergy_system import get_active_synergies
     _synergies = get_active_synergies(player)
     for _syn in _synergies:
@@ -244,6 +300,8 @@ def enemy_attack(enemy: Enemy, player: "Player") -> int:
             damage = max(1, int(damage * (1 - _syn["bonus"]["damage_reduction"] / 100)))
     _extra_dodge = sum(_syn["bonus"].get("dodge_pct", 0) / 100 for _syn in _synergies)
     dodge_chance = player.stats.AGI * 0.008 + _extra_dodge
+    if mods:
+        dodge_chance += mods.dodge_chance
     if random.random() < dodge_chance:
         return 0  # dodged
     player.current_hp = max(0, player.current_hp - damage)

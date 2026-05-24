@@ -212,12 +212,13 @@ def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
         player.gold += template.reward_gold * COPPER_PER_GOLD
 
     if template.reward_xp:
-        leveled_up = level_system.add_experience(player, template.reward_xp)
-        if leveled_up:
-            bus.publish(Event("LEVEL_UP", {
-                "level": player.level,
-                "stat_points": player.stat_points,
-            }))
+        # Pull registries from state if attached — auto-grants next class
+        # skill on level-up (F9). add_experience itself publishes LEVEL_UP.
+        leveled_up = level_system.add_experience(
+            player, template.reward_xp,
+            class_registry=getattr(state, "class_registry", None),
+            skill_registry=getattr(state, "skill_registry", None),
+        )
 
     for item_id in template.reward_items:
         player.add_item(item_id)

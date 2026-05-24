@@ -7,7 +7,7 @@ SAVES_DIR = BASE_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 
 # ── Save versioning ────────────────────────────────────────────────────────────
-SAVE_VERSION = 3   # bump when Player schema or world_db schema changes
+SAVE_VERSION = 4   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
 AI_ENABLED = True
