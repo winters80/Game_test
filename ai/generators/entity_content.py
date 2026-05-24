@@ -35,7 +35,7 @@ class EntityContentGenerators:
             if template:
                 return {"type": "quest", "template": template}
         except Exception as exc:
-            logger.warning(f"BG quest generation error: {exc}")
+            logger.info(f"BG quest generation error: {exc}")
         return None
 
     def _gen_npc_branch(self, task: dict) -> dict | None:
@@ -63,7 +63,7 @@ class EntityContentGenerators:
             if result and "node_id" in result and "text" in result:
                 return {"type": "npc_branch", "npc_id": npc_id, "node": result}
         except Exception as exc:
-            logger.warning(f"BG NPC branch generation error: {exc}")
+            logger.info(f"BG NPC branch generation error: {exc}")
         return None
 
     def _gen_bot_action(self, task: dict) -> dict | None:
@@ -88,7 +88,7 @@ class EntityContentGenerators:
             if result and result.get("type") == "bot_action":
                 return result
         except Exception as exc:
-            logger.warning(f"BG bot action error: {exc}")
+            logger.info(f"BG bot action error: {exc}")
         return None
 
     def _gen_guild_tick(self, task: dict) -> dict | None:
@@ -114,5 +114,5 @@ class EntityContentGenerators:
             if results:
                 return {"type": "guild_tick_results", "results": results}
         except Exception as exc:
-            logger.warning(f"BG guild tick error: {exc}")
+            logger.info(f"BG guild tick error: {exc}")
         return None

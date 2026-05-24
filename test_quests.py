@@ -1446,6 +1446,66 @@ def main() -> None:
         fail("Polish items (skill-level event / stat menu / trainer / givers) broken", e)
         traceback.print_exc()
 
+    # ── 22. UX polish: [?] cancel keywords + log-level demotion ──────────────
+    section("22. [?] UX + Log Noise")
+    try:
+        from pathlib import Path as _PathLN
+
+        # 22a. Ollama retry warnings are now INFO, not WARNING — they were
+        # bleeding into the player's terminal during normal play.
+        oc = _PathLN(__file__).parent / "ai" / "ollama_client.py"
+        ocsrc = oc.read_text(encoding="utf-8")
+        assert "logger.info(\"generate_json request error attempt=" in ocsrc, (
+            "generate_json per-retry log should be INFO, not WARNING — players "
+            "shouldn't see transient timeouts in their terminal"
+        )
+        assert "logger.info(\"generate_json parse error attempt=" in ocsrc, (
+            "generate_json per-retry parse error should be INFO"
+        )
+        assert "logger.error(\"generate_json exhausted all" in ocsrc, (
+            "Final exhaustion should still be ERROR — that's a real failure"
+        )
+        ok("Ollama retry warnings demoted to INFO; only final exhaustion is ERROR")
+
+        # 22b. BG generation errors also demoted
+        gen_dir = _PathLN(__file__).parent / "ai" / "generators"
+        warning_count = 0
+        info_count = 0
+        for f in gen_dir.glob("*.py"):
+            src = f.read_text(encoding="utf-8")
+            warning_count += src.count('logger.warning(f"BG ')
+            info_count += src.count('logger.info(f"BG ')
+        assert warning_count == 0, (
+            f"BG generation errors should not use WARNING (found {warning_count}); "
+            "they leak to the player's terminal"
+        )
+        assert info_count >= 9, (
+            f"Expected at least 9 BG generation INFO logs, found {info_count}"
+        )
+        ok(f"BG generation logs: {info_count} INFO, {warning_count} WARNING (regression guard)")
+
+        # 22c. situation_query accepts cancel keywords as abort
+        sq_path = _PathLN(__file__).parent / "core" / "situation_query.py"
+        sq_src = sq_path.read_text(encoding="utf-8")
+        assert '"cancel"' in sq_src and '"back"' in sq_src and '"stop"' in sq_src, (
+            "situation_query should accept 'cancel'/'back'/'stop' as abort"
+        )
+        assert "Leave blank or type 'cancel'" in sq_src, (
+            "Prompt instruction must tell the player how to back out"
+        )
+        ok("situation_query accepts cancel keywords and prompts the player on how to back out")
+
+        # 22d. Thin-response guard: empty options + < 60-char situation_text
+        # triggers a 'try rephrasing' nudge instead of dumping a one-liner.
+        assert "len(situation) < 60" in sq_src, (
+            "Thin-response guard missing — short situation_text + no options "
+            "must fall through to the rephrase nudge"
+        )
+        ok("Thin-response guard catches one-liner + no-options AI failures")
+    except Exception as e:
+        fail("UX / log noise fixes broken", e)
+        traceback.print_exc()
+
     _report()
 
 
