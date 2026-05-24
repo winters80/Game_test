@@ -41,9 +41,20 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
     renderer.console.print()
     question = questionary.text(
         "What do you want to know or try?",
-        instruction="(e.g. 'Can I aim for the head?' or 'Is there a way to sneak past?')",
+        instruction=(
+            "(e.g. 'Can I aim for the head?' or 'Is there a way to sneak past?'. "
+            "Leave blank or type 'cancel' to back out.)"
+        ),
     ).ask()
-    if not question or not question.strip():
+    # Accept blank input, an explicit 'cancel', or a couple of common
+    # back-out phrases as the abort path. Avoids the awkward situation
+    # where a player tries to abort mid-typing and ends up submitting
+    # gibberish to the AI.
+    if (
+        not question
+        or not question.strip()
+        or question.strip().lower() in {"cancel", "back", "nevermind", "never mind", "stop"}
+    ):
         return
 
     question = question.strip()
@@ -85,7 +96,7 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
         logger.error("Dynamic query exception: %s", exc, exc_info=True)
 
     if not result:
-        logger.warning(
+        logger.info(
             "Dynamic query returned no result: scene=%s question=%r",
             engine.state.current_scene_id, question,
         )
@@ -96,8 +107,26 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
         renderer.prompt_any_key()
         return
 
+    # Quality guard: if the AI returned a near-empty situation_text AND no
+    # new options, treat it as a non-answer. The player typed something the
+    # model didn't understand; nudge them to rephrase instead of showing
+    # a one-liner that looks like a non-sequitur ("The light intensifies...").
+    situation = (result.situation_text or "").strip()
+    if not result.options and len(situation) < 60:
+        logger.info(
+            "Dynamic query response too thin (len=%d, options=0): scene=%s question=%r",
+            len(situation), engine.state.current_scene_id, question,
+        )
+        renderer.print_system_message(
+            "The System received your question but could not draw any new path "
+            "from it. Try a more specific or in-character phrasing.",
+            style="dim_text",
+        )
+        renderer.prompt_any_key()
+        return
+
     renderer.print_divider()
-    renderer.print_scene_text([result.situation_text])
+    renderer.print_scene_text([situation or "..."])
     renderer.print_divider()
 
     if not result.options:

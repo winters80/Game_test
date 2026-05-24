@@ -110,10 +110,14 @@ class OllamaClient:
                 return data
             except json.JSONDecodeError as e:
                 last_error = OllamaParseError(f"JSON parse failed on attempt {attempt + 1}: {e}")
-                logger.warning("generate_json parse error attempt=%d: %s", attempt + 1, e)
+                # Per-retry: INFO only (goes to ai.log, NOT the player's terminal).
+                # The retry will absorb most transient failures; the player
+                # doesn't need to see every attempt. Only the final exhaustion
+                # below is loud enough to break the player's immersion.
+                logger.info("generate_json parse error attempt=%d: %s", attempt + 1, e)
             except Exception as e:
                 last_error = e
-                logger.warning("generate_json request error attempt=%d: %s", attempt + 1, e)
+                logger.info("generate_json request error attempt=%d: %s", attempt + 1, e)
 
         logger.error("generate_json exhausted all %d retries", max_retries)
         raise last_error or OllamaParseError("All retries exhausted")

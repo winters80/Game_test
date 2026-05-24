@@ -49,7 +49,7 @@ class WorldContentGenerators:
                     "event_text": text.strip(),
                 }
         except Exception as exc:
-            logger.warning(f"BG world_event error: {exc}")
+            logger.info(f"BG world_event error: {exc}")
         return None
 
     def _gen_rumor_task(self, task: dict) -> dict | None:
@@ -78,7 +78,7 @@ class WorldContentGenerators:
                     "event_text": text.strip(),
                 }
         except Exception as exc:
-            logger.warning(f"BG rumor error: {exc}")
+            logger.info(f"BG rumor error: {exc}")
         return None
 
     def _gen_lore_entry(self, task: dict) -> dict | None:
@@ -108,7 +108,7 @@ class WorldContentGenerators:
                     "title": "Lore Fragment",
                 }
         except Exception as exc:
-            logger.warning(f"BG lore_entry error: {exc}")
+            logger.info(f"BG lore_entry error: {exc}")
         return None
 
     def _gen_area_activity(self, task: dict) -> dict | None:
@@ -139,7 +139,7 @@ class WorldContentGenerators:
                     "event_text": text.strip(),
                 }
         except Exception as exc:
-            logger.warning(f"BG area_activity error: {exc}")
+            logger.info(f"BG area_activity error: {exc}")
         return None
 
     def _gen_narrative(self, task: dict) -> dict | None:
@@ -166,7 +166,7 @@ class WorldContentGenerators:
             if text:
                 return {"type": "narrative", "zone_id": zone_id, "text": text.strip()}
         except Exception as exc:
-            logger.warning(f"BG narrative generation error: {exc}")
+            logger.info(f"BG narrative generation error: {exc}")
         return None
 
     def _gen_autonomous_world_expansion(
