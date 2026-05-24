@@ -102,7 +102,13 @@ def main() -> int:
         player = Player(name="Threshold the Bold", base_class="warrior")
         player.gold = 0
         engine.state = new_game_state(player, SAVES_DIR, SLOT)
+        # Attach engine handles to state — same wiring core/menu_flow does
+        # when starting a real game. Without this, quest_system's skill-
+        # reward path and option_logic's give_skill: AI path silently skip.
         engine.state.skill_registry = engine.skill_registry
+        engine.state.class_registry = engine.class_registry
+        engine.state.scene_registry = engine.scene_registry
+        engine.state.ai_service = engine.ai_service
         engine.state.current_scene_id = "village_start"
         engine.state.current_node_id = "root"
         engine.state.turn_number = 1
@@ -120,6 +126,7 @@ def main() -> int:
     bus.subscribe("QUEST_FAILED",    event_recorder)
     bus.subscribe("ITEM_FOUND",      event_recorder)
     bus.subscribe("LEVEL_UP",        event_recorder)
+    bus.subscribe("SKILL_ACQUIRED",  event_recorder)
 
     # ── 3. Talk to Torven, pick up the blacksmith hammer quest ─────────────
     section("3. Quest 1 — Blacksmith Hammer (2-stage)")
@@ -195,6 +202,34 @@ def main() -> int:
         fail(f"Quest instance {iid} still in active_quest_ids after completion")
     else:
         ok("Quest moved from active → completed list cleanly")
+
+    # ── Verify the reward_skill_hints demo fired ────────────────────────────
+    # blacksmith_hammer in data/quests/quest_templates.json declares
+    # "reward_skill_hints": ["Forge-Born Strike"]. After completion the
+    # player should own a new skill themed to that hint.
+    skill_events = [e for e in captured_events if e.name == "SKILL_ACQUIRED"]
+    if not skill_events:
+        if engine.ai_service and engine.ai_service.is_available:
+            fail("blacksmith_hammer reward_skill_hint should have granted a skill "
+                 "(SKILL_ACQUIRED event missing). Ollama may have timed out — "
+                 "rerun if so.")
+        else:
+            ok("(AI offline) skill-reward fallback skipped — expected")
+    else:
+        granted = skill_events[-1]
+        sid = granted.data.get("skill_id")
+        sk_obj = engine.skill_registry.get(sid) if sid else None
+        if sk_obj is None:
+            fail(f"SKILL_ACQUIRED fired (skill_id={sid}) but skill missing from registry")
+        else:
+            ok(f"Reward skill granted: '{sk_obj.name}' "
+               f"({sk_obj.skill_type.value} {sk_obj.rarity.value}, "
+               f"mp={sk_obj.mp_cost} cd={sk_obj.cooldown_turns}, "
+               f"effects={len(sk_obj.effects)})")
+            if sk_obj.effects:
+                ef = sk_obj.effects[0]
+                ok(f"  → effect: {ef.effect_type.value} {ef.base_value} + "
+                   f"{ef.scaling_stat or '—'}×{ef.scaling_coefficient}")
 
     # ── 4. Quest 2 — 3-stage Mira theft investigation ──────────────────────
     section("4. Quest 2 — Theft Investigation (3-stage)")

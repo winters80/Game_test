@@ -17,6 +17,7 @@ from typing import TYPE_CHECKING
 import questionary
 
 from config import DATA_DIR, SAVES_DIR, feature
+from core.event_bus import Event, bus
 from persistence.save_manager import save_game
 from ui import renderer
 
@@ -34,11 +35,29 @@ class GameMenusMixin:
     # ── Skills menu ───────────────────────────────────────────────────────────
 
     def _skills_menu(self) -> None:
-        """Show all learned skills grouped by type with full detail view."""
+        """Show all learned skills grouped by type with full detail view.
+
+        Players with the Inspect utility passive AND a running AIService also
+        get an "Inspect an unknown skill" entry — they describe / name a
+        skill they've heard rumour of, and the AI generates a full
+        Skill in their tier using ``source="inspect"`` and
+        ``has_inspect=True`` (rich, technically-precise description).
+        """
         from ui.panels import RARITY_COLORS
         player = self.state.player
 
-        if not player.skills:
+        # Detect Inspect passive via the same utility_tags pipeline combat uses.
+        inspect_available = False
+        ai_service = getattr(self, "ai_service", None)
+        if ai_service is not None and getattr(ai_service, "is_available", False):
+            try:
+                from systems.passive_system import get_passive_modifiers
+                mods = get_passive_modifiers(player, self.skill_registry)
+                inspect_available = "inspect" in mods.utility_tags
+            except Exception:
+                inspect_available = False
+
+        if not player.skills and not inspect_available:
             renderer.print_system_message("You have not learned any skills yet.", style="dim_text")
             renderer.prompt_any_key()
             return
@@ -53,8 +72,11 @@ class GameMenusMixin:
             groups[key].append(skill)
 
         # Build flat choice list with headers
+        INSPECT_CHOICE = "✦ Inspect an unknown skill (System-Awakened)"
         skill_choices: list[str] = []
         skill_map: dict[str, object] = {}
+        if inspect_available:
+            skill_choices.append(INSPECT_CHOICE)
         for group_name in ("ACTIVE", "PASSIVE", "TRIGGERED", "OTHER"):
             skills = groups[group_name]
             if not skills:
@@ -74,6 +96,13 @@ class GameMenusMixin:
             chosen = questionary.select("Select skill to inspect:", choices=skill_choices).ask()
             if chosen is None or chosen == "← Back" or chosen.startswith("──"):
                 break
+
+            # ── Inspect flow: ask the AI to materialise a new skill ──────
+            if chosen == INSPECT_CHOICE:
+                self._inspect_unknown_skill()
+                # Rebuild the choice list so the new skill shows up
+                return self._skills_menu()
+
             skill = skill_map.get(chosen)
             if not skill:
                 continue
@@ -104,8 +133,138 @@ class GameMenusMixin:
                 for eff in skill.effects:
                     stat = eff.scaling_stat or "—"
                     renderer.console.print(f"    [dim_text]{eff.effect_type.value.upper()}  base={eff.base_value}  ×{eff.scaling_coefficient} {stat}[/dim_text]")
+            # Show level + use-count for skills with growth state
+            cur_lvl = self.state.player.skill_levels.get(skill.skill_id, 1)
+            uses = self.state.player.skill_uses.get(skill.skill_id, 0)
+            if uses > 0 or cur_lvl > 1:
+                renderer.console.print(
+                    f"  Mastery : [system_msg]Lvl {cur_lvl}/{skill.max_level}[/system_msg]  "
+                    f"[dim_text]({uses} uses in combat)[/dim_text]"
+                )
             renderer.console.print()
             renderer.prompt_any_key()
+
+    def _inspect_unknown_skill(self) -> None:
+        """Player-driven AI skill generation via the Inspect passive.
+
+        The player describes a skill they've heard rumour of (a name, a
+        short phrase). The AI generates a fully-mechanically-defined Skill
+        themed to their class + level, with the rich Inspect-tooltip
+        description style. The result is registered + added to the player's
+        skill list — they now know it.
+        """
+        from ui.panels import RARITY_COLORS
+
+        ai_service = getattr(self, "ai_service", None)
+        if ai_service is None or not getattr(ai_service, "is_available", False):
+            renderer.print_system_message(
+                "The System is silent. (AI offline — Inspect cannot reach across the silence.)",
+                style="dim_text",
+            )
+            renderer.prompt_any_key()
+            return
+
+        renderer.clear()
+        renderer.print_title()
+        renderer.console.print(
+            "\n  [system_msg][ INSPECT — UNKNOWN SKILL ][/system_msg]\n"
+        )
+        renderer.console.print(
+            "  [dim_text]Name or describe the ability you've witnessed / heard whispers of.\n"
+            "  The System will reveal what it actually is.[/dim_text]\n"
+        )
+        hint = questionary.text(
+            "What skill are you inspecting?",
+            instruction="(e.g. 'Echoing Hammer Strike' or 'a stealth move that bends shadow')",
+        ).ask()
+        if not hint or not hint.strip():
+            return
+
+        # Build context so the LLM gets situational anchors. Scene context
+        # helps it pick a thematically-coherent skill even when the hint
+        # is vague.
+        ctx = {}
+        if getattr(self, "scene_registry", None) is not None and self.state:
+            scene = self.scene_registry.get(self.state.current_scene_id)
+            if scene is not None:
+                ctx["scene_title"] = scene.title
+                node = scene.get_node(self.state.current_node_id) if hasattr(scene, "get_node") else {}
+                ctx["scene_text"] = (node or {}).get("text", "")[:240]
+
+        skill = None
+        try:
+            with renderer.show_ai_thinking_spinner(f"INSPECTING: {hint[:40]}..."):
+                skill = ai_service.generate_skill(
+                    player=self.state.player,
+                    name_hint=hint.strip(),
+                    source="inspect",
+                    context=ctx,
+                    has_inspect=True,    # this whole flow IS the Inspect passive at work
+                )
+        except Exception:
+            import logging
+            logging.getLogger(__name__).warning("Inspect generation crashed", exc_info=True)
+
+        if skill is None:
+            renderer.print_system_message(
+                "The System could not resolve that ability. Try a clearer description.",
+                style="dim_text",
+            )
+            renderer.prompt_any_key()
+            return
+
+        # Register + grant
+        if self.skill_registry.get(skill.skill_id) is None:
+            self.skill_registry.register(skill)
+        if skill.skill_id not in self.state.player.skills:
+            self.state.player.skills.append(skill.skill_id)
+        bus.publish(Event("SKILL_ACQUIRED", {
+            "skill_id": skill.skill_id,
+            "skill_name": skill.name,
+            "rarity": skill.rarity.value,
+        }))
+        # Persist for save reload
+        if feature("world_db") and self.state.world_db is not None:
+            try:
+                self.state.world_db.store_ai_skill(
+                    skill_id=skill.skill_id,
+                    definition=skill.model_dump(mode="json"),
+                    source="inspect",
+                    generated_turn=self.state.player.turn_count,
+                )
+            except Exception:
+                pass
+
+        # Show the result with the Inspect-rich detail
+        renderer.clear()
+        renderer.print_title()
+        color = RARITY_COLORS.get(skill.rarity.value, "white")
+        renderer.console.print(
+            f"\n  [system_msg]✦ SYSTEM REVELATION ✦[/system_msg]\n"
+            f"\n  [{color}]{skill.name}[/{color}]  [{color}]{skill.rarity.value}[/{color}]"
+        )
+        renderer.console.print(f"\n  [scene_text]{skill.description}[/scene_text]")
+        if skill.flavor_text:
+            renderer.console.print(f'  [italic dim_text]"{skill.flavor_text}"[/italic dim_text]')
+        renderer.console.print()
+        renderer.console.print(f"  Type    : [dim_text]{skill.skill_type.value}[/dim_text]")
+        if skill.mp_cost > 0:
+            renderer.console.print(f"  MP Cost : [mp]{skill.mp_cost}[/mp]")
+        if skill.cooldown_turns > 0:
+            renderer.console.print(f"  Cooldown: {skill.cooldown_turns} turns")
+        if skill.effects:
+            renderer.console.print("  Effects :")
+            for eff in skill.effects:
+                stat = eff.scaling_stat or "—"
+                renderer.console.print(
+                    f"    [dim_text]{eff.effect_type.value.upper()}  base={eff.base_value}  "
+                    f"×{eff.scaling_coefficient} {stat}[/dim_text]"
+                )
+        renderer.console.print()
+        renderer.print_system_message(
+            f"Skill acquired: {skill.name}", style="success",
+        )
+        renderer.prompt_any_key()
 
     # ── Crafting menu ─────────────────────────────────────────────────────────
 

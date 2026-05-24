@@ -171,10 +171,35 @@ class AIQuestResponse(BaseModel):
     reward_gold: int = 0
     reward_xp: int = 0
     reward_items: list[str] = []
+    # Short evocative skill-name hints. Each becomes a full AI-generated
+    # Skill at quest-completion time via systems.quest_system._grant_quest_skill_rewards.
+    # Capped at 2 because more would dilute the reward and lengthen the
+    # post-quest spinner pause.
+    reward_skill_hints: list[str] = []
     alignment_reward: float = 0.0
     faction_rewards: dict[str, float] = {}   # {faction_id: standing_delta}
     guild_rewards: dict[str, float] = {}     # {guild_id: standing_delta}
     flavor_text: str = ""
+
+    @field_validator("reward_skill_hints", mode="before")
+    @classmethod
+    def coerce_skill_hints(cls, v) -> list[str]:
+        """Accept the half-dozen ways an LLM might phrase a list of hints."""
+        if not v:
+            return []
+        if isinstance(v, str):
+            return [v.strip()][:2]
+        if isinstance(v, list):
+            out: list[str] = []
+            for item in v:
+                if isinstance(item, str) and item.strip():
+                    out.append(item.strip()[:80])
+                elif isinstance(item, dict):
+                    name = item.get("name") or item.get("hint") or item.get("skill")
+                    if name:
+                        out.append(str(name).strip()[:80])
+            return out[:2]
+        return []
 
     @field_validator("reward_gold", mode="before")
     @classmethod

@@ -177,6 +177,13 @@ REQUIREMENTS:
 - Flags should be snake_case like "completed_verath_errand"
 - If player is evil-aligned, quest can have morally gray objectives
 - faction_rewards and guild_rewards: use faction/guild IDs like "iron_vanguard", "shadow_network", "mages_conclave", "silver_fangs"
+- reward_skill_hints (OPTIONAL): 0-2 short evocative skill names that thematically
+    fit this quest. The game will turn each hint into a full Skill (level-scaled,
+    coherent with the player's class). Use ONLY when the quest narrative
+    genuinely warrants a new ability — e.g. a forge quest hinting at a fire
+    technique, a shadow quest hinting at a stealth move. Leave empty for
+    delivery / errand / political quests where a skill reward would feel out
+    of place. Examples: ["Forge-Born Strike"], ["Shadow Cloak", "Trap Sense"]
 - Return ONLY valid JSON matching the schema exactly
 
 Return JSON in this exact format:
@@ -201,6 +208,7 @@ Return JSON in this exact format:
   "reward_gold": 100,
   "reward_xp": 200,
   "reward_items": [],
+  "reward_skill_hints": [],
   "alignment_reward": 5.0,
   "faction_rewards": {{"iron_vanguard": 10.0}},
   "guild_rewards": {{}},

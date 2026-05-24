@@ -218,6 +218,10 @@ class ContentGenerator:
                 reward_gold=ai_response.reward_gold,
                 reward_xp=ai_response.reward_xp,
                 reward_items=ai_response.reward_items,
+                # AI may propose 0-2 short skill name hints; each becomes a
+                # fully-generated Skill at quest completion (themed to the
+                # quest narrative). See AIQuestResponse + _grant_quest_skill_rewards.
+                reward_skill_hints=ai_response.reward_skill_hints,
                 alignment_reward=ai_response.alignment_reward,
                 reward_flags=[],
                 failure_conditions=[],
