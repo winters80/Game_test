@@ -89,10 +89,10 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
         from systems.buff_system import tick_buffs
         tick_buffs(engine.state.player)
 
-    # Skill cooldowns
-    if engine.state.player.skill_cooldowns:
-        from systems.skill_system import tick_skill_cooldowns
-        tick_skill_cooldowns(engine.state.player)
+    # NOTE: skill cooldowns are now ticked PER COMBAT TURN (see core/combat_handler.py)
+    # and reset at the start of each combat. Previously this tick ran every
+    # game-loop turn, which let players "refresh" a 5-CD spell by walking
+    # 5 menu steps in the village. That was F5 in the skill audit.
 
     # Alignment inertia — nudge toward 0 every N turns
     if feature("alignment_system"):

@@ -116,6 +116,7 @@ def _migrate(data: dict[str, Any], from_version: int, to_version: int) -> dict[s
     migrators = {
         1: _v1_to_v2,
         2: _v2_to_v3,
+        3: _v3_to_v4,
     }
 
     v = from_version
@@ -201,5 +202,20 @@ def _v2_to_v3(data: dict[str, Any]) -> dict[str, Any]:
     player.setdefault("active_buffs", [])
     player.setdefault("skill_cooldowns", {})
     player.setdefault("play_time_seconds", 0)
+    data["player"] = player
+    return data
+
+
+def _v3_to_v4(data: dict[str, Any]) -> dict[str, Any]:
+    """
+    v3 → v4: Player gained skill_uses + skill_levels (used by the skill
+    leveling system — skills grow stronger by use). Both default to empty
+    dicts; populated lazily the first time a player casts a skill.
+    """
+    data["save_version"] = 4
+
+    player = data.get("player", {})
+    player.setdefault("skill_uses", {})
+    player.setdefault("skill_levels", {})
     data["player"] = player
     return data

@@ -8,14 +8,27 @@ from core.event_bus import Event, bus
 
 if TYPE_CHECKING:
     from entities.player import Player
+    from entities.character_class import ClassRegistry
+    from entities.skill import SkillRegistry
 
 
 def xp_for_level(level: int) -> int:
     return int(BASE_XP_PER_LEVEL * (XP_SCALING_FACTOR ** (level - 1)))
 
 
-def add_experience(player: "Player", amount: int) -> list[int]:
-    """Add XP and handle level-ups. Returns list of new levels reached."""
+def add_experience(
+    player: "Player",
+    amount: int,
+    class_registry: "ClassRegistry | None" = None,
+    skill_registry: "SkillRegistry | None" = None,
+) -> list[int]:
+    """Add XP and handle level-ups. Returns list of new levels reached.
+
+    If both ``class_registry`` and ``skill_registry`` are provided, each
+    level-up also auto-grants the next unlearned skill from the player's
+    active class ``learnable_skills`` list (F9 — making the previously-dead
+    learnable_skills data drive actual progression).
+    """
     leveled_up_to = []
     player.experience += amount
     while player.experience >= player.experience_to_next:
@@ -32,6 +45,13 @@ def add_experience(player: "Player", amount: int) -> list[int]:
 
         leveled_up_to.append(player.level)
         bus.publish(Event("LEVEL_UP", {"level": player.level, "stat_points": STAT_POINTS_PER_LEVEL}))
+
+        # Auto-grant a class skill on level-up. Optional — only fires when
+        # both registries are passed (combat / quest reward paths supply
+        # them; legacy callers without them stay backward-compatible).
+        if class_registry is not None and skill_registry is not None:
+            from systems.skill_system import grant_next_learnable_skill
+            grant_next_learnable_skill(player, class_registry, skill_registry)
 
     return leveled_up_to
 

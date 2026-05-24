@@ -902,6 +902,166 @@ def main() -> None:
         fail("Skill audit fixes broken", e)
         traceback.print_exc()
 
+    # ── 18. Skill design decisions (F3-F9 implementation) ────────────────────
+    section("18. Skill Design Decisions (passives, CDs, triggers, leveling)")
+    try:
+        from systems import passive_system
+        from systems import skill_system
+        from entities.skill import Skill, SkillEffect
+        from entities.enums import EffectType, SkillType, Rarity
+
+        # ── F3a: Passive skills now contribute defense_bonus, attack_bonus, etc.
+        sr = SkillRegistry()
+        sr.load_from_dir(DATA_DIR / "skills")
+
+        from entities.player import Player as _P
+        pp = _P(name="PassiveTest", base_class="warrior")
+        # Add Iron Skin (PASSIVE buff ENDx0.5) — should produce defense_bonus
+        pp.skills.append("iron_skin")
+        mods = passive_system.get_passive_modifiers(pp, sr)
+        assert mods.defense_bonus > 0, (
+            f"Iron Skin should contribute defense_bonus, got {mods.defense_bonus}"
+        )
+        ok(f"Iron Skin → defense_bonus={mods.defense_bonus} (PASSIVE now does something)")
+
+        # ── F3b: Utility passives become tags
+        pp.skills.append("tracking")
+        pp.skills.append("persuasion")
+        mods2 = passive_system.get_passive_modifiers(pp, sr)
+        assert "tracking" in mods2.utility_tags
+        assert "persuasion" in mods2.utility_tags
+        ok(f"Utility passives → utility_tags={mods2.utility_tags}")
+
+        # ── F3c: Stacking is capped (dodge can't exceed 40%)
+        # Fake a player with many evasion-style skills
+        pp2 = _P(name="DodgeAbuse", base_class="rogue")
+        for i in range(8):
+            fake_evade = Skill(
+                skill_id=f"fake_evade_{i}", name=f"Evasion Layer {i}",
+                rarity=Rarity.RARE, description="evasion",
+                skill_type=SkillType.PASSIVE,
+                effects=[SkillEffect(effect_type=EffectType.BUFF,
+                                     scaling_stat="AGI", base_value=0.0,
+                                     scaling_coefficient=10.0)],
+            )
+            sr.register(fake_evade)
+            pp2.skills.append(fake_evade.skill_id)
+        mods3 = passive_system.get_passive_modifiers(pp2, sr)
+        assert mods3.dodge_chance <= passive_system.MAX_DODGE_CHANCE + 1e-6, (
+            f"Dodge cap broken: {mods3.dodge_chance} > {passive_system.MAX_DODGE_CHANCE}"
+        )
+        ok(f"Dodge stacking capped at {passive_system.MAX_DODGE_CHANCE * 100:.0f}% "
+           f"(8 evasion layers = {mods3.dodge_chance:.2f})")
+
+        # ── F6: TRIGGERED skill fires on the right event, ignored otherwise
+        trig = Skill(
+            skill_id="test_on_attack", name="Test Trigger", rarity=Rarity.RARE,
+            description="extra damage on attack",
+            skill_type=SkillType.TRIGGERED,
+            trigger_condition="on_attack",
+            effects=[SkillEffect(effect_type=EffectType.DAMAGE,
+                                 scaling_stat="STR", base_value=5.0,
+                                 scaling_coefficient=1.0)],
+        )
+        sr.register(trig)
+        pp3 = _P(name="TrigTest", base_class="warrior")
+        pp3.skills.append("test_on_attack")
+        # Right event → fires
+        v_attack = passive_system.try_fire_trigger(pp3, "on_attack", sr)
+        assert v_attack > 0, f"on_attack trigger should produce damage, got {v_attack}"
+        ok(f"TRIGGERED 'on_attack' fires when event matches (value={v_attack})")
+        # Wrong event → silent
+        v_kill = passive_system.try_fire_trigger(pp3, "on_kill", sr)
+        assert v_kill == 0, f"on_attack trigger should NOT fire for on_kill, got {v_kill}"
+        ok("TRIGGERED skills only fire when trigger_condition matches the event")
+
+        # ── F5: Cooldowns tick per combat-turn, reset on combat entry
+        pp4 = _P(name="CDTest", base_class="warrior")
+        pp4.skill_cooldowns = {"fireball": 3, "ice_lance": 2}
+        skill_system.tick_combat_cooldowns(pp4)
+        assert pp4.skill_cooldowns == {"fireball": 2, "ice_lance": 1}, (
+            f"tick_combat_cooldowns broken: {pp4.skill_cooldowns}"
+        )
+        skill_system.tick_combat_cooldowns(pp4)
+        assert pp4.skill_cooldowns == {"fireball": 1}, (
+            f"cooldown 2 → 1 → expired expected, got {pp4.skill_cooldowns}"
+        )
+        ok("tick_combat_cooldowns decrements + drops expired entries")
+
+        pp4.skill_cooldowns = {"fireball": 5, "lightning_bolt": 3}
+        skill_system.reset_cooldowns_for_combat(pp4)
+        assert pp4.skill_cooldowns == {}
+        ok("reset_cooldowns_for_combat clears every cooldown (per-encounter)")
+
+        # ── F7: cast_spell + get_spell_skills are gone
+        assert not hasattr(skill_system, "cast_spell"), \
+            "Dead cast_spell function should have been removed (F7)"
+        assert not hasattr(skill_system, "get_spell_skills"), \
+            "Dead get_spell_skills function should have been removed (F7)"
+        assert not hasattr(skill_system, "tick_skill_cooldowns"), \
+            "Legacy tick_skill_cooldowns removed in favour of tick_combat_cooldowns"
+        ok("Dead code removed: cast_spell, get_spell_skills, tick_skill_cooldowns")
+
+        # ── F8: Skills grow with use, capped at max_level
+        pp5 = _P(name="GrowTest", base_class="warrior")
+        pp5.skills.append("power_strike")
+        # 5 uses → level up
+        for _ in range(4):
+            res = skill_system.record_skill_use(pp5, "power_strike", sr)
+            assert res is None, "Shouldn't level up on uses 1-4"
+        res5 = skill_system.record_skill_use(pp5, "power_strike", sr)
+        assert res5 == 2, f"Use #5 should level up to 2, got {res5}"
+        assert pp5.skill_levels["power_strike"] == 2
+        ok(f"Skills level up every {skill_system.USES_PER_LEVEL} uses (lvl 1→2 at 5 uses)")
+
+        # Damage scales with skill level
+        from systems.skill_system import calculate_skill_damage
+        sk_ps = sr.get("power_strike")
+        pp5.skill_levels["power_strike"] = 1
+        dmg_l1 = calculate_skill_damage(sk_ps, pp5)
+        pp5.skill_levels["power_strike"] = 5
+        dmg_l5 = calculate_skill_damage(sk_ps, pp5)
+        assert dmg_l5 > dmg_l1, f"L5 should out-damage L1, got L1={dmg_l1} L5={dmg_l5}"
+        ok(f"calculate_skill_damage reads skill_levels: L1={dmg_l1} → L5={dmg_l5}")
+
+        # Capped at max_level
+        pp5.skill_uses["power_strike"] = 1000
+        pp5.skill_levels["power_strike"] = sk_ps.max_level
+        capped = skill_system.record_skill_use(pp5, "power_strike", sr)
+        assert capped is None and pp5.skill_levels["power_strike"] == sk_ps.max_level
+        ok(f"Skill leveling stops at max_level ({sk_ps.max_level})")
+
+        # ── F9: grant_next_learnable_skill auto-learns from class
+        from entities.character_class import ClassRegistry as _CR
+        cr = _CR()
+        cr.load_from_file(DATA_DIR / "classes" / "base_classes.json")
+        pp6 = _P(name="LearnTest", base_class="warrior")
+        # Warrior's learnable_skills includes berserker_rage, shield_bash, etc.
+        granted = skill_system.grant_next_learnable_skill(pp6, cr, sr)
+        assert granted is not None, "Warrior should auto-learn first listed skill"
+        assert granted in pp6.skills
+        ok(f"grant_next_learnable_skill auto-granted '{granted}' to warrior")
+
+        # Calling again grants the NEXT one in the list
+        granted2 = skill_system.grant_next_learnable_skill(pp6, cr, sr)
+        assert granted2 is not None and granted2 != granted, \
+            f"Second call should grant a different skill, got {granted2}"
+        ok(f"Repeat call grants next unlearned skill ('{granted2}')")
+
+        # ── Save v3 → v4 migration adds skill_uses + skill_levels
+        from persistence.save_manager import _v3_to_v4
+        v3 = {"save_version": 3, "player": {"name": "old", "base_class": "warrior",
+                                            "stats": {"STR": 5, "INT": 5, "AGI": 5, "LCK": 5,
+                                                      "VIT": 5, "WIS": 5, "END": 5}}}
+        v4 = _v3_to_v4(v3.copy())
+        assert v4["save_version"] == 4
+        assert "skill_uses" in v4["player"] and v4["player"]["skill_uses"] == {}
+        assert "skill_levels" in v4["player"] and v4["player"]["skill_levels"] == {}
+        ok("v3 → v4 migration adds skill_uses + skill_levels (default empty)")
+    except Exception as e:
+        fail("F3-F9 skill design decisions broken", e)
+        traceback.print_exc()
+
     _report()
 
 

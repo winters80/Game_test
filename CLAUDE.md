@@ -260,6 +260,51 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 |---------|---------|
 | 1 | Initial — Player, scene position, AI cache |
 | 2 | Added: gender, species_id, alignment, lives_remaining/used, guild_memberships, faction_standing_cache, active/completed_quest_ids, evolution_stage, background, perception_bonus, turn_count, last_safe_zone_id. Paired SQLite .db file introduced. |
+| 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
+| 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
+
+## Skill System
+
+Three skill types with distinct combat roles:
+
+| Type | Combat menu | When fires |
+|------|-------------|-----------|
+| `ACTIVE` | Yes — player picks each turn | On selection |
+| `PASSIVE` | No — contributes via `systems/passive_system.get_passive_modifiers` | Always — see stacking rules below |
+| `TRIGGERED` | No — fires via `systems/passive_system.try_fire_trigger` | When `trigger_condition` matches event: `on_attack`, `on_hit`, `on_kill`, `on_low_hp` |
+
+### Passive stacking rules (`systems/passive_system.py`)
+
+| Bonus | Stack | Hard cap |
+|-------|-------|---------|
+| `attack_bonus` | additive | +20 dmg |
+| `defense_bonus` | additive | +15 dmg reduction |
+| `magic_defense_bonus` | additive | +10 dmg reduction |
+| `bonus_damage_on_hit` | additive | +30 dmg |
+| `dodge_chance` | additive | 40% |
+| `crit_chance` | additive | 30% |
+| `utility_tags` | set union | (presence-only) |
+
+A skill is classified by keyword scan of its `name`/`description`: "iron skin"/"armor"→defense, "evasion"/"acrobat"→dodge, "tracking"/"persuasion"/etc.→utility tags. Unmatched PASSIVE skills with effects fall back to a generic contribution based on `effect_type` (BUFF→attack, SHIELD→defense, DAMAGE→bonus_damage_on_hit).
+
+### Cooldowns
+
+Cooldowns are **per-combat-encounter**:
+- `reset_cooldowns_for_combat(player)` is called at the start of every `_run_combat`
+- `tick_combat_cooldowns(player)` is called at the end of every combat round (not every game-loop turn)
+- This stops the old exploit where a 5-CD skill was "off cooldown" after walking 5 menu steps in town
+
+### Skill leveling (F8 — use-count based)
+
+Skills grow with use. Every `USES_PER_LEVEL` (=5) casts in combat, the skill levels up by +1, capped at `Skill.max_level` (default 10). Each level adds:
+- `+LEVEL_BONUS_FLAT` (1.0) to base value
+- `+LEVEL_BONUS_COEFF` (10%) to stat scaling
+
+Per-player level + use-count live in `player.skill_levels` and `player.skill_uses` dicts. `calculate_skill_damage` reads them automatically.
+
+### Auto-learn on level-up (F9)
+
+`level_system.add_experience(player, xp, class_registry, skill_registry)` calls `skill_system.grant_next_learnable_skill` after each level-up — auto-grants the next unlearned skill from the player's class `learnable_skills` list. Callers without registries (legacy / test) skip this gracefully.
 
 Migration in `persistence/save_manager._migrate()`. Always backward-compatible (new fields have defaults).
 
