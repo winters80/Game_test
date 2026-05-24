@@ -18,6 +18,39 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Patterns the LLM tends to leak into a string-typed narrative when it
+# tries to produce two JSON objects in one response. The parser still
+# accepts the outer object, but the inner string carries trailing
+# `"} {` / unmatched braces / "next response begins" residue. Strip it
+# before showing the text to the player.
+import re as _re
+_JSON_TRAILING_GUNK = _re.compile(r'\s*[\"\']?\s*\}?\s*[,;]?\s*\{.*$', _re.DOTALL)
+_UNMATCHED_TAIL = _re.compile(r'[\}\]\"]+\s*$')
+
+
+def _sanitise_narrative(text: str) -> str:
+    """Clean trailing JSON pollution from an LLM-produced narrative string.
+
+    Catches the common failure mode where the model emits
+        "narrative": "...sentence.\"} {"
+    by trimming everything from the first stray `} {` / `"} {` boundary.
+    Also strips unmatched trailing braces / quotes left over from the same
+    class of mistake. Leaves clean strings unchanged.
+    """
+    if not text:
+        return ""
+    text = text.strip()
+    text = _JSON_TRAILING_GUNK.sub("", text)
+    # If the model wrapped its output in quotes, drop the wrapping
+    # without removing apostrophes inside the sentence.
+    text = text.strip()
+    if text.startswith('"') and text.endswith('"') and text.count('"') == 2:
+        text = text[1:-1]
+    # Pull off any unmatched trailing brace/quote/bracket fragment
+    text = _UNMATCHED_TAIL.sub("", text).strip()
+    return text
+
+
 class ChoiceHandlerMixin:
 
     def _handle_choice(self, option: SceneOption) -> None:
@@ -210,9 +243,12 @@ class ChoiceHandlerMixin:
                     num_predict=80,
                     max_retries=1,
                 )
-            return str(raw.get("narrative", "")).strip()
+            return _sanitise_narrative(str(raw.get("narrative", "")))
         except Exception as e:
-            logger.warning("Action narrative generation failed: %s", e)
+            # INFO not WARNING — this is a best-effort cosmetic call. The
+            # caller falls through to "Action taken." silently and the
+            # player doesn't need to see the technical failure.
+            logger.info("Action narrative generation failed: %s", e)
             return ""
 
     def _generate_ai_followup(self, narrative_text: str) -> list[str]:
@@ -253,7 +289,9 @@ class ChoiceHandlerMixin:
                     if key in result and isinstance(result[key], list):
                         return [str(r) for r in result[key] if isinstance(r, str)]
         except Exception as e:
-            logger.warning("AI follow-up generation failed: %s", e)
+            # INFO not WARNING — best-effort cosmetic. Caller falls through
+            # with an empty list and the player just doesn't see new options.
+            logger.info("AI follow-up generation failed: %s", e)
         return []
 
     def _apply_pending_species(self, player) -> None:
