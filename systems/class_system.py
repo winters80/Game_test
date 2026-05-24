@@ -96,7 +96,10 @@ def resolve_combo_class(
     divergence = compute_divergence_score(player, class_registry, item_registry)
     if divergence.trigger_ai and ai_service is not None and getattr(ai_service, "is_available", False):
         bus.emit(Event("ANOMALY_DETECTED", {}))
-        generated_class = ai_service.generate_class(player, divergence, class_registry)
+        generated_class = ai_service.generate_class(
+            player, divergence, class_registry,
+            skill_registry=skill_registry,  # so the class's AI skills are materialised + registered
+        )
         if generated_class:
             class_registry.register(generated_class)
             return generated_class

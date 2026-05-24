@@ -1,9 +1,9 @@
 [
   {
-    "skill_id": "fireball",
-    "name": "Fireball",
+    "skill_id": "greater_fireball",
+    "name": "Greater Fireball",
     "rarity": "UNCOMMON",
-    "description": "Hurl a condensed sphere of arcane flame at a single target. Fast, reliable, hot.",
+    "description": "A condensed sphere of arcane flame, costlier than the basic cast but hotter on impact.",
     "flavor_text": "The System logs every cast. It finds the heat... interesting.",
     "skill_type": "ACTIVE",
     "spell_type": "fire",

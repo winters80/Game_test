@@ -822,7 +822,7 @@ def main() -> None:
         # 12b. AIService with a fake generator passes calls through unchanged.
         class _FakeGen:
             def __init__(self): self.calls = []
-            def generate_class(self, p, d, r):
+            def generate_class(self, p, d, r, skill_registry=None):
                 self.calls.append("class"); return "CLASS_OK"
             def generate_quest(self, p, gid, n, r):
                 self.calls.append("quest"); return "QUEST_OK"
@@ -1065,7 +1065,7 @@ def main() -> None:
         # 16c. With a fake generator, async submission returns a Future that resolves
         from concurrent.futures import Future
         class _FastGen:
-            def generate_class(self, p, d, r):
+            def generate_class(self, p, d, r, skill_registry=None):
                 return "MOCK_CLASS_DEF"
         svc = AIService(content_generator=_FastGen())
         fut = svc.submit_class_generation_async(None, None, None)
@@ -1076,7 +1076,7 @@ def main() -> None:
 
         # 16d. A generator that raises returns None (caught + logged)
         class _BrokenGen:
-            def generate_class(self, p, d, r):
+            def generate_class(self, p, d, r, skill_registry=None):
                 raise RuntimeError("Ollama exploded")
         svc2 = AIService(content_generator=_BrokenGen())
         fut2 = svc2.submit_class_generation_async(None, None, None)
