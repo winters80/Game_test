@@ -64,7 +64,6 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
 
         # Runtime state
         self.state: GameState | None = None
-        self.ai_generator = None
         self.ai_service = None       # AIService facade — systems' boundary to AI
         self._bg_generator = None
         self._world_director = None
@@ -87,6 +86,10 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         """Delegate — see core/bootstrap.setup_ai."""
         from core.bootstrap import setup_ai
         setup_ai(self)
+
+    def _ai_online(self) -> bool:
+        """True when AI calls can be made. All AI goes through ``self.ai_service``."""
+        return self.ai_service is not None and self.ai_service.is_available
 
     def _setup_notifications(self) -> None:
         setup_notification_listeners(renderer.console, self.system_messages)

@@ -153,7 +153,7 @@ class ChoiceHandlerMixin:
                 renderer.print_scene_text([f"» {option.narrative}"])
                 renderer.print_divider()
                 narrative_text = option.narrative
-            elif self.ai_generator:
+            elif self._ai_online():
                 # Follow-up options have no pre-written narrative — generate one on the spot
                 narrative_text = self._generate_action_narrative(option.label)
                 if narrative_text:
@@ -175,7 +175,7 @@ class ChoiceHandlerMixin:
             if narrative_text and any(kw in narrative_text.lower() for kw in combat_keywords):
                 renderer.prompt_any_key()
                 self._run_combat("street_thugs")
-            elif self.ai_generator and narrative_text:
+            elif self._ai_online() and narrative_text:
                 # Generate 2-3 follow-up options from Ollama
                 followup_opts = self._generate_ai_followup(narrative_text)
                 if followup_opts:
@@ -218,81 +218,34 @@ class ChoiceHandlerMixin:
 
         self.state.mark_dirty()
 
+    def _current_scene_title_and_text(self, max_text: int) -> tuple[str, str]:
+        scene = self.scene_registry.get(self.state.current_scene_id)
+        scene_title = scene.title if scene else self.state.current_scene_id
+        node = scene.get_node(self.state.current_node_id) if scene else {}
+        return scene_title, node.get("text", "")[:max_text]
+
     def _generate_action_narrative(self, action_label: str) -> str:
         """
         Generate a single-sentence outcome for a follow-up AI option that has no narrative.
         Uses the fast client with a tiny token budget for near-instant response.
         Returns empty string on failure.
         """
-        try:
-            scene = self.scene_registry.get(self.state.current_scene_id)
-            scene_title = scene.title if scene else self.state.current_scene_id
-            node = scene.get_node(self.state.current_node_id) if scene else {}
-            scene_text = node.get("text", "")[:150]
-            prompt = (
-                f'Scene: {scene_title}. {scene_text}\n'
-                f'Player action: "{action_label}"\n'
-                'Describe the outcome in one vivid sentence (max 25 words). '
-                'Return ONLY a JSON object: {"narrative": "..."}'
-            )
-            with renderer.show_ai_thinking_spinner(""):
-                raw = self.ai_generator.fast_client.generate_json(
-                    prompt=prompt,
-                    system_prompt="You write one-sentence action outcomes for a fantasy RPG. Return only valid JSON.",
-                    temperature=0.8,
-                    num_predict=80,
-                    max_retries=1,
-                )
-            return _sanitise_narrative(str(raw.get("narrative", "")))
-        except Exception as e:
-            # INFO not WARNING — this is a best-effort cosmetic call. The
-            # caller falls through to "Action taken." silently and the
-            # player doesn't need to see the technical failure.
-            logger.info("Action narrative generation failed: %s", e)
-            return ""
+        scene_title, scene_text = self._current_scene_title_and_text(150)
+        with renderer.show_ai_thinking_spinner(""):
+            raw = self.ai_service.generate_action_narrative(scene_title, scene_text, action_label)
+        return _sanitise_narrative(raw or "")
 
     def _generate_ai_followup(self, narrative_text: str) -> list[str]:
         """
         Ask the AI for 2-3 immediate follow-up options given a narrative outcome.
         Returns a list of short option label strings, or empty list on failure.
         """
-        if not self.ai_generator:
+        if not self._ai_online():
             return []
-        try:
-            scene = self.scene_registry.get(self.state.current_scene_id)
-            scene_title = scene.title if scene else self.state.current_scene_id
-            prompt = (
-                f"Scene: {scene_title}\n"
-                f"What just happened: {narrative_text}\n\n"
-                "Given this outcome, list 2-3 immediate short options the player could choose next. "
-                "Each option must be a single short sentence (under 12 words). "
-                "Return ONLY a JSON array of strings, e.g.: "
-                '[\"Press the advantage.\", \"Step back and assess.\", \"Call out to the others.\"]'
-            )
-            system_prompt = (
-                "You write concise player action options for a fantasy LitRPG text game set in Aethoria. "
-                "Return ONLY a valid JSON array of 2-3 short option strings. No explanation."
-            )
-            with renderer.show_ai_thinking_spinner("Generating follow-up options..."):
-                result = self.ai_generator.fast_client.generate_json(
-                    prompt=prompt,
-                    system_prompt=system_prompt,
-                    temperature=0.75,
-                    num_predict=200,
-                    max_retries=1,
-                )
-            if isinstance(result, list):
-                return [str(r) for r in result if isinstance(r, str)]
-            # Some models return {"options": [...]}
-            if isinstance(result, dict):
-                for key in ("options", "choices", "actions"):
-                    if key in result and isinstance(result[key], list):
-                        return [str(r) for r in result[key] if isinstance(r, str)]
-        except Exception as e:
-            # INFO not WARNING — best-effort cosmetic. Caller falls through
-            # with an empty list and the player just doesn't see new options.
-            logger.info("AI follow-up generation failed: %s", e)
-        return []
+        scene_title, _ = self._current_scene_title_and_text(0)
+        with renderer.show_ai_thinking_spinner("Generating follow-up options..."):
+            result = self.ai_service.generate_followup_options(scene_title, narrative_text)
+        return result or []
 
     def _apply_pending_species(self, player) -> None:
         """Apply _pending_species:<id> flag set by scene triggers."""

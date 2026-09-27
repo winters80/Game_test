@@ -71,5 +71,295 @@
     "mp_cost": 0,
     "cooldown_turns": 0,
     "effects": [{"effect_type": "buff", "scaling_stat": "LCK", "base_value": 0.0, "scaling_coefficient": 1.5}]
+  },
+
+  {
+    "skill_id": "mana_blade",
+    "name": "Mana Blade",
+    "rarity": "UNCOMMON",
+    "description": "Condense raw mana into a shimmering edge along your weapon and cut with it.",
+    "flavor_text": "Steel is optional. Intent is not.",
+    "skill_type": "ACTIVE",
+    "spell_type": "arcane",
+    "mp_cost": 9,
+    "cooldown_turns": 1,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 5.0, "scaling_coefficient": 1.0},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 5.0, "scaling_coefficient": 1.4}
+    ]
+  },
+  {
+    "skill_id": "runic_armor",
+    "name": "Runic Armor",
+    "rarity": "UNCOMMON",
+    "description": "Protective runes etched into your gear flare on impact, turning your armor into a spell-hardened shell.",
+    "flavor_text": "Every rune is a promise the blow will not land clean.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "INT", "base_value": 2.0, "scaling_coefficient": 0.4},
+      {"effect_type": "buff", "scaling_stat": "END", "base_value": 1.0, "scaling_coefficient": 0.3}
+    ]
+  },
+  {
+    "skill_id": "spellsword_surge",
+    "name": "Spellsword Surge",
+    "rarity": "RARE",
+    "description": "Unleash a flurry of blade strikes, each one discharging stored arcane power into the target.",
+    "flavor_text": "The sword remembers every spell you ever fed it.",
+    "skill_type": "ACTIVE",
+    "spell_type": "arcane",
+    "mp_cost": 18,
+    "cooldown_turns": 4,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 10.0, "scaling_coefficient": 1.6},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 1.8}
+    ]
+  },
+  {
+    "skill_id": "elemental_weapon",
+    "name": "Elemental Weapon",
+    "rarity": "RARE",
+    "description": "Your weapon is permanently wreathed in flame; every basic attack sears the target for extra fire damage.",
+    "flavor_text": "It has not been cold since the day you lit it.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_attack",
+    "spell_type": "fire",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 4.0, "scaling_coefficient": 0.9}
+    ]
+  },
+
+  {
+    "skill_id": "null_field",
+    "name": "Null Field",
+    "rarity": "UNCOMMON",
+    "description": "A thin skin of anti-magic clings to you at all times, granting strong magic resist against hostile spells.",
+    "flavor_text": "Spells arrive. Most of them do not survive the trip.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "INT", "base_value": 3.0, "scaling_coefficient": 0.5}
+    ]
+  },
+  {
+    "skill_id": "blade_resonance",
+    "name": "Blade Resonance",
+    "rarity": "RARE",
+    "description": "Each basic attack sets your blade humming; the echo of the strike lands a heartbeat later.",
+    "flavor_text": "The second cut is the one they never see.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_attack",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "AGI", "base_value": 4.0, "scaling_coefficient": 0.8}
+    ]
+  },
+  {
+    "skill_id": "anti_magic_edge",
+    "name": "Anti-Magic Edge",
+    "rarity": "RARE",
+    "description": "A precise cut that severs the flow of mana around the target, dealing heavy damage.",
+    "flavor_text": "Whatever was holding it together, you cut that too.",
+    "skill_type": "ACTIVE",
+    "spell_type": "arcane",
+    "mp_cost": 14,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "AGI", "base_value": 10.0, "scaling_coefficient": 1.6},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 8.0, "scaling_coefficient": 1.4}
+    ]
+  },
+  {
+    "skill_id": "dimension_cut",
+    "name": "Dimension Cut",
+    "rarity": "EPIC",
+    "description": "A single strike that slices through space itself. Devastating damage at a steep mana cost.",
+    "flavor_text": "For an instant, there are two of the world. Then there is one.",
+    "skill_type": "ACTIVE",
+    "spell_type": "arcane",
+    "mp_cost": 30,
+    "cooldown_turns": 7,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 20.0, "scaling_coefficient": 2.5},
+      {"effect_type": "damage", "scaling_stat": "AGI", "base_value": 15.0, "scaling_coefficient": 2.0}
+    ]
+  },
+
+  {
+    "skill_id": "dark_nova",
+    "name": "Dark Nova",
+    "rarity": "UNCOMMON",
+    "description": "Collapse the shadows around your target into a single point, then let them burst.",
+    "flavor_text": "Light leaves. Something else arrives.",
+    "skill_type": "ACTIVE",
+    "spell_type": "shadow",
+    "mp_cost": 14,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 13.0, "scaling_coefficient": 2.1}
+    ]
+  },
+  {
+    "skill_id": "soul_drain",
+    "name": "Soul Drain",
+    "rarity": "RARE",
+    "description": "Reach into the target and pull at the thread of its life, dealing shadow damage.",
+    "flavor_text": "It does not hurt. That is the worst part.",
+    "skill_type": "ACTIVE",
+    "spell_type": "shadow",
+    "mp_cost": 16,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "drain", "scaling_stat": "INT", "base_value": 12.0, "scaling_coefficient": 1.8},
+      {"effect_type": "drain", "scaling_stat": "LCK", "base_value": 0.0, "scaling_coefficient": 0.8}
+    ]
+  },
+  {
+    "skill_id": "void_walk",
+    "name": "Void Walk",
+    "rarity": "RARE",
+    "description": "Part of you always stands a half-step inside the dark, letting you evade attacks that should have landed.",
+    "flavor_text": "They hit the shadow. You were never in it.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "AGI", "base_value": 0.0, "scaling_coefficient": 1.0}
+    ]
+  },
+  {
+    "skill_id": "nightmare_bind",
+    "name": "Nightmare Bind",
+    "rarity": "EPIC",
+    "description": "Trap the target inside its own worst fear. The terror tears at its body as surely as any blade.",
+    "flavor_text": "Everyone is afraid of something. You simply ask what.",
+    "skill_type": "ACTIVE",
+    "spell_type": "shadow",
+    "mp_cost": 26,
+    "cooldown_turns": 6,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 18.0, "scaling_coefficient": 2.6},
+      {"effect_type": "debuff", "scaling_stat": "WIS", "base_value": 4.0, "scaling_coefficient": 0.8}
+    ]
+  },
+
+  {
+    "skill_id": "divine_strike",
+    "name": "Divine Strike",
+    "rarity": "UNCOMMON",
+    "description": "A weapon blow carried by holy conviction, dealing physical and radiant damage.",
+    "flavor_text": "Your arm swings. Something greater follows through.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 10,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 7.0, "scaling_coefficient": 1.3},
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 5.0, "scaling_coefficient": 1.3}
+    ]
+  },
+  {
+    "skill_id": "consecration",
+    "name": "Consecration",
+    "rarity": "UNCOMMON",
+    "description": "Sanctify the ground under your enemy; holy fire rises to burn what does not belong.",
+    "flavor_text": "This ground is spoken for.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 14,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 12.0, "scaling_coefficient": 2.0}
+    ]
+  },
+  {
+    "skill_id": "aura_of_protection",
+    "name": "Aura of Protection",
+    "rarity": "RARE",
+    "description": "Your vows manifest as a steady aura that hardens around you like a second suit of armor.",
+    "flavor_text": "You stand. Therefore they are safe.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "VIT", "base_value": 3.0, "scaling_coefficient": 0.4},
+      {"effect_type": "buff", "scaling_stat": "WIS", "base_value": 1.0, "scaling_coefficient": 0.3}
+    ]
+  },
+  {
+    "skill_id": "judgment",
+    "name": "Judgment",
+    "rarity": "EPIC",
+    "description": "Pronounce sentence on a single foe. A pillar of light answers, scaled by your Strength and Wisdom.",
+    "flavor_text": "The verdict was never in question.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 28,
+    "cooldown_turns": 6,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 20.0, "scaling_coefficient": 2.8},
+      {"effect_type": "damage", "scaling_stat": "STR", "base_value": 10.0, "scaling_coefficient": 1.5}
+    ]
+  },
+
+  {
+    "skill_id": "reality_glitch",
+    "name": "Reality Glitch",
+    "rarity": "RARE",
+    "description": "Something about the target briefly fails to render. When it resolves, it resolves wrong.",
+    "flavor_text": "ERROR: ENTITY STATE INCONSISTENT.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 12,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "LCK", "base_value": 6.0, "scaling_coefficient": 1.8},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 6.0, "scaling_coefficient": 1.2}
+    ]
+  },
+  {
+    "skill_id": "fortune_strike",
+    "name": "Fortune Strike",
+    "rarity": "RARE",
+    "description": "Stake everything on a single blow and let probability decide how hard it lands.",
+    "flavor_text": "Heads, you win. Tails, they lose.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 3,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "LCK", "base_value": 12.0, "scaling_coefficient": 2.4}
+    ]
+  },
+  {
+    "skill_id": "adapt",
+    "name": "Adapt",
+    "rarity": "RARE",
+    "description": "Your body rewrites itself between fights, quietly growing stronger in whatever way the last one demanded.",
+    "flavor_text": "The System keeps trying to pin you down. You keep changing shape.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "LCK", "base_value": 2.0, "scaling_coefficient": 0.4}
+    ]
+  },
+  {
+    "skill_id": "undefined_power",
+    "name": "Undefined Power",
+    "rarity": "EPIC",
+    "description": "Draw on a power the System has no name for and release it all at once.",
+    "flavor_text": "NULL. NULL. NULL. NULL.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 30,
+    "cooldown_turns": 7,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "LCK", "base_value": 18.0, "scaling_coefficient": 2.6},
+      {"effect_type": "damage", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 1.5}
+    ]
   }
 ]

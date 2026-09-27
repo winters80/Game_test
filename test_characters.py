@@ -283,6 +283,9 @@ def validate_classes(class_reg: ClassRegistry) -> None:
         for skill_id in cls.starting_skills:
             if not skill_reg.get(skill_id):
                 fail(f"Class '{class_id}' starting skill '{skill_id}' not found")
+        for skill_id in cls.learnable_skills:
+            if not skill_reg.get(skill_id):
+                fail(f"Class '{class_id}' learnable skill '{skill_id}' not found")
 
 def validate_npcs(npc_reg: NPCRegistry, scene_reg: SceneRegistry) -> None:
     """Check NPC home zones exist in scenes."""
@@ -1050,6 +1053,83 @@ def main() -> None:
                     try: p.unlink()
                     except OSError: pass
 
+        # 12f. Interactive helpers (situation query, follow-ups, shop quip,
+        # token usage) follow the same None-on-failure contract.
+        assert svc.generate_dynamic_options("q", "t", "x", [], None) is None
+        assert svc.generate_action_narrative("t", "x", "act") is None
+        assert svc.generate_followup_options("t", "x") is None
+        assert svc.generate_shop_refusal("n", "r", "1g", "0g") is None
+        assert svc.token_usage() == []
+
+        class _FakeInteractiveGen:
+            def generate_dynamic_options(self, **kw): return "DYN_OK"
+            def generate_action_narrative(self, *a): return "ACT_OK"
+            def generate_followup_options(self, *a): return ["F1", "F2"]
+            def generate_shop_refusal(self, *a): return "SHOP_OK"
+            def token_usage(self): return [("primary", "m", {})]
+        svc4 = AIService(content_generator=_FakeInteractiveGen())
+        assert svc4.generate_dynamic_options("q", "t", "x", [], None) == "DYN_OK"
+        assert svc4.generate_action_narrative("t", "x", "act") == "ACT_OK"
+        assert svc4.generate_followup_options("t", "x") == ["F1", "F2"]
+        assert svc4.generate_shop_refusal("n", "r", "1g", "0g") == "SHOP_OK"
+        assert svc4.token_usage() == [("primary", "m", {})]
+
+        class _BrokenInteractiveGen:
+            def __getattr__(self, name):
+                def _boom(*a, **kw): raise RuntimeError(name)
+                return _boom
+        svc5 = AIService(content_generator=_BrokenInteractiveGen())
+        assert svc5.generate_dynamic_options("q", "t", "x", [], None) is None
+        assert svc5.generate_action_narrative("t", "x", "act") is None
+        assert svc5.generate_followup_options("t", "x") is None
+        assert svc5.generate_shop_refusal("n", "r", "1g", "0g") is None
+        assert svc5.token_usage() == []
+        ok("AIService interactive helpers: None when offline, pass-through, None on failure")
+
+        # 12g. ContentGenerator parsing for the helpers moved out of core/.
+        from ai.content_generator import ContentGenerator
+
+        class _FakeClient:
+            def __init__(self, model, json_out=None, text_out=None):
+                self.model = model
+                self._json, self._text = json_out, text_out
+            def generate_json(self, **kw):
+                if isinstance(self._json, Exception): raise self._json
+                return self._json
+            def generate_text(self, **kw): return self._text
+            def token_summary(self): return {"calls": 0}
+
+        def _gen(client, fast=None):
+            return ContentGenerator(client, {}, client.model, fast_client=fast)
+
+        assert _gen(_FakeClient("m", json_out=["a", 1, "b"])).generate_followup_options("t", "x") == ["a", "b"]
+        assert _gen(_FakeClient("m", json_out={"choices": ["c"]})).generate_followup_options("t", "x") == ["c"]
+        assert _gen(_FakeClient("m", json_out={"nope": 1})).generate_followup_options("t", "x") is None
+        assert _gen(_FakeClient("m", json_out=ValueError("bad"))).generate_followup_options("t", "x") is None
+        assert _gen(_FakeClient("m", json_out={"narrative": "It lands."})).generate_action_narrative("t", "x", "a") == "It lands."
+        assert _gen(_FakeClient("m", json_out=ValueError("bad"))).generate_action_narrative("t", "x", "a") is None
+        assert _gen(_FakeClient("m", text_out='  "Not today."  ')).generate_shop_refusal("n", "r", "1g", "0g") == "Not today."
+        assert _gen(_FakeClient("m", text_out='  ')).generate_shop_refusal("n", "r", "1g", "0g") is None
+        _slow = _FakeClient("slow")
+        assert [u[:2] for u in _gen(_slow).token_usage()] == [("primary", "slow")]
+        assert [u[:2] for u in _gen(_slow, _FakeClient("fast")).token_usage()] == [("primary", "slow"), ("fast", "fast")]
+        ok("ContentGenerator follow-up / narrative / shop / token helpers parse + fail cleanly")
+
+        # 12h. Boundary guard: outside ai/, only core/bootstrap.py (the
+        # composition root) may touch ContentGenerator or raw Ollama clients.
+        import re as _re
+        _pat = _re.compile(r"\b(ContentGenerator|OllamaClient|fast_client|ai_generator)\b")
+        _offenders = []
+        for _pkg in ("core", "systems", "scenes", "ui", "persistence", "entities"):
+            for _py in (BASE_DIR / _pkg).rglob("*.py"):
+                if _py.relative_to(BASE_DIR).as_posix() == "core/bootstrap.py":
+                    continue
+                for _n, _line in enumerate(_py.read_text(encoding="utf-8").splitlines(), 1):
+                    if _pat.search(_line) and not _line.lstrip().startswith("#"):
+                        _offenders.append(f"{_py.relative_to(BASE_DIR).as_posix()}:{_n}")
+        assert not _offenders, f"Direct AI access outside AIService: {_offenders}"
+        ok("No package outside ai/ bypasses AIService (bootstrap excepted)")
+
     except Exception as e:
         fail("AIService facade broken", e)
         traceback.print_exc()
@@ -1423,7 +1503,7 @@ def main() -> None:
             current_node_id = "root"
             player = Player(name="StubP", base_class="warrior")
         class _StubEngine:
-            ai_generator = None  # AI offline
+            ai_service = None  # AI offline
             state = _StubState()
             scene_registry = None
 
@@ -1435,7 +1515,7 @@ def main() -> None:
             _sq.handle_situation_query(_StubEngine(), [])
         finally:
             _rdr.prompt_any_key = _orig_prompt
-        ok("handle_situation_query returns early when ai_generator is None")
+        ok("handle_situation_query returns early when ai_service is None")
 
         # 19e. _convert_ai_option locks options when stats fail
         class _AIOpt:

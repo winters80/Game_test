@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Any
 if TYPE_CHECKING:
     from ai.content_generator import ContentGenerator
     from ai.background_generator import BackgroundGenerator
+    from ai.response_validator import AIDynamicOptionsResponse
     from entities.character_class import ClassDefinition, ClassRegistry
     from entities.player import Player
     from entities.quest import QuestTemplate
@@ -252,14 +253,78 @@ class AIService:
             logger.warning("AI narrative generation failed", exc_info=True)
             return None
 
-    # ── Escape hatch ─────────────────────────────────────────────────────────
+    # ── Interactive scene helpers (fast client) ──────────────────────────────
+    #
+    # These run while the player waits on a spinner. The caller owns the
+    # spinner; these just return None on failure. The two follow-up helpers
+    # are cosmetic, so their failures log at INFO — the console handler
+    # shows WARNING+ and a failed flourish shouldn't interrupt play.
 
-    @property
-    def raw_generator(self) -> "ContentGenerator | None":
-        """
-        For interactive paths that need direct access (spinner control, streaming).
-        New code should prefer the wrapped methods above; this exists so existing
-        call sites in choice_handler / dialogue_handler don't need a rewrite just
-        to add the facade.
-        """
-        return self._gen
+    def generate_dynamic_options(
+        self,
+        question: str,
+        scene_title: str,
+        scene_text: str,
+        current_options: list[str],
+        player: "Player",
+    ) -> "AIDynamicOptionsResponse | None":
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_dynamic_options(
+                question=question,
+                scene_title=scene_title,
+                scene_text=scene_text,
+                current_options=current_options,
+                player=player,
+            )
+        except Exception:
+            logger.warning("AI dynamic options generation failed", exc_info=True)
+            return None
+
+    def generate_action_narrative(
+        self, scene_title: str, scene_text: str, action_label: str,
+    ) -> str | None:
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_action_narrative(scene_title, scene_text, action_label)
+        except Exception:
+            logger.info("AI action narrative generation failed", exc_info=True)
+            return None
+
+    def generate_followup_options(
+        self, scene_title: str, narrative_text: str,
+    ) -> list[str] | None:
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_followup_options(scene_title, narrative_text)
+        except Exception:
+            logger.info("AI follow-up generation failed", exc_info=True)
+            return None
+
+    # ── NPC flavour ──────────────────────────────────────────────────────────
+
+    def generate_shop_refusal(
+        self, npc_name: str, npc_role: str, price_text: str, gold_text: str,
+    ) -> str | None:
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_shop_refusal(npc_name, npc_role, price_text, gold_text)
+        except Exception:
+            logger.warning("AI shop-refusal generation failed", exc_info=True)
+            return None
+
+    # ── Diagnostics ──────────────────────────────────────────────────────────
+
+    def token_usage(self) -> list[tuple[str, str, dict]]:
+        """``(role, model, stats)`` per distinct Ollama client; [] when offline."""
+        if self._gen is None:
+            return []
+        try:
+            return self._gen.token_usage()
+        except Exception:
+            logger.warning("AI token usage lookup failed", exc_info=True)
+            return []

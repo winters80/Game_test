@@ -1048,6 +1048,21 @@ def main() -> None:
             f"Second call should grant a different skill, got {granted2}"
         ok(f"Repeat call grants next unlearned skill ('{granted2}')")
 
+        # An id missing from the registry is skipped, not a dead end —
+        # previously it stopped auto-learn for the rest of the class list.
+        _warrior = cr.get("warrior")
+        _orig_learnable = list(_warrior.learnable_skills)
+        try:
+            _warrior.learnable_skills = ["no_such_skill_xyz"] + _orig_learnable
+            pp7 = _P(name="SkipTest", base_class="warrior")
+            granted3 = skill_system.grant_next_learnable_skill(pp7, cr, sr)
+            assert granted3 == _orig_learnable[0], \
+                f"Unknown id should be skipped, got {granted3}"
+            assert "no_such_skill_xyz" not in pp7.skills
+        finally:
+            _warrior.learnable_skills = _orig_learnable
+        ok(f"Unknown learnable id skipped; auto-learn continued to '{granted3}'")
+
         # ── Save v3 → v4 migration adds skill_uses + skill_levels
         from persistence.save_manager import _v3_to_v4
         v3 = {"save_version": 3, "player": {"name": "old", "base_class": "warrior",
@@ -1545,20 +1560,46 @@ def main() -> None:
         assert _sanitise_narrative("   \n  ") == ""
         ok("Empty input handled cleanly")
 
-        # 23f. Caller-side warnings (action narrative / follow-up) demoted to INFO
-        from pathlib import Path as _PathCH
-        ch_src = (_PathCH(__file__).parent / "core" / "choice_handler.py").read_text(encoding="utf-8")
-        assert 'logger.info("Action narrative generation failed' in ch_src, (
-            "Action narrative failure should be INFO — caller falls through "
-            "to 'Action taken.' silently"
-        )
-        assert 'logger.info("AI follow-up generation failed' in ch_src, (
-            "Follow-up generation failure should be INFO — caller falls "
-            "through with an empty list silently"
-        )
-        assert 'logger.warning("Action narrative' not in ch_src
-        assert 'logger.warning("AI follow-up' not in ch_src
-        ok("Caller-side AI-cosmetic failures logged at INFO (no terminal leak)")
+        # 23f. Cosmetic AI failures (action narrative / follow-up) log below
+        # WARNING, so nothing leaks to the console handler mid-scene. These
+        # calls live in ContentGenerator + AIService; check both layers.
+        import logging as _lg
+        from ai.ai_service import AIService as _AIS
+        from ai.content_generator import ContentGenerator as _CG
+
+        class _FailClient:
+            model = "m"
+            def generate_json(self, **kw): raise ValueError("JSON parse failed")
+
+        class _RaisingGen:
+            def generate_action_narrative(self, *a): raise RuntimeError("boom")
+            def generate_followup_options(self, *a): raise RuntimeError("boom")
+
+        class _Capture(_lg.Handler):
+            def __init__(self):
+                super().__init__(_lg.DEBUG)
+                self.records = []
+            def emit(self, record): self.records.append(record)
+
+        _cap = _Capture()
+        _ai_logger = _lg.getLogger("ai")
+        _prev_level = _ai_logger.level
+        _ai_logger.addHandler(_cap)
+        _ai_logger.setLevel(_lg.DEBUG)
+        try:
+            _cg = _CG(_FailClient(), {}, "m")
+            assert _cg.generate_action_narrative("t", "x", "a") is None
+            assert _cg.generate_followup_options("t", "x") is None
+            _svc = _AIS(content_generator=_RaisingGen())
+            assert _svc.generate_action_narrative("t", "x", "a") is None
+            assert _svc.generate_followup_options("t", "x") is None
+        finally:
+            _ai_logger.removeHandler(_cap)
+            _ai_logger.setLevel(_prev_level)
+        assert _cap.records, "Expected the failures to be logged at INFO"
+        _loud = [r.getMessage() for r in _cap.records if r.levelno >= _lg.WARNING]
+        assert not _loud, f"Cosmetic AI failure logged at WARNING+: {_loud}"
+        ok("Cosmetic AI failures logged at INFO (no terminal leak)")
     except Exception as e:
         fail("Narrative sanitiser / caller-side INFO broken", e)
         traceback.print_exc()

@@ -1,0 +1,57 @@
+[
+  {
+    "skill_id": "resurrection",
+    "name": "Resurrection",
+    "rarity": "RARE",
+    "description": "Call your fading life back from the brink, restoring a massive amount of HP based on your Wisdom.",
+    "flavor_text": "Not yet. The light has not finished with you.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 30,
+    "cooldown_turns": 8,
+    "effects": [
+      {"effect_type": "heal", "scaling_stat": "WIS", "base_value": 40.0, "scaling_coefficient": 3.0}
+    ]
+  },
+  {
+    "skill_id": "smite",
+    "name": "Smite",
+    "rarity": "UNCOMMON",
+    "description": "Call down a lance of divine radiance on a single foe, dealing holy damage based on your Wisdom.",
+    "flavor_text": "Judgement, delivered in person.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 10,
+    "cooldown_turns": 1,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "WIS", "base_value": 9.0, "scaling_coefficient": 2.0}
+    ]
+  },
+  {
+    "skill_id": "blessed_aura",
+    "name": "Blessed Aura",
+    "rarity": "UNCOMMON",
+    "description": "A constant halo of sanctified light forms a barrier that softens hostile spells and curses.",
+    "flavor_text": "The dark finds you harder to hold.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "WIS", "base_value": 2.0, "scaling_coefficient": 0.5}
+    ]
+  },
+  {
+    "skill_id": "sanctuary",
+    "name": "Sanctuary",
+    "rarity": "RARE",
+    "description": "Consecrate the ground beneath you into a pocket of holy stillness, mending wounds based on your Wisdom.",
+    "flavor_text": "Here, for a moment, nothing can reach you.",
+    "skill_type": "ACTIVE",
+    "spell_type": "light",
+    "mp_cost": 22,
+    "cooldown_turns": 4,
+    "effects": [
+      {"effect_type": "heal", "scaling_stat": "WIS", "base_value": 28.0, "scaling_coefficient": 2.4}
+    ]
+  }
+]
