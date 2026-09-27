@@ -36,6 +36,7 @@ Add an entry to `data/classes/base_classes.json` or `combo_classes.json`. See ex
 
 ### New skill
 Add to a `data/skills/*.json` file. `SkillRegistry.load_from_dir()` loads all files in the directory.
+Every id in a class's `starting_skills` and `learnable_skills` must exist in the registry. `test_characters.py` fails otherwise. At runtime, auto-learn logs and skips a missing id rather than stalling on it.
 
 ### New item
 Add to a `data/items/*.json` file. Set `"combo_catalyst": true` if the item should contribute to AI class divergence detection.
@@ -59,25 +60,38 @@ Add to `data/world/zones.json`.
 
 ## Trigger String Reference
 
-Trigger strings are the `"triggers": [...]` values on scene option nodes. They are processed by `scenes/scene_base.Scene.process_triggers()` and `core/game_engine.GameEngine._handle_choice()`.
+Trigger strings are the `"triggers": [...]` values on scene option nodes. They are processed in two passes:
+
+1. **State triggers**: `scenes/option_logic.process_triggers()`. `Scene.process_triggers()` in `scenes/scene_base.py` is a thin delegate to it.
+2. **Engine triggers** (combat, NPCs, quests, menus): `core/choice_handler.ChoiceHandlerMixin._handle_choice()`.
 
 | Trigger | Effect |
 |---------|--------|
 | `flag:X` | Set `player.flags["X"] = True` |
 | `give_item:X` | Add item_id X to player inventory; fires `ITEM_FOUND` event |
-| `give_skill:X` | Add skill_id X to player; fires `SKILL_ACQUIRED` event |
-| `give_gold:N` | Add N gold to player |
+| `give_food:X` | Add one food item X to inventory; fires `ITEM_FOUND` event |
+| `give_skill:X` | Add skill_id X to player; fires `SKILL_ACQUIRED` event. If X isn't in the skill registry, a skill is AI-generated (or a deterministic default is built) under that id |
+| `give_gold:N` | Add N to `player.gold`, which is stored in **copper** (`COPPER_PER_GOLD` = 100), so `give_gold:500` is 5g |
 | `set_base_class:X` | Assign class_id X as player's base class via `class_system.assign_base_class()` |
-| `combat:X` | Start encounter X (see `combat_system.ENEMY_TEMPLATES`) |
+| `set_gender:X` | Set `player.gender` |
+| `set_species:X` | *(species_system)* Queue species X; applied after the choice resolves |
+| `set_background:X` | Queue background X; applied after the choice resolves (alongside species) |
+| `combat:X` | Start encounter X (see the `encounters` table in `combat_system.spawn_encounter()`) |
 | `alignment:+N` | Shift player alignment by +N (float) |
 | `alignment:-N` | Shift player alignment by -N (float) |
+| `rest_camp:full` / `rest_camp:short` | Restore all / half of HP + MP, then run the rest flow (`systems/rest_system.handle_rest`) |
+| `rest_inn:N` | Pay N (copper) for a full restore + `well_rested` buff (+1 combat stats, 30 turns) |
 | `talk_npc:X` | *(npc_system)* Trigger NPC interaction with NPC id X |
 | `start_quest:X` | *(quest_system)* Activate quest template X |
-| `advance_quest:X:STATE` | *(quest_system)* Move quest instance X to state STATE |
+| `advance_quest:X[:STAGE]` | *(quest_system)* Advance the active instance of template X (optionally to STAGE) |
+| `complete_quest:X[:OUTCOME]` | *(quest_system)* Complete the active instance of template X; outcome defaults to `success` |
+| `join_guild:X` | *(guild_system)* Join guild X |
+| `update_faction:X:±N` | *(faction_system)* Shift standing with faction X by N |
+| `show_auction` / `buy_life_token` | *(auction_house)* Open the auction house / buy a life token directly |
 
 ### Adding a new trigger type
-1. Add it to the `process_triggers()` method in `scenes/scene_base.py`
-2. If it needs engine context (combat, scene transitions), also handle it in `game_engine._handle_choice()`
+1. If it only changes player/game state, add it to `process_triggers()` in `scenes/option_logic.py`
+2. If it needs engine context (combat, menus, NPCs, quests), handle it in `_handle_choice()` in `core/choice_handler.py` (and add a no-op branch in `option_logic` if it shouldn't fall through)
 3. Document it in this table
 
 ---
@@ -181,7 +195,7 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 
 ### The `AIService` boundary
 Non-AI packages **must** depend on `ai.ai_service.AIService`, never on
-`ContentGenerator` directly. AIService:
+`ContentGenerator` or an `OllamaClient` directly. AIService:
 - Returns `None` on failure (caller supplies its own fallback path)
 - Centralises try/except + logging for every generation method
 - Exposes `is_available` so systems can skip work when Ollama is offline
@@ -189,6 +203,19 @@ Non-AI packages **must** depend on `ai.ai_service.AIService`, never on
 
 Systems (`class_system`, `quest_system`, `guilds/guild_sim`) all take
 `ai_service` as a typed parameter and use `ai_service.is_available` to gate.
+Engine code in `core/` uses `self.ai_service` and gates on `self._ai_online()`;
+it owns the spinner, AIService owns the call.
+
+`core/bootstrap.setup_ai()` is the only file outside `ai/` that constructs
+`ContentGenerator` / `OllamaClient`, and it keeps the generator in a local
+variable. The "No package outside ai/ bypasses AIService" check in
+`test_characters.py` fails if anything else references them.
+
+**Adding a new AI call:** put the prompt + client call in a
+`ContentGenerator` method, add a wrapper on `AIService` that returns `None`
+(or `[]`) on failure, and call the wrapper. Purely cosmetic calls
+(e.g. follow-up option flavour) log failures at INFO. The console handler
+shows WARNING and above, so a WARNING would print mid-scene.
 
 ### Economy guard rails
 
@@ -272,6 +299,8 @@ Three skill types with distinct combat roles:
 | `ACTIVE` | Yes — player picks each turn | On selection |
 | `PASSIVE` | No — contributes via `systems/passive_system.get_passive_modifiers` | Always — see stacking rules below |
 | `TRIGGERED` | No — fires via `systems/passive_system.try_fire_trigger` | When `trigger_condition` matches event: `on_attack`, `on_hit`, `on_kill`, `on_low_hp` |
+
+> **Note:** combat currently dispatches only `on_attack` and `on_kill` (`systems/combat_system.player_attack`). `on_hit` and `on_low_hp` are accepted but never fire, so author new TRIGGERED skills against `on_attack` / `on_kill`.
 
 ### Passive stacking rules (`systems/passive_system.py`)
 
