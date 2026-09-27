@@ -1,0 +1,55 @@
+[
+  {
+    "skill_id": "volley",
+    "name": "Volley",
+    "rarity": "UNCOMMON",
+    "description": "Loose a rapid spread of arrows at your target, dealing damage based on your Agility.",
+    "flavor_text": "One of them will find the gap.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 8,
+    "cooldown_turns": 2,
+    "effects": [
+      {"effect_type": "damage", "scaling_stat": "AGI", "base_value": 9.0, "scaling_coefficient": 1.9}
+    ]
+  },
+  {
+    "skill_id": "camouflage",
+    "name": "Camouflage",
+    "rarity": "UNCOMMON",
+    "description": "You blend into your surroundings by instinct, making it easier to evade incoming blows.",
+    "flavor_text": "They swing at where you were.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "AGI", "base_value": 0.0, "scaling_coefficient": 0.8}
+    ]
+  },
+  {
+    "skill_id": "nature_bond",
+    "name": "Nature's Bond",
+    "rarity": "RARE",
+    "description": "When you bring down a foe, the wild returns a share of its life to you, restoring HP.",
+    "flavor_text": "Nothing in the forest is wasted.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_kill",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "heal", "scaling_stat": "WIS", "base_value": 6.0, "scaling_coefficient": 0.8}
+    ]
+  },
+  {
+    "skill_id": "eagle_eye",
+    "name": "Eagle Eye",
+    "rarity": "RARE",
+    "description": "Your sight sharpens to a predator's focus, raising your chance to crit on every attack.",
+    "flavor_text": "You see the weak point before they know they have one.",
+    "skill_type": "PASSIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 0,
+    "effects": [
+      {"effect_type": "buff", "scaling_stat": "LCK", "base_value": 0.0, "scaling_coefficient": 1.0}
+    ]
+  }
+]

@@ -1048,6 +1048,21 @@ def main() -> None:
             f"Second call should grant a different skill, got {granted2}"
         ok(f"Repeat call grants next unlearned skill ('{granted2}')")
 
+        # An id missing from the registry is skipped, not a dead end —
+        # previously it stopped auto-learn for the rest of the class list.
+        _warrior = cr.get("warrior")
+        _orig_learnable = list(_warrior.learnable_skills)
+        try:
+            _warrior.learnable_skills = ["no_such_skill_xyz"] + _orig_learnable
+            pp7 = _P(name="SkipTest", base_class="warrior")
+            granted3 = skill_system.grant_next_learnable_skill(pp7, cr, sr)
+            assert granted3 == _orig_learnable[0], \
+                f"Unknown id should be skipped, got {granted3}"
+            assert "no_such_skill_xyz" not in pp7.skills
+        finally:
+            _warrior.learnable_skills = _orig_learnable
+        ok(f"Unknown learnable id skipped; auto-learn continued to '{granted3}'")
+
         # ── Save v3 → v4 migration adds skill_uses + skill_levels
         from persistence.save_manager import _v3_to_v4
         v3 = {"save_version": 3, "player": {"name": "old", "base_class": "warrior",

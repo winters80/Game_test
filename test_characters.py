@@ -283,6 +283,9 @@ def validate_classes(class_reg: ClassRegistry) -> None:
         for skill_id in cls.starting_skills:
             if not skill_reg.get(skill_id):
                 fail(f"Class '{class_id}' starting skill '{skill_id}' not found")
+        for skill_id in cls.learnable_skills:
+            if not skill_reg.get(skill_id):
+                fail(f"Class '{class_id}' learnable skill '{skill_id}' not found")
 
 def validate_npcs(npc_reg: NPCRegistry, scene_reg: SceneRegistry) -> None:
     """Check NPC home zones exist in scenes."""
