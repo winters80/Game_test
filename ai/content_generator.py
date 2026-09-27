@@ -282,6 +282,123 @@ class ContentGenerator:
             logger.warning(f"Dynamic options generation failed: {e}")
             return None
 
+    def generate_action_narrative(
+        self,
+        scene_title: str,
+        scene_text: str,
+        action_label: str,
+    ) -> str | None:
+        """
+        One-sentence outcome for a follow-up AI option that has no narrative.
+        Uses the fast client with a tiny token budget. Returns the raw
+        (unsanitised) narrative string, or None on failure.
+        """
+        prompt = (
+            f'Scene: {scene_title}. {scene_text}\n'
+            f'Player action: "{action_label}"\n'
+            'Describe the outcome in one vivid sentence (max 25 words). '
+            'Return ONLY a JSON object: {"narrative": "..."}'
+        )
+        try:
+            raw = self.fast_client.generate_json(
+                prompt=prompt,
+                system_prompt="You write one-sentence action outcomes for a fantasy RPG. Return only valid JSON.",
+                temperature=0.8,
+                num_predict=80,
+                max_retries=1,
+            )
+            return str(raw.get("narrative", ""))
+        except Exception as e:
+            # INFO not WARNING — best-effort cosmetic call; the console
+            # handler shows WARNING+ and the player doesn't need to see it.
+            logger.info(f"Action narrative generation failed: {e}")
+            return None
+
+    def generate_followup_options(
+        self,
+        scene_title: str,
+        narrative_text: str,
+    ) -> list[str] | None:
+        """
+        2-3 short follow-up option labels for a narrative outcome.
+        Returns None on failure.
+        """
+        prompt = (
+            f"Scene: {scene_title}\n"
+            f"What just happened: {narrative_text}\n\n"
+            "Given this outcome, list 2-3 immediate short options the player could choose next. "
+            "Each option must be a single short sentence (under 12 words). "
+            "Return ONLY a JSON array of strings, e.g.: "
+            '[\"Press the advantage.\", \"Step back and assess.\", \"Call out to the others.\"]'
+        )
+        system_prompt = (
+            "You write concise player action options for a fantasy LitRPG text game set in Aethoria. "
+            "Return ONLY a valid JSON array of 2-3 short option strings. No explanation."
+        )
+        try:
+            result = self.fast_client.generate_json(
+                prompt=prompt,
+                system_prompt=system_prompt,
+                temperature=0.75,
+                num_predict=200,
+                max_retries=1,
+            )
+        except Exception as e:
+            # INFO not WARNING — best-effort cosmetic, same as above.
+            logger.info(f"AI follow-up generation failed: {e}")
+            return None
+        if isinstance(result, list):
+            return [str(r) for r in result if isinstance(r, str)]
+        # Some models return {"options": [...]}
+        if isinstance(result, dict):
+            for key in ("options", "choices", "actions"):
+                if key in result and isinstance(result[key], list):
+                    return [str(r) for r in result[key] if isinstance(r, str)]
+        return None
+
+    def generate_shop_refusal(
+        self,
+        npc_name: str,
+        npc_role: str,
+        price_text: str,
+        gold_text: str,
+    ) -> str | None:
+        """
+        In-character line from a shopkeeper when the player can't afford an
+        item. Returns the stripped line, or None on failure / empty output.
+        """
+        try:
+            raw = self.client.generate_text(
+                prompt=(
+                    f"You are {npc_name}, a {npc_role} in a fantasy city. "
+                    f"A customer wants to buy something costing {price_text} "
+                    f"but only has {gold_text}. "
+                    f"Reply in character, 1-2 short sentences. "
+                    f"You may offer them a small errand or job to earn coin, "
+                    f"or make a dry but not cruel remark."
+                ),
+                system_prompt=(
+                    "You write brief, flavourful NPC dialogue for a fantasy RPG. "
+                    "Stay in character. No quotation marks around the response."
+                ),
+                temperature=0.85,
+                max_tokens=80,
+            )
+        except Exception as e:
+            logger.warning(f"NPC shop-refusal generation failed: {e}")
+            return None
+        return (raw or "").strip().strip('"') or None
+
+    def token_usage(self) -> list[tuple[str, str, dict]]:
+        """
+        Per-client token stats as ``(role, model, stats)`` tuples. The fast
+        client is only listed separately when it is a distinct instance.
+        """
+        usage = [("primary", self.client.model, self.client.token_summary())]
+        if self.fast_client is not self.client:
+            usage.append(("fast", self.fast_client.model, self.fast_client.token_summary()))
+        return usage
+
     def generate_guild_intent(
         self,
         guild: object,   # GuildState

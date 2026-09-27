@@ -151,29 +151,16 @@ class DialogueHandlerMixin:
                             f"Not enough gold. Need {_fc(buy_price)}, you have {_fc(self.state.player.gold)}."
                         )
                         broke_comment = "Come back when your coin purse is heavier."
-                        if self.ai_generator:
-                            try:
-                                with renderer.show_ai_thinking_spinner(f"{npc.name} considers..."):
-                                    raw_comment = self.ai_generator.client.generate_text(
-                                        prompt=(
-                                            f"You are {npc.name}, a {npc.role} in a fantasy city. "
-                                            f"A customer wants to buy something costing {_fc(buy_price)} "
-                                            f"but only has {_fc(self.state.player.gold)}. "
-                                            f"Reply in character, 1-2 short sentences. "
-                                            f"You may offer them a small errand or job to earn coin, "
-                                            f"or make a dry but not cruel remark."
-                                        ),
-                                        system_prompt=(
-                                            "You write brief, flavourful NPC dialogue for a fantasy RPG. "
-                                            "Stay in character. No quotation marks around the response."
-                                        ),
-                                        temperature=0.85,
-                                        max_tokens=80,
-                                    )
-                                if raw_comment:
-                                    broke_comment = raw_comment.strip().strip('"')
-                            except Exception:
-                                logger.warning("NPC broke-comment generation failed", exc_info=True)
+                        if self._ai_online():
+                            with renderer.show_ai_thinking_spinner(f"{npc.name} considers..."):
+                                ai_comment = self.ai_service.generate_shop_refusal(
+                                    npc_name=npc.name,
+                                    npc_role=npc.role,
+                                    price_text=_fc(buy_price),
+                                    gold_text=_fc(self.state.player.gold),
+                                )
+                            if ai_comment:
+                                broke_comment = ai_comment
                         renderer.print_npc_response(npc.name, broke_comment)
                         renderer.prompt_any_key()
                         continue  # stay on current_node — don't advance
@@ -237,7 +224,7 @@ class DialogueHandlerMixin:
             state=self.state,
             quest_registry=self.quest_registry,
             disposition=disposition,
-            ai_enabled=(self.ai_generator is not None),
+            ai_enabled=self._ai_online(),
             ai_quest_disposition_min=AI_QUEST_DISPOSITION_MIN,
         )
 
@@ -357,18 +344,15 @@ class DialogueHandlerMixin:
 
         # AI generates template if enabled
         template = None
-        if self.ai_generator:
-            try:
-                renderer.console.print("  [dim_text]Consulting the System...[/dim_text]")
-                template = self.ai_generator.generate_guild_template(
-                    name=name,
-                    archetype=archetype,
-                    zone_id=intent.zone_id,
-                    founding_reason=reason,
-                    seed_traits=[],
-                )
-            except Exception:
-                logger.warning("AI guild template generation failed; using default", exc_info=True)
+        if self._ai_online():
+            renderer.console.print("  [dim_text]Consulting the System...[/dim_text]")
+            template = self.ai_service.generate_guild_template(
+                name=name,
+                archetype=archetype,
+                zone_id=intent.zone_id,
+                founding_reason=reason,
+                seed_traits=[],
+            )
 
         if template is None:
             guild_id = "gen_" + _uuid.uuid4().hex[:8]

@@ -132,7 +132,9 @@ def setup_ai(engine: "GameEngine") -> None:
             )
             if fast_model != OLLAMA_MODEL else client
         )
-        engine.ai_generator = ContentGenerator(
+        # Kept local on purpose: everything outside ai/ reaches the generator
+        # through engine.ai_service, never directly.
+        generator = ContentGenerator(
             client, engine.lore_data, OLLAMA_MODEL, fast_client=fast_client,
         )
 
@@ -140,20 +142,20 @@ def setup_ai(engine: "GameEngine") -> None:
             from config import BG_GEN_ENABLED
             if BG_GEN_ENABLED:
                 from ai.background_generator import BackgroundGenerator
-                engine._bg_generator = BackgroundGenerator(engine.ai_generator)
+                engine._bg_generator = BackgroundGenerator(generator)
                 engine._bg_generator.start()
 
-        if engine._bg_generator and engine.ai_generator:
+        if engine._bg_generator:
             from ai.world_director import WorldDirector
             engine._world_director = WorldDirector(
                 engine._bg_generator,
-                engine.ai_generator.client,
-                engine.ai_generator.lore_data,
+                generator.client,
+                generator.lore_data,
             )
             logger.info("WorldDirector initialized.")
 
         engine.ai_service = AIService(
-            content_generator=engine.ai_generator,
+            content_generator=generator,
             background_generator=engine._bg_generator,
         )
         renderer.print_success("AI system online. Ollama connected.")

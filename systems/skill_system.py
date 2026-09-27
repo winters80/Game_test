@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import logging
 from typing import TYPE_CHECKING
 
 from core.event_bus import Event, bus
@@ -9,6 +10,7 @@ if TYPE_CHECKING:
     from entities.skill import Skill, SkillRegistry
     from entities.character_class import ClassRegistry
 
+logger = logging.getLogger(__name__)
 
 # Use-count threshold for a skill to level up. Every USES_PER_LEVEL casts in
 # combat the skill grows by +1 level (capped at Skill.max_level).
@@ -115,6 +117,9 @@ def grant_next_learnable_skill(
     Called on level-up to give players incremental access to their class's
     ``learnable_skills`` list. Returns the granted skill_id, or None if the
     player has no class or has already learned every listed skill.
+
+    Ids missing from the registry are logged and skipped, so one bad entry
+    in a class's list can't block every skill listed after it.
     """
     active_id = player.active_class or player.base_class
     if not active_id:
@@ -123,9 +128,19 @@ def grant_next_learnable_skill(
     if not cls:
         return None
     for skill_id in cls.learnable_skills:
-        if skill_id not in player.skills:
-            ok_, _msg = learn_skill(player, skill_id, skill_registry)
-            return skill_id if ok_ else None
+        if skill_id in player.skills:
+            continue
+        if skill_registry.get(skill_id) is None:
+            # INFO, not WARNING: AI-generated classes can list unregistered
+            # ids, and the console shows WARNING+ on every level-up.
+            # Hand-authored data is checked by test_characters.validate_classes.
+            logger.info(
+                "Class '%s' lists learnable skill '%s' but it is not in the "
+                "skill registry; skipping.", active_id, skill_id,
+            )
+            continue
+        ok_, _msg = learn_skill(player, skill_id, skill_registry)
+        return skill_id if ok_ else None
     return None
 
 
