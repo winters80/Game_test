@@ -72,6 +72,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `give_food:X` | Add one food item X to inventory; fires `ITEM_FOUND` event |
 | `give_skill:X` | Add skill_id X to player; fires `SKILL_ACQUIRED` event. If X isn't in the skill registry, a skill is AI-generated (or a deterministic default is built) under that id |
 | `give_gold:N` | Add N to `player.gold`, which is stored in **copper** (`COPPER_PER_GOLD` = 100), so `give_gold:500` is 5g |
+| `spend_gold:N` | Subtract N copper from `player.gold` (never below 0). Gate the option with `requires.min_gold` |
 | `set_base_class:X` | Assign class_id X as player's base class via `class_system.assign_base_class()` |
 | `set_gender:X` | Set `player.gender` |
 | `set_species:X` | *(species_system)* Queue species X; applied after the choice resolves |
@@ -105,8 +106,12 @@ Option `"requires"` block controls visibility and locking:
   "min_stats": { "INT": 15 },
   "items": ["ancient_tome"],
   "flags": ["found_vault"],
+  "flags_any": ["took_left_path", "took_right_path"],
+  "flags_absent": ["vault_emptied"],
+  "min_gold": 2500,
   "alignment_min": 20,
-  "alignment_max": 100
+  "alignment_max": 100,
+  "lock_reason": "The vault door won't budge."
 }
 ```
 
@@ -114,9 +119,15 @@ Option `"requires"` block controls visibility and locking:
 |-------|---------|
 | `min_stats` | Hard lock if any stat below threshold. Shows lock reason. |
 | `items` | Hard lock if item not in inventory |
-| `flags` | Hard lock if flag not set on player |
+| `flags` | Hard lock if any listed flag is not set on player |
+| `flags_any` | Hard lock unless **at least one** listed flag is set |
+| `flags_absent` | **Hides** the option if any listed flag is set (use for one-shot options) |
+| `min_gold` | Hard lock if `player.gold` (copper) is below the value; pair with a `spend_gold:N` trigger |
 | `alignment_min` | *(alignment_system)* Hard lock if `player.alignment < value` |
 | `alignment_max` | *(alignment_system)* Hard lock if `player.alignment > value` |
+| `lock_reason` | Replaces the generic lock text shown when the option is locked. Write it in-world |
+
+**Verath access:** the capital (`verath_city`) is gated on the `verath_access` flag. It's granted by clearing Floor 1 (both fights, then the survey report), by descending to Floor 2, by one of the divergent routes at `village_start.city_gate` (bribe, INT, LCK, the Gray Wanderer's blind spot), or by the fast AI model when a typed `[?]` action plausibly gets the player past the gate (`ai/content_generator._dynamic_option_rules`).
 
 **Divergence signal:** Set `"expected": false` on any option that represents an unusual player path. This feeds the divergence scorer. The higher the score, the more likely the player gets an AI-generated class at the Class Awakening scene.
 

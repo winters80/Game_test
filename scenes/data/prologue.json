@@ -36,7 +36,7 @@
       ]
     },
     "examine": {
-      "text": "You are standing in the town square of Verath. Around you, others who've come of age today stand in their own circles of blue light — their own private Classification Rites. Some look excited. Some look terrified. One child is crying. A man nearby looks like he's about to run.",
+      "text": "You are standing in the market square outside Verath's walls. Around you, others who've come of age today stand in their own circles of blue light — their own private Classification Rites. Some look excited. Some look terrified. One child is crying. A man nearby looks like he's about to run.",
       "options": [
         {
           "option_id": "step_forward",

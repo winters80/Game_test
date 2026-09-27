@@ -91,7 +91,7 @@ def validate_scene_links(scene_reg: SceneRegistry) -> None:
 # ── Trigger validator ──────────────────────────────────────────────────────────
 
 VALID_TRIGGER_PREFIXES = {
-    "flag:", "give_item:", "give_skill:", "give_gold:", "set_base_class:",
+    "flag:", "give_item:", "give_skill:", "give_gold:", "spend_gold:", "set_base_class:",
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
     "rest_camp:", "give_food:",
@@ -240,7 +240,7 @@ def define_characters() -> list[SimChar]:
         ),
         SimChar(
             name="Bram",
-            description="Mage path — elf, mage class, visits city",
+            description="Mage path — elf, mage class, bribes the gate into the city",
             path=[
                 ("prologue", "root", "begin_rite"),
                 ("character_creation", "root", "begin_identity"),
@@ -251,7 +251,8 @@ def define_characters() -> list[SimChar]:
                 ("character_creation", "bg_scholar_confirm", "confirm_bg_scholar"),
                 ("character_creation", "affinity", "born_scholar"),
                 ("character_creation", "confirm_mage", "accept_mage"),
-                ("village_start", "root", "head_to_dungeon"),
+                ("village_start", "root", "approach_city_gate"),
+                ("village_start", "city_gate", "bribe_gate_guard"),
                 ("verath_city", "root", "go_mages_spire"),
             ],
         ),
@@ -1676,6 +1677,136 @@ def main() -> None:
     except Exception as e:
         fail("Final game_engine extractions broken", e)
         traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("24. Verath Gate + Option Gates (flags_any / min_gold / lock_reason)")
+    _vstate = None
+    try:
+        from scenes.option_logic import build_option, process_triggers
+
+        # 24a. Every scene is reachable from the prologue. Verath used to be
+        # an island: nothing linked into it.
+        _edges: dict[str, set[str]] = {}
+        for _sid, _sc in scene_reg._scenes.items():
+            _edges[_sid] = {
+                o.get("leads_to") for n in _sc.nodes.values()
+                for o in n.get("options", [])
+                if o.get("leads_to") not in (None, "__stay__")
+            }
+        _seen, _todo = {"prologue"}, ["prologue"]
+        while _todo:
+            for _nxt in _edges.get(_todo.pop(), ()):
+                if _nxt in _edges and _nxt not in _seen:
+                    _seen.add(_nxt); _todo.append(_nxt)
+        _unreachable = sorted(set(_edges) - _seen)
+        assert not _unreachable, f"Scenes unreachable from prologue: {_unreachable}"
+        ok(f"All {len(_edges)} scenes reachable from the prologue")
+
+        _vp = Player(name="GateTester", base_class="warrior")
+        _vstate = new_game_state(_vp, SAVES_DIR, "_verath_gate_test_")
+
+        def _opt(scene_id: str, node_id: str, option_id: str) -> dict:
+            node = scene_reg.get(scene_id).get_node(node_id)
+            return next(o for o in node["options"] if o["option_id"] == option_id)
+
+        # 24b. Generic gate fields.
+        _g = build_option({"option_id": "a", "label": "a",
+                           "requires": {"flags_any": ["x_flag", "y_flag"]}}, _vstate)
+        assert _g.locked, "flags_any with no flag set should lock"
+        _vp.set_flag("y_flag")
+        assert not build_option({"option_id": "a", "label": "a",
+                                 "requires": {"flags_any": ["x_flag", "y_flag"]}}, _vstate).locked
+        _vp.gold = 100
+        _g = build_option({"option_id": "b", "label": "b", "requires": {"min_gold": 2500}}, _vstate)
+        assert _g.locked and "25" in _g.lock_reason, f"min_gold lock reason: {_g.lock_reason!r}"
+        _vp.gold = 2500
+        assert not build_option({"option_id": "b", "label": "b",
+                                 "requires": {"min_gold": 2500}}, _vstate).locked
+        _g = build_option({"option_id": "c", "label": "c",
+                           "requires": {"flags": ["nope"], "lock_reason": "Custom why."}}, _vstate)
+        assert _g.locked and _g.lock_reason == "Custom why."
+        process_triggers(["spend_gold:1000"], _vstate)
+        assert _vp.gold == 1500
+        process_triggers(["spend_gold:999999"], _vstate)
+        assert _vp.gold == 0, "spend_gold must floor at zero"
+        ok("flags_any / min_gold / lock_reason gates + spend_gold trigger behave")
+
+        # 24c. The city gate is locked by default, with an in-world reason,
+        # and opens once verath_access is set.
+        _enter = _opt("village_start", "root", "enter_verath")
+        _g = build_option(_enter, _vstate)
+        assert _g.locked and "gate guards" in _g.lock_reason, _g.lock_reason
+        assert not build_option(_opt("village_start", "root", "approach_city_gate"), _vstate).should_hide
+        _vp.set_flag("verath_access")
+        assert not build_option(_enter, _vstate).locked
+        assert _enter["leads_to"] == "verath_city"
+        assert build_option(_opt("village_start", "root", "approach_city_gate"), _vstate).should_hide
+        del _vp.flags["verath_access"]
+        ok("Verath gate locked with reason until verath_access, then open")
+
+        # 24d. Normal route: both Floor 1 fights → report option → access.
+        _rep = _opt("dungeon_floor1", "root", "report_floor1_cleared")
+        _vp.set_flag("goblins_defeated")
+        assert build_option(_rep, _vstate).locked, "Needs both fights, not one"
+        _vp.set_flag("crystal_spiders_cleared")
+        assert not build_option(_rep, _vstate).locked
+        process_triggers(_rep["triggers"], _vstate)
+        assert _vp.has_flag("verath_access") and _vp.has_flag("floor1_cleared")
+        assert "flag:verath_access" in _opt("dungeon_floor1", "floor2_warning", "descend_anyway")["triggers"]
+        ok("Clearing Floor 1 (or descending to Floor 2) grants verath_access")
+
+        # 24e. Early routes: each is divergent, gated, grants access, lands in Verath.
+        _routes = {
+            "bribe_gate_guard": {"min_gold": 2500},
+            "talk_past_gate_guard": {"min_stats": {"INT": 12}},
+            "stow_away_on_cart": {"min_stats": {"LCK": 12}},
+            "wanderer_blind_spot_route": {"flags": ["wanderer_route_known"]},
+        }
+        for _oid, _req in _routes.items():
+            _o = _opt("village_start", "city_gate", _oid)
+            assert _o["expected"] is False, f"{_oid} should count as divergent"
+            for _k, _v in _req.items():
+                assert _o["requires"][_k] == _v, f"{_oid} gate {_k}"
+            assert "flag:verath_access" in _o["triggers"] and _o["leads_to"] == "verath_city"
+        assert "spend_gold:2500" in _opt("village_start", "city_gate", "bribe_gate_guard")["triggers"]
+        ok("Bribe / INT / LCK / wanderer routes are divergent, gated, and open Verath")
+
+        # 24f. The wanderer reveals his route once you've offered to help.
+        _w = npc_reg.get_by_npc_id("gray_wanderer")
+        _wopts = {o.option_id: o for n in _w.dialogue_nodes.values() for o in n.options}
+        for _oid in ("ask_verath_blind_spot", "ask_verath_blind_spot_friendly"):
+            assert _wopts[_oid].requires.get("flags") == ["wanderer_asked_for_help"]
+            assert "flag:wanderer_route_known" in _wopts[_oid].triggers
+        ok("Gray Wanderer reveals the blind-spot route after the mapping favour")
+
+        # 24g. The fast model may grant access only while the player lacks it.
+        from ai.content_generator import _dynamic_option_rules
+        _fresh = Player(name="RuleTester")
+        assert any("flag:verath_access" in r for r in _dynamic_option_rules(_fresh))
+        _fresh.set_flag("verath_access")
+        assert _dynamic_option_rules(_fresh) == []
+        ok("AI situation prompt offers verath_access only while locked out")
+
+        # 24h. flags_any now actually gates Floor 3's sealed door.
+        _door = _opt("dungeon_floor3", "root", "go_core_chamber")
+        _fresh_state_player = Player(name="DoorTester")
+        _vstate.player = _fresh_state_player
+        assert build_option(_door, _vstate).locked, "Sealed door should need recorded data"
+        _fresh_state_player.set_flag("fracture_data_recorded")
+        assert not build_option(_door, _vstate).locked
+        _vstate.player = _vp
+        ok("Floor 3 sealed door honours its flags_any gate")
+    except Exception as e:
+        fail("Verath gate / option gates broken", e)
+        traceback.print_exc()
+    finally:
+        if _vstate is not None:
+            close_game(_vstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"_verath_gate_test_{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
 
     _report()
 

@@ -19,6 +19,23 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 
+# Flag the fast model may grant from a typed action while the player is
+# still locked out of the capital. Scene options gate the city on it.
+VERATH_ACCESS_FLAG = "verath_access"
+
+
+def _dynamic_option_rules(player: "Player") -> list[str]:
+    """Situational rules for the "Ask about this situation" prompt."""
+    rules: list[str] = []
+    if not player.has_flag(VERATH_ACCESS_FLAG):
+        rules.append(
+            "If an option would realistically get the player past Verath's "
+            "city gate (a forged pass, hiding in a cart, a convincing lie), add "
+            f'"flag:{VERATH_ACCESS_FLAG}" to that option\'s triggers. Otherwise never add it.'
+        )
+    return rules
+
+
 class ContentGenerator:
     def __init__(self, ollama_client: OllamaClient, lore_data: dict, model: str,
                  fast_client: OllamaClient | None = None) -> None:
@@ -266,6 +283,7 @@ class ContentGenerator:
             player_stats=player_stats,
             player_flags=player_flags,
             lore_data=self.lore_data,
+            extra_rules=_dynamic_option_rules(player),
         )
 
         _sys = "You write player action options for a fantasy text RPG. Return ONLY valid JSON. No commentary."

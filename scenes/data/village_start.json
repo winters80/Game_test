@@ -1,15 +1,15 @@
 {
   "scene_id": "village_start",
-  "title": "Verath — The Day After",
+  "title": "Outer Verath — The Day After",
   "entrance_text": [
     "The Classification Rite is complete.",
     "You feel it — a subtle shift, like a lock being turned somewhere deep in your bones.",
     "The System has marked you. Catalogued you. Filed you away.",
-    "Verath goes about its business around you, as if the world didn't just permanently change."
+    "Outer Verath goes about its business around you, as if the world didn't just permanently change. Above the rooftops, the capital's walls glow System-blue."
   ],
   "nodes": {
     "root": {
-      "text": "You stand in Verath's market district. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, the Iron Compass Inn, and the road leading to the old forest dungeon.",
+      "text": "You stand in the outer market, in the shadow of Verath's walls. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, the Iron Compass Inn, the road leading to the old forest dungeon, and the guarded gate into the city proper.",
       "options": [
         {
           "option_id": "check_board",
@@ -77,11 +77,103 @@
           "expected": true,
           "leads_to": "camp_rest",
           "leads_to_node": "root"
+        },
+        {
+          "option_id": "enter_verath",
+          "label": "Pass through the gate into Verath.",
+          "expected": true,
+          "requires": {
+            "flags": ["verath_access"],
+            "lock_reason": "The gate guards only pass ranked adventurers. Clear the dungeon's first floor, or find another way in."
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        },
+        {
+          "option_id": "approach_city_gate",
+          "label": "Look for another way past the city gate.",
+          "expected": true,
+          "requires": {
+            "flags_absent": ["verath_access"]
+          },
+          "leads_to": "village_start",
+          "leads_to_node": "city_gate"
+        }
+      ]
+    },
+    "city_gate": {
+      "text": "The gate into Verath proper is a tall arch of System-lit stone. Two guards check every traveller against a floating ledger: rank, class, permits. Most of the outer market never gets past them.\n\nOne guard looks bored. Merchant carts rattle through with barely a glance at their cargo. And somewhere in the crowd, you suspect, there are ways in the ledger doesn't cover.",
+      "options": [
+        {
+          "option_id": "bribe_gate_guard",
+          "label": "Press 25 gold into the bored guard's hand.",
+          "expected": false,
+          "requires": {
+            "min_gold": 2500
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "root",
+          "triggers": [
+            "spend_gold:2500",
+            "flag:verath_access",
+            "flag:bribed_gate_guard",
+            "alignment:-3"
+          ]
+        },
+        {
+          "option_id": "talk_past_gate_guard",
+          "label": "Talk your way past: claim you're carrying a Guild dispatch.",
+          "expected": false,
+          "requires": {
+            "min_stats": { "INT": 12 }
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "root",
+          "triggers": [
+            "flag:verath_access",
+            "flag:talked_past_gate_guard"
+          ]
+        },
+        {
+          "option_id": "stow_away_on_cart",
+          "label": "Wait for a loaded cart and ride through hidden in the cargo.",
+          "expected": false,
+          "requires": {
+            "min_stats": { "LCK": 12 }
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "root",
+          "triggers": [
+            "flag:verath_access",
+            "flag:stowed_away_to_verath"
+          ]
+        },
+        {
+          "option_id": "wanderer_blind_spot_route",
+          "label": "Slip through a gap in the System's sight.",
+          "expected": false,
+          "requires": {
+            "flags": ["wanderer_route_known"],
+            "lock_reason": "Somewhere the ledger can't see. Someone who lives outside the System might know the way."
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "root",
+          "triggers": [
+            "flag:verath_access",
+            "flag:entered_verath_unseen"
+          ]
+        },
+        {
+          "option_id": "leave_city_gate",
+          "label": "Not today. Back to the market.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
         }
       ]
     },
     "unknown_arrival": {
-      "text": "You arrive in Verath's market district with a strange coin in your pocket and absolutely no idea what the System has done with you.\n\nOthers who went through the Rite today are comparing class designations, showing off their new skill notifications. One man nearby got 'Iron Warrior'. A woman is practically glowing — she got 'Ember Mage'.\n\nYour status screen shows... nothing. Just 'Unclassified'. And somehow that feels exactly right.",
+      "text": "You arrive in Verath's outer market with a strange coin in your pocket and absolutely no idea what the System has done with you.\n\nOthers who went through the Rite today are comparing class designations, showing off their new skill notifications. One man nearby got 'Iron Warrior'. A woman is practically glowing — she got 'Ember Mage'.\n\nYour status screen shows... nothing. Just 'Unclassified'. And somehow that feels exactly right.",
       "options": [
         {
           "option_id": "explore_unclassified",

@@ -85,10 +85,37 @@
           "triggers": ["talk_npc:dungeon_vendor"]
         },
         {
+          "option_id": "report_floor1_cleared",
+          "label": "Both threats are down. Report Floor 1 cleared to the Guild survey post.",
+          "expected": true,
+          "requires": {
+            "flags": ["goblins_defeated", "crystal_spiders_cleared"],
+            "flags_absent": ["floor1_cleared"]
+          },
+          "leads_to": "dungeon_floor1",
+          "leads_to_node": "floor1_cleared",
+          "triggers": [
+            "flag:floor1_cleared",
+            "flag:verath_access"
+          ]
+        },
+        {
           "option_id": "return_village",
           "label": "Return to the village. Not ready yet.",
           "expected": true,
           "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "floor1_cleared": {
+      "text": "The survey post is a brass plate bolted to the wall by the entrance, humming with System light. You press your palm to it.\n\nFLOOR 1 THREATS: NEUTRALISED. SURVEY CONFIRMED. ADVENTURER RANK: F → E.\n\nA second line scrolls beneath, smaller: ROAD PERMIT GRANTED — VERATH. The guards on the capital road will let you through now.",
+      "options": [
+        {
+          "option_id": "floor1_cleared_continue",
+          "label": "Good. Head back into the corridor.",
+          "expected": true,
+          "leads_to": "dungeon_floor1",
           "leads_to_node": "root"
         }
       ]
@@ -389,7 +416,8 @@
           "leads_to_node": "root",
           "triggers": [
             "flag:descended_to_floor2",
-            "flag:ignored_system_warning"
+            "flag:ignored_system_warning",
+            "flag:verath_access"
           ]
         }
       ]

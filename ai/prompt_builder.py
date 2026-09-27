@@ -398,20 +398,25 @@ def build_dynamic_options_prompt(
     player_stats: dict,
     player_flags: list[str],
     lore_data: dict,
+    extra_rules: list[str] | None = None,
 ) -> str:
     """
     Build a prompt for generating dynamic situational options based on player question.
+
+    ``extra_rules`` are short, situational instructions (e.g. which unlock
+    flags the model may grant right now), one line each.
     """
     stats_str = ", ".join(f"{k}:{v}" for k, v in player_stats.items())
     options_str = "\n".join(f"- {o}" for o in current_options)
     flags_str = ", ".join(player_flags[:12]) or "none"
     world_name = lore_data.get("world_name", "Aethoria")
+    rules_str = "".join(f"Rule: {r}\n" for r in (extra_rules or []))
 
     return f"""Scene: {scene_title}
 Context: {scene_text[:200]}
 Player stats: {stats_str}
 Flags: {flags_str}
 Question: "{question}"
-
+{rules_str}
 Return ONLY JSON with 1-2 options:
 {{"situation_text":"1-2 sentence description","options":[{{"option_id":"snake_id","label":"Short label","narrative":"1 sentence outcome","triggers":[]}}]}}"""

@@ -416,6 +416,20 @@
             "memory_summary": "Player discussed the unmapped passage. He confirmed he's mapping System blind spots."
           },
           {
+            "option_id": "ask_verath_blind_spot",
+            "label": "You map the System's blind spots. Is there one at the city gate?",
+            "requires": {
+              "flags": ["wanderer_asked_for_help"],
+              "flags_absent": ["wanderer_route_known", "verath_access"]
+            },
+            "npc_response": "'There is. The ledger at the gate reads every traveller, except for the half-second when a cart's shadow crosses the arch. The System sees the cart, not what's under it.' He almost smiles. 'Walk in the shadow. Don't stop. Consider it an advance on the mapping.'",
+            "disposition_change": 5.0,
+            "triggers": ["flag:wanderer_route_known"],
+            "memory_event_type": "shared_gate_blind_spot",
+            "memory_summary": "Told the player how to slip into Verath through the gate's blind spot.",
+            "leads_to_node": "__exit__"
+          },
+          {
             "option_id": "leave",
             "label": "I need to think about this.",
             "requires": {},
@@ -459,6 +473,20 @@
             "npc_response": "'The dungeon. Specifically Floor 2. I can't go in — I'm highly visible to anything that operates outside the System's observation, which is exactly what seems to be down there. But you...' He considers. 'You might pass unnoticed. Especially carrying that shard.'",
             "disposition_change": 5.0,
             "leads_to_node": "root"
+          },
+          {
+            "option_id": "ask_verath_blind_spot_friendly",
+            "label": "You map the System's blind spots. Is there one at the city gate?",
+            "requires": {
+              "flags": ["wanderer_asked_for_help"],
+              "flags_absent": ["wanderer_route_known", "verath_access"]
+            },
+            "npc_response": "'There is. The ledger at the gate reads every traveller, except for the half-second when a cart's shadow crosses the arch. The System sees the cart, not what's under it.' He almost smiles. 'Walk in the shadow. Don't stop. Consider it an advance on the mapping.'",
+            "disposition_change": 5.0,
+            "triggers": ["flag:wanderer_route_known"],
+            "memory_event_type": "shared_gate_blind_spot",
+            "memory_summary": "Told the player how to slip into Verath through the gate's blind spot.",
+            "leads_to_node": "__exit__"
           },
           {
             "option_id": "leave_friendly",
