@@ -802,7 +802,7 @@ class GameMenusMixin:
             renderer.console.print("\n  [system_msg][ ADMIN PANEL ][/system_msg]\n")
 
             bg_status = "ON" if self._bg_generator and self._bg_generator._running else "OFF"
-            ai_status = "online" if self.ai_generator else "offline"
+            ai_status = "online" if self._ai_online() else "offline"
             director_status = "ON" if self._world_director else "OFF"
             renderer.console.print(f"  Director AI      : {director_status}")
 
@@ -822,18 +822,12 @@ class GameMenusMixin:
                 break
 
             elif action.startswith("AI Token Usage"):
-                if self.ai_generator is None:
+                if not self._ai_online():
                     renderer.print_system_message("AI system is offline.", style="dim_text")
                 else:
-                    # Collect stats from every distinct OllamaClient instance.
-                    # Slow client = self.ai_generator.client; fast client may be the same
-                    # object (when no fast model is configured) or a separate instance.
-                    seen: dict[int, tuple[str, dict]] = {}
-                    slow_client = self.ai_generator.client
-                    fast_client = getattr(self.ai_generator, "fast_client", slow_client)
-                    seen[id(slow_client)] = (slow_client.model, slow_client.token_summary())
-                    if id(fast_client) not in seen:
-                        seen[id(fast_client)] = (fast_client.model, fast_client.token_summary())
+                    # One entry per distinct Ollama client (primary, plus fast
+                    # when a separate fast model is configured).
+                    usage = self.ai_service.token_usage()
 
                     renderer.console.print()
                     renderer.console.print("  [system_msg][ OLLAMA TOKEN USAGE — THIS SESSION ][/system_msg]")
@@ -841,8 +835,7 @@ class GameMenusMixin:
                     grand_calls = 0
                     grand_prompt = 0
                     grand_gen = 0
-                    for idx, (model_name, stats) in enumerate(seen.values()):
-                        role = "primary" if idx == 0 else "fast"
+                    for role, model_name, stats in usage:
                         renderer.console.print()
                         renderer.console.print(
                             f"  [subtitle]» {model_name}[/subtitle] [dim_text]({role})[/dim_text]"
@@ -855,7 +848,7 @@ class GameMenusMixin:
                         grand_prompt += stats['prompt_tokens']
                         grand_gen    += stats['generated_tokens']
 
-                    if len(seen) > 1:
+                    if len(usage) > 1:
                         renderer.console.print()
                         renderer.console.print("  [system_msg]» combined[/system_msg]")
                         renderer.console.print(f"    Calls made       : [gold]{grand_calls}[/gold]")

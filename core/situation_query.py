@@ -30,7 +30,8 @@ logger = logging.getLogger(__name__)
 
 def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
     """Prompt the player for a free-text question, call the AI, inject options."""
-    if not engine.ai_generator:
+    ai_service = getattr(engine, "ai_service", None)
+    if ai_service is None or not ai_service.is_available:
         renderer.print_system_message(
             "The System is silent. (AI offline — enable Ollama to use this feature.)",
             style="dim_text",
@@ -72,28 +73,16 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
 
     option_labels = [opt.label for opt in current_options if not opt.locked]
 
-    result = None
-    try:
-        with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
-            result = engine.ai_generator.generate_dynamic_options(
-                question=question,
-                scene_title=scene_title,
-                scene_text=scene_text,
-                current_options=option_labels,
-                player=engine.state.player,
-            )
-    except Exception as exc:
-        from utils.logging_setup import log_player_error
-        log_player_error(
-            "dynamic_query_crash",
-            exc=exc,
+    # AIService logs and swallows generation failures and returns None,
+    # which lands in the "could not generate a response" path below.
+    with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
+        result = ai_service.generate_dynamic_options(
+            question=question,
+            scene_title=scene_title,
+            scene_text=scene_text,
+            current_options=option_labels,
             player=engine.state.player,
-            scene_id=engine.state.current_scene_id,
-            node_id=engine.state.current_node_id,
-            turn=engine.state.player.turn_count,
-            extra={"question": question[:120]},
         )
-        logger.error("Dynamic query exception: %s", exc, exc_info=True)
 
     if not result:
         logger.info(

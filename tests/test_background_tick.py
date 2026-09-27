@@ -60,7 +60,7 @@ except Exception:
     print(f"  {FAIL} Run 1 crashed:\n{traceback.format_exc()}")
 
 
-section("Run 2 — tick with no AI (nil ai_generator)")
+section("Run 2 — tick with no AI (nil ai_service)")
 try:
     from persistence.world_db import WorldDatabase
     from systems.guilds.guild_sim import tick
