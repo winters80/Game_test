@@ -354,7 +354,7 @@ The project is in maintenance / content-authoring mode.
 **Skill system (audit + design):**
 - **Passive aggregator (F3)** — 9 previously-decorative passives (Iron Skin, Evasion, etc.) now contribute attack / defense / dodge / crit / utility-tags with hard caps (dodge 40%, crit 30%, etc.).
 - **Combat-turn cooldowns (F5)** — `reset_cooldowns_for_combat` at fight start, `tick_combat_cooldowns` per round. No more "5-CD spell refreshed by walking 5 menu steps in town".
-- **TRIGGERED skills fire (F6)** — `try_fire_trigger(player, "on_attack" / "on_kill", sr)` from `combat_system`. Filtered out of the active menu.
+- **TRIGGERED skills fire (F6)** — `try_fire_trigger(player, event, sr)` from `combat_system` for `on_attack` / `on_hit` / `on_kill` (basic attacks) and `on_low_hp` (enemy hit crossing 30% HP). Exact, comma-separated matching; honours `cooldown_turns`. Filtered out of the active menu.
 - **Skill leveling (F8)** — `skill_uses` + `skill_levels` per player; every 5 uses → +1 level (capped at `max_level=10`); each level adds `+1 base` and `+10% scaling`.
 - **Auto-learn on level-up (F9)** — `grant_next_learnable_skill` walks the class's `learnable_skills` list.
 - **Skill validators (F10)** — `mp_cost`, `cooldown_turns`, `scaling_coefficient` hard-clamped against LLM hallucination.

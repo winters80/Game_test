@@ -108,7 +108,7 @@ class CombatHandlerMixin:
             # Only include ACTIVE skills. PASSIVE skills contribute via
             # systems/passive_system (defense/attack bonuses, dodge, etc.).
             # TRIGGERED skills fire automatically from combat_system on the
-            # right event (on_attack / on_kill) — showing them in the menu
+            # right event (on_attack / on_hit / on_kill / on_low_hp) — showing them in the menu
             # would let the player double-fire them.
             skills_available = [
                 sid for sid in player.skills

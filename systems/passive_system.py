@@ -43,10 +43,25 @@ a generic stat bonus (the BUFF effect on the skill itself, if any).
 ### Triggered skills
 
 `try_fire_trigger(player, event_name, ...)` is called by combat at the
-relevant moments — currently `"on_attack"` (after a basic attack lands)
-and `"on_kill"` (after the player drops an enemy). Returns the bonus
-damage / healing the trigger produced, so the caller can fold it into
-the combat log.
+relevant moments. Returns the bonus damage / healing the trigger
+produced, so the caller can fold it into the combat log.
+
+| Event       | Fired from                     | When                                        | Value used as |
+|-------------|--------------------------------|---------------------------------------------|---------------|
+| `on_attack` | `combat_system.player_attack`  | Player makes a basic attack                 | bonus damage  |
+| `on_hit`    | `combat_system.player_attack`  | A basic attack lands (currently always)     | bonus damage  |
+| `on_kill`   | `combat_system.player_attack`  | The basic attack drops the enemy            | healing       |
+| `on_low_hp` | `combat_system.enemy_attack`   | An enemy hit takes HP from >= `LOW_HP_TRIGGER_THRESHOLD` of max to below it (player still alive) | healing |
+
+`on_attack` and `on_hit` are distinct events that fire at the same point
+today because basic attacks can't miss; if a miss mechanic is added,
+`on_hit` should only fire on the landed branch.
+
+A skill's `trigger_condition` is matched exactly. It may list several
+events separated by commas (`"on_hit, on_kill"`); substrings never match.
+
+TRIGGERED skills honour `cooldown_turns`: once one fires, it is put on
+the normal per-combat cooldown and skipped until it expires.
 """
 from __future__ import annotations
 
@@ -144,11 +159,13 @@ def try_fire_trigger(
     """Fire any TRIGGERED skills bound to ``event_name``.
 
     Returns total bonus value (damage for ``on_attack`` / ``on_hit``,
-    healing for ``on_kill``). The caller decides how to apply it (add to
-    attack damage, heal the player, etc.).
+    healing for ``on_kill`` / ``on_low_hp``). The caller decides how to
+    apply it (add to attack damage, heal the player, etc.).
 
     Supported triggers right now: ``on_attack``, ``on_hit``, ``on_kill``,
-    ``on_low_hp``. Anything else is silently ignored.
+    ``on_low_hp``. Anything else is silently ignored. Skills on cooldown
+    are skipped; a skill with ``cooldown_turns > 0`` goes on cooldown
+    when it fires.
     """
     if skill_registry is None:
         return 0
@@ -157,11 +174,24 @@ def try_fire_trigger(
         skill = skill_registry.get(skill_id)
         if skill is None or skill.skill_type != SkillType.TRIGGERED:
             continue
-        cond = (skill.trigger_condition or "").lower()
-        if not cond or event_name not in cond:
+        if event_name not in parse_trigger_conditions(skill.trigger_condition):
+            continue
+        if player.skill_cooldowns.get(skill_id, 0) > 0:
             continue
         total += _evaluate_trigger_value(skill, player)
+        if skill.cooldown_turns > 0:
+            player.skill_cooldowns[skill_id] = skill.cooldown_turns
     return total
+
+
+def parse_trigger_conditions(trigger_condition: str | None) -> set[str]:
+    """Split a ``trigger_condition`` into exact event names.
+
+    ``"on_hit, ON_KILL"`` → ``{"on_hit", "on_kill"}``. ``None`` / ``""`` → empty.
+    """
+    if not trigger_condition:
+        return set()
+    return {part.strip().lower() for part in trigger_condition.split(",") if part.strip()}
 
 
 # ── Internal: per-skill application ─────────────────────────────────────────

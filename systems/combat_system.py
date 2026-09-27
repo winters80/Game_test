@@ -218,7 +218,7 @@ def player_attack(
     """Basic attack. Returns (damage_dealt, is_critical).
 
     Folds in PASSIVE skill bonuses (attack/crit/bonus-damage-on-hit) and any
-    TRIGGERED skills bound to ``on_attack``. Pass ``skill_registry`` to get
+    TRIGGERED skills bound to ``on_attack`` / ``on_hit`` / ``on_kill``. Pass ``skill_registry`` to get
     full passive contributions — without it, the function falls back to the
     legacy stat-only formula.
     """
@@ -242,10 +242,11 @@ def player_attack(
     from systems.synergy_system import apply_synergy_bonuses
     damage, _ = apply_synergy_bonuses(player, damage, 0)
 
-    # TRIGGERED skills firing on attack (Arcane Strike)
+    # TRIGGERED skills firing on attack / on hit (Arcane Strike is on_hit).
+    # Basic attacks can't miss, so every attack is also a hit.
     if skill_registry is not None:
-        trig_bonus = try_fire_trigger(player, "on_attack", skill_registry)
-        damage += trig_bonus
+        damage += try_fire_trigger(player, "on_attack", skill_registry)
+        damage += try_fire_trigger(player, "on_hit", skill_registry)
 
     enemy.current_hp = max(0, enemy.current_hp - damage)
 
@@ -284,8 +285,16 @@ def enemy_attack(
 
     PASSIVE skills apply: defense_bonus subtracts flat damage,
     dodge_chance adds to the player's chance to dodge entirely.
+
+    TRIGGERED ``on_low_hp`` skills fire when this hit takes the player from
+    at/above ``LOW_HP_TRIGGER_THRESHOLD`` of max HP to below it without
+    killing them; their value heals the player. Firing on the crossing
+    (rather than "while low") means one hit = at most one firing, and it
+    can only fire again after the player climbs back above the threshold.
+    The returned damage is the raw hit, before any trigger heal.
     """
-    from systems.passive_system import get_passive_modifiers
+    from config import LOW_HP_TRIGGER_THRESHOLD
+    from systems.passive_system import get_passive_modifiers, try_fire_trigger
 
     mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
 
@@ -304,7 +313,17 @@ def enemy_attack(
         dodge_chance += mods.dodge_chance
     if random.random() < dodge_chance:
         return 0  # dodged
+    hp_before = player.current_hp
     player.current_hp = max(0, player.current_hp - damage)
+
+    threshold = player.max_hp * LOW_HP_TRIGGER_THRESHOLD
+    if (
+        skill_registry is not None
+        and 0 < player.current_hp < threshold <= hp_before
+    ):
+        heal = try_fire_trigger(player, "on_low_hp", skill_registry)
+        if heal:
+            player.current_hp = min(player.max_hp, player.current_hp + heal)
     return damage
 
 

@@ -273,6 +273,17 @@ Three skill types with distinct combat roles:
 | `PASSIVE` | No — contributes via `systems/passive_system.get_passive_modifiers` | Always — see stacking rules below |
 | `TRIGGERED` | No — fires via `systems/passive_system.try_fire_trigger` | When `trigger_condition` matches event: `on_attack`, `on_hit`, `on_kill`, `on_low_hp` |
 
+### Triggered events (`systems/combat_system.py`)
+
+| Event | Fired from | When | Value |
+|-------|-----------|------|-------|
+| `on_attack` | `player_attack` | Every basic attack | bonus damage |
+| `on_hit` | `player_attack` | Basic attack lands (always, today — no miss mechanic) | bonus damage |
+| `on_kill` | `player_attack` | Basic attack drops the enemy | heals player |
+| `on_low_hp` | `enemy_attack` | Hit takes HP from ≥ `LOW_HP_TRIGGER_THRESHOLD` (30%) of max to below it, player still alive | heals player |
+
+`on_low_hp` fires on the threshold *crossing*, so it can't re-fire until the player climbs back above 30%. `trigger_condition` is matched exactly: list several events with commas (`"on_hit, on_kill"`); `"on_attack_or_kill"` matches nothing. A TRIGGERED skill with `cooldown_turns > 0` goes on the normal per-combat cooldown after firing.
+
 ### Passive stacking rules (`systems/passive_system.py`)
 
 | Bonus | Stack | Hard cap |
