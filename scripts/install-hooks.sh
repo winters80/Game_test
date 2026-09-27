@@ -17,7 +17,9 @@ if [ -z "$REPO_ROOT" ]; then
 fi
 
 SRC="$REPO_ROOT/scripts/hooks"
-DEST="$REPO_ROOT/.git/hooks"
+# --git-path resolves correctly from worktrees (where .git is a file) and
+# honours core.hooksPath.
+DEST="$(cd "$REPO_ROOT" && git rev-parse --path-format=absolute --git-path hooks)"
 
 if [ ! -d "$SRC" ]; then
     echo "Error: $SRC does not exist." >&2

@@ -16,7 +16,9 @@ if (-not $repoRoot) {
 }
 
 $src = Join-Path $repoRoot "scripts/hooks"
-$dest = Join-Path $repoRoot ".git/hooks"
+# --git-path resolves correctly from worktrees (where .git is a file) and
+# honours core.hooksPath.
+$dest = (git -C $repoRoot rev-parse --path-format=absolute --git-path hooks)
 
 if (-not (Test-Path $src)) {
     Write-Error "$src does not exist."
