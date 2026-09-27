@@ -151,15 +151,24 @@ def get_passive_modifiers(
     return mods
 
 
-def try_fire_trigger(
+@dataclass
+class TriggerFiring:
+    """One TRIGGERED skill that fired — lets combat tell the player about it."""
+    skill_id: str
+    skill_name: str
+    event: str
+    value: int
+
+
+def fire_triggers(
     player: "Player",
     event_name: str,
     skill_registry: "SkillRegistry | None",
-) -> int:
-    """Fire any TRIGGERED skills bound to ``event_name``.
+) -> list[TriggerFiring]:
+    """Fire any TRIGGERED skills bound to ``event_name``; return what fired.
 
-    Returns total bonus value (damage for ``on_attack`` / ``on_hit``,
-    healing for ``on_kill`` / ``on_low_hp``). The caller decides how to
+    Each firing's ``value`` is damage for ``on_attack`` / ``on_hit`` and
+    healing for ``on_kill`` / ``on_low_hp``. The caller decides how to
     apply it (add to attack damage, heal the player, etc.).
 
     Supported triggers right now: ``on_attack``, ``on_hit``, ``on_kill``,
@@ -168,8 +177,8 @@ def try_fire_trigger(
     when it fires.
     """
     if skill_registry is None:
-        return 0
-    total = 0
+        return []
+    fired: list[TriggerFiring] = []
     for skill_id in player.skills:
         skill = skill_registry.get(skill_id)
         if skill is None or skill.skill_type != SkillType.TRIGGERED:
@@ -178,10 +187,21 @@ def try_fire_trigger(
             continue
         if player.skill_cooldowns.get(skill_id, 0) > 0:
             continue
-        total += _evaluate_trigger_value(skill, player)
+        fired.append(TriggerFiring(
+            skill_id, skill.name, event_name, _evaluate_trigger_value(skill, player),
+        ))
         if skill.cooldown_turns > 0:
             player.skill_cooldowns[skill_id] = skill.cooldown_turns
-    return total
+    return fired
+
+
+def try_fire_trigger(
+    player: "Player",
+    event_name: str,
+    skill_registry: "SkillRegistry | None",
+) -> int:
+    """Like ``fire_triggers`` but returns only the summed value."""
+    return sum(f.value for f in fire_triggers(player, event_name, skill_registry))
 
 
 def parse_trigger_conditions(trigger_condition: str | None) -> set[str]:

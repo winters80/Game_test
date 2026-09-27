@@ -615,6 +615,48 @@ def main() -> None:
     except Exception as e:
         fail("trigger_condition matching / cooldown broken", e)
 
+    try:
+        # Combat reports which TRIGGERED skills fired so the UI can log them
+        p = Player(name="FiredTest")
+        p.skills.append("arcane_strike")
+        target = combat_system.spawn_encounter("single_slime")[0]
+        target.max_hp = target.current_hp = 1000
+        fired = []
+        combat_system.player_attack(p, target, skill_reg, fired)
+        assert [(f.skill_name, f.event) for f in fired] == [("Arcane Strike", "on_hit")], fired
+        assert fired[0].value > 0
+
+        p = _low_hp_player(35)
+        brute.attack = 20
+        fired = []
+        combat_system.enemy_attack(brute, p, trig_reg, fired)
+        assert [(f.skill_id, f.value) for f in fired] == [("test_last_stand", 25)], fired
+        ok("player_attack / enemy_attack report fired TRIGGERED skills for the combat log")
+    except Exception as e:
+        fail("fired-trigger reporting broken", e)
+
+    try:
+        # Headless auto-combat applies TRIGGERED skills too (on_kill heal)
+        trig_reg.register(Skill(
+            skill_id="test_kill_heal", name="Bloodrush", rarity=Rarity.RARE,
+            description="Heal on kill.", skill_type=SkillType.TRIGGERED,
+            trigger_condition="on_kill",
+            effects=[SkillEffect(effect_type=EffectType.HEAL, base_value=100.0)],
+        ))
+        p = Player(name="AutoTrigTest")
+        p.stats.STR = 99             # one-shots the slime before it can swing
+        p.max_hp, p.current_hp = 200, 50
+        p.skills.append("test_kill_heal")
+        result = combat_system.resolve_combat_auto(
+            p, combat_system.spawn_encounter("single_slime"), trig_reg,
+        )
+        assert result.victory
+        assert p.current_hp == 150, f"on_kill heal should apply in auto combat, HP={p.current_hp}"
+        assert all(isinstance(i, str) for i in result.loot), f"loot must be item ids: {result.loot}"
+        ok("resolve_combat_auto applies TRIGGERED skills (on_kill healed 50 → 150)")
+    except Exception as e:
+        fail("resolve_combat_auto trigger wiring broken", e)
+
     # ── 8. Background generator lifecycle ────────────────────────────────────
     section("8. Background Generator Lifecycle")
     try:

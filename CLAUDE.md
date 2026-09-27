@@ -311,6 +311,8 @@ Three skill types with distinct combat roles:
 
 `on_low_hp` fires on the threshold *crossing*, so it can't re-fire until the player climbs back above 30%. `trigger_condition` is matched exactly: list several events with commas (`"on_hit, on_kill"`); `"on_attack_or_kill"` matches nothing. A TRIGGERED skill with `cooldown_turns > 0` goes on the normal per-combat cooldown after firing.
 
+`passive_system.fire_triggers()` returns a `TriggerFiring` per skill that fired (`try_fire_trigger()` is the summed-value shorthand). `player_attack` / `enemy_attack` take an optional `fired` list so `core/combat_handler` can log "✦ Arcane Strike triggers — bonus damage 16".
+
 ### Passive stacking rules (`systems/passive_system.py`)
 
 | Bonus | Stack | Hard cap |

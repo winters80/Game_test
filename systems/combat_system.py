@@ -11,6 +11,7 @@ from core.event_bus import Event, bus
 if TYPE_CHECKING:
     from entities.player import Player
     from entities.skill import SkillRegistry
+    from systems.passive_system import TriggerFiring
 
 
 # ── Status Effects ────────────────────────────────────────────────────────────
@@ -214,15 +215,19 @@ class CombatResult:
 def player_attack(
     player: "Player", enemy: Enemy,
     skill_registry: "SkillRegistry | None" = None,
+    fired: "list[TriggerFiring] | None" = None,
 ) -> tuple[int, bool]:
     """Basic attack. Returns (damage_dealt, is_critical).
 
     Folds in PASSIVE skill bonuses (attack/crit/bonus-damage-on-hit) and any
-    TRIGGERED skills bound to ``on_attack`` / ``on_hit`` / ``on_kill``. Pass ``skill_registry`` to get
-    full passive contributions — without it, the function falls back to the
-    legacy stat-only formula.
+    TRIGGERED skills bound to ``on_attack`` / ``on_hit`` / ``on_kill``. Pass
+    ``skill_registry`` to get full passive contributions — without it, the
+    function falls back to the legacy stat-only formula. Pass a ``fired``
+    list to collect the TRIGGERED skills that fired, for the combat log.
     """
-    from systems.passive_system import get_passive_modifiers, try_fire_trigger
+    from systems.passive_system import fire_triggers, get_passive_modifiers
+
+    fired = fired if fired is not None else []
 
     mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
 
@@ -245,16 +250,20 @@ def player_attack(
     # TRIGGERED skills firing on attack / on hit (Arcane Strike is on_hit).
     # Basic attacks can't miss, so every attack is also a hit.
     if skill_registry is not None:
-        damage += try_fire_trigger(player, "on_attack", skill_registry)
-        damage += try_fire_trigger(player, "on_hit", skill_registry)
+        for event in ("on_attack", "on_hit"):
+            hits = fire_triggers(player, event, skill_registry)
+            damage += sum(f.value for f in hits)
+            fired.extend(hits)
 
     enemy.current_hp = max(0, enemy.current_hp - damage)
 
     # on_kill trigger (heal / buff after dropping an enemy)
     if skill_registry is not None and enemy.current_hp <= 0:
-        kill_bonus = try_fire_trigger(player, "on_kill", skill_registry)
+        kills = fire_triggers(player, "on_kill", skill_registry)
+        kill_bonus = sum(f.value for f in kills)
         if kill_bonus:
             player.current_hp = min(player.max_hp, player.current_hp + kill_bonus)
+        fired.extend(kills)
 
     return damage, is_crit
 
@@ -280,6 +289,7 @@ def player_skill_attack(player: "Player", skill_id: str, enemy: Enemy, skill_reg
 def enemy_attack(
     enemy: Enemy, player: "Player",
     skill_registry: "SkillRegistry | None" = None,
+    fired: "list[TriggerFiring] | None" = None,
 ) -> int:
     """Enemy attacks player. Returns damage dealt.
 
@@ -291,10 +301,11 @@ def enemy_attack(
     killing them; their value heals the player. Firing on the crossing
     (rather than "while low") means one hit = at most one firing, and it
     can only fire again after the player climbs back above the threshold.
-    The returned damage is the raw hit, before any trigger heal.
+    The returned damage is the raw hit, before any trigger heal. Pass a
+    ``fired`` list to collect the TRIGGERED skills that fired.
     """
     from config import LOW_HP_TRIGGER_THRESHOLD
-    from systems.passive_system import get_passive_modifiers, try_fire_trigger
+    from systems.passive_system import fire_triggers, get_passive_modifiers
 
     mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
 
@@ -321,9 +332,12 @@ def enemy_attack(
         skill_registry is not None
         and 0 < player.current_hp < threshold <= hp_before
     ):
-        heal = try_fire_trigger(player, "on_low_hp", skill_registry)
+        lows = fire_triggers(player, "on_low_hp", skill_registry)
+        heal = sum(f.value for f in lows)
         if heal:
             player.current_hp = min(player.max_hp, player.current_hp + heal)
+        if fired is not None:
+            fired.extend(lows)
     return damage
 
 
@@ -334,7 +348,16 @@ def try_flee(player: "Player", enemy: Enemy) -> bool:
 
 
 def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: "SkillRegistry") -> CombatResult:
-    """Run a full combat to completion (used for encounters triggered by scene triggers)."""
+    """Run a full combat to completion without player input.
+
+    Interactive fights go through ``core/combat_handler._run_combat``; this
+    is the headless equivalent. It applies the same skill rules: PASSIVE
+    and TRIGGERED skills via ``skill_registry``, per-combat cooldowns reset
+    at the start and ticked each round.
+    """
+    from systems.skill_system import reset_cooldowns_for_combat, tick_combat_cooldowns
+
+    reset_cooldowns_for_combat(player)
     total_xp = 0
     total_gold = 0
     all_loot: list[str] = []
@@ -352,7 +375,7 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
         # Player attacks first alive enemy
         target = next((e for e in enemies if e.is_alive), None)
         if target:
-            dmg, _ = player_attack(player, target)
+            dmg, _ = player_attack(player, target, skill_registry)
             # Chance to apply bleed on physical attacks (10% base)
             if random.random() < 0.10:
                 idx = enemies.index(target)
@@ -376,11 +399,12 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
             if enemy.current_hp <= 0:
                 total_xp += enemy.xp_reward
                 total_gold += enemy.gold_reward
-                all_loot.extend(enemy.loot_table)
+                all_loot.extend(roll_loot([enemy]))
                 continue  # enemy died from DoT
             if player.current_hp > 0:
-                enemy_attack(enemy, player)
+                enemy_attack(enemy, player, skill_registry)
 
+        tick_combat_cooldowns(player)
         if turn > 50:  # safety cap
             break
 
