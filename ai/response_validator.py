@@ -277,7 +277,8 @@ class AIDynamicOptionsResponse(BaseModel):
                 continue
             label = next((opt[k] for k in ("label", "text", "option", "name", "action")
                           if isinstance(opt.get(k), str) and opt[k].strip()), None)
-            if label is None:
+            # Placeholder text copied from the prompt's JSON shape isn't an option.
+            if label is None or label.strip(" .").lower() in {"", "label", "short label"}:
                 continue
             opt = {**opt, "label": label.strip()}
             if not isinstance(opt.get("option_id"), str) or not opt["option_id"].strip():

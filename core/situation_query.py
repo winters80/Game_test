@@ -149,13 +149,13 @@ def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
     requires = ai_opt.requires or {}
     locked = False
     lock_reason = ""
-    raw_triggers = list(ai_opt.triggers or [])
-    # Every typed action may grow the world: if the small model forgot the
-    # action tag, derive one from the option label.
-    if not any(str(t).startswith(WORLD_ACTION_PREFIX) for t in raw_triggers):
-        derived = derive_world_action(ai_opt.label)
-        if derived:
-            raw_triggers.append(derived)
+    # Every typed action may grow the world. The tag always comes from the
+    # option's label, never from the model: a small model tags options with
+    # whatever example it saw ("mine:gold") rather than what the option does.
+    raw_triggers = [t for t in (ai_opt.triggers or []) if not str(t).startswith(WORLD_ACTION_PREFIX)]
+    derived = derive_world_action(ai_opt.label)
+    if derived:
+        raw_triggers.append(derived)
     triggers = sanitize_ai_triggers(
         raw_triggers, getattr(engine, "item_registry", None),
     ).kept

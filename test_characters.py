@@ -2256,7 +2256,8 @@ def main() -> None:
         assert _wg.normalize_subject("wild berries") == "wild_berry"
         assert _wg.derive_world_action("[AI] Mine the gold vein") == "world_action:mine:gold_vein"
         assert _wg.derive_world_action("Go") is None
-        assert any("world_action" in r for r in _dynamic_option_rules(Player(name="R")))
+        # No example action in the [?] prompt: the 1B model copied "mine gold".
+        assert not any("mine" in r or "world_action" in r for r in _dynamic_option_rules(Player(name="R")))
         class _NoTagOpt:
             option_id = "ai_x"; label = "Forage for wild berries"; narrative = ""
             triggers = ["flag:x"]; requires = {}
@@ -2265,7 +2266,24 @@ def main() -> None:
             class state:
                 player = Player(name="T"); current_node_id = "root"
         assert "world_action:forage:wild_berries" in _convert_ai_option(_NoTagOpt(), _NoTagEngine()).triggers
-        ok("Action keys normalise; options without a tag get one derived from the label")
+        # The model's own tag is ignored: the label says what the player does.
+        class _WrongTagOpt(_NoTagOpt):
+            label = "Study the glowing sigils"; triggers = ["world_action:mine:gold"]
+        _wt = _convert_ai_option(_WrongTagOpt(), _NoTagEngine()).triggers
+        assert "world_action:study:glowing_sigils" in _wt and "world_action:mine:gold" not in _wt, _wt
+        # The [?] prompt answers the question from the scene and lists the
+        # existing choices; it carries no example action to copy.
+        from ai.prompt_builder import build_dynamic_options_prompt
+        _pr = build_dynamic_options_prompt("Whats happening", "The Day the Sky Shattered",
+                                           "The Classification Rite is beginning.",
+                                           ["Step forward."], {"STR": 5}, [], {},
+                                           _dynamic_option_rules(Player(name="R")))
+        assert "Step forward." in _pr and "Classification Rite" in _pr and "Whats happening" in _pr
+        assert "gold" not in _pr.lower() and "Short label" not in _pr
+        from ai.response_validator import AIDynamicOptionsResponse as _ADR
+        assert _ADR.model_validate({"situation_text": "x", "options": [{"label": "Short label"}]}).options == []
+        ok("Action keys normalise; options are tagged from their label, never the model's tag; "
+           "the [?] prompt is grounded in the scene with nothing to parrot")
 
         # 27b. A real engine with a fake primary model + a real BG generator
         # (not started: the test drives the worker step by step).
