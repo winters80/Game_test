@@ -2477,10 +2477,22 @@ def main() -> None:
         assert _oc.model_in("gemma3:1b", {"gemma3:1b"})
         assert not _oc.model_in("gemma3:1b", {"gemma3:4b"})
 
-        def _boot(available: bool, models: set[str]):
-            said, warmed = [], []
+        import core.bootstrap as _bs
+
+        def _boot(available: bool, models: set[str], accept_download: bool = False):
+            said, warmed, pulled = [], [], []
+
+            def _pull(self, model=None, on_progress=None):
+                pulled.append(model)
+                if on_progress:
+                    on_progress("pulling", 5, 10); on_progress("pulling", 10, 10)
+                models.add(model)
+                return True
+
             with _mock.patch.object(_oc.OllamaClient, "is_available", lambda self: available), \
-                 _mock.patch.object(_oc.OllamaClient, "installed_models", lambda self: models), \
+                 _mock.patch.object(_oc.OllamaClient, "installed_models", lambda self: set(models)), \
+                 _mock.patch.object(_oc.OllamaClient, "pull", _pull), \
+                 _mock.patch.object(_bs, "_confirm_download", lambda missing: accept_download), \
                  _mock.patch.object(_oc.OllamaClient, "warm_up",
                                     lambda self: warmed.append(self.model) or True), \
                  _mock.patch.object(_rdr4.console, "print", lambda *a, **k: said.append(" ".join(map(str, a)))), \
@@ -2490,6 +2502,7 @@ def main() -> None:
                     if len(warmed) >= 2 or not _e.ai_service.is_available:
                         break
                     _time.sleep(0.05)
+            _boot.pulled = pulled
             return _e, "\n".join(said), sorted(warmed)
 
         _e, _said, _w = _boot(False, set())
@@ -2503,8 +2516,26 @@ def main() -> None:
         _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:1b"})
         assert _e.ai_service.is_available and _w == ["gemma3:1b", "mistral-nemo"]
         assert _e.ai_offline_reason == ""
+        # Pre-check: missing models are named, other installed models suggested,
+        # and accepting the offer downloads them so the AI comes online.
+        _e, _said, _w = _boot(True, {"qwen3:32b"})
+        assert not _e.ai_service.is_available and _boot.pulled == []
+        assert "mistral-nemo, gemma3:1b" in _said and "qwen3:32b" in _said and "OLLAMA_MODEL" in _said
+        _e, _said, _w = _boot(True, {"qwen3:32b"}, accept_download=True)
+        assert _boot.pulled == ["mistral-nemo", "gemma3:1b"] and _e.ai_service.is_available
+        assert "Downloaded mistral-nemo" in _said and _e.ai_offline_reason == ""
+        # Thinking models (qwen3, deepseek-r1) are asked not to think.
+        _c = _oc.OllamaClient(model="qwen3:32b")
+        with _mock.patch.object(_c, "_get_client", lambda timeout=None: type("C", (), {
+                "show": lambda self, m: {"capabilities": ["completion", "thinking"]}})()):
+            assert _c._think_kwargs() == {"think": False}
+        _c = _oc.OllamaClient(model="mistral-nemo")
+        with _mock.patch.object(_c, "_get_client", lambda timeout=None: type("C", (), {
+                "show": lambda self, m: {"capabilities": ["completion"]}})()):
+            assert _c._think_kwargs() == {}
         ok("Startup says exactly what's wrong (server / model), falls back to primary, preloads models; "
-           "the reason is kept for the admin panel")
+           "the reason is kept for the admin panel; missing models can be downloaded at startup; "
+           "thinking models are asked not to think")
     except Exception as e:
         fail("Ollama startup checks broken", e)
         traceback.print_exc()

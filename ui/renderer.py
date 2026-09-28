@@ -111,6 +111,38 @@ def show_ai_thinking_spinner(message: str = "THE SYSTEM IS CONTEMPLATING...") ->
     return Live(Align.center(spinner), console=console, refresh_per_second=10)
 
 
+class DownloadProgress:
+    """Progress bar for a model download. Use as a context manager and pass
+    ``update`` as the ``on_progress(status, completed, total)`` callback."""
+
+    def __init__(self, label: str) -> None:
+        from rich.progress import (BarColumn, DownloadColumn, Progress, TextColumn,
+                                   TransferSpeedColumn)
+        self._progress = Progress(
+            TextColumn(f"  [system_msg]{label}[/system_msg]"), BarColumn(),
+            DownloadColumn(), TransferSpeedColumn(), TextColumn("[dim_text]{task.description}"),
+            console=console,
+        )
+        self._task = self._progress.add_task("", total=None)
+        self._biggest = 0
+
+    def __enter__(self) -> "DownloadProgress":
+        self._progress.start()
+        return self
+
+    def __exit__(self, *exc) -> None:
+        self._progress.stop()
+
+    def update(self, status: str, completed: int, total: int) -> None:
+        # Ollama reports one layer at a time. Track the biggest (the weights),
+        # so the small layers after it don't make the bar jump backwards.
+        if total and total >= self._biggest:
+            self._biggest = total
+            self._progress.update(self._task, completed=completed, total=total, description="")
+        elif not total:
+            self._progress.update(self._task, description=status)
+
+
 def print_combat_header(enemy_name: str, enemy_hp: int, enemy_max_hp: int, player: Any = None) -> None:
     bar_width = 20
     ratio = enemy_hp / enemy_max_hp if enemy_max_hp > 0 else 0

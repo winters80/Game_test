@@ -140,6 +140,7 @@ def setup_ai(engine: "GameEngine") -> None:
                 "scripts/start.sh, which do it for you.[/dim_text]"
             )
             return
+        _offer_model_downloads(client)
         if not client.has_model():
             have = ", ".join(sorted(client.installed_models())) or "none"
             engine.ai_offline_reason = (
@@ -200,6 +201,54 @@ def setup_ai(engine: "GameEngine") -> None:
         renderer.console.print(
             f"  [dim_text]AI setup failed: {e} — continuing without AI.[/dim_text]"
         )
+
+
+def _wanted_models() -> list[str]:
+    """The models config.py asks for: primary, plus fast if it's separate."""
+    return list(dict.fromkeys(m for m in (OLLAMA_MODEL, OLLAMA_FAST_MODEL) if m))
+
+
+def _confirm_download(missing: list[str]) -> bool:
+    """Ask before a multi-GB download. No terminal (tests, pipes) → no."""
+    import sys
+    if not sys.stdin.isatty():
+        return False
+    import questionary
+    answer = questionary.confirm(
+        f"Download {' and '.join(missing)} now? (one-time; the game waits until it's done)",
+        default=True,
+    ).ask()
+    return bool(answer)
+
+
+def _offer_model_downloads(client) -> None:
+    """Startup pre-check: if a model config.py needs isn't pulled, say so and
+    offer to download it with a progress bar, so the AI works this session."""
+    from ai.ollama_client import model_in
+
+    installed = client.installed_models()
+    missing = [m for m in _wanted_models() if not model_in(m, installed)]
+    if not missing:
+        return
+    renderer.console.print(
+        f"\n  [system_msg]The AI needs {len(missing)} model(s) that aren't downloaded yet: "
+        f"{', '.join(missing)}.[/system_msg]"
+    )
+    others = sorted(installed)
+    if others:
+        renderer.console.print(
+            f"  [dim_text]Installed: {', '.join(others)}. To use one of those instead, set the "
+            "OLLAMA_MODEL / OLLAMA_FAST_MODEL environment variables (see README).[/dim_text]"
+        )
+    if not _confirm_download(missing):
+        return
+    for model in missing:
+        with renderer.DownloadProgress(f"Downloading {model}") as bar:
+            ok = client.pull(model, on_progress=bar.update)
+        if ok:
+            renderer.print_success(f"Downloaded {model}.")
+        else:
+            renderer.print_error(f"Couldn't download {model}. Try: ollama pull {model}")
 
 
 def _preload_models(*clients) -> None:

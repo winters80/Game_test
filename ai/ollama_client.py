@@ -35,6 +35,7 @@ class OllamaClient:
         self.tokens_prompt: int = 0
         self.tokens_generated: int = 0
         self.calls_made: int = 0
+        self._thinks: bool | None = None   # model has Ollama's "thinking" capability
 
     def token_summary(self) -> dict:
         return {
@@ -99,6 +100,37 @@ class OllamaClient:
         A bare name matches its ``:latest`` tag, as Ollama does."""
         return model_in(model or self.model, self.installed_models())
 
+    def pull(self, model: str | None = None, on_progress=None) -> bool:
+        """Download ``model`` into Ollama. ``on_progress(status, completed, total)``
+        is called as layers arrive. True on success."""
+        try:
+            stream = self._get_client(timeout=OLLAMA_WARMUP_TIMEOUT).pull(model or self.model, stream=True)
+            for p in stream:
+                get = p.get if isinstance(p, dict) else (lambda k, _p=p: getattr(_p, k, None))
+                if on_progress:
+                    on_progress(get("status") or "", get("completed") or 0, get("total") or 0)
+            return True
+        except Exception as e:
+            logger.info("Pull of %s failed: %s", model or self.model, e)
+            return False
+
+    def _think_kwargs(self) -> dict:
+        """``think=False`` for models that reason before answering (qwen3,
+        deepseek-r1, ...). Their reasoning would eat the token budget and
+        slow every call, and the game only wants the answer."""
+        if self._thinks is None:
+            self._thinks = False
+            try:
+                import inspect
+                import ollama
+                if "think" in inspect.signature(ollama.Client.generate).parameters:
+                    shown = self._get_client().show(self.model)
+                    caps = shown.get("capabilities") if isinstance(shown, dict) else getattr(shown, "capabilities", None)
+                    self._thinks = "thinking" in (caps or [])
+            except Exception as e:
+                logger.info("Could not read capabilities of %s: %s", self.model, e)
+        return {"think": False} if self._thinks else {}
+
     def warm_up(self) -> bool:
         """Load the model into memory now (and keep it for OLLAMA_KEEP_ALIVE),
         so the first real request doesn't wait for a multi-GB load."""
@@ -139,6 +171,7 @@ class OllamaClient:
                         "num_predict": num_predict,
                     },
                     keep_alive=OLLAMA_KEEP_ALIVE,
+                    **self._think_kwargs(),
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
                 data = json.loads(raw)
@@ -192,6 +225,7 @@ class OllamaClient:
                     "num_predict": max_tokens,
                 },
                 keep_alive=OLLAMA_KEEP_ALIVE,
+                **self._think_kwargs(),
             )
             raw = response.get("response", "") if isinstance(response, dict) else response.response
             self._record_usage(response)
