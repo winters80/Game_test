@@ -151,7 +151,11 @@ class OllamaClient:
         timeout: int = 120,
         max_retries: int = 3,
         num_predict: int = 800,
+        schema: dict | None = None,
     ) -> dict[str, Any]:
+        """``schema``: a JSON schema Ollama constrains the output to
+        (structured outputs), instead of just "some JSON". Small models need
+        it to get nested shapes right."""
         client = self._get_client(timeout)
         last_error: Exception | None = None
 
@@ -165,7 +169,7 @@ class OllamaClient:
                     model=self.model,
                     prompt=prompt,
                     system=system_prompt,
-                    format="json",
+                    format=schema or "json",
                     options={
                         "temperature": temperature,
                         "num_predict": num_predict,

@@ -1169,6 +1169,31 @@ def main() -> None:
         assert [u[:2] for u in _gen(_slow, _FakeClient("fast")).token_usage()] == [("primary", "slow"), ("fast", "fast")]
         ok("ContentGenerator follow-up / narrative / shop / token helpers parse + fail cleanly")
 
+        # 12g2. [?] answers from a small model: the exact malformed shape seen
+        # live (a stray "triggers" string in the options list) is salvaged,
+        # the structured-output schema is sent, and a bad first try is retried.
+        from types import SimpleNamespace as _NS
+        from entities.player import Player as _P12
+        _p12 = _P12(name="Q")
+        class _SeqClient(_FakeClient):
+            def __init__(self, outs):
+                super().__init__("fast"); self.outs, self.kw = list(outs), []
+            def generate_json(self, **kw):
+                self.kw.append(kw); out = self.outs.pop(0)
+                if isinstance(out, Exception): raise out
+                return out
+        _bad = {"situation_text": "The air hums.",
+                "options": [{"option_id": "look", "label": "Look closer", "triggers": []}, "triggers"]}
+        _sc = _SeqClient([_bad])
+        _r = _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12)
+        assert [o.label for o in _r.options] == ["Look closer"]
+        assert _sc.kw[0]["schema"]["properties"]["options"]["items"]["required"][:2] == ["option_id", "label"]
+        _sc = _SeqClient([ValueError("bad json"), _bad])
+        assert _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12) is not None
+        _sc = _SeqClient([ValueError("a"), {"options": []}])   # no situation_text twice → None
+        assert _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12) is None
+        ok("[?] answers: malformed options salvaged, JSON schema sent, one retry")
+
         # 12h. Boundary guard: outside ai/, only core/bootstrap.py (the
         # composition root) may touch ContentGenerator or raw Ollama clients.
         import re as _re
@@ -2673,6 +2698,29 @@ def main() -> None:
         _snap2 = {b.bot_id: (b.level, b.current_zone_id, b.gold, dict(b.inventory)) for b in _beng._bot_manager.all()}
         assert _snap == _snap2
         ok("Bots are restored exactly on load (per save)")
+
+        # 30h. Saves from before the bot update stored 3 bare bots (no
+        # archetype, all "warrior"): they get their identity back from the
+        # templates and the cast is topped up to BOT_COUNT.
+        import json as _json30
+        from systems.bot_system import BotManager as _BM
+        class _OldDB:
+            def __init__(self):
+                self.rows = {b["bot_id"]: {"definition": _json30.dumps(
+                    {"bot_id": b["bot_id"], "name": b["name"], "current_zone_id": "village_start"}),
+                    "current_zone_id": "village_start"} for b in _beng._bot_registry.all_templates()}
+            def load_bot_instances(self): return list(self.rows.values())
+            def upsert_bot_instance(self, bot_id, definition, current_zone_id, last_active_turn):
+                self.rows[bot_id] = {"definition": _json30.dumps(definition), "current_zone_id": current_zone_id}
+        _odb = _OldDB()
+        _bm = _BM(); _bm.populate(_beng._bot_registry, _odb, BOT_COUNT, seed="old-save")
+        _kael = _bm.get("wanderer_kael")
+        assert _bm.active_count() == BOT_COUNT and len(_odb.rows) == BOT_COUNT
+        assert (_kael.archetype, _kael.class_id) == ("explorer", "ranger")
+        assert _bm.get("merchant_dova").archetype == "trader"
+        _bm2 = _BM(); _bm2.populate(_beng._bot_registry, _odb, BOT_COUNT, seed="old-save")
+        assert _bm2.active_count() == BOT_COUNT, "No duplicates on the next load"
+        ok("Older saves: stored bots regain their archetype/class and are topped up to BOT_COUNT")
 
         # 30h. The legacy per-bot AI decision path is off by default.
         from core import bg_scheduler as _bgs
