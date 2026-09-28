@@ -115,6 +115,17 @@ def validate_triggers(scene_reg: SceneRegistry, item_reg: ItemRegistry,
                         skill_id = trigger.split(":", 1)[1]
                         if not skill_reg.get(skill_id):
                             fail(f"give_skill references unknown skill '{skill_id}' in {scene_id}/{node_id}")
+                    elif trigger.startswith("combat:"):
+                        # Must spawn real enemies (not crash, not silently skip).
+                        from systems.combat_system import spawn_encounter
+                        encounter_id = trigger.split(":", 1)[1]
+                        try:
+                            spawned = spawn_encounter(encounter_id)
+                        except Exception as exc:
+                            fail(f"combat:{encounter_id} crashes on spawn in {scene_id}/{node_id}", exc)
+                            continue
+                        if not spawned:
+                            fail(f"combat:{encounter_id} spawns no enemies in {scene_id}/{node_id}")
 
 # ── Simulated playthrough ──────────────────────────────────────────────────────
 

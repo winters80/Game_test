@@ -71,6 +71,9 @@ class Enemy:
     gold_reward: int = 5
     loot_table: list[str] = field(default_factory=list)
     rank: str = "F"
+    # (status, chance) inflicted on hit, e.g. ("poison", 0.3). Declared so
+    # templates that carry it can spawn; combat doesn't apply statuses yet.
+    status_on_hit: tuple[str, float] | None = None
 
     @property
     def is_alive(self) -> bool:
@@ -144,6 +147,24 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "status_on_hit": ("bleed", 0.20),
         "loot_table": [("void_crystal", 0.25)],
     },
+    "cave_troll": {
+        "enemy_id": "cave_troll",
+        "name": "Cave Troll",
+        "max_hp": 50, "current_hp": 50,
+        "attack": 11, "defense": 4,
+        "xp_reward": 50, "gold_reward": 600,
+        "rank": "E",
+        "loot_table": [("mountain_root", 0.4), ("cooked_meat", 0.3)],
+    },
+    "crystal_golem": {
+        "enemy_id": "crystal_golem",
+        "name": "Crystal Golem",
+        "max_hp": 90, "current_hp": 90,
+        "attack": 14, "defense": 7,
+        "xp_reward": 140, "gold_reward": 1500,
+        "rank": "D",
+        "loot_table": [("void_crystal", 0.6), ("mountain_root", 0.5)],
+    },
     "unknown_creature": {
         "enemy_id": "unknown_creature",
         "name": "??? [UNREGISTERED]",
@@ -184,6 +205,8 @@ ENCOUNTERS: dict[str, list[str]] = {
     "fracture_wraith":    ["fracture_wraith", "fracture_wraith"],
     "unknown_creature":   ["unknown_creature"],
     "street_thugs":       ["street_thugs"],
+    "troll_patrol":       ["cave_troll", "goblin_scout"],
+    "crystal_golem":      ["crystal_golem"],          # Floor 2 boss
 }
 
 
