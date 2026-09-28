@@ -12,7 +12,7 @@ SAVE_VERSION = 4   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
 AI_ENABLED = True
-OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = "mistral-nemo"          # Primary: 12B, good JSON + creative writing
 OLLAMA_FAST_MODEL = "gemma3:1b"        # Small model for interactive (dynamic options). Set "" to use primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"

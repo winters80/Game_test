@@ -2494,13 +2494,17 @@ def main() -> None:
 
         _e, _said, _w = _boot(False, set())
         assert not _e.ai_service.is_available and "ollama serve" in _said and "start.ps1" in _said
+        assert "Nothing is answering" in _e.ai_offline_reason  # kept for the admin panel
         _e, _said, _w = _boot(True, {"gemma3:1b"})
         assert not _e.ai_service.is_available and "ollama pull mistral-nemo" in _said
+        assert "ollama pull mistral-nemo" in _e.ai_offline_reason and "gemma3:1b" in _e.ai_offline_reason
         _e, _said, _w = _boot(True, {"mistral-nemo:latest"})
         assert _e.ai_service.is_available and "ollama pull gemma3:1b" in _said and _w == ["mistral-nemo"]
         _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:1b"})
         assert _e.ai_service.is_available and _w == ["gemma3:1b", "mistral-nemo"]
-        ok("Startup says exactly what's wrong (server / model), falls back to primary, preloads models")
+        assert _e.ai_offline_reason == ""
+        ok("Startup says exactly what's wrong (server / model), falls back to primary, preloads models; "
+           "the reason is kept for the admin panel")
     except Exception as e:
         fail("Ollama startup checks broken", e)
         traceback.print_exc()

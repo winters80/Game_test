@@ -24,7 +24,7 @@ class OllamaParseError(Exception):
 
 
 class OllamaClient:
-    def __init__(self, model: str, base_url: str = "http://localhost:11434",
+    def __init__(self, model: str, base_url: str = "http://127.0.0.1:11434",
                  default_timeout: int = 120) -> None:
         self.model = model
         self.base_url = base_url

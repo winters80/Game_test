@@ -77,7 +77,7 @@ The game tells you what's wrong at startup:
 
 | Message | Fix |
 |---|---|
-| `Ollama not available … Nothing is answering at http://localhost:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher |
+| `Ollama not available … Nothing is answering at http://127.0.0.1:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher. The same reason shows under Admin → AI Token Usage, which can retry the connection without restarting |
 | `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | `ollama pull mistral-nemo` (or run the launcher) |
 | `Fast model 'gemma3:1b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:1b` |
 
@@ -259,7 +259,7 @@ All AI settings are in `config.py`:
 
 ```python
 AI_ENABLED = True                          # master switch — set False to disable all Ollama calls
-OLLAMA_BASE_URL = "http://localhost:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
+OLLAMA_BASE_URL = "http://127.0.0.1:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
 OLLAMA_MODEL = "mistral-nemo"              # PRIMARY — used for heavy generation (classes, quests, NPC branches)
 OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries. Set "" to reuse primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"  # used if primary fails to load
