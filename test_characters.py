@@ -2699,6 +2699,29 @@ def main() -> None:
         assert _snap == _snap2
         ok("Bots are restored exactly on load (per save)")
 
+        # 30h. Saves from before the bot update stored 3 bare bots (no
+        # archetype, all "warrior"): they get their identity back from the
+        # templates and the cast is topped up to BOT_COUNT.
+        import json as _json30
+        from systems.bot_system import BotManager as _BM
+        class _OldDB:
+            def __init__(self):
+                self.rows = {b["bot_id"]: {"definition": _json30.dumps(
+                    {"bot_id": b["bot_id"], "name": b["name"], "current_zone_id": "village_start"}),
+                    "current_zone_id": "village_start"} for b in _beng._bot_registry.all_templates()}
+            def load_bot_instances(self): return list(self.rows.values())
+            def upsert_bot_instance(self, bot_id, definition, current_zone_id, last_active_turn):
+                self.rows[bot_id] = {"definition": _json30.dumps(definition), "current_zone_id": current_zone_id}
+        _odb = _OldDB()
+        _bm = _BM(); _bm.populate(_beng._bot_registry, _odb, BOT_COUNT, seed="old-save")
+        _kael = _bm.get("wanderer_kael")
+        assert _bm.active_count() == BOT_COUNT and len(_odb.rows) == BOT_COUNT
+        assert (_kael.archetype, _kael.class_id) == ("explorer", "ranger")
+        assert _bm.get("merchant_dova").archetype == "trader"
+        _bm2 = _BM(); _bm2.populate(_beng._bot_registry, _odb, BOT_COUNT, seed="old-save")
+        assert _bm2.active_count() == BOT_COUNT, "No duplicates on the next load"
+        ok("Older saves: stored bots regain their archetype/class and are topped up to BOT_COUNT")
+
         # 30h. The legacy per-bot AI decision path is off by default.
         from core import bg_scheduler as _bgs
         _submitted = []

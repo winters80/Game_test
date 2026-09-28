@@ -181,28 +181,38 @@ class BotManager:
         for tmpl in registry.all_templates():
             self._bots.append(BotAgent.model_validate(tmpl))
 
-    def load_from_db(self, world_db: "WorldDatabase") -> None:
+    def load_from_db(self, world_db: "WorldDatabase", registry: BotRegistry | None = None) -> None:
         rows = world_db.load_bot_instances()
         for row in rows:
-            agent = BotAgent.model_validate(json.loads(row["definition"]))
+            data = json.loads(row["definition"])
+            # Saves from before bots had archetypes stored the authored bots
+            # without one; take their identity from the template again.
+            tmpl = registry.get_template(data.get("bot_id", "")) if registry else None
+            if tmpl and "archetype" not in data:
+                for key in ("archetype", "class_id", "personality_seed", "current_goal"):
+                    if key in tmpl:
+                        data[key] = tmpl[key]
+            agent = BotAgent.model_validate(data)
             agent.current_zone_id = row["current_zone_id"] or agent.current_zone_id
             self._bots.append(agent)
 
     def populate(
         self, registry: BotRegistry, world_db: "WorldDatabase | None", count: int, seed: str,
     ) -> None:
-        """Bots for the current save: this save's stored bots if it has any,
-        otherwise the authored bots plus generated ones up to ``count``."""
+        """Bots for the current save: this save's stored bots, topped up to
+        ``count`` with generated ones (older saves stored fewer); a new save
+        gets the authored bots plus generated ones."""
         self._bots = []
         if world_db is not None:
-            self.load_from_db(world_db)
-        if self._bots:
-            return
-        self.load_from_templates(registry)
+            self.load_from_db(world_db, registry)
+        if not self._bots:
+            self.load_from_templates(registry)
         missing = max(0, count - len(self._bots))
         if missing:
             taken = {b.name for b in self._bots}
-            self._bots.extend(generate_bots(registry, missing, seed, taken))
+            new = generate_bots(registry, missing, seed, taken)
+            ids = {b.bot_id for b in self._bots}
+            self._bots.extend(b for b in new if b.bot_id not in ids)
         if world_db is not None:
             self.save_to_db(world_db)
 
