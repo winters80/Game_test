@@ -4,7 +4,15 @@ import json
 import logging
 from typing import Any
 
+from config import OLLAMA_KEEP_ALIVE, OLLAMA_WARMUP_TIMEOUT
+
 logger = logging.getLogger(__name__)
+
+
+def model_in(model: str, installed: set[str]) -> bool:
+    """Ollama treats "name" and "name:latest" as the same model."""
+    want = model if ":" in model else f"{model}:latest"
+    return model in installed or want in installed
 
 
 class OllamaTimeoutError(Exception):
@@ -70,6 +78,39 @@ class OllamaClient:
         except Exception:
             return False
 
+    def installed_models(self) -> set[str]:
+        """Names of models pulled into this Ollama server ("name:tag" form).
+        Empty set if the server can't be reached."""
+        try:
+            listing = self._get_client().list()
+        except Exception:
+            return set()
+        models = listing.get("models", []) if isinstance(listing, dict) else getattr(listing, "models", [])
+        names = set()
+        for m in models or []:
+            name = m.get("model") or m.get("name") if isinstance(m, dict) else (
+                getattr(m, "model", None) or getattr(m, "name", None))
+            if name:
+                names.add(str(name))
+        return names
+
+    def has_model(self, model: str | None = None) -> bool:
+        """True if ``model`` (default: this client's model) is pulled.
+        A bare name matches its ``:latest`` tag, as Ollama does."""
+        return model_in(model or self.model, self.installed_models())
+
+    def warm_up(self) -> bool:
+        """Load the model into memory now (and keep it for OLLAMA_KEEP_ALIVE),
+        so the first real request doesn't wait for a multi-GB load."""
+        try:
+            self._get_client(timeout=OLLAMA_WARMUP_TIMEOUT).generate(
+                model=self.model, prompt="", keep_alive=OLLAMA_KEEP_ALIVE,
+            )
+            return True
+        except Exception as e:
+            logger.info("Warm-up of %s failed: %s", self.model, e)
+            return False
+
     def generate_json(
         self,
         prompt: str,
@@ -97,6 +138,7 @@ class OllamaClient:
                         "temperature": temperature,
                         "num_predict": num_predict,
                     },
+                    keep_alive=OLLAMA_KEEP_ALIVE,
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
                 data = json.loads(raw)
@@ -149,6 +191,7 @@ class OllamaClient:
                     "temperature": temperature,
                     "num_predict": max_tokens,
                 },
+                keep_alive=OLLAMA_KEEP_ALIVE,
             )
             raw = response.get("response", "") if isinstance(response, dict) else response.response
             self._record_usage(response)

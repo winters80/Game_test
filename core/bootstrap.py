@@ -19,7 +19,7 @@ from typing import TYPE_CHECKING
 
 from config import (
     AI_ENABLED, DATA_DIR, OLLAMA_BASE_URL, OLLAMA_FAST_MODEL, OLLAMA_MODEL,
-    OLLAMA_TIMEOUT_FAST, feature,
+    OLLAMA_PRELOAD, OLLAMA_TIMEOUT_FAST, feature,
 )
 from ui import renderer
 
@@ -123,11 +123,26 @@ def setup_ai(engine: "GameEngine") -> None:
         client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
         if not client.is_available():
             renderer.console.print(
-                "  [dim_text]Ollama not available — AI features disabled.[/dim_text]"
+                "  [dim_text]Ollama not available — AI features disabled.[/dim_text]\n"
+                f"  [dim_text]Nothing is answering at {OLLAMA_BASE_URL}. Start Ollama (open the "
+                "Ollama app, or run `ollama serve`), or launch with scripts/start.ps1 / "
+                "scripts/start.sh, which do it for you.[/dim_text]"
+            )
+            return
+        if not client.has_model():
+            renderer.console.print(
+                f"  [dim_text]Ollama is running, but the model '{OLLAMA_MODEL}' isn't downloaded "
+                f"— AI features disabled.\n  Run: ollama pull {OLLAMA_MODEL}[/dim_text]"
             )
             return
 
         fast_model = OLLAMA_FAST_MODEL or OLLAMA_MODEL
+        if fast_model != OLLAMA_MODEL and not client.has_model(fast_model):
+            renderer.console.print(
+                f"  [dim_text]Fast model '{fast_model}' isn't downloaded; using '{OLLAMA_MODEL}' "
+                f"for quick questions too (slower). Run: ollama pull {fast_model}[/dim_text]"
+            )
+            fast_model = OLLAMA_MODEL
         fast_client = (
             OllamaClient(
                 model=fast_model, base_url=OLLAMA_BASE_URL,
@@ -162,7 +177,28 @@ def setup_ai(engine: "GameEngine") -> None:
             background_generator=engine._bg_generator,
         )
         renderer.print_success("AI system online. Ollama connected.")
+        if OLLAMA_PRELOAD:
+            _preload_models(client, fast_client)
     except Exception as e:
         renderer.console.print(
             f"  [dim_text]AI setup failed: {e} — continuing without AI.[/dim_text]"
         )
+
+
+def _preload_models(*clients) -> None:
+    """Load each distinct model into Ollama's memory on a daemon thread.
+
+    A cold 7 GB model can take longer to load than the fast-call timeout, so
+    without this the first "[?]" question after launch tends to fail.
+    Non-blocking: the title menu appears immediately.
+    """
+    import threading
+
+    distinct = list({id(c): c for c in clients if c is not None}.values())
+
+    def _run() -> None:
+        for c in distinct:
+            if c.warm_up():
+                logger.info("Preloaded Ollama model %s", c.model)
+
+    threading.Thread(target=_run, name="ollama-preload", daemon=True).start()

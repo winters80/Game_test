@@ -2298,6 +2298,47 @@ def main() -> None:
                 try: _pp.unlink()
                 except OSError: pass
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("29. Ollama startup checks (server, models, preload)")
+    try:
+        import time as _time
+        from unittest import mock as _mock
+        import ai.ollama_client as _oc
+        from core.game_engine import GameEngine
+        from ui import renderer as _rdr4
+
+        assert _oc.model_in("mistral-nemo", {"mistral-nemo:latest"})
+        assert _oc.model_in("gemma3:1b", {"gemma3:1b"})
+        assert not _oc.model_in("gemma3:1b", {"gemma3:4b"})
+
+        def _boot(available: bool, models: set[str]):
+            said, warmed = [], []
+            with _mock.patch.object(_oc.OllamaClient, "is_available", lambda self: available), \
+                 _mock.patch.object(_oc.OllamaClient, "installed_models", lambda self: models), \
+                 _mock.patch.object(_oc.OllamaClient, "warm_up",
+                                    lambda self: warmed.append(self.model) or True), \
+                 _mock.patch.object(_rdr4.console, "print", lambda *a, **k: said.append(" ".join(map(str, a)))), \
+                 _mock.patch.object(_rdr4, "print_success", lambda m: said.append(m)):
+                _e = GameEngine(); _e.bootstrap()
+                for _ in range(20):
+                    if len(warmed) >= 2 or not _e.ai_service.is_available:
+                        break
+                    _time.sleep(0.05)
+            return _e, "\n".join(said), sorted(warmed)
+
+        _e, _said, _w = _boot(False, set())
+        assert not _e.ai_service.is_available and "ollama serve" in _said and "start.ps1" in _said
+        _e, _said, _w = _boot(True, {"gemma3:1b"})
+        assert not _e.ai_service.is_available and "ollama pull mistral-nemo" in _said
+        _e, _said, _w = _boot(True, {"mistral-nemo:latest"})
+        assert _e.ai_service.is_available and "ollama pull gemma3:1b" in _said and _w == ["mistral-nemo"]
+        _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:1b"})
+        assert _e.ai_service.is_available and _w == ["gemma3:1b", "mistral-nemo"]
+        ok("Startup says exactly what's wrong (server / model), falls back to primary, preloads models")
+    except Exception as e:
+        fail("Ollama startup checks broken", e)
+        traceback.print_exc()
+
     _report()
 
 

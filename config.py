@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 # ── Paths ──────────────────────────────────────────────────────────────────────
@@ -11,7 +12,7 @@ SAVE_VERSION = 4   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
 AI_ENABLED = True
-OLLAMA_BASE_URL = "http://localhost:11434"
+OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
 OLLAMA_MODEL = "mistral-nemo"          # Primary: 12B, good JSON + creative writing
 OLLAMA_FAST_MODEL = "gemma3:1b"        # Small model for interactive (dynamic options). Set "" to use primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"
@@ -19,6 +20,9 @@ OLLAMA_TIMEOUT_JSON = 60               # seconds for structured generation (prim
 OLLAMA_TIMEOUT_FAST = 15              # seconds for fast-model interactive calls
 OLLAMA_TIMEOUT_TEXT = 20               # seconds for narrative generation
 OLLAMA_MAX_RETRIES = 3
+OLLAMA_KEEP_ALIVE = "30m"              # keep models loaded between calls (Ollama's default is 5m)
+OLLAMA_PRELOAD = True                  # load both models into memory at startup (background)
+OLLAMA_WARMUP_TIMEOUT = 180            # seconds allowed for the first model load
 OLLAMA_TEMP_JSON = 0.4                 # lower = more consistent structured output
 OLLAMA_TEMP_TEXT = 0.85                # higher = more creative narrative
 

@@ -25,12 +25,44 @@ Built with:
 
 ## Quick Start
 
-### 1. Prerequisites
+### 1. Install the prerequisites (once)
 
-- **Python 3.11+**
-- **[Ollama](https://ollama.ai)** installed and running locally. Optional, but the game is much richer with it on.
+- **Python 3.11+**: https://www.python.org/downloads/
+- **Ollama**: https://ollama.com/download. It's optional, but without it there's no AI: no unique classes, no `[?]` answers, no world growth.
 
-### 2. Pull the Ollama models
+### 2. Start the game (recommended)
+
+The launcher makes sure everything is ready every time you play:
+
+```bash
+# Windows: double-click start.bat, or from PowerShell:
+.\scripts\start.ps1
+
+# macOS / Linux / Git Bash
+./scripts/start.sh
+```
+
+It will:
+1. install the Python dependencies if any are missing
+2. **start Ollama** if it isn't already running
+3. **download the two models** from `config.py` if they aren't there yet (a one-time download of about 8 GB)
+4. launch the game, which then **preloads both models into memory** in the background, so your first `[?]` question doesn't time out on a cold model
+
+Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game.
+
+On the title screen you should see **`AI system online. Ollama connected.`** The admin panel (`[A]`) shows **`AI: online`**.
+
+### 3. Or start it by hand
+
+```bash
+pip install -r requirements.txt
+
+ollama serve                # or open the Ollama app (Windows/macOS start it in the tray)
+ollama pull mistral-nemo    # primary model (~7 GB)
+ollama pull gemma3:1b       # fast model (~800 MB)
+
+python -X utf8 main.py
+```
 
 The game uses a **dual-model setup**:
 
@@ -39,31 +71,19 @@ The game uses a **dual-model setup**:
 | `mistral-nemo` | **Primary**: heavy generation in the background (classes, quests, NPC dialogue branches, world events, and **world growth**: the items, recipes, traders and skills that appear in response to your actions) | ~7 GB | recommended |
 | `gemma3:1b` | **Fast**: interactive calls (the `[?]` «Ask about this situation» prompt, anything player-facing where latency matters) | ~800 MB | recommended |
 
-```bash
-ollama pull mistral-nemo
-ollama pull gemma3:1b
-```
+### If the AI shows as offline
 
-Both fall back gracefully:
-- If only `mistral-nemo` is pulled, the fast model alias points back to the primary (slower interactive prompts, still works)
-- If Ollama isn't running at all, every AI call returns a fallback (hand-crafted classes, static dialogue, no dynamic quests, no world growth). The game stays fully playable. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running.
+The game tells you what's wrong at startup:
 
-### 3. Install Python dependencies
+| Message | Fix |
+|---|---|
+| `Ollama not available … Nothing is answering at http://localhost:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher |
+| `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | `ollama pull mistral-nemo` (or run the launcher) |
+| `Fast model 'gemma3:1b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:1b` |
 
-```bash
-cd Game_Test
-pip install -r requirements.txt
-```
+Without Ollama the game stays fully playable, with hand-crafted classes, static dialogue, no dynamic quests and no world growth. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
 
-### 4. Run the game
-
-```bash
-python main.py
-```
-
-You'll see `AI system online. Ollama connected.` on the title screen if everything is wired correctly. If Ollama isn't reachable you'll see `Ollama not available — AI features disabled.` and the game will continue with the static fallback path.
-
-### 5. (Optional) Install the pre-push test hook
+### 4. (Optional) Install the pre-push test hook
 
 If you plan to push commits, install the local git hook that runs the test suite before every push:
 
@@ -75,6 +95,14 @@ If you plan to push commits, install the local git hook that runs the test suite
 .\scripts\install-hooks.ps1
 ```
 
+### Updating
+
+```bash
+git pull
+```
+
+Your saves upgrade automatically when you load them.
+
 ---
 
 ## Project Layout
@@ -82,6 +110,8 @@ If you plan to push commits, install the local git hook that runs the test suite
 ```
 Game_Test/
 ├── main.py                 # Entry point
+├── start.bat               # Windows: double-click to play (runs scripts/start.ps1)
+├── scripts/                # start.ps1 / start.sh launchers, git hook installers
 ├── config.py               # All constants and feature flags — change here only
 ├── CLAUDE.md               # Developer reference (architecture, triggers, schemas)
 │
@@ -219,7 +249,7 @@ All AI settings are in `config.py`:
 
 ```python
 AI_ENABLED = True                          # master switch — set False to disable all Ollama calls
-OLLAMA_BASE_URL = "http://localhost:11434" # default Ollama port
+OLLAMA_BASE_URL = "http://localhost:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
 OLLAMA_MODEL = "mistral-nemo"              # PRIMARY — used for heavy generation (classes, quests, NPC branches)
 OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries. Set "" to reuse primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"  # used if primary fails to load
@@ -228,6 +258,8 @@ OLLAMA_TIMEOUT_JSON = 60   # seconds for structured (JSON) generation on primary
 OLLAMA_TIMEOUT_FAST = 15   # seconds for fast-model interactive calls
 OLLAMA_TIMEOUT_TEXT = 20   # seconds for free-form narrative generation
 OLLAMA_MAX_RETRIES = 3
+OLLAMA_KEEP_ALIVE = "30m"   # keep models loaded between calls (Ollama's default unloads after 5m)
+OLLAMA_PRELOAD = True       # load both models into memory at startup, in the background
 
 DIVERGENCE_THRESHOLD = 30          # score that triggers AI class generation
 AI_QUEST_DISPOSITION_MIN = 30.0    # NPC disposition needed for an implicit AI-quest offer
@@ -265,7 +297,7 @@ Prints `True` if Ollama is reachable and the model is pulled.
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 149 checks across 28 sections
+python -X utf8 test_characters.py                  # 150 checks across 29 sections
 python -X utf8 test_quests.py                      # 132 checks across 23 sections
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  12 checks (SQLite schema, v6)
@@ -284,9 +316,9 @@ python -X utf8 playthrough_smoke.py                #  24 checks
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 408 checks across 7 test files (all gated by the pre-push hook).**
+**Combined test count: 409 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (149 checks, 28 sections) covers:
+`test_characters.py` (150 checks, 29 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -310,6 +342,7 @@ git checkout -b feature/my-feature
 - **Traders:** travelling routes, ambient "Talk to …" options, buying and selling, equipped-item protection, runtime NPCs and recipes, the crafting-quantity fix
 - **World growth end-to-end** (fake primary model through the real background worker, integrator, registries and DB): discovery, clamped bundle, reward, trader presence, yield cooldown, per-save isolation, offline behaviour
 - **World growth guard rails:** trader cap with stock merging, expansion cap, retry on load, admin World Growth log
+- **Ollama startup:** the right message for "server down" / "model missing", fallback to the primary model, background preload
 
 `test_quests.py` (132 checks, 23 sections) covers:
 - Schema integrity for every quest template
@@ -378,8 +411,8 @@ world-growth prompts against real Ollama playthroughs.
 | Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
 | **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 408 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 408 checks across 7 files + 24-check live playthrough |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 409 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 409 checks across 7 files + 24-check live playthrough |
 | **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
 | **AI trigger allow-list** | ✅ **Shipped** | AI-authored options can't give gold, gear, classes, quests or story flags (`systems/ai_trigger_policy.py`) |
 | **Traders** | ✅ **Shipped** | Buy/sell menus, travelling traders (Wren), AI-generated traders in the outer market / Verath / camp / road |
