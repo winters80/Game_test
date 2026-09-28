@@ -1169,6 +1169,31 @@ def main() -> None:
         assert [u[:2] for u in _gen(_slow, _FakeClient("fast")).token_usage()] == [("primary", "slow"), ("fast", "fast")]
         ok("ContentGenerator follow-up / narrative / shop / token helpers parse + fail cleanly")
 
+        # 12g2. [?] answers from a small model: the exact malformed shape seen
+        # live (a stray "triggers" string in the options list) is salvaged,
+        # the structured-output schema is sent, and a bad first try is retried.
+        from types import SimpleNamespace as _NS
+        from entities.player import Player as _P12
+        _p12 = _P12(name="Q")
+        class _SeqClient(_FakeClient):
+            def __init__(self, outs):
+                super().__init__("fast"); self.outs, self.kw = list(outs), []
+            def generate_json(self, **kw):
+                self.kw.append(kw); out = self.outs.pop(0)
+                if isinstance(out, Exception): raise out
+                return out
+        _bad = {"situation_text": "The air hums.",
+                "options": [{"option_id": "look", "label": "Look closer", "triggers": []}, "triggers"]}
+        _sc = _SeqClient([_bad])
+        _r = _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12)
+        assert [o.label for o in _r.options] == ["Look closer"]
+        assert _sc.kw[0]["schema"]["properties"]["options"]["items"]["required"][:2] == ["option_id", "label"]
+        _sc = _SeqClient([ValueError("bad json"), _bad])
+        assert _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12) is not None
+        _sc = _SeqClient([ValueError("a"), {"options": []}])   # no situation_text twice → None
+        assert _gen(_FakeClient("m"), _sc).generate_dynamic_options("what?", "t", "x", [], _p12) is None
+        ok("[?] answers: malformed options salvaged, JSON schema sent, one retry")
+
         # 12h. Boundary guard: outside ai/, only core/bootstrap.py (the
         # composition root) may touch ContentGenerator or raw Ollama clients.
         import re as _re

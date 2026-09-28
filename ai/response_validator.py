@@ -259,12 +259,61 @@ class AIDynamicOption(BaseModel):
 class AIDynamicOptionsResponse(BaseModel):
     """Response from the AI when a player asks about the situation."""
     situation_text: str   # narrative paragraph explaining the possibilities
-    options: list[AIDynamicOption]
+    options: list[AIDynamicOption] = []
 
-    @field_validator("options")
+    @field_validator("options", mode="before")
     @classmethod
-    def cap_options(cls, v: list) -> list:
-        return v[:4]  # max 4 dynamic options
+    def salvage_options(cls, v: object) -> list:
+        """Small models get the nesting wrong: one option as a bare object,
+        stray strings in the list, "text" instead of "label", no id. Keep
+        every option that has a usable label, drop the rest."""
+        if isinstance(v, dict):
+            v = [v]
+        if not isinstance(v, list):
+            return []
+        kept = []
+        for opt in v:
+            if not isinstance(opt, dict):
+                continue
+            label = next((opt[k] for k in ("label", "text", "option", "name", "action")
+                          if isinstance(opt.get(k), str) and opt[k].strip()), None)
+            if label is None:
+                continue
+            opt = {**opt, "label": label.strip()}
+            if not isinstance(opt.get("option_id"), str) or not opt["option_id"].strip():
+                opt["option_id"] = "_".join(label.lower().split()[:4])
+            if not isinstance(opt.get("triggers"), list):
+                opt["triggers"] = []
+            if not isinstance(opt.get("requires"), dict):
+                opt["requires"] = {}
+            if not isinstance(opt.get("narrative"), str):
+                opt["narrative"] = ""
+            kept.append(opt)
+        return kept[:4]  # max 4 dynamic options
+
+
+# Structured-output schema for the fast model: Ollama constrains generation
+# to this shape, so a 1B model can't flatten the option objects.
+DYNAMIC_OPTIONS_SCHEMA: dict = {
+    "type": "object",
+    "properties": {
+        "situation_text": {"type": "string"},
+        "options": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "properties": {
+                    "option_id": {"type": "string"},
+                    "label": {"type": "string"},
+                    "narrative": {"type": "string"},
+                    "triggers": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["option_id", "label", "narrative", "triggers"],
+            },
+        },
+    },
+    "required": ["situation_text", "options"],
+}
 
 
 # ── Guild AI response models ──────────────────────────────────────────────────

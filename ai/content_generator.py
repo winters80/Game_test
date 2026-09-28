@@ -274,7 +274,7 @@ class ContentGenerator:
         Returns None on failure.
         """
         from ai.prompt_builder import build_dynamic_options_prompt
-        from ai.response_validator import AIDynamicOptionsResponse
+        from ai.response_validator import DYNAMIC_OPTIONS_SCHEMA, AIDynamicOptionsResponse
 
         player_stats = {k: v for k, v in player.stats.model_dump().items() if v}
         player_stats["level"] = player.level
@@ -292,18 +292,23 @@ class ContentGenerator:
         )
 
         _sys = "You write player action options for a fantasy text RPG. Return ONLY valid JSON. No commentary."
-        try:
-            raw = self.fast_client.generate_json(
-                prompt=prompt,
-                system_prompt=_sys,
-                temperature=0.8,
-                num_predict=300,
-                max_retries=1,
-            )
-            return AIDynamicOptionsResponse.model_validate(raw)
-        except Exception as e:
-            logger.warning(f"Dynamic options generation failed: {e}")
-            return None
+        # Two tries: a malformed answer from a small model is usually a one-off.
+        # INFO, not WARNING: the console shows WARNING+ mid-scene, and the
+        # caller already tells the player when there's no answer.
+        for attempt in (1, 2):
+            try:
+                raw = self.fast_client.generate_json(
+                    prompt=prompt,
+                    system_prompt=_sys,
+                    temperature=0.8,
+                    num_predict=400,
+                    max_retries=1,
+                    schema=DYNAMIC_OPTIONS_SCHEMA,
+                )
+                return AIDynamicOptionsResponse.model_validate(raw)
+            except Exception as e:
+                logger.info("Dynamic options generation failed (attempt %d): %s", attempt, e)
+        return None
 
     def generate_action_narrative(
         self,
