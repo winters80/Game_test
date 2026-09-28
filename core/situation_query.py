@@ -136,10 +136,19 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
 
 
 def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
-    """Build a SceneOption from an AI option, evaluating min_stats / flags gates."""
+    """Build a SceneOption from an AI option, evaluating min_stats / flags gates.
+
+    The option's triggers pass through the AI trigger policy first, so the
+    model can only attach allow-listed effects (see systems/ai_trigger_policy).
+    """
+    from systems.ai_trigger_policy import ai_required_flag_met, sanitize_ai_triggers
+
     requires = ai_opt.requires or {}
     locked = False
     lock_reason = ""
+    triggers = sanitize_ai_triggers(
+        ai_opt.triggers, getattr(engine, "item_registry", None),
+    ).kept
 
     for stat, val in requires.get("min_stats", {}).items():
         if getattr(engine.state.player.stats, stat, 0) < val:
@@ -149,7 +158,7 @@ def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
 
     if not locked:
         for flag in requires.get("flags", []):
-            if not engine.state.player.has_flag(flag):
+            if not ai_required_flag_met(engine.state.player.has_flag, flag):
                 locked = True
                 lock_reason = "Condition not met"
                 break
@@ -160,7 +169,7 @@ def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
         leads_to="__stay__",
         leads_to_node=engine.state.current_node_id,
         expected=False,  # always a divergence signal
-        triggers=ai_opt.triggers,
+        triggers=triggers,
         locked=locked,
         lock_reason=lock_reason,
         narrative=ai_opt.narrative,

@@ -267,6 +267,8 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass
         elif trigger.startswith("scene_transition:"):
             pass
+        elif trigger.startswith("world_action:"):
+            pass  # AI action tag — recorded by the engine for world expansion
 
     state.mark_dirty()
 

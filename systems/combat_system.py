@@ -174,18 +174,21 @@ def spawn_enemy(enemy_id: str) -> Enemy | None:
     return Enemy(**data)
 
 
+# encounter_id → enemy template ids. Scene `combat:X` triggers name these.
+ENCOUNTERS: dict[str, list[str]] = {
+    "goblin_patrol":      ["goblin_scout", "goblin_scout", "goblin_looter"],
+    "single_slime":       ["dungeon_slime"],
+    "wolf_pack":          ["dungeon_wolf", "dungeon_wolf"],
+    "crystal_spider_den": ["crystal_spider", "crystal_spider", "crystal_spider"],
+    "corrupted_golem":    ["corrupted_golem"],
+    "fracture_wraith":    ["fracture_wraith", "fracture_wraith"],
+    "unknown_creature":   ["unknown_creature"],
+    "street_thugs":       ["street_thugs"],
+}
+
+
 def spawn_encounter(encounter_id: str) -> list[Enemy]:
-    encounters: dict[str, list[str]] = {
-        "goblin_patrol":      ["goblin_scout", "goblin_scout", "goblin_looter"],
-        "single_slime":       ["dungeon_slime"],
-        "wolf_pack":          ["dungeon_wolf", "dungeon_wolf"],
-        "crystal_spider_den": ["crystal_spider", "crystal_spider", "crystal_spider"],
-        "corrupted_golem":    ["corrupted_golem"],
-        "fracture_wraith":    ["fracture_wraith", "fracture_wraith"],
-        "unknown_creature":   ["unknown_creature"],
-        "street_thugs":       ["street_thugs"],
-    }
-    ids = encounters.get(encounter_id, [])
+    ids = ENCOUNTERS.get(encounter_id, [])
     enemies = [spawn_enemy(eid) for eid in ids]
     return [e for e in enemies if e is not None]
 

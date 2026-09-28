@@ -89,6 +89,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `join_guild:X` | *(guild_system)* Join guild X |
 | `update_faction:X:±N` | *(faction_system)* Shift standing with faction X by N |
 | `show_auction` / `buy_life_token` | *(auction_house)* Open the auction house / buy a life token directly |
+| `world_action:VERB:SUBJECT` | AI-only tag describing what the player did (e.g. `world_action:mine:gold`). No direct effect; feeds world expansion |
 
 ### Adding a new trigger type
 1. If it only changes player/game state, add it to `process_triggers()` in `scenes/option_logic.py`
@@ -227,6 +228,22 @@ variable. The "No package outside ai/ bypasses AIService" check in
 (or `[]`) on failure, and call the wrapper. Purely cosmetic calls
 (e.g. follow-up option flavour) log failures at INFO. The console handler
 shows WARNING and above, so a WARNING would print mid-scene.
+
+### AI trigger policy (`systems/ai_trigger_policy.py`)
+
+Every trigger list the AI authors, whether on `[?]` situation options or on
+background NPC dialogue branches, goes through `sanitize_ai_triggers()` before
+the engine sees it. Only these survive:
+
+| Trigger | Rule |
+|---------|------|
+| `flag:X` | Rewritten to `flag:ai_X`, so the AI can never set an authored story flag. Exception: `config.AI_GRANTABLE_FLAGS` (currently `verath_access`) |
+| `give_item:X` | X must exist and be a COMMON/UNCOMMON **consumable or material**, not a combo catalyst. Max 1 per option |
+| `alignment:±N` | Clamped to `AI_MAX_ALIGNMENT_SHIFT` (5) |
+| `combat:X` | X must be in `combat_system.ENCOUNTERS` |
+| `world_action:VERB:SUBJECT` | Slugged; one per option |
+
+Everything else (gold, skills, classes, quests, NPC talk, shops, factions, rests) is dropped and logged at INFO. AI option `requires.flags` match either the authored flag or its `ai_` form. To let the AI grant a new story flag, add it to `AI_GRANTABLE_FLAGS` deliberately.
 
 ### Economy guard rails
 

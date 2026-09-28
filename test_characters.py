@@ -1808,6 +1808,114 @@ def main() -> None:
                 try: _pp.unlink()
                 except OSError: pass
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("25. AI Trigger Policy (allow-list for AI-authored effects)")
+    try:
+        from systems.ai_trigger_policy import (
+            ai_required_flag_met, parse_world_action, sanitize_ai_triggers,
+        )
+
+        def _san(trigs):
+            return sanitize_ai_triggers(trigs, item_reg)
+
+        # 25a. Economy / progression effects are never allowed from AI.
+        _banned = [
+            "give_gold:999999", "spend_gold:1", "give_skill:god_mode",
+            "set_base_class:paladin", "start_quest:crown_ascension",
+            "talk_npc:gray_wanderer", "buy_item:iron_sword:1", "rest_inn:0",
+            "join_guild:x", "update_faction:verath_crown:+100", "buy_life_token",
+            "complete_quest:x", "set_species:void",
+        ]
+        _v = _san(_banned)
+        assert _v.kept == [] and len(_v.dropped) == len(_banned), _v
+        ok("Gold / skills / classes / quests / NPCs / shops / factions dropped")
+
+        # 25b. Flags are namespaced, except the deliberately grantable ones.
+        _v = _san(["flag:Found Gold Vein", "flag:crown_ruler_candidate_flag",
+                   "flag:verath_access", "flag:ai_already", "flag:!!!"])
+        assert _v.kept == ["flag:ai_found_gold_vein", "flag:ai_crown_ruler_candidate_flag",
+                           "flag:verath_access", "flag:ai_already"], _v.kept
+        assert _v.dropped == ["flag:!!!"]
+        ok("AI flags namespaced to ai_* (story flags untouchable); verath_access passes")
+
+        # 25c. Items: only existing common/uncommon consumables + materials, max 1.
+        assert _san(["give_item:health_potion"]).kept == ["give_item:health_potion"]
+        assert _san(["give_item:forest_herb", "give_item:bread"]).kept == ["give_item:forest_herb"]
+        for _bad in ("no_such_item", "void_shard", "ancient_tome",
+                     "torven_hammer", "room_key", "iron_sword", "chain_shirt"):
+            assert _san([f"give_item:{_bad}"]).kept == [], _bad
+        ok("give_item limited to one real common consumable/material (no gear, keys, catalysts)")
+
+        # 25d. Alignment clamped, combat must be a real encounter.
+        assert _san(["alignment:-50"]).kept == ["alignment:-5"]
+        assert _san(["alignment:+2.5"]).kept == ["alignment:+2.5"]
+        assert _san(["alignment:0", "alignment:abc"]).kept == []
+        assert _san(["combat:wolf_pack", "combat:dragon_army"]).kept == ["combat:wolf_pack"]
+        ok("alignment clamped to ±5; combat only for known encounters")
+
+        # 25e. world_action tags: slugged, one per option, malformed dropped.
+        _v = _san(["world_action:Mine:Gold Vein", "world_action:mine:silver",
+                   "world_action:onlyverb"])
+        assert _v.kept == ["world_action:mine:gold_vein"], _v.kept
+        assert parse_world_action("world_action:forage:wild herbs") == ("forage", "wild_herbs")
+        assert parse_world_action("world_action::gold") is None
+        ok("world_action tags normalised, one per option")
+
+        # 25f. AI requires.flags accept the namespaced form of their own flags.
+        _fp = Player(name="PolicyP")
+        _fp.set_flag("ai_found_gold_vein"); _fp.set_flag("met_the_wanderer")
+        assert ai_required_flag_met(_fp.has_flag, "found_gold_vein")
+        assert ai_required_flag_met(_fp.has_flag, "met_the_wanderer")
+        assert not ai_required_flag_met(_fp.has_flag, "never_set")
+        ok("AI option gates match both ai_-namespaced and authored flags")
+
+        # 25g. Both AI entry points apply the policy.
+        from core import situation_query as _sq2
+        class _AIOptStub:
+            option_id = "ai_mine"
+            label = "Mine the gold"
+            narrative = "You chip at the vein."
+            triggers = ["give_gold:5000", "flag:struck_gold", "world_action:mine:gold"]
+            requires = {"flags": ["struck_gold"]}
+        class _StateStub:
+            player = Player(name="SqPolicy")
+            current_node_id = "root"
+        class _EngineStub:
+            item_registry = item_reg
+            state = _StateStub()
+        _so = _sq2._convert_ai_option(_AIOptStub(), _EngineStub())
+        assert _so.triggers == ["flag:ai_struck_gold", "world_action:mine:gold"], _so.triggers
+        assert _so.locked, "Gate on an unset AI flag should lock"
+        _EngineStub.state.player.set_flag("ai_struck_gold")
+        assert not _sq2._convert_ai_option(_AIOptStub(), _EngineStub()).locked
+        ok("[?] situation options are sanitised before reaching the engine")
+
+        from core import background_integrator as _bi
+        from entities.npc import NPCRegistry as _NR
+        _nreg = _NR(); _nreg.load_from_dir(DATA_DIR / "npcs")
+        class _BiState:
+            world_db = None
+            player = Player(name="BiP")
+            current_scene_id = "village_start"
+        class _BiEngine:
+            npc_registry = _nreg
+            item_registry = item_reg
+            state = _BiState()
+        _bi._handle_npc_branch(_BiEngine(), {
+            "npc_id": "gray_wanderer",
+            "node": {"node_id": "ai_test_branch", "npc_text": "…", "options": [{
+                "option_id": "greedy", "label": "Pay me", "npc_response": "…",
+                "triggers": ["give_gold:100000", "flag:trusted", "give_skill:x"],
+                "leads_to_node": "__exit__",
+            }]},
+        })
+        _branch = _nreg.get("gray_wanderer").dialogue_nodes["ai_test_branch"]
+        assert _branch.options[0].triggers == ["flag:ai_trusted"], _branch.options[0].triggers
+        ok("Background AI NPC dialogue branches are sanitised before registration")
+    except Exception as e:
+        fail("AI trigger policy broken", e)
+        traceback.print_exc()
+
     _report()
 
 

@@ -130,6 +130,13 @@ def _handle_npc_branch(engine: "GameEngine", result: dict) -> None:
     npc = engine.npc_registry.get(npc_id)
     if npc and hasattr(npc, "dialogue_nodes") and node.get("node_id"):
         from entities.npc import NPCDialogueNode
+        from systems.ai_trigger_policy import sanitize_ai_triggers
+        # AI-authored dialogue options may only carry allow-listed effects.
+        for opt in node.get("options") or []:
+            if isinstance(opt, dict):
+                opt["triggers"] = sanitize_ai_triggers(
+                    opt.get("triggers") or [], engine.item_registry,
+                ).kept
         try:
             npc.dialogue_nodes[node["node_id"]] = NPCDialogueNode.model_validate(node)
         except Exception:
