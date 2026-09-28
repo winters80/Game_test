@@ -117,8 +117,11 @@ def setup_ai(engine: "GameEngine") -> None:
 
     # Empty placeholder — replaced below if Ollama is reachable.
     engine.ai_service = AIService()
+    # Why the AI is off, shown in the admin panel (the startup screen clears).
+    engine.ai_offline_reason = ""
 
     if not AI_ENABLED:
+        engine.ai_offline_reason = "AI_ENABLED is False in config.py."
         return
 
     try:
@@ -126,6 +129,10 @@ def setup_ai(engine: "GameEngine") -> None:
         from ai.content_generator import ContentGenerator
         client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
         if not client.is_available():
+            engine.ai_offline_reason = (
+                f"Nothing is answering at {OLLAMA_BASE_URL}. Open the Ollama app or run "
+                "`ollama serve`, or launch with start.bat / scripts/start.sh."
+            )
             renderer.console.print(
                 "  [dim_text]Ollama not available — AI features disabled.[/dim_text]\n"
                 f"  [dim_text]Nothing is answering at {OLLAMA_BASE_URL}. Start Ollama (open the "
@@ -133,7 +140,13 @@ def setup_ai(engine: "GameEngine") -> None:
                 "scripts/start.sh, which do it for you.[/dim_text]"
             )
             return
+        _offer_model_downloads(client)
         if not client.has_model():
+            have = ", ".join(sorted(client.installed_models())) or "none"
+            engine.ai_offline_reason = (
+                f"Ollama is running, but the model '{OLLAMA_MODEL}' isn't downloaded "
+                f"(installed: {have}). Run: ollama pull {OLLAMA_MODEL}"
+            )
             renderer.console.print(
                 f"  [dim_text]Ollama is running, but the model '{OLLAMA_MODEL}' isn't downloaded "
                 f"— AI features disabled.\n  Run: ollama pull {OLLAMA_MODEL}[/dim_text]"
@@ -184,9 +197,58 @@ def setup_ai(engine: "GameEngine") -> None:
         if OLLAMA_PRELOAD:
             _preload_models(client, fast_client)
     except Exception as e:
+        engine.ai_offline_reason = f"AI setup failed: {e}"
         renderer.console.print(
             f"  [dim_text]AI setup failed: {e} — continuing without AI.[/dim_text]"
         )
+
+
+def _wanted_models() -> list[str]:
+    """The models config.py asks for: primary, plus fast if it's separate."""
+    return list(dict.fromkeys(m for m in (OLLAMA_MODEL, OLLAMA_FAST_MODEL) if m))
+
+
+def _confirm_download(missing: list[str]) -> bool:
+    """Ask before a multi-GB download. No terminal (tests, pipes) → no."""
+    import sys
+    if not sys.stdin.isatty():
+        return False
+    import questionary
+    answer = questionary.confirm(
+        f"Download {' and '.join(missing)} now? (one-time; the game waits until it's done)",
+        default=True,
+    ).ask()
+    return bool(answer)
+
+
+def _offer_model_downloads(client) -> None:
+    """Startup pre-check: if a model config.py needs isn't pulled, say so and
+    offer to download it with a progress bar, so the AI works this session."""
+    from ai.ollama_client import model_in
+
+    installed = client.installed_models()
+    missing = [m for m in _wanted_models() if not model_in(m, installed)]
+    if not missing:
+        return
+    renderer.console.print(
+        f"\n  [system_msg]The AI needs {len(missing)} model(s) that aren't downloaded yet: "
+        f"{', '.join(missing)}.[/system_msg]"
+    )
+    others = sorted(installed)
+    if others:
+        renderer.console.print(
+            f"  [dim_text]Installed: {', '.join(others)}. To use one of those instead, set the "
+            "OLLAMA_MODEL / OLLAMA_FAST_MODEL environment variables (see README).[/dim_text]"
+        )
+    if not _confirm_download(missing):
+        return
+    for model in missing:
+        with renderer.DownloadProgress(f"Downloading {model}") as bar:
+            ok = client.pull(model, on_progress=bar.update)
+        if ok:
+            renderer.print_success(f"Downloaded {model}.")
+        else:
+            renderer.print_error(f"Couldn't download {model}. Try: ollama pull {model}")
 
 
 def _preload_models(*clients) -> None:

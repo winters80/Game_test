@@ -834,6 +834,12 @@ class GameMenusMixin:
             elif action.startswith("AI Token Usage"):
                 if not self._ai_online():
                     renderer.print_system_message("AI system is offline.", style="dim_text")
+                    reason = getattr(self, "ai_offline_reason", "")
+                    if reason:
+                        renderer.console.print(f"  [dim_text]{reason}[/dim_text]")
+                    if questionary.confirm("Retry the AI connection now?", default=True).ask():
+                        from core.bootstrap import setup_ai
+                        setup_ai(self)
                 else:
                     # One entry per distinct Ollama client (primary, plus fast
                     # when a separate fast model is configured).

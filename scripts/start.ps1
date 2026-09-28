@@ -25,7 +25,7 @@ foreach ($cand in @("python", "py", "python3")) {
 if (-not $py) { Warn "Python 3.11+ is required: https://www.python.org/downloads/"; exit 1 }
 
 # 1. Python dependencies
-& $py -c "import rich, questionary, pydantic, ollama" 2>$null
+& $py -c "import rich, questionary, pydantic, inspect, ollama; assert 'think' in inspect.signature(ollama.Client.generate).parameters" 2>$null
 if ($LASTEXITCODE -ne 0) {
     Say "Installing Python dependencies..."
     & $py -m pip install -r requirements.txt

@@ -71,14 +71,40 @@ The game uses a **dual-model setup**:
 | `mistral-nemo` | **Primary**: heavy generation in the background (classes, quests, NPC dialogue branches, world events, and **world growth**: the items, recipes, traders and skills that appear in response to your actions) | ~7 GB | recommended |
 | `gemma3:1b` | **Fast**: interactive calls (the `[?]` «Ask about this situation» prompt, anything player-facing where latency matters) | ~800 MB | recommended |
 
+If a model is missing when the game starts, it names it and offers to **download it right there** (with a progress bar), so running `python main.py` directly works too.
+
+#### Using a different model
+
+Both models can be swapped without editing code, via environment variables the launchers and the game both read:
+
+```powershell
+# PowerShell (this window only)
+$env:OLLAMA_MODEL = "qwen3:32b"      # primary
+$env:OLLAMA_FAST_MODEL = "gemma3:4b" # fast; "" = use the primary for everything
+.\start.bat
+```
+
+```bash
+OLLAMA_MODEL=qwen3:32b OLLAMA_FAST_MODEL=gemma3:4b ./scripts/start.sh
+```
+
+Models that "think" before answering (qwen3, deepseek-r1) are asked not to, so they answer at normal speed. Pick a primary that fits your GPU memory **alongside** the fast model: both stay loaded for 30 minutes.
+
+| Your GPU memory | Primary | Fast |
+|---|---|---|
+| 8 GB | `mistral-nemo` (default, ~7 GB, partly on CPU) or `qwen3:8b` | `gemma3:1b` (default) |
+| 12–16 GB | `mistral-nemo` or `qwen3:14b` | `gemma3:4b` |
+| 24 GB+ | `qwen3:32b` (~20 GB) | `gemma3:1b` (fits beside it) |
+
 ### If the AI shows as offline
 
 The game tells you what's wrong at startup:
 
 | Message | Fix |
 |---|---|
-| `Ollama not available … Nothing is answering at http://localhost:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher |
-| `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | `ollama pull mistral-nemo` (or run the launcher) |
+| `Ollama not available … Nothing is answering at http://127.0.0.1:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher. The same reason shows under Admin → AI Token Usage, which can retry the connection without restarting |
+| `The AI needs … model(s) that aren't downloaded yet` | Accept the download offer, or `ollama pull <model>`, or run the launcher |
+| `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | You declined the download. `ollama pull mistral-nemo`, or point `OLLAMA_MODEL` at a model you have |
 | `Fast model 'gemma3:1b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:1b` |
 
 Without Ollama the game stays fully playable, with hand-crafted classes, static dialogue, no dynamic quests and no world growth. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
@@ -259,9 +285,9 @@ All AI settings are in `config.py`:
 
 ```python
 AI_ENABLED = True                          # master switch — set False to disable all Ollama calls
-OLLAMA_BASE_URL = "http://localhost:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
-OLLAMA_MODEL = "mistral-nemo"              # PRIMARY — used for heavy generation (classes, quests, NPC branches)
-OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries. Set "" to reuse primary.
+OLLAMA_BASE_URL = "http://127.0.0.1:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
+OLLAMA_MODEL = "mistral-nemo"              # PRIMARY (env var OLLAMA_MODEL overrides) — used for heavy generation (classes, quests, NPC branches)
+OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries (env var OLLAMA_FAST_MODEL overrides). "" reuses primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"  # used if primary fails to load
 
 OLLAMA_TIMEOUT_JSON = 60   # seconds for structured (JSON) generation on primary
