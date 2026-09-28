@@ -413,13 +413,16 @@ def build_dynamic_options_prompt(
     rules_str = "".join(f"Rule: {r}\n" for r in (extra_rules or []))
 
     return f"""Scene: {scene_title}
-Context: {scene_text[:200]}
+What is happening: {scene_text[:400]}
+The player can already choose:
+{options_str or "- (nothing yet)"}
 Player stats: {stats_str}
 Flags: {flags_str}
-Question: "{question}"
-{rules_str}
-Return ONLY JSON with 1-2 options:
-{{"situation_text":"1-2 sentence description","options":[{{"option_id":"snake_id","label":"Short label","narrative":"1 sentence outcome","triggers":[]}}]}}"""
+The player asks: "{question}"
+{rules_str}Rule: "situation_text" answers the player's question in 1-2 sentences, using only what is happening above.
+Rule: each option is something the player could do right here, in this scene. Base it on what is happening above. Don't repeat a choice they already have.
+Return ONLY JSON with 1-2 options, in this shape:
+{{"situation_text":"...","options":[{{"option_id":"...","label":"...","narrative":"...","triggers":[]}}]}}"""
 
 
 def build_world_expansion_prompt(

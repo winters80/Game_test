@@ -26,10 +26,12 @@ VERATH_ACCESS_FLAG = "verath_access"
 
 def _dynamic_option_rules(player: "Player") -> list[str]:
     """Situational rules for the "Ask about this situation" prompt."""
+    # No worked example actions here: a 1B model copies them verbatim (it
+    # offered "Mine Gold" at the Classification Rite). The world_action tag
+    # is derived from each option's label in code instead
+    # (core/situation_query._convert_ai_option).
     rules: list[str] = [
-        'Every option must include exactly one trigger "world_action:<verb>:<subject>" '
-        'naming what the player does, e.g. "world_action:mine:gold".',
-        'Other allowed triggers: "flag:<snake_name>", "alignment:+N" or "alignment:-N" (max 5). '
+        'Allowed triggers: "flag:<snake_name>", "alignment:+N" or "alignment:-N" (max 5), or none. '
         "Never give gold, items, skills or quests.",
     ]
     if not player.has_flag(VERATH_ACCESS_FLAG):
