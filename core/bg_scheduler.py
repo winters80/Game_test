@@ -165,8 +165,13 @@ def _maybe_submit_guild_tick(engine: "GameEngine", ctx: dict) -> None:
 
 
 def _maybe_submit_bot_decisions(engine: "GameEngine", ctx: dict) -> None:
-    """Every batch: submit a decision request for each active bot."""
-    if not (feature("bot_system") and engine._bot_manager):
+    """Legacy path: ask the primary model to decide each bot's next action.
+
+    Off by default (config.BOT_AI_DECISIONS): bots are driven by the rules
+    in systems/bot_brain.py every turn, and the AI only writes their talk.
+    """
+    from config import BOT_AI_DECISIONS
+    if not (BOT_AI_DECISIONS and feature("bot_system") and engine._bot_manager):
         return
     world_context = {"player_zone": ctx["zone_id"], "turn": ctx["turn"]}
     for bot in engine._bot_manager.all():

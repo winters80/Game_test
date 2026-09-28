@@ -105,3 +105,6 @@ def _attach_engine_handles(engine: "GameEngine") -> None:
     # re-register this save's bundles (items, recipes, traders, skills).
     from core.world_growth_flow import reload_world_growth
     reload_world_growth(engine)
+    # Per-save bots: load this save's adventurers, or create them for a new one.
+    from core.bot_flow import setup_bots
+    setup_bots(engine)

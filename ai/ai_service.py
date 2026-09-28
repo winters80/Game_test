@@ -348,6 +348,16 @@ class AIService:
             logger.warning("AI shop-refusal generation failed", exc_info=True)
             return None
 
+    def generate_bot_line(self, profile: dict, player_name: str) -> str | None:
+        """What a bot adventurer says (cosmetic: failures log at INFO)."""
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_bot_line(profile, player_name)
+        except Exception:
+            logger.info("AI bot line generation failed", exc_info=True)
+            return None
+
     # ── Diagnostics ──────────────────────────────────────────────────────────
 
     def token_usage(self) -> list[tuple[str, str, dict]]:

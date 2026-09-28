@@ -101,6 +101,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `join_guild:X` | *(guild_system)* Join guild X |
 | `update_faction:X:±N` | *(faction_system)* Shift standing with faction X by N |
 | `show_auction` / `buy_life_token` | *(auction_house)* Open the auction house / buy a life token directly |
+| `talk_bot:BOT_ID` | *(bot_system)* Talk to / trade with a bot adventurer. Added automatically for bots in the player's zone; no need to author it |
 | `world_action:VERB:SUBJECT` | AI-only tag describing what the player did (e.g. `world_action:mine:gold`). No direct effect; feeds world expansion |
 
 ### Adding a new trigger type
@@ -338,6 +339,32 @@ Guard rails (all in `config.py`):
 | `WORLD_YIELD_COOLDOWN_TURNS` (10) | Minimum turns between gathering an action's yield |
 
 The admin panel's **World Growth log** lists every recorded action, its status, and what it added.
+
+## Bot Adventurers (other "players" in the world)
+
+`BOT_COUNT` (12) adventurers live alongside the player in every save, like
+playerbots: they level, fight, loot, trade and craft on their own.
+
+| Piece | Where |
+|-------|-------|
+| State: class, level, XP, HP, inventory (`{item_id: qty}`), gold (copper), activity, memory | `systems/bot_system.BotAgent`, stored as JSON in `bot_instances` |
+| Cast: 3 authored bots (`data/bots/bot_templates.json`) + generated ones from name / archetype pools (`data/bots/bot_generation.json`), deterministic per save | `bot_system.generate_bots`, `BotManager.populate` |
+| Behaviour: rules-based, **no AI calls**. Five archetypes (fighter, explorer, gatherer, trader, crafter) weight the choices | `systems/bot_brain.tick_bot` |
+| Engine: per-save setup, per-turn tick (each bot every `BOT_ACT_EVERY_TURNS`), what the player sees, persistence | `core/bot_flow.py` |
+| Player ↔ bot trading (bots have a real purse and bag) | `systems/bot_trade.py` |
+
+What a bot does each act:
+- **Hurt:** drinks a potion in the dungeon, rests in a safe zone, or walks home.
+- **In the dungeon:** fights real encounters from `combat_system.ENCOUNTERS`, getting the XP, gold and loot from `ENEMY_TEMPLATES` (only fights it can survive); forages; or gathers world-growth yields. It heads home when its bag is full.
+- **In a safe zone:** sells loot to the traders actually present, crafts from `engine.recipes` (bots brew their own potions from the salve recipe), buys a missing potion ingredient, then walks towards what its archetype wants. Fighters go to the deepest floor their level allows (Floor 2 at level 3, Floor 3 at level 5).
+- **Trader bots** never dump stock on NPC traders. They keep up to 6 items to sell to the player.
+
+The player sees bots through:
+- a "Talk to Ryn (Lv 4 Warrior), …" option at the zone root (at most 4)
+- `[W] Who's around`
+- one activity line at most per turn in their zone: level-ups and defeats at once, fights / crafts / trades at most every other turn, and arrivals batched every `BOT_ARRIVALS_EVERY_TURNS`
+
+World Log entries are only written for milestones (level-ups, defeats). Talking uses `AIService.generate_bot_line` (fast model, grounded in the bot's memory) with `bot_system.fallback_line` when offline. `BOT_AI_DECISIONS = True` restores the old "ask the primary model for every bot decision" path. It's slow and freezes bots without Ollama.
 
 ## Divergence System (How AI Classes Are Triggered)
 

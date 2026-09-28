@@ -1,0 +1,65 @@
+{
+  "names": [
+    "Aris", "Bren", "Cato", "Dessa", "Edric", "Fenna", "Garrow", "Hale", "Isolde", "Jory",
+    "Kestrel", "Lio", "Marek", "Nessa", "Orrin", "Quill", "Rhea", "Soren", "Tamsin",
+    "Ulric", "Vesna", "Wyn", "Yara", "Zeke", "Ansel", "Brisa", "Corin", "Dalia", "Emeric",
+    "Faye", "Gideon", "Hollis", "Ilka", "Joss", "Kaia", "Lark", "Mabry", "Nico", "Odile"
+  ],
+  "archetypes": [
+    {
+      "archetype": "fighter",
+      "label": "brawler",
+      "weight": 3,
+      "classes": ["warrior", "rogue", "ranger"],
+      "personalities": [
+        "aggressive brawler, seeks strong opponents, collects trophies",
+        "grim veteran of the Fracture, fights because it's the only thing that makes sense",
+        "young hothead chasing a higher System rank"
+      ]
+    },
+    {
+      "archetype": "explorer",
+      "label": "explorer",
+      "weight": 2,
+      "classes": ["ranger", "rogue", "mage"],
+      "personalities": [
+        "cautious explorer, avoids conflict, seeks rare herbs",
+        "cartographer mapping the dungeon floors the Guild won't",
+        "restless wanderer who never stays anywhere for long"
+      ]
+    },
+    {
+      "archetype": "gatherer",
+      "label": "gatherer",
+      "weight": 2,
+      "classes": ["ranger", "priest", "warrior"],
+      "personalities": [
+        "patient forager who knows every herb near the dungeon mouth",
+        "salvager who strips the dungeon of anything worth selling",
+        "prospector who swears the deep floors are full of ore"
+      ]
+    },
+    {
+      "archetype": "trader",
+      "label": "trader",
+      "weight": 2,
+      "classes": ["rogue", "mage", "priest"],
+      "personalities": [
+        "shrewd trader, always buying low selling high, suspicious of magic",
+        "cheerful haggler who knows every price in the outer market",
+        "debt-ridden merchant trying to buy back a family stall in Verath"
+      ]
+    },
+    {
+      "archetype": "crafter",
+      "label": "crafter",
+      "weight": 1,
+      "classes": ["mage", "priest", "warrior"],
+      "personalities": [
+        "apprentice alchemist brewing potions to pay for lessons",
+        "tinkerer who turns dungeon scrap into something useful",
+        "quiet herbalist who trusts salves more than steel"
+      ]
+    }
+  ]
+}

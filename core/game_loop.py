@@ -84,6 +84,10 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
         engine._world_director.tick(engine.state, engine.state.player.turn_count)
     engine.state.advance_turn()
 
+    # Bot adventurers live their lives (rules-based; no AI calls).
+    from core.bot_flow import tick_bots
+    tick_bots(engine)
+
     # Buff tick — decrement durations
     if engine.state.player.active_buffs:
         from systems.buff_system import tick_buffs
