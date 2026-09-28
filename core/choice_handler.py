@@ -95,6 +95,9 @@ class ChoiceHandlerMixin:
             elif trigger.startswith("talk_npc:"):
                 template_id = trigger[9:]
                 self._run_dialogue(template_id)
+            elif trigger.startswith("talk_bot:") and feature("bot_system"):
+                from core.bot_flow import talk_to_bot
+                talk_to_bot(self, trigger[len("talk_bot:"):])
             elif trigger.startswith("join_guild:") and feature("guild_system") and self.guild_registry:
                 guild_id = trigger[11:]
                 self._join_guild(guild_id)

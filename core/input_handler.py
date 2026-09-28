@@ -39,8 +39,32 @@ def get_current_options(engine: "GameEngine") -> list[SceneOption]:
     if dynamic:
         options = list(options) + dynamic
     if engine.state.current_node_id == "root":
-        options = list(options) + _ambient_npc_options(engine, options)
+        options = list(options) + _ambient_npc_options(engine, options) + _bot_options(engine)
     return options
+
+
+_MAX_BOT_OPTIONS = 4
+
+
+def _bot_options(engine: "GameEngine") -> list[SceneOption]:
+    """"Talk to Ryn (Lv 4 Warrior)." for bot adventurers in this zone (a few at most)."""
+    mgr = getattr(engine, "_bot_manager", None)
+    if not feature("bot_system") or not mgr:
+        return []
+    from core.bot_flow import bot_label
+
+    here = sorted(mgr.in_zone(engine.state.current_scene_id), key=lambda b: -b.level)
+    return [
+        SceneOption(
+            option_id=f"__bot__{b.bot_id}",
+            label=f"Talk to {bot_label(engine, b)}, {b.activity}.",
+            leads_to="__stay__",
+            leads_to_node=engine.state.current_node_id,
+            expected=True,
+            triggers=[f"talk_bot:{b.bot_id}"],
+        )
+        for b in here[:_MAX_BOT_OPTIONS]
+    ]
 
 
 def _ambient_npc_options(engine: "GameEngine", existing: list[SceneOption]) -> list[SceneOption]:
@@ -86,6 +110,7 @@ _HOTKEYS: list[tuple[str, str, str]] = [
     ("[I]", "_inventory_menu",         "Items & Equipment"),
     ("[J]", "_quests_menu",            "Quest Journal"),
     ("[L]", "_lore_log",               "World Log"),
+    ("[W]", "_whos_around",            "Who's around"),
     ("[C]", "_craft_menu",             "Craft"),
     ("[S]", "_save_prompt",            "Save game"),
     ("[A]", "_admin_panel",            "Admin Panel"),
@@ -113,6 +138,9 @@ def _build_extras(engine: "GameEngine") -> list[str]:
                 continue
         elif key == "[G]":
             if not feature("guild_system"):
+                continue
+        elif key == "[W]":
+            if not (feature("bot_system") and getattr(engine, "_bot_manager", None)):
                 continue
         out.append(f"{key} {label}")
     return out

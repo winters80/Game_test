@@ -69,6 +69,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self._bg_generator = None
         self._world_director = None
         self._bot_manager = None
+        self._bot_registry = None
         self._running = False
 
     # ── Bootstrap ─────────────────────────────────────────────────────────────

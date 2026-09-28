@@ -1542,12 +1542,12 @@ def main() -> None:
         assert callable(_ih._build_extras)
         ok("core.input_handler exposes get_current_options + prompt_choice + _build_extras")
 
-        # 21a. Hotkey table has the expected 10 entries
-        assert len(_ih._HOTKEYS) == 10, f"Expected 10 hotkeys, got {len(_ih._HOTKEYS)}"
+        # 21a. Hotkey table has the expected 11 entries
+        assert len(_ih._HOTKEYS) == 11, f"Expected 11 hotkeys, got {len(_ih._HOTKEYS)}"
         keys = [k for k, _m, _l in _ih._HOTKEYS]
-        for required in ("[?]", "[K]", "[I]", "[J]", "[L]", "[C]", "[S]", "[A]", "[G]", "[Q]"):
+        for required in ("[?]", "[K]", "[I]", "[J]", "[L]", "[W]", "[C]", "[S]", "[A]", "[G]", "[Q]"):
             assert required in keys, f"Hotkey {required} missing from _HOTKEYS"
-        ok("All 10 documented hotkeys present in _HOTKEYS table")
+        ok("All 11 documented hotkeys present in _HOTKEYS table")
 
         # 21b. _build_extras filters by feature flags + player flags
         from config import FEATURES as _F
@@ -2349,6 +2349,162 @@ def main() -> None:
     except Exception as e:
         fail("Ollama startup checks broken", e)
         traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("30. Bot adventurers (generation, rules brain, presence, talk, trade)")
+    _b_slot = "_bots_test_"
+    _bstate = None
+    try:
+        import random as _rnd
+        from unittest import mock as _mock2
+        from config import BOT_COUNT
+        from core import bot_flow as _bf
+        from core.game_engine import GameEngine
+        from core.input_handler import get_current_options as _gco
+        from core.menu_flow import _attach_engine_handles
+        from persistence.save_manager import load_game as _lg2, save_game as _sg2
+        from systems import bot_brain as _bb, bot_trade as _bt
+        from systems.bot_system import BotAgent, fallback_line
+        from ui import renderer as _rdr5
+
+        # 30a. A save gets BOT_COUNT bots, persisted; reload restores them exactly.
+        _beng = GameEngine()
+        with _mock2.patch.object(_rdr5.console, "print", lambda *a, **k: None):
+            _beng.bootstrap()
+        _bp = Player(name="BotTester", base_class="warrior")
+        _bstate = new_game_state(_bp, SAVES_DIR, _b_slot)
+        _beng.state = _bstate
+        _attach_engine_handles(_beng)
+        _bots = _beng._bot_manager.all()
+        assert len(_bots) == BOT_COUNT and len(_bstate.world_db.load_bot_instances()) == BOT_COUNT
+        assert {"Kael", "Dova", "Ryn"} <= {b.name for b in _bots}, "Authored bots included"
+        _npc_first = {n.name.split()[0] for n in npc_reg.all()}
+        assert not ({b.name for b in _bots if b.is_generated} & _npc_first), "No NPC name clashes"
+        assert BotAgent.model_validate({"bot_id": "x", "name": "X", "inventory": ["a", "a"]}).inventory == {"a": 2}
+        ok(f"New save gets {BOT_COUNT} bots (authored + generated), stored in world_db")
+
+        # 30b. The brain uses the real world: fights, levels, loot, trade, craft.
+        from collections import Counter as _C
+        _kinds = _C()
+        with _mock2.patch.object(_rdr5.console, "print", lambda *a, **k: None):
+            for _ in range(120):
+                _bp.turn_count += 1
+                for ev in _bf.tick_bots(_beng):
+                    _kinds[ev.kind] += 1
+        for _k in ("move", "fight", "gather", "trade", "craft"):
+            assert _kinds[_k] > 0, f"No '{_k}' events in 120 turns: {_kinds}"
+        assert any(b.level > 1 or b.xp > 0 for b in _beng._bot_manager.all())
+        assert all(b.current_zone_id in _bb.BOT_MAP for b in _beng._bot_manager.all())
+        assert all(0 < b.hp <= b.max_hp for b in _beng._bot_manager.all())
+        ok(f"Rules brain drives real fights / loot / trading / crafting ({dict(_kinds)})")
+
+        # 30c. Brain rules: retreat when hurt, level gates, no NPC-trader money loop.
+        _t = BotAgent(bot_id="t", name="T", archetype="fighter", current_zone_id="dungeon_floor1")
+        _t.hp = 3
+        _w = _bf.bot_world(_beng)
+        _ev = _bb.tick_bot(_t, _w, _rnd.Random(1))
+        assert _t.current_zone_id == "village_start" and _ev and _ev[0].kind == "move"
+        _t.hp = _t.max_hp
+        assert _bb.next_step(_t, "dungeon_floor3") is None, "Level 1 can't path to Floor 3"
+        _t.level = 5
+        assert _bb.next_step(_t, "dungeon_floor3") == "dungeon_floor1"
+        _tr = BotAgent(bot_id="tr", name="Tr", archetype="trader", current_zone_id="village_start", gold=5000)
+        _tr.add_item("firewood", 3)
+        _g0 = _tr.gold
+        for _i in range(30):
+            _bb.tick_bot(_tr, _w, _rnd.Random(_i))
+            _tr.current_zone_id = "village_start"
+        assert _tr.gold >= _g0, "Trader bots must not lose money trading with NPC traders"
+        ok("Hurt bots retreat, floors are level-gated, trader bots don't bleed gold")
+
+        # 30d. Presence: Talk-to options at the zone root; [W] list.
+        _here = [b for b in _beng._bot_manager.all()][:2]
+        for b in _here:
+            b.current_zone_id = "village_start"
+        _bstate.current_scene_id = "village_start"; _bstate.current_node_id = "root"
+        _opts = [o for o in _gco(_beng) if o.option_id.startswith("__bot__")]
+        assert _opts and all(o.triggers[0].startswith("talk_bot:") for o in _opts)
+        assert len(_opts) <= 4 and "Lv " in _opts[0].label
+        _wl = _bf.whos_around_lines(_beng)
+        assert len(_wl) == BOT_COUNT and "HERE" in _wl[0]
+        from core.input_handler import _build_extras
+        assert any(e.startswith("[W]") for e in _build_extras(_beng))
+        ok("Bots in your zone get 'Talk to …' options; [W] lists everyone, here first")
+
+        # 30e. Trading with a bot moves real items and real gold both ways.
+        _seller = _here[0]
+        _seller.inventory = {"herb_bundle": 3, "health_potion": 1}
+        _seller.gold = 1000
+        _offers = {o.item.item_id: o for o in _bt.bot_sells(_seller, item_reg)}
+        assert "herb_bundle" in _offers and "health_potion" not in _offers, "Keeps its own potion"
+        _bp.gold = 10_000
+        _price = _offers["herb_bundle"].price
+        assert _bt.buy_from_bot(_bp, _seller, "herb_bundle", item_reg)[0]
+        assert _bp.gold == 10_000 - _price and _seller.gold == 1000 + _price
+        assert _seller.inventory["herb_bundle"] == 2 and _bp.has_item("herb_bundle")
+        _bp.add_item("forest_herb", 5)
+        _ok, _msg, _earned = _bt.sell_to_bot(_bp, _seller, "forest_herb", item_reg, 5)
+        assert _ok and _seller.inventory["forest_herb"] == 5 and _earned == 5 * _bt.bot_buy_price(item_reg.get("forest_herb"))
+        _seller.gold = 0
+        assert _bt.player_sellables(_bp, _seller, item_reg) == [], "A broke bot can't buy"
+        assert not _bt.bot_buys(_seller, item_reg.get("torven_hammer")), "Key items never traded"
+        ok("Buying from / selling to bots transfers items and gold; bots respect their purse")
+
+        # 30f. Talk: AI line when online, grounded fallback otherwise.
+        _seller.remember("Defeated a goblin patrol on Floor 1 (turn 3)")
+        assert "defeated a goblin patrol" in fallback_line(_seller)
+        from ai.ai_service import AIService
+        class _Talky:
+            def generate_bot_line(self, profile, player_name):
+                assert profile["recent"] and profile["name"] == _seller.name
+                return "Watch the wolves on Floor 1."
+        assert AIService(content_generator=_Talky()).generate_bot_line(
+            {"name": _seller.name, "recent": ["x"]}, "P") == "Watch the wolves on Floor 1."
+        assert AIService().generate_bot_line({"name": "x"}, "P") is None, "Offline → fallback"
+        _beng.ai_service = AIService(content_generator=_Talky())
+        import questionary as _q
+        _said = []
+        with _mock2.patch.object(_q, "select", lambda *a, **k: type("A", (), {"ask": lambda s: "Farewell."})()), \
+             _mock2.patch.object(_rdr5, "print_npc_dialogue", lambda n, d, t: _said.append(t)), \
+             _mock2.patch.object(_rdr5, "clear", lambda: None), \
+             _mock2.patch.object(_rdr5, "print_title", lambda: None):
+            _bf.talk_to_bot(_beng, _seller.bot_id)
+        assert _said == ["Watch the wolves on Floor 1."], _said
+        ok("Talking to a bot uses the AI line (grounded in its memory) or a fallback")
+
+        # 30g. Bots survive save + load unchanged (they used to reset every load).
+        _snap = {b.bot_id: (b.level, b.current_zone_id, b.gold, dict(b.inventory)) for b in _beng._bot_manager.all()}
+        _bf._persist(_beng, _beng._bot_manager.all(), [])
+        _sg2(_bstate, _b_slot, SAVES_DIR)
+        close_game(_bstate); _bstate = None
+        _bstate = _lg2(_b_slot, SAVES_DIR)
+        _beng.state = _bstate
+        _attach_engine_handles(_beng)
+        _snap2 = {b.bot_id: (b.level, b.current_zone_id, b.gold, dict(b.inventory)) for b in _beng._bot_manager.all()}
+        assert _snap == _snap2
+        ok("Bots are restored exactly on load (per save)")
+
+        # 30h. The legacy per-bot AI decision path is off by default.
+        from core import bg_scheduler as _bgs
+        _submitted = []
+        class _BG:
+            def submit_bot_decision(self, *a, **k): _submitted.append(a)
+        _beng._bg_generator = _BG()
+        _bgs._maybe_submit_bot_decisions(_beng, {"zone_id": "village_start", "turn": 1})
+        _beng._bg_generator = None
+        assert _submitted == [], "BOT_AI_DECISIONS is False: no model call per bot"
+        ok("No per-bot AI calls by default (BOT_AI_DECISIONS = False)")
+    except Exception as e:
+        fail("Bot adventurers broken", e)
+        traceback.print_exc()
+    finally:
+        if _bstate is not None:
+            close_game(_bstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"{_b_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
 
     _report()
 

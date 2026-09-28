@@ -457,6 +457,29 @@ class ContentGenerator:
             )
         return {"response": response, "skill": skill}
 
+    def generate_bot_line(self, profile: dict, player_name: str) -> str | None:
+        """One or two in-character sentences from a bot adventurer, grounded in
+        what it has actually been doing (``profile["recent"]``). Fast client."""
+        recent = "; ".join(profile.get("recent") or []) or "nothing notable"
+        prompt = (
+            f"You are {profile['name']}, a level {profile['level']} {profile['class']} adventurer in "
+            f"Aethoria ({profile['personality']}). Right now you are {profile['doing']}. "
+            f"Recently: {recent}. {player_name}, another adventurer, walks up to you. "
+            "Reply in character, 1-2 short sentences. Mention something you've really been doing."
+        )
+        try:
+            raw = self.fast_client.generate_text(
+                prompt=prompt,
+                system_prompt=("You write brief, grounded dialogue for adventurers in a gritty fantasy "
+                               "RPG. No quotation marks around the reply."),
+                temperature=0.85, max_tokens=80,
+            )
+        except Exception as e:
+            logger.info(f"Bot line generation failed: {e}")
+            return None
+        text = (raw or "").strip().strip('"').strip()
+        return text or None
+
     def token_usage(self) -> list[tuple[str, str, dict]]:
         """
         Per-client token stats as ``(role, model, stats)`` tuples. The fast

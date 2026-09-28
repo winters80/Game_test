@@ -710,7 +710,8 @@ class GameMenusMixin:
             bot_choices = []
             for bot in bots:
                 bot_choices.append(
-                    f"  {bot.name}  [{bot.bot_id}]  zone: {bot.current_zone_id}  goal: {bot.current_goal}"
+                    f"  {bot.name}  Lv {bot.level} {bot.class_id}  ({bot.archetype})  "
+                    f"zone: {bot.current_zone_id}  — {bot.activity}"
                 )
             bot_choices.append("← Back")
 
@@ -727,7 +728,9 @@ class GameMenusMixin:
             renderer.print_title()
             renderer.console.print(f"\n  [cyan]═══  {bot.name}  ═══[/cyan]  [dim_text][{bot.bot_id}][/dim_text]\n")
             renderer.console.print(f"  Personality : [dim_text]{bot.personality_seed}[/dim_text]")
-            renderer.console.print(f"  Current Goal: [system_msg]{bot.current_goal}[/system_msg]")
+            renderer.console.print(f"  Class       : Lv {bot.level} {bot.class_id} ({bot.archetype}), "
+                                   f"XP {bot.xp}, HP {bot.hp}/{bot.max_hp}, kills {bot.kills}")
+            renderer.console.print(f"  Doing       : [system_msg]{bot.activity}[/system_msg]")
             renderer.console.print(f"  Zone        : {bot.current_zone_id}")
             renderer.console.print(f"  Last Active : turn {bot.turn_last_acted}")
             renderer.console.print(f"  Gold        : [gold]{format_currency(bot.gold)}[/gold]")
@@ -757,11 +760,11 @@ class GameMenusMixin:
             # Inventory
             if bot.inventory:
                 renderer.console.print("  [system_msg][ INVENTORY ][/system_msg]")
-                for item_id in bot.inventory:
+                for item_id, qty in sorted(bot.inventory.items()):
                     item = self.item_registry.get(item_id)
                     name = item.name if item else item_id
                     color = RARITY_COLORS.get(item.rarity.value, "white") if item else "white"
-                    renderer.console.print(f"    [{color}]{name}[/{color}]")
+                    renderer.console.print(f"    [{color}]{name}[/{color}] ×{qty}")
             else:
                 renderer.console.print("  [dim_text]Inventory: empty[/dim_text]")
             renderer.console.print()
@@ -791,6 +794,12 @@ class GameMenusMixin:
                     bot.current_zone_id = new_zone.strip()
                     renderer.print_success(f"{bot.name} moved to: {bot.current_zone_id}")
                     renderer.prompt_any_key()
+
+    # ── Who's around (bot adventurers) ───────────────────────────────────────
+
+    def _whos_around(self) -> None:
+        from core.bot_flow import show_whos_around
+        show_whos_around(self)
 
     # ── Admin panel ───────────────────────────────────────────────────────────
 
@@ -983,6 +992,8 @@ class GameMenusMixin:
             "quest":         "[system_msg]QUEST[/system_msg]",
             "narrative":     "[dim_text]NARRATIVE[/dim_text]",
             "npc_branch":    "[dim_text]NPC[/dim_text]",
+            "bot_activity":  "[cyan]ADVENTURER[/cyan]",
+            "world_growth":  "[system_msg]GROWTH[/system_msg]",
         }
 
         for ev in reversed(events):

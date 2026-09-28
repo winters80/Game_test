@@ -98,8 +98,12 @@ def load_registries(engine: "GameEngine") -> None:
         bot_path = DATA_DIR / "bots" / "bot_templates.json"
         if bot_path.exists():
             bot_registry.load_from_file(bot_path)
+        gen_path = DATA_DIR / "bots" / "bot_generation.json"
+        if gen_path.exists():
+            bot_registry.load_generation(gen_path)
+        engine._bot_registry = bot_registry
+        # Filled per save by core/bot_flow.setup_bots (new game / load).
         engine._bot_manager = BotManager()
-        engine._bot_manager.load_from_templates(bot_registry)
 
 
 def setup_ai(engine: "GameEngine") -> None:

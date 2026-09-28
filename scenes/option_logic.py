@@ -269,6 +269,8 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass
         elif trigger.startswith("world_action:"):
             pass  # AI action tag — recorded by the engine for world expansion
+        elif trigger.startswith("talk_bot:"):
+            pass  # engine-delegated: core/bot_flow.talk_to_bot
 
     state.mark_dirty()
 

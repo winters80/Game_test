@@ -68,6 +68,14 @@ AI_MAX_ITEMS_PER_OPTION = 1
 # ── Traders (systems/trade_system.py) ──────────────────────────────────────────
 TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each route zone
 
+# ── Bots (systems/bot_system.py, systems/bot_brain.py) ─────────────────────────
+BOT_COUNT = 12                         # adventurers per save (authored ones + generated)
+BOT_ACT_EVERY_TURNS = 2                # each bot acts once every N player turns (staggered)
+BOT_AI_DECISIONS = False               # True = old behaviour: ask the primary model for every
+                                       # bot decision (slow; bots freeze without Ollama)
+BOT_MAX_EVENT_LINES = 1                # bot activity lines shown per turn in your zone
+BOT_ARRIVALS_EVERY_TURNS = 4           # batch "X and Y are about." to once per N turns
+
 # ── World growth (systems/world_growth.py) ─────────────────────────────────────
 WORLD_YIELD_COOLDOWN_TURNS = 10        # turns before repeating an action yields again
 WORLD_MAX_TRADERS_PER_LOCATION = 2     # generated traders per zone (and on the road);

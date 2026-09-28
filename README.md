@@ -134,7 +134,7 @@ Game_Test/
 
 - **Arrow keys** to navigate menus, **Enter** to confirm
 - **`[?]`** Ask about this situation: type a question or an action in your own words
-- **`[K]`** Skills · **`[I]`** Items & equipment · **`[J]`** Quest journal · **`[L]`** World log
+- **`[K]`** Skills · **`[I]`** Items & equipment · **`[J]`** Quest journal · **`[L]`** World log · **`[W]`** Who's around
 - **`[C]`** Craft · **`[G]`** Found a guild
 - **`[S]`** Save · **`[A]`** Admin panel (AI token usage, feature flags, **World Growth log**) · **`[Q]`** Quit to menu
 
@@ -158,6 +158,16 @@ Game_Test/
 5. Doing the same thing again later gathers what it produces (at most once every 10 turns).
 
 Everything the AI adds is validated and price-capped. It can't hand out gold, gear, quest items, classes or story flags, and it can't overwrite anything hand-written. Generated traders only appear in safe places: the outer market, Verath, the roadside camp, or travelling the road between them. The admin panel's **World Growth log** shows every action you've taken and what it added.
+
+### Other adventurers
+
+You're not alone. A dozen other adventurers (**bots**, like playerbots in an MMO) live in every save:
+- **What they do:** they head into the dungeon, fight real encounters, loot, level up, sell their haul to traders, brew potions, and wander between the outer market, the camp and Verath.
+- **When they're near you:** you'll see the occasional line, like *"Ryn took down a goblin patrol."* or *"✦ Dova and Kael are about."* Each bot in your zone also gets a "Talk to …" option.
+- **Talking to them:** they tell you what they've really been doing, and you can **buy their spare loot** or **sell them** materials and consumables. They pay better than NPC traders, but only what they can afford.
+- **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
+
+Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
 
 ### Trading
 
@@ -270,6 +280,11 @@ WORLD_MAX_TRADERS_PER_LOCATION = 2     # extra goods join an existing trader's s
 WORLD_MAX_EXPANSIONS = 60              # per save
 WORLD_RETRY_ON_LOAD = 3                # unfinished actions re-queued per load
 
+# Bot adventurers
+BOT_COUNT = 12                    # adventurers per save
+BOT_ACT_EVERY_TURNS = 2           # each bot acts once every N turns
+BOT_AI_DECISIONS = False          # True = ask the primary model for every bot decision (slow)
+
 # What AI-generated options may do (everything else is dropped)
 AI_GRANTABLE_FLAGS = frozenset({"verath_access"})
 AI_MAX_ALIGNMENT_SHIFT = 5.0
@@ -297,7 +312,7 @@ Prints `True` if Ollama is reachable and the model is pulled.
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 150 checks across 29 sections
+python -X utf8 test_characters.py                  # 158 checks across 30 sections
 python -X utf8 test_quests.py                      # 132 checks across 23 sections
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  12 checks (SQLite schema, v6)
@@ -316,9 +331,9 @@ python -X utf8 playthrough_smoke.py                #  24 checks
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 409 checks across 7 test files (all gated by the pre-push hook).**
+**Combined test count: 417 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (150 checks, 29 sections) covers:
+`test_characters.py` (158 checks, 30 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -343,6 +358,8 @@ git checkout -b feature/my-feature
 - **World growth end-to-end** (fake primary model through the real background worker, integrator, registries and DB): discovery, clamped bundle, reward, trader presence, yield cooldown, per-save isolation, offline behaviour
 - **World growth guard rails:** trader cap with stock merging, expansion cap, retry on load, admin World Growth log
 - **Ollama startup:** the right message for "server down" / "model missing", fallback to the primary model, background preload
+- **Every scene `combat:X` spawns real enemies** (caught a crash and two missing Floor 2 fights)
+- **Bot adventurers:** generation and per-save persistence, a 120-turn brain run (fights, loot, trade, craft), retreat, level gates, trader solvency, Talk-to options, `[W]`, trading both ways, AI/fallback talk, no per-bot AI calls
 
 `test_quests.py` (132 checks, 23 sections) covers:
 - Schema integrity for every quest template
@@ -411,9 +428,11 @@ world-growth prompts against real Ollama playthroughs.
 | Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
 | **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 409 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 409 checks across 7 files + 24-check live playthrough |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 417 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 417 checks across 7 files + 24-check live playthrough |
 | **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
+| **Bot adventurers** | ✅ **Shipped** | 12 rules-driven adventurers per save that fight, level, loot, trade and craft; talk to them, trade with them, `[W]` Who's around |
+| **One-step launchers** | ✅ **Shipped** | `start.bat` / `scripts/start.ps1` / `scripts/start.sh` start Ollama, pull models, run the game; models preloaded |
 | **AI trigger allow-list** | ✅ **Shipped** | AI-authored options can't give gold, gear, classes, quests or story flags (`systems/ai_trigger_policy.py`) |
 | **Traders** | ✅ **Shipped** | Buy/sell menus, travelling traders (Wren), AI-generated traders in the outer market / Verath / camp / road |
 | **Verath gate** | ✅ **Shipped** | Capital unlocks by clearing Floor 1 or via divergent routes (bribe, INT, LCK, the Wanderer, AI) |
@@ -423,6 +442,8 @@ world-growth prompts against real Ollama playthroughs.
 | Item | Why |
 |------|-----|
 | Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:1b` output quality still needs a playthrough |
+| Group up with bots | Invite a bot into your party so it fights alongside you (the next bot stage) |
+| Bots use the auction house and guilds | They already trade with NPC traders and the player; listing loot on the auction house and joining guilds would complete the MMO feel |
 | Fire `on_hit` / `on_low_hp` TRIGGERED skills | Combat only dispatches `on_attack` / `on_kill`, so Battle Mage's starting skill Arcane Strike never fires |
 | Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |
 | Move class-generation off the main thread | The `Future`-based submission path exists (`AIService.submit_class_generation_async`); the Class Awakening scene still calls it synchronously |
