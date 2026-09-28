@@ -408,8 +408,8 @@ class GameMenusMixin:
 
     def _craft_menu(self) -> None:
         """Alchemy / crafting menu — combine ingredients into items."""
-        from systems.alchemy_system import load_recipes, craft_item
-        recipes = load_recipes(DATA_DIR)
+        from systems.alchemy_system import craft_item
+        recipes = self.recipes
         if not recipes:
             renderer.print_system_message("No recipes are known yet.", style="dim_text")
             renderer.prompt_any_key()

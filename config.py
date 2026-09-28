@@ -61,6 +61,9 @@ AI_GIVEABLE_RARITIES = frozenset({"COMMON", "UNCOMMON"})
 AI_GIVEABLE_ITEM_TYPES = frozenset({"CONSUMABLE", "MATERIAL"})
 AI_MAX_ITEMS_PER_OPTION = 1
 
+# ── Traders (systems/trade_system.py) ──────────────────────────────────────────
+TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each route zone
+
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP

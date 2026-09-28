@@ -8,6 +8,10 @@
     "description": "A barrel-chested blacksmith with soot-stained hands and the careful eyes of someone who fixes broken things for a living.",
     "flavor_text": "He's had that anvil since before the Fracture. It still rings true.",
     "starting_disposition": 5.0,
+    "trades": {
+      "buys": ["type:WEAPON", "type:ARMOR"],
+      "buy_rate": 0.4
+    },
     "appears_requires": {},
     "disposition_hooks": {
       "default": "root",
@@ -803,5 +807,50 @@
         "zone_id": "village_start"
       }
     ]
+  },
+  {
+    "template_id": "wren_pedlar",
+    "npc_id": "wren_pedlar",
+    "name": "Wren",
+    "role": "merchant",
+    "zone_id": "village_start",
+    "description": "A wiry pedlar with a hand-cart piled high: jars, rope, sacks of dried herbs, a birdcage with no bird in it. She walks the road between the outer market, the campsites and the capital.",
+    "flavor_text": "The System rates her 'Merchant, F-rank'. She rates the System 'bad for business'.",
+    "starting_disposition": 10.0,
+    "ambient": true,
+    "route": ["village_start", "camp_rest", "verath_city"],
+    "trades": {
+      "buys": ["type:MATERIAL", "type:CONSUMABLE"],
+      "buy_rate": 0.5,
+      "sells": [
+        {"item_id": "rations", "price": 500},
+        {"item_id": "empty_vial", "price": 300},
+        {"item_id": "antidote", "price": 2000},
+        {"item_id": "firewood", "price": 300}
+      ]
+    },
+    "appears_requires": {},
+    "disposition_hooks": {"default": "root"},
+    "dialogue_nodes": {
+      "root": {
+        "node_id": "root",
+        "npc_text": "She doesn't stop sorting the cart when you walk up. 'Buying, selling, or asking for directions? Directions are free. Everything else isn't.'",
+        "options": [
+          {
+            "option_id": "ask_route",
+            "label": "Where does your road take you?",
+            "npc_response": "'Outer market, then whichever camp has the best fire, then through the gate into Verath if the guards are feeling generous. Round and round. You'll catch me somewhere on it.'",
+            "disposition_change": 2.0,
+            "leads_to_node": "root"
+          },
+          {
+            "option_id": "leave",
+            "label": "Safe roads.",
+            "npc_response": "'There's no such thing any more. But thank you.'",
+            "leads_to_node": "__exit__"
+          }
+        ]
+      }
+    }
   }
 ]

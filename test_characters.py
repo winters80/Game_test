@@ -1916,6 +1916,129 @@ def main() -> None:
         fail("AI trigger policy broken", e)
         traceback.print_exc()
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("26. Traders: selling, travelling NPCs, runtime NPCs + recipes")
+    _tstate = None
+    try:
+        from config import TRADER_ROUTE_STAY_TURNS
+        from entities.npc import NPCTemplate
+        from systems import trade_system as _ts
+        from systems.npc_system import get_npc_zone
+        from systems.alchemy_system import craft_item, load_recipes, register_recipe
+
+        _wren = npc_reg.get("wren_pedlar")
+        _torven = npc_reg.get("torven_blacksmith")
+        assert _wren and _wren.ambient and _wren.trades and _wren.route
+        assert _torven.trades and "type:WEAPON" in _torven.trades.buys
+
+        # 26a. Travelling route: one zone per TRADER_ROUTE_STAY_TURNS.
+        _n = TRADER_ROUTE_STAY_TURNS
+        assert [get_npc_zone(_wren, t) for t in (0, _n - 1, _n, 2 * _n, 3 * _n)] == \
+            ["village_start", "village_start", "camp_rest", "verath_city", "village_start"]
+        ok("Travelling trader walks outer market → camp → Verath and loops")
+
+        # 26b. Ambient presence → automatic "Talk to …" option at zone root.
+        _tp = Player(name="TraderTester", base_class="warrior")
+        _tstate = new_game_state(_tp, SAVES_DIR, "_trader_test_")
+        _tstate.current_scene_id = "camp_rest"
+        _tp.turn_count = _n
+        assert [n.template_id for n in _ts.ambient_npcs_here(npc_reg, _tstate)] == ["wren_pedlar"]
+        _tp.turn_count = 0
+        assert _ts.ambient_npcs_here(npc_reg, _tstate) == []
+
+        from core import input_handler as _ih
+        class _IHEngine:
+            npc_registry = npc_reg
+            scene_registry = scene_reg
+            state = _tstate
+        _tstate.current_scene_id = "village_start"; _tstate.current_node_id = "root"
+        _ambient = _ih._ambient_npc_options(_IHEngine(), [])
+        assert [o.triggers for o in _ambient] == [["talk_npc:wren_pedlar"]], _ambient
+        assert "Wren" in _ambient[0].label
+        _linked = [_ambient[0]]
+        assert _ih._ambient_npc_options(_IHEngine(), _linked) == [], "No duplicate when already linked"
+        assert any(o.option_id == "__ambient__wren_pedlar" for o in _ih.get_current_options(_IHEngine()))
+        _tstate.current_node_id = "guard_post"
+        assert not any(o.option_id.startswith("__ambient__") for o in _ih.get_current_options(_IHEngine()))
+        _tstate.current_node_id = "root"
+        ok("Ambient NPCs get a Talk-to option at the zone root, no duplicates, not on sub-nodes")
+
+        # 26c. Selling: type/id matching, price, equipped copy kept.
+        _herb = item_reg.get("forest_herb"); _sword = item_reg.get("iron_sword")
+        assert _ts.trader_buys(_wren, _herb) and not _ts.trader_buys(_wren, _sword)
+        assert _ts.trader_buys(_torven, _sword) and not _ts.trader_buys(_torven, _herb)
+        assert _ts.sell_price(_wren, _herb) == int(_herb.value_gold * 100 * 0.5)
+        _tp.inventory.clear(); _tp.gold = 0
+        _tp.add_item("forest_herb", 3); _tp.add_item("iron_sword", 1)
+        _tp.equipped.weapon = "iron_sword"
+        assert _ts.sellable_items(_tp, _torven, item_reg) == [], "Last equipped copy is not sellable"
+        _tp.add_item("iron_sword", 1)
+        assert _ts.sellable_items(_tp, _torven, item_reg)[0].quantity == 1
+        _ok, _msg, _earned = _ts.sell_item(_tp, _wren, "forest_herb", item_reg, 2)
+        assert _ok and _earned == 2 * _ts.sell_price(_wren, _herb) and _tp.gold == _earned
+        assert sum(s.quantity for s in _tp.inventory if s.item_id == "forest_herb") == 1
+        assert not _ts.sell_item(_tp, _wren, "iron_sword", item_reg)[0], "Wren doesn't buy swords"
+        ok("sell_item pays trader rate, removes items, respects equipped + trader interests")
+
+        # 26d. Buying from wares.
+        _tp.gold = 400
+        assert not _ts.buy_item(_tp, _wren, "rations", item_reg)[0], "500c rations, only 400c"
+        _tp.gold = 1000
+        _ok, _msg = _ts.buy_item(_tp, _wren, "rations", item_reg)
+        assert _ok and _tp.gold == 500 and _tp.has_item("rations")
+        assert not _ts.buy_item(_tp, _wren, "iron_sword", item_reg)[0]
+        from core.dialogue_handler import DialogueHandlerMixin
+        class _DH:
+            item_registry = item_reg
+        assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _wren)] == \
+            ["__trade_buy__", "__trade_sell__"]
+        assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _torven)] == \
+            ["__trade_sell__"], "Torven only buys"
+        ok("buy_item checks gold + wares; dialogue offers Browse/Sell as the trader supports")
+
+        # 26e. Runtime NPC registration.
+        _gen = NPCTemplate.model_validate({
+            "template_id": "gen_ore_buyer", "npc_id": "gen_ore_buyer", "name": "Brenna",
+            "role": "merchant", "zone_id": "village_start", "description": "Buys ore.",
+            "ambient": True, "trades": {"buys": ["type:MATERIAL"]}, "is_ai_generated": True,
+            "dialogue_nodes": {"root": {"node_id": "root", "npc_text": "Ore?", "options": []}},
+        })
+        npc_reg.register(_gen)
+        assert npc_reg.get("gen_ore_buyer") is _gen
+        assert "gen_ore_buyer" in [n.template_id for n in _ts.ambient_npcs_here(npc_reg, _tstate)]
+        ok("NPCRegistry.register adds an NPC at runtime; ambient ones appear immediately")
+
+        # 26f. Runtime recipes + the crafting quantity exploit.
+        _recipes = load_recipes(DATA_DIR)
+        _n0 = len(_recipes)
+        assert register_recipe(_recipes, {"recipe_id": "herb_tea", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert len(_recipes) == _n0 + 1 and _recipes[-1]["name"] == "Herb Tea"
+        assert not register_recipe(_recipes, {"recipe_id": "herb_tea", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert not register_recipe(_recipes, {"recipe_id": "x", "ingredients": [
+            {"item_id": "unobtainium", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert not register_recipe(_recipes, {"recipe_id": "y", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "nothing"}, item_reg)[0]
+        _tp.inventory.clear(); _tp.add_item("forest_herb", 1); _tp.add_item("empty_vial", 1)
+        _ok, _msg = craft_item(_tp, "basic_health_salve", item_reg, _recipes)
+        assert not _ok and not _tp.has_item("health_potion"), "1 herb must not craft a 2-herb recipe"
+        _tp.add_item("forest_herb", 1)
+        assert craft_item(_tp, "basic_health_salve", item_reg, _recipes)[0]
+        assert _tp.has_item("health_potion") and not _tp.has_item("forest_herb")
+        ok("register_recipe validates; crafting now checks ingredient quantities")
+    except Exception as e:
+        fail("Traders / runtime registration broken", e)
+        traceback.print_exc()
+    finally:
+        if _tstate is not None:
+            close_game(_tstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"_trader_test_{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
+
     _report()
 
 

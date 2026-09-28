@@ -44,6 +44,18 @@ Add to a `data/items/*.json` file. Set `"combo_catalyst": true` if the item shou
 ### New NPC *(npc_system feature flag must be True)*
 Add a template to `data/npcs/*.json`. The NPC is instantiated into `npc_instances` SQLite table on first entry to their home zone.
 
+Optional NPC fields for traders (`systems/trade_system.py`):
+
+| Field | Effect |
+|-------|--------|
+| `trades.buys` | Item ids or `type:ITEM_TYPE` tags the NPC will buy. Price = `value_gold × 100 × buy_rate` copper |
+| `trades.buy_rate` | 0–1, default 0.5 |
+| `trades.sells` | `[{"item_id": ..., "price": copper}]` shown under « Browse wares » |
+| `ambient` | `true` → an automatic "Talk to …" option appears at the root node of whatever zone the NPC is in. No scene edit needed |
+| `route` | Zones a travelling NPC visits in order, `TRADER_ROUTE_STAY_TURNS` (15) turns each. Overrides `schedule` |
+
+Trade menus (« Browse wares » / « Sell items ») are injected at the dialogue root of any NPC with `trades`. The last copy of an equipped item is never sellable. `NPCRegistry.register()` and `alchemy_system.register_recipe()` add NPCs and recipes at runtime; recipes load once into `engine.recipes`.
+
 ### New quest template *(quest_system feature flag must be True)*
 Add to `data/quests/*.json`. Quest state machine states are defined in the JSON.
 
