@@ -141,7 +141,7 @@ Option `"requires"` block controls visibility and locking:
 | `alignment_max` | *(alignment_system)* Hard lock if `player.alignment > value` |
 | `lock_reason` | Replaces the generic lock text shown when the option is locked. Write it in-world |
 
-**Verath access:** the capital (`verath_city`) is gated on the `verath_access` flag. It's granted by clearing Floor 1 (both fights, then the survey report), by descending to Floor 2, by one of the divergent routes at `village_start.city_gate` (bribe, INT, LCK, the Gray Wanderer's blind spot), or by the fast AI model when a typed `[?]` action plausibly gets the player past the gate (`ai/content_generator._dynamic_option_rules`).
+**Verath access:** the capital (`verath_city`) is gated on the `verath_access` flag. It's granted by clearing Floor 1 (both fights, then the survey report), by descending to Floor 2, by one of the divergent routes at `village_start.city_gate` (bribe, INT, LCK, the Gray Wanderer's blind spot), or by the fast AI model when a typed `[?]` action plausibly gets the player past the gate (`ai/content_generator._dynamic_option_rules`; the rule is only sent in scenes that mention Verath).
 
 **Divergence signal:** Set `"expected": false` on any option that represents an unusual player path. This feeds the divergence scorer. The higher the score, the more likely the player gets an AI-generated class at the Class Awakening scene.
 
@@ -315,7 +315,7 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 
 The script is the spine; what the player *types* grows the world around it.
 
-1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option gets a `world_action:VERB:SUBJECT` tag, which `world_growth.derive_world_action()` derives from its label ("Mine the gold vein" → `world_action:mine:gold_vein`). Tags the model writes itself are dropped: a 1B model copies prompt examples, so the prompt carries no example actions. Looking, waiting and moving ("Take a moment", "Examine your surroundings", "Attempt to move forward") get no tag and don't grow the world. Options that repeat an existing choice, and answers that just echo the scene text, are dropped (`core/situation_query`). AI follow-up options are tagged the same way.
+1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option gets a `world_action:VERB:SUBJECT` tag, which `world_growth.derive_world_action()` derives from its label ("Mine the gold vein" → `world_action:mine:gold_vein`). Tags the model writes itself are dropped: a 1B model copies prompt examples, so the prompt carries no example actions. Only hands-on work grows the world: the label's verb must be in `world_growth._WORLD_VERBS` (mine, forage, chop, hunt, brew, craft, trade, steal …). Looking, talking, moving, remembering and declining get no tag. Options that repeat an existing choice, and answers that just echo the scene text, are dropped (`core/situation_query`). AI follow-up options are tagged the same way, and each new set replaces the previous AI options at that node.
 2. **Player picks the option** → `core/world_growth_flow.on_world_action()`:
    - **New action** (`world_growth.action_key()` normalises "gold veins" and "the gold" to `mine:gold`): recorded in `world_actions`, queued as a background `world_expansion` task, and the player sees a **✦ DISCOVERY** notice.
    - **Already expanded**: the player gathers the bundle's yield item, at most once every `WORLD_YIELD_COOLDOWN_TURNS` (10).

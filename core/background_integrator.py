@@ -140,13 +140,21 @@ def _handle_npc_branch(engine: "GameEngine", result: dict) -> None:
                 opt["triggers"] = sanitize_ai_triggers(
                     opt.get("triggers") or [], engine.item_registry,
                 ).kept
+        # Models name the line "text" / "dialogue" / "line" as often as "npc_text".
+        if not node.get("npc_text"):
+            node["npc_text"] = next((node[k] for k in ("text", "dialogue", "line", "response", "npc_line")
+                                     if isinstance(node.get(k), str) and node[k].strip()), "")
         try:
+            if not node["npc_text"]:
+                raise ValueError("no npc_text")
             npc.dialogue_nodes[node["node_id"]] = NPCDialogueNode.model_validate(node)
-        except Exception:
-            logger.warning(
-                "Failed to validate AI-generated NPC dialogue node npc=%s node=%s",
-                npc_id, node.get("node_id"), exc_info=True,
+        except Exception as e:
+            # INFO: runs mid-scene; a dropped background branch isn't the player's problem.
+            logger.info(
+                "Dropped AI-generated NPC dialogue node npc=%s node=%s: %s",
+                npc_id, node.get("node_id"), e,
             )
+            return
     if feature("world_db") and engine.state.world_db:
         engine.state.world_db.store_bg_content(
             "npc_branch", npc_id, node,

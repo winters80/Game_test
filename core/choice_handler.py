@@ -40,6 +40,11 @@ def _sanitise_narrative(text: str) -> str:
     if not text:
         return ""
     text = text.strip()
+    # Small models sometimes wrap the sentence in a placeholder tag:
+    # "<AI: A nimble rogue spots a masked figure.>"
+    m = _re.fullmatch(r"<\s*(?:AI|narrative|outcome)\s*:\s*(.*?)\s*>", text, _re.IGNORECASE | _re.DOTALL)
+    if m:
+        text = m.group(1).strip()
     text = _JSON_TRAILING_GUNK.sub("", text)
     # If the model wrapped its output in quotes, drop the wrapping
     # without removing apostrophes inside the sentence.
@@ -151,11 +156,11 @@ class ChoiceHandlerMixin:
         if option.option_id.startswith("ai_"):
             state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
             narrative_text = ""
-            if option.narrative:
+            if option.narrative and _sanitise_narrative(option.narrative):
+                narrative_text = _sanitise_narrative(option.narrative)
                 renderer.print_divider()
-                renderer.print_scene_text([f"» {option.narrative}"])
+                renderer.print_scene_text([f"» {narrative_text}"])
                 renderer.print_divider()
-                narrative_text = option.narrative
             elif self._ai_online():
                 # Follow-up options have no pre-written narrative — generate one on the spot
                 narrative_text = self._generate_action_narrative(option.label)
@@ -188,9 +193,10 @@ class ChoiceHandlerMixin:
                 if followup_opts:
                     from scenes.scene_base import SceneOption
                     new_followups = []
+                    turn = self.state.player.turn_count
                     for i, fo in enumerate(followup_opts[:3]):
                         new_followups.append(SceneOption(
-                            option_id=f"ai_followup_{i}",
+                            option_id=f"ai_followup_{turn}_{i}",
                             label=f"[AI] {fo}",
                             leads_to="__stay__",
                             leads_to_node=self.state.current_node_id,
@@ -198,9 +204,9 @@ class ChoiceHandlerMixin:
                             triggers=[],
                             narrative="",
                         ))
-                    # Prepend follow-ups so they appear at top of dynamic options
-                    existing = self.state._dynamic_options.get(state_key, [])
-                    self.state._dynamic_options[state_key] = new_followups + existing
+                    # The follow-ups replace the earlier AI options: the moment
+                    # has moved on, and appending let the menu grow to 11 entries.
+                    self.state._dynamic_options[state_key] = new_followups
                     renderer.console.print("  [dim_text]New options available.[/dim_text]")
                     renderer.prompt_any_key()
                 else:
