@@ -1973,10 +1973,13 @@ def main() -> None:
         # 24g. The fast model may grant access only while the player lacks it.
         from ai.content_generator import _dynamic_option_rules
         _fresh = Player(name="RuleTester")
-        assert any("flag:verath_access" in r for r in _dynamic_option_rules(_fresh))
+        _gate = "Outer Verath. The guarded gate into the city proper."
+        assert any("flag:verath_access" in r for r in _dynamic_option_rules(_fresh, _gate))
+        # Not at the gate: no Verath rule (it made the model set the Rite in Verath).
+        assert not any("verath" in r.lower() for r in _dynamic_option_rules(_fresh, "The Classification Rite"))
         _fresh.set_flag("verath_access")
-        assert not any("verath_access" in r for r in _dynamic_option_rules(_fresh))
-        ok("AI situation prompt offers verath_access only while locked out")
+        assert not any("verath_access" in r for r in _dynamic_option_rules(_fresh, _gate))
+        ok("AI situation prompt offers verath_access only near the gate, while locked out")
 
         # 24h. flags_any now actually gates Floor 3's sealed door.
         _door = _opt("dungeon_floor3", "root", "go_core_chamber")
@@ -2288,6 +2291,33 @@ def main() -> None:
                      "Observe the damage.", "Search for clues near."):
             assert _wg.derive_world_action(_lbl) is None, _lbl
         assert _wg.derive_world_action("Try to pry open the crate") == "world_action:pry:open_crate"
+        # Seen live with mistral-nemo + gemma3:1b: talking, remembering and
+        # scanning announced discoveries. Only hands-on work grows the world.
+        for _lbl in ("Politely decline further interaction.", "Recall your memories.",
+                     "Scan for allies.", "Attempt to track them.", "Dash away.", "Catch it"):
+            assert _wg.derive_world_action(_lbl) is None, _lbl
+        assert _wg.derive_world_action("Fish the stream") == "world_action:fish:stream"
+        # "<AI: …>" placeholder wrappers are stripped from narratives.
+        from core.choice_handler import _sanitise_narrative
+        assert _sanitise_narrative("<AI: A nimble rogue spots a masked figure.>") == "A nimble rogue spots a masked figure."
+        # AI NPC dialogue nodes: "text" is accepted for npc_text; unusable
+        # nodes are dropped quietly (INFO) instead of a WARNING traceback.
+        from core.background_integrator import _handle_npc_branch
+        class _NpcStub:
+            dialogue_nodes = {}
+        class _RegStub:
+            def get(self, _id): return _npc_stub
+        _npc_stub = _NpcStub()
+        class _EngStub:
+            npc_registry = _RegStub(); item_registry = item_reg
+            class state:
+                world_db = None
+        import unittest.mock as _mk
+        with _mk.patch("core.background_integrator.feature", lambda n: n == "npc_system"):
+            _handle_npc_branch(_EngStub(), {"npc_id": "torven", "node": {
+                "node_id": "t1", "text": "Steel doesn't lie.", "options": []}})
+            _handle_npc_branch(_EngStub(), {"npc_id": "torven", "node": {"node_id": "t2", "options": []}})
+        assert _npc_stub.dialogue_nodes["t1"].npc_text == "Steel doesn't lie." and "t2" not in _npc_stub.dialogue_nodes
         # Echoed answers and split-up existing choices are dropped.
         from core.situation_query import _repeats_choice
         _have = ["Step forward. Accept what comes.", "Take a moment. Examine your surroundings."]
@@ -2310,6 +2340,7 @@ def main() -> None:
         ok("Action keys normalise; options are tagged from their label, never the model's tag; "
            "the [?] prompt is grounded in the scene with nothing to parrot")
 
+        import unittest.mock as _mock_fu
         # 27b. A real engine with a fake primary model + a real BG generator
         # (not started: the test drives the worker step by step).
         _response = AIWorldExpansionResponse.model_validate({
@@ -2384,6 +2415,23 @@ def main() -> None:
         assert any(o.option_id == "__ambient__gen_npc_brenna" for o in get_current_options(_eng))
         assert _ts.sell_item(_wp, _brenna, "gen_gold_ore", _eng.item_registry)[0]
         ok("Generated trader appears in the outer market and buys the new ore")
+
+        # 27f2. Follow-ups replace the earlier AI options instead of piling up
+        # (live: the menu grew to 11 entries), with ids unique per turn.
+        from scenes.scene_base import SceneOption as _SO
+        _key = f"{_wstate.current_scene_id}:{_wstate.current_node_id}"
+        _mk_opt = lambda oid, lbl: _SO(option_id=oid, label=lbl, leads_to="__stay__",
+                                       leads_to_node="root", narrative="You look closer.")
+        _wstate._dynamic_options[_key] = [_mk_opt("ai_old_1", "[AI] Old one"), _mk_opt("ai_old_2", "[AI] Old two")]
+        with _mock_fu.patch.object(type(_eng), "_ai_online", lambda self: True), \
+             _mock_fu.patch.object(type(_eng), "_generate_ai_followup", lambda self, n: ["Next A", "Next B"]), \
+             _mock_fu.patch.object(_rdr2, "prompt_any_key", lambda: None), \
+             _mock_fu.patch.object(_rdr2.console, "print", lambda *a, **k: None):
+            _eng._handle_choice(_mk_opt("ai_old_1", "[AI] Old one"))
+        _now = _wstate._dynamic_options[_key]
+        assert [o.label for o in _now] == ["[AI] Next A", "[AI] Next B"], [o.label for o in _now]
+        assert len({o.option_id for o in _now}) == 2 and all(o.option_id.startswith("ai_followup_") for o in _now)
+        ok("AI follow-up options replace the previous ones (no pile-up)")
 
         # 27g. Per-save: reload restores it; another save never sees it.
         from persistence.save_manager import load_game as _lg, save_game as _sg

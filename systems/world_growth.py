@@ -51,6 +51,7 @@ _STOPWORDS = {
     "the", "a", "an", "some", "for", "to", "at", "into", "in", "on", "with",
     "your", "my", "his", "her", "their", "its", "of", "from", "and", "up",
     "try", "attempt", "carefully", "quickly", "quietly",
+    "it", "them", "him", "me", "us", "this", "that", "these", "those", "there", "here",
 }
 
 
@@ -78,31 +79,39 @@ def action_key(verb: str, subject: str) -> str:
     return f"{slugify(verb, 20)}:{normalize_subject(subject)}"
 
 
-# Looking, waiting and moving are answered by the fast model; they don't
-# grow the world ("take a moment" is not a discovery). Doing things does.
-_NON_ACTION_VERBS = {
-    "look", "observe", "examine", "inspect", "study", "watch", "listen", "notice",
-    "search", "scan", "check", "survey", "peer", "glance", "read",
-    "wait", "pause", "rest", "take", "stay", "stand", "sit", "breathe", "calm",
-    "think", "consider", "reflect", "remember", "focus", "ponder", "prepare",
-    "move", "step", "go", "walk", "continue", "proceed", "approach", "follow",
-    "advance", "return", "leave", "head", "enter", "keep", "ask", "accept",
+# Only hands-on work grows the world: gathering, making, trading, taming.
+# Looking, talking, moving, remembering and declining are answered by the
+# fast model and stay flavour (live play turned "Politely decline further
+# interaction" and "Recall your memories" into discoveries).
+_WORLD_VERBS = {
+    # gathering
+    "mine", "dig", "excavate", "quarry", "chip", "pry", "prise", "smash", "break",
+    "chop", "fell", "saw", "cut", "gather", "collect", "pick", "harvest", "forage",
+    "pluck", "scavenge", "salvage", "loot", "extract", "tap", "bottle", "scrape",
+    # hunting and animals
+    "hunt", "trap", "fish", "catch", "skin", "butcher", "tame", "milk", "shear",
+    # making
+    "brew", "craft", "forge", "smelt", "smith", "cook", "bake", "carve", "sew", "tan",
+    "build", "repair", "mend", "enchant", "distil", "distill", "grind", "mix", "weave",
+    "plant", "grow", "farm", "cultivate",
+    # trade and theft
+    "trade", "sell", "buy", "barter", "steal", "pickpocket", "smuggle",
 }
-_HELPER_VERBS = {"try", "attempt", "carefully", "quickly", "quietly", "slowly", "cautiously"}
+_HELPER_VERBS = {"try", "attempt", "carefully", "quickly", "quietly", "slowly", "cautiously", "to"}
 
 
 def derive_world_action(label: str) -> str | None:
     """World-growth tag from an option label.
 
     "Mine the gold vein" → "world_action:mine:gold_vein". None if the label
-    has no usable verb + subject, or only looks, waits or moves ("Take a
-    moment", "Examine your surroundings", "Attempt to move forward").
+    has no usable verb + subject, or the verb isn't hands-on work
+    (``_WORLD_VERBS``): looking, talking, moving and waiting don't grow the world.
     """
     words = [w for w in re.split(r"[^a-z0-9]+", label.lower()) if w]
     words = [w for w in words if w not in {"ai"}]
-    while words and (words[0] in _HELPER_VERBS or words[0] == "to"):
+    while words and words[0] in _HELPER_VERBS:
         words = words[1:]
-    if len(words) < 2 or words[0] in _NON_ACTION_VERBS:
+    if len(words) < 2 or words[0] not in _WORLD_VERBS:
         return None
     verb = words[0]
     subject = [w for w in words[1:] if w not in _STOPWORDS][:3]

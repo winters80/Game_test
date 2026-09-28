@@ -24,17 +24,23 @@ logger = logging.getLogger(__name__)
 VERATH_ACCESS_FLAG = "verath_access"
 
 
-def _dynamic_option_rules(player: "Player") -> list[str]:
-    """Situational rules for the "Ask about this situation" prompt."""
+def _dynamic_option_rules(player: "Player", scene_context: str = "") -> list[str]:
+    """Situational rules for the "Ask about this situation" prompt.
+
+    ``scene_context`` (scene title + text) decides whether the Verath gate
+    rule applies: sent everywhere, it made a 1B model set the Classification
+    Rite in "Verath's city".
+    """
     # No worked example actions here: a 1B model copies them verbatim (it
     # offered "Mine Gold" at the Classification Rite). The world_action tag
     # is derived from each option's label in code instead
     # (core/situation_query._convert_ai_option).
     rules: list[str] = [
         'Allowed triggers: "flag:<snake_name>", "alignment:+N" or "alignment:-N" (max 5), or none. '
-        "Never give gold, items, skills or quests.",
+        "Never grant money, items, skills or quests.",
     ]
-    if not player.has_flag(VERATH_ACCESS_FLAG):
+    near_gate = "verath" in scene_context.lower()
+    if near_gate and not player.has_flag(VERATH_ACCESS_FLAG):
         rules.append(
             "If an option would realistically get the player past Verath's "
             "city gate (a forged pass, hiding in a cart, a convincing lie), add "
@@ -290,7 +296,7 @@ class ContentGenerator:
             player_stats=player_stats,
             player_flags=player_flags,
             lore_data=self.lore_data,
-            extra_rules=_dynamic_option_rules(player),
+            extra_rules=_dynamic_option_rules(player, f"{scene_title} {scene_text}"),
         )
 
         _sys = "You write player action options for a fantasy text RPG. Return ONLY valid JSON. No commentary."
