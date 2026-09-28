@@ -2268,9 +2268,9 @@ def main() -> None:
         assert "world_action:forage:wild_berries" in _convert_ai_option(_NoTagOpt(), _NoTagEngine()).triggers
         # The model's own tag is ignored: the label says what the player does.
         class _WrongTagOpt(_NoTagOpt):
-            label = "Study the glowing sigils"; triggers = ["world_action:mine:gold"]
+            label = "Carve the glowing sigils"; triggers = ["world_action:mine:gold"]
         _wt = _convert_ai_option(_WrongTagOpt(), _NoTagEngine()).triggers
-        assert "world_action:study:glowing_sigils" in _wt and "world_action:mine:gold" not in _wt, _wt
+        assert "world_action:carve:glowing_sigils" in _wt and "world_action:mine:gold" not in _wt, _wt
         # The [?] prompt answers the question from the scene and lists the
         # existing choices; it carries no example action to copy.
         from ai.prompt_builder import build_dynamic_options_prompt
@@ -2282,6 +2282,31 @@ def main() -> None:
         assert "gold" not in _pr.lower() and "Short label" not in _pr
         from ai.response_validator import AIDynamicOptionsResponse as _ADR
         assert _ADR.model_validate({"situation_text": "x", "options": [{"label": "Short label"}]}).options == []
+        # Looking, waiting and moving don't grow the world (seen live: "Take
+        # a moment" announced a DISCOVERY); helper verbs are skipped.
+        for _lbl in ("Take a moment.", "Examine your surroundings.", "Attempt to move forward.",
+                     "Observe the damage.", "Search for clues near."):
+            assert _wg.derive_world_action(_lbl) is None, _lbl
+        assert _wg.derive_world_action("Try to pry open the crate") == "world_action:pry:open_crate"
+        # Echoed answers and split-up existing choices are dropped.
+        from core.situation_query import _repeats_choice
+        _have = ["Step forward. Accept what comes.", "Take a moment. Examine your surroundings."]
+        assert _repeats_choice("[AI] Take a moment.", _have) and _repeats_choice("Examine your surroundings", _have)
+        assert not _repeats_choice("Touch the glowing crystal", _have)
+        # Invented skill effect types map onto real ones instead of failing.
+        from ai.response_validator import AISkillEffectResponse as _SE
+        assert _SE(effect_type="reveal").effect_type == "buff"
+        assert _SE(effect_type="stun").effect_type == "debuff" and _SE(effect_type="heal").effect_type == "heal"
+        # Warnings from background threads stay out of the terminal.
+        import logging as _lg, threading as _th
+        from utils.logging_setup import _MainThreadOnly
+        _rec = _lg.LogRecord("ai", _lg.WARNING, "", 0, "x", None, None)
+        assert _MainThreadOnly().filter(_rec)
+        _res = []
+        _t = _th.Thread(target=lambda: _res.append(_MainThreadOnly().filter(
+            _lg.LogRecord("ai", _lg.WARNING, "", 0, "x", None, None))), name="bg-gen")
+        _t.start(); _t.join()
+        assert _res == [False]
         ok("Action keys normalise; options are tagged from their label, never the model's tag; "
            "the [?] prompt is grounded in the scene with nothing to parrot")
 
@@ -2551,21 +2576,21 @@ def main() -> None:
         _e, _said, _w = _boot(False, set())
         assert not _e.ai_service.is_available and "ollama serve" in _said and "start.ps1" in _said
         assert "Nothing is answering" in _e.ai_offline_reason  # kept for the admin panel
-        _e, _said, _w = _boot(True, {"gemma3:1b"})
+        _e, _said, _w = _boot(True, {"gemma3:4b"})
         assert not _e.ai_service.is_available and "ollama pull mistral-nemo" in _said
-        assert "ollama pull mistral-nemo" in _e.ai_offline_reason and "gemma3:1b" in _e.ai_offline_reason
+        assert "ollama pull mistral-nemo" in _e.ai_offline_reason and "gemma3:4b" in _e.ai_offline_reason
         _e, _said, _w = _boot(True, {"mistral-nemo:latest"})
-        assert _e.ai_service.is_available and "ollama pull gemma3:1b" in _said and _w == ["mistral-nemo"]
-        _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:1b"})
-        assert _e.ai_service.is_available and _w == ["gemma3:1b", "mistral-nemo"]
+        assert _e.ai_service.is_available and "ollama pull gemma3:4b" in _said and _w == ["mistral-nemo"]
+        _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:4b"})
+        assert _e.ai_service.is_available and _w == ["gemma3:4b", "mistral-nemo"]
         assert _e.ai_offline_reason == ""
         # Pre-check: missing models are named, other installed models suggested,
         # and accepting the offer downloads them so the AI comes online.
         _e, _said, _w = _boot(True, {"qwen3:32b"})
         assert not _e.ai_service.is_available and _boot.pulled == []
-        assert "mistral-nemo, gemma3:1b" in _said and "qwen3:32b" in _said and "OLLAMA_MODEL" in _said
+        assert "mistral-nemo, gemma3:4b" in _said and "qwen3:32b" in _said and "OLLAMA_MODEL" in _said
         _e, _said, _w = _boot(True, {"qwen3:32b"}, accept_download=True)
-        assert _boot.pulled == ["mistral-nemo", "gemma3:1b"] and _e.ai_service.is_available
+        assert _boot.pulled == ["mistral-nemo", "gemma3:4b"] and _e.ai_service.is_available
         assert "Downloaded mistral-nemo" in _said and _e.ai_offline_reason == ""
         # Thinking models (qwen3, deepseek-r1) are asked not to think.
         _c = _oc.OllamaClient(model="qwen3:32b")

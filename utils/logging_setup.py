@@ -100,6 +100,10 @@ def setup_logging(log_dir: Path | None = None) -> None:
     console_handler.setFormatter(fmt_brief)
     # Suppress noisy third-party warnings from the terminal
     console_handler.addFilter(_SuppressFilter(["httpx", "httpcore", "urllib3", "ollama"]))
+    # Background AI work (world growth, quests, the world director) runs on
+    # worker threads while the player is at a prompt; a warning from there
+    # would print over the menu. Those go to the log files only.
+    console_handler.addFilter(_MainThreadOnly())
     root.addHandler(console_handler)
 
     logging.getLogger("ai").setLevel(logging.DEBUG)
@@ -107,6 +111,12 @@ def setup_logging(log_dir: Path | None = None) -> None:
     logging.getLogger("httpcore").setLevel(logging.WARNING)
 
     logging.info("Logging initialised. Log dir: %s", log_dir)
+
+
+class _MainThreadOnly(logging.Filter):
+    """Pass only records logged on the main (UI) thread."""
+    def filter(self, record: logging.LogRecord) -> bool:
+        return record.threadName == "MainThread"
 
 
 class _NameFilter(logging.Filter):

@@ -24,6 +24,26 @@ class AISkillEffectResponse(BaseModel):
     """Single effect within an AI-generated skill."""
     effect_type: Literal["damage", "heal", "buff", "debuff", "shield", "drain", "summon"] = "damage"
     scaling_stat: str | None = "LCK"   # one of STR/INT/AGI/LCK/VIT/WIS/END
+
+    @field_validator("effect_type", mode="before")
+    @classmethod
+    def known_effect(cls, v):
+        """Models invent effect types ("reveal", "stun", "utility"); map them
+        onto the ones combat understands instead of rejecting the skill."""
+        v = str(v or "").lower().strip()
+        known = {"damage", "heal", "buff", "debuff", "shield", "drain", "summon"}
+        if v in known:
+            return v
+        aliases = {
+            "attack": "damage", "strike": "damage", "burn": "damage", "poison": "damage",
+            "restore": "heal", "regen": "heal", "regeneration": "heal", "cure": "heal",
+            "stun": "debuff", "slow": "debuff", "weaken": "debuff", "curse": "debuff",
+            "fear": "debuff", "blind": "debuff", "root": "debuff",
+            "protect": "shield", "barrier": "shield", "block": "shield", "ward": "shield",
+            "lifesteal": "drain", "siphon": "drain", "leech": "drain",
+            "call": "summon", "conjure": "summon",
+        }
+        return aliases.get(v, "buff")   # reveal / detect / utility / stealth …
     base_value: float = 6.0
     scaling_coefficient: float = 1.0
 

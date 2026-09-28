@@ -242,7 +242,7 @@ variable. The "No package outside ai/ bypasses AIService" check in
 `ContentGenerator` method, add a wrapper on `AIService` that returns `None`
 (or `[]`) on failure, and call the wrapper. Purely cosmetic calls
 (e.g. follow-up option flavour) log failures at INFO. The console handler
-shows WARNING and above, so a WARNING would print mid-scene.
+shows WARNING and above from the main thread, so a WARNING would print mid-scene. Records from background threads (world growth, quests, the director) only go to the log files.
 
 ### AI trigger policy (`systems/ai_trigger_policy.py`)
 
@@ -315,7 +315,7 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 
 The script is the spine; what the player *types* grows the world around it.
 
-1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option gets a `world_action:VERB:SUBJECT` tag, which `world_growth.derive_world_action()` derives from its label ("Mine the gold vein" → `world_action:mine:gold_vein`). Tags the model writes itself are dropped: a 1B model copies prompt examples, so the prompt carries no example actions. AI follow-up options are tagged the same way.
+1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option gets a `world_action:VERB:SUBJECT` tag, which `world_growth.derive_world_action()` derives from its label ("Mine the gold vein" → `world_action:mine:gold_vein`). Tags the model writes itself are dropped: a 1B model copies prompt examples, so the prompt carries no example actions. Looking, waiting and moving ("Take a moment", "Examine your surroundings", "Attempt to move forward") get no tag and don't grow the world. Options that repeat an existing choice, and answers that just echo the scene text, are dropped (`core/situation_query`). AI follow-up options are tagged the same way.
 2. **Player picks the option** → `core/world_growth_flow.on_world_action()`:
    - **New action** (`world_growth.action_key()` normalises "gold veins" and "the gold" to `mine:gold`): recorded in `world_actions`, queued as a background `world_expansion` task, and the player sees a **✦ DISCOVERY** notice.
    - **Already expanded**: the player gathers the bundle's yield item, at most once every `WORLD_YIELD_COOLDOWN_TURNS` (10).

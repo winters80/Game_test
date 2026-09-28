@@ -78,15 +78,31 @@ def action_key(verb: str, subject: str) -> str:
     return f"{slugify(verb, 20)}:{normalize_subject(subject)}"
 
 
+# Looking, waiting and moving are answered by the fast model; they don't
+# grow the world ("take a moment" is not a discovery). Doing things does.
+_NON_ACTION_VERBS = {
+    "look", "observe", "examine", "inspect", "study", "watch", "listen", "notice",
+    "search", "scan", "check", "survey", "peer", "glance", "read",
+    "wait", "pause", "rest", "take", "stay", "stand", "sit", "breathe", "calm",
+    "think", "consider", "reflect", "remember", "focus", "ponder", "prepare",
+    "move", "step", "go", "walk", "continue", "proceed", "approach", "follow",
+    "advance", "return", "leave", "head", "enter", "keep", "ask", "accept",
+}
+_HELPER_VERBS = {"try", "attempt", "carefully", "quickly", "quietly", "slowly", "cautiously"}
+
+
 def derive_world_action(label: str) -> str | None:
-    """Fallback tag from an option label when the model forgot one.
+    """World-growth tag from an option label.
 
     "Mine the gold vein" → "world_action:mine:gold_vein". None if the label
-    has no usable verb + subject.
+    has no usable verb + subject, or only looks, waits or moves ("Take a
+    moment", "Examine your surroundings", "Attempt to move forward").
     """
     words = [w for w in re.split(r"[^a-z0-9]+", label.lower()) if w]
     words = [w for w in words if w not in {"ai"}]
-    if len(words) < 2:
+    while words and (words[0] in _HELPER_VERBS or words[0] == "to"):
+        words = words[1:]
+    if len(words) < 2 or words[0] in _NON_ACTION_VERBS:
         return None
     verb = words[0]
     subject = [w for w in words[1:] if w not in _STOPWORDS][:3]
