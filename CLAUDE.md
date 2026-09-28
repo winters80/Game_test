@@ -328,6 +328,17 @@ The script is the spine; what the player *types* grows the world around it.
 5. **`apply_expansion_result()`** registers the bundle, stores it in `world_expansions`, gives the player the new item (and skill), and announces **✦ NEW ITEM / NEW SKILL / NEW RECIPE / WORD SPREADS**. It also logs to the `[L]` World Log.
 6. **Per save:** `reload_world_growth()` (called on new game and load) clears every `gen_` item / NPC / recipe / skill, then re-registers only this save's bundles.
 
+Guard rails (all in `config.py`):
+
+| Setting | Effect |
+|---------|--------|
+| `WORLD_MAX_TRADERS_PER_LOCATION` (2) | Once a zone (or the road) has this many generated traders, a new bundle's goods are merged into an existing one's stock (`npc_extend`) instead of adding another NPC |
+| `WORLD_MAX_EXPANSIONS` (60) | Per save. Later new actions are recorded as `capped` and never queued |
+| `WORLD_RETRY_ON_LOAD` (3) | On load, up to this many `pending` / `no_ai` actions are re-queued if the AI is available (the background queue doesn't survive quitting) |
+| `WORLD_YIELD_COOLDOWN_TURNS` (10) | Minimum turns between gathering an action's yield |
+
+The admin panel's **World Growth log** lists every recorded action, its status, and what it added.
+
 ## Divergence System (How AI Classes Are Triggered)
 
 The `systems/progression_tracker.compute_divergence_score()` function scores how far the player has deviated from the expected path:
@@ -351,6 +362,8 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 2 | Added: gender, species_id, alignment, lives_remaining/used, guild_memberships, faction_standing_cache, active/completed_quest_ids, evolution_stage, background, perception_bonus, turn_count, last_safe_zone_id. Paired SQLite .db file introduced. |
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
+
+The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **6** (v6 added `world_actions` + `world_expansions`). Migrations run automatically on open.
 
 ## Skill System
 

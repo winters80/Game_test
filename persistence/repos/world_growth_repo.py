@@ -86,3 +86,7 @@ def load_expansions(conn: sqlite3.Connection) -> list[dict[str, Any]]:
         d["bundle"] = json.loads(d["bundle"])
         out.append(d)
     return out
+
+
+def count_expansions(conn: sqlite3.Connection) -> int:
+    return conn.execute("SELECT COUNT(*) FROM world_expansions").fetchone()[0]

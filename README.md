@@ -330,6 +330,9 @@ The project is in maintenance / content-authoring mode.
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
 | Pre-push hook (all 7 test files) | ✅ Shipped | 359 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
 | Test suite | ✅ Shipped | 359 checks across 7 files + 24-check live playthrough |
+| **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
+| **Traders** | ✅ **Shipped** | Buy/sell menus, travelling traders (Wren), AI-generated traders in the outer market / Verath / camp / road |
+| **Verath gate** | ✅ **Shipped** | Capital unlocks by clearing Floor 1 or via divergent routes (bribe, INT, LCK, the Wanderer, AI) |
 
 ### Next up — long-tail
 

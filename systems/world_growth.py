@@ -22,6 +22,7 @@ import logging
 import re
 from typing import TYPE_CHECKING, Any
 
+from config import WORLD_MAX_TRADERS_PER_LOCATION
 from systems.ai_trigger_policy import slugify
 
 if TYPE_CHECKING:
@@ -204,6 +205,7 @@ def build_bundle(
 
     # Trader: ambient, sells at or above value (no buy-low/sell-high loops).
     npc_dict = None
+    npc_extend = None
     t = response.trader
     if t is not None and t.name.strip() and npc_registry is not None:
         buys: list[str] = []
@@ -227,12 +229,17 @@ def build_bundle(
             price_gold = max(value, min(offer.price_gold, value * _TRADER_MAX_MARKUP))
             sells.append({"item_id": rid, "price": price_gold * 100})
         buys = list(dict.fromkeys(buys))
-        if buys or sells:
+        if t.location == "road":
+            zone, route = ROAD_ROUTE[0], list(ROAD_ROUTE)
+        else:
+            zone, route = LOCATION_ZONES.get(t.location, "village_start"), []
+        crowded = _generated_traders_at(npc_registry, zone, bool(route))
+        if (buys or sells) and len(crowded) >= WORLD_MAX_TRADERS_PER_LOCATION:
+            # Location is full: the new goods join an existing generated
+            # trader's stock instead of adding yet another NPC.
+            npc_extend = {"template_id": crowded[0].template_id, "buys": buys, "sells": sells}
+        elif buys or sells:
             template_id = _fresh_id(f"npc_{t.name}", lambda i: npc_registry.get(i) is not None)
-            if t.location == "road":
-                zone, route = ROAD_ROUTE[0], list(ROAD_ROUTE)
-            else:
-                zone, route = LOCATION_ZONES.get(t.location, "village_start"), []
             name = t.name.strip()[:30]
             greeting = (t.greeting or f"'{name}. Trading, are we?'").strip()[:300]
             npc_dict = {
@@ -276,13 +283,27 @@ def build_bundle(
         "items": list(new_items.values()),
         "recipes": bundle_recipes,
         "npc": npc_dict,
+        "npc_extend": npc_extend,
         "skill": skill_dict,
     }
 
 
+def _generated_traders_at(npc_registry: "NPCRegistry", zone: str, travelling: bool) -> list:
+    """Generated traders already at this location (or on the road)."""
+    out = []
+    for npc in npc_registry.all():
+        if not (npc.is_ai_generated and npc.trades is not None):
+            continue
+        if travelling and npc.route:
+            out.append(npc)
+        elif not travelling and not npc.route and npc.zone_id == zone:
+            out.append(npc)
+    return out
+
+
 def bundle_is_empty(bundle: dict) -> bool:
-    return not (bundle.get("items") or bundle.get("recipes")
-                or bundle.get("npc") or bundle.get("skill"))
+    return not (bundle.get("items") or bundle.get("recipes") or bundle.get("npc")
+                or bundle.get("npc_extend") or bundle.get("skill"))
 
 
 # ── Registration ──────────────────────────────────────────────────────────────
@@ -318,6 +339,19 @@ def register_bundle(
         npc = NPCTemplate.model_validate(bundle["npc"])
         npc_registry.register(npc)
         added.append(f"npc:{npc.template_id}")
+    ext = bundle.get("npc_extend")
+    if ext and npc_registry is not None:
+        host = npc_registry.get(ext.get("template_id", ""))
+        if host is not None and host.trades is not None:
+            from entities.npc import NPCTradeOffer
+            for b in ext.get("buys", []):
+                if b not in host.trades.buys:
+                    host.trades.buys.append(b)
+            stocked = {o.item_id for o in host.trades.sells}
+            for offer in ext.get("sells", []):
+                if offer["item_id"] not in stocked:
+                    host.trades.sells.append(NPCTradeOffer.model_validate(offer))
+            added.append(f"npc_extend:{host.template_id}")
     if bundle.get("skill") and skill_registry is not None:
         skill = Skill.model_validate(bundle["skill"])
         skill_registry.register(skill)

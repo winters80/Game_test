@@ -709,6 +709,11 @@ class WorldDatabase:
         assert self._conn
         return world_growth_repo.get_expansion(self._conn, action_key)
 
+    def count_world_expansions(self) -> int:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.count_expansions(self._conn)
+
     def load_world_expansions(self) -> list[dict[str, Any]]:
         from persistence.repos import world_growth_repo
         assert self._conn

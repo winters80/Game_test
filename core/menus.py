@@ -809,6 +809,7 @@ class GameMenusMixin:
             bot_count = self._bot_manager.active_count() if self._bot_manager else 0
             choices = [
                 f"AI Token Usage  (AI: {ai_status})",
+                "World Growth log",
                 f"Toggle Feature Flags",
                 f"Background Generator: {bg_status}",
                 f"Active Bots / Players  ({bot_count} bots · 1 player)",
@@ -860,6 +861,14 @@ class GameMenusMixin:
                     bg_q = self._bg_generator._task_queue.qsize() if self._bg_generator else 0
                     renderer.console.print(f"  BG tasks queued    : [dim_text]{bg_q}[/dim_text]")
                     renderer.console.print()
+                renderer.prompt_any_key()
+
+            elif action == "World Growth log":
+                from core.world_growth_flow import world_growth_report
+                renderer.console.print("\n  [system_msg][ WORLD GROWTH — THIS SAVE ][/system_msg]\n")
+                for line in world_growth_report(self):
+                    renderer.console.print(f"  [dim_text]{line}[/dim_text]")
+                renderer.console.print()
                 renderer.prompt_any_key()
 
             elif action == "Toggle Feature Flags":

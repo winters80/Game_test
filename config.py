@@ -66,6 +66,10 @@ TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each ro
 
 # ── World growth (systems/world_growth.py) ─────────────────────────────────────
 WORLD_YIELD_COOLDOWN_TURNS = 10        # turns before repeating an action yields again
+WORLD_MAX_TRADERS_PER_LOCATION = 2     # generated traders per zone (and on the road);
+                                       # beyond this, new goods join an existing one's stock
+WORLD_MAX_EXPANSIONS = 60              # world expansions per save; later new actions are 'capped'
+WORLD_RETRY_ON_LOAD = 3                # pending / no_ai actions re-queued per load
 
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100

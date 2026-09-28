@@ -2188,6 +2188,116 @@ def main() -> None:
                     try: _pp.unlink()
                     except OSError: pass
 
+    # ─────────────────────────────────────────────────────────────────────────
+    section("28. World Growth guard rails (trader cap, expansion cap, retry, log)")
+    _d_slot = "_world_growth_d_test_"
+    _dstate = None
+    try:
+        from ai.ai_service import AIService
+        from ai.background_generator import BackgroundGenerator
+        from ai.response_validator import AIWorldExpansionResponse
+        from config import WORLD_MAX_TRADERS_PER_LOCATION
+        from core import world_growth_flow as _wgf2
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from systems import world_growth as _wg2
+        from ui import renderer as _rdr3
+
+        def _resp(n: int, location: str = "outer_market"):
+            return AIWorldExpansionResponse.model_validate({
+                "yield_item": {"item_id": f"thing_{n}", "name": f"Thing {n}", "value_gold": 2},
+                "trader": {"name": f"Trader {n}", "location": location,
+                           "buys": [f"thing_{n}"], "sells": [{"item_id": f"thing_{n}", "price_gold": 3}]},
+            })
+
+        _deng = GameEngine()
+        _orig_print2 = _rdr3.console.print
+        _rdr3.console.print = lambda *a, **k: None
+        try:
+            _deng.bootstrap()
+            _dp = Player(name="Guard", base_class="warrior")
+            _dstate = new_game_state(_dp, SAVES_DIR, _d_slot)
+            _deng.state = _dstate
+            _attach_engine_handles(_deng)
+
+            # 28a. Trader cap: once a location is full, goods join an existing trader.
+            for _i in range(WORLD_MAX_TRADERS_PER_LOCATION + 1):
+                _dstate.world_db.record_world_action(f"find:thing_{_i}", "find", f"thing_{_i}", "village_start", 0)
+                _wgf2.apply_expansion_result(_deng, {
+                    "type": "world_expansion", "action_key": f"find:thing_{_i}",
+                    "zone_id": "village_start", "response": _resp(_i), "skill": None,
+                })
+            _gen_traders = [n for n in _deng.npc_registry.all()
+                            if n.is_ai_generated and n.zone_id == "village_start" and not n.route]
+            assert len(_gen_traders) == WORLD_MAX_TRADERS_PER_LOCATION, [n.name for n in _gen_traders]
+            _last = _dstate.world_db.get_world_expansion(f"find:thing_{WORLD_MAX_TRADERS_PER_LOCATION}")
+            assert _last["bundle"]["npc"] is None and _last["bundle"]["npc_extend"]
+            _host = _deng.npc_registry.get(_last["bundle"]["npc_extend"]["template_id"])
+            _n = WORLD_MAX_TRADERS_PER_LOCATION
+            assert f"gen_thing_{_n}" in _host.trades.buys
+            assert any(o.item_id == f"gen_thing_{_n}" for o in _host.trades.sells)
+            # Road traders have their own cap.
+            _dstate.world_db.record_world_action("find:road_thing", "find", "road_thing", "camp_rest", 0)
+            _wgf2.apply_expansion_result(_deng, {
+                "type": "world_expansion", "action_key": "find:road_thing", "zone_id": "camp_rest",
+                "response": _resp(99, "road"), "skill": None,
+            })
+            assert _deng.npc_registry.get("gen_npc_trader_99").route
+            ok(f"Max {WORLD_MAX_TRADERS_PER_LOCATION} generated traders per location; extras extend stock")
+
+            # 28b. Merged stock survives a reload, without duplicating offers.
+            _attach_engine_handles(_deng)
+            _host = _deng.npc_registry.get(_last["bundle"]["npc_extend"]["template_id"])
+            assert _host.trades.buys.count(f"gen_thing_{_n}") == 1
+            assert [o.item_id for o in _host.trades.sells].count(f"gen_thing_{_n}") == 1
+            ok("Merged trader stock is restored once on reload")
+
+            # 28c. Expansion cap: new actions past the cap are logged, not queued.
+            class _Gen:
+                def generate_world_expansion(self, **kw): return None
+            _dbg = BackgroundGenerator(_Gen())
+            _deng.ai_service = AIService(content_generator=_Gen(), background_generator=_dbg)
+            _saved_cap = _wgf2.WORLD_MAX_EXPANSIONS
+            _wgf2.WORLD_MAX_EXPANSIONS = _dstate.world_db.count_world_expansions()
+            try:
+                _wgf2.on_world_action(_deng, "carve", "statue", "")
+            finally:
+                _wgf2.WORLD_MAX_EXPANSIONS = _saved_cap
+            assert _dstate.world_db.get_world_action("carve:statue")["status"] == "capped"
+            assert _dbg._task_queue.empty()
+            ok("Past WORLD_MAX_EXPANSIONS new actions are 'capped' and never queued")
+
+            # 28d. Retry on load: offline actions are re-queued once AI is back.
+            _deng.ai_service = AIService()
+            _wgf2.on_world_action(_deng, "fish", "river", "")
+            assert _dstate.world_db.get_world_action("fish:river")["status"] == "no_ai"
+            _deng.ai_service = AIService(content_generator=_Gen(), background_generator=_dbg)
+            _attach_engine_handles(_deng)
+            _queued = [_dbg._task_queue.get_nowait()["action_key"] for _ in range(_dbg._task_queue.qsize())]
+            assert "fish:river" in _queued, _queued
+            assert "carve:statue" not in _queued, "Capped actions stay capped"
+            assert _dstate.world_db.get_world_action("fish:river")["status"] == "pending"
+            ok("Pending / no_ai actions are re-queued on load when the AI is available")
+
+            # 28e. Admin World Growth log.
+            _log = "\n".join(_wgf2.world_growth_report(_deng))
+            assert "find thing 0" in _log and "trader  Trader 0 @ village_start" in _log
+            assert "joined gen_npc_trader_" in _log and "fish river  ·  pending" in _log
+            ok("Admin 'World Growth log' lists actions, statuses and what each added")
+        finally:
+            _rdr3.console.print = _orig_print2
+    except Exception as e:
+        fail("World growth guard rails broken", e)
+        traceback.print_exc()
+    finally:
+        if _dstate is not None:
+            close_game(_dstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"{_d_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
+
     _report()
 
 
