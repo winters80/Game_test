@@ -210,6 +210,8 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 | `death_records` | Every death: cause, zone, level, alignment, lives_remaining |
 | `world_flags` | Global flags independent of the player |
 | `turn_log` | Lightweight event log for quest/NPC trigger processing |
+| `world_actions` | *(schema v6)* Every AI-option action the player took (`verb:subject`), status `pending` / `expanded` / `empty` / `no_ai`, yield cooldown |
+| `world_expansions` | *(schema v6)* The validated content bundle the world grew for each action; re-registered on load |
 
 **Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
 
@@ -285,6 +287,7 @@ before proposing rewards.
 2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
 3. **Quest generation** *(quest_system)* — fired from `dialogue_handler` when the player picks an injected `« Is there any work I could take on? »` option. Triggered by an explicit `"ai_dynamic"` seed on the NPC, **or implicitly** when the NPC has no available seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN` (default 30) and `_ai_offered_{npc_id}` flag is unset.
 4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
+5. **World growth** — the first time the player takes a new `[?]` action (`world_action:VERB:SUBJECT`), the primary model is asked in the background how the world should respond. See "World Growth" below.
 
 ### AI response schemas (validated by `ai/response_validator.py`)
 All AI calls must return JSON validated against Pydantic models. If validation fails, retry up to `OLLAMA_MAX_RETRIES` times, then use the fallback.
@@ -295,6 +298,7 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 | `generate_narrative()` | plain text string | None (scene uses static text) |
 | `generate_quest()` *(future)* | `AIQuestResponse` | nearest matching template quest |
 | `generate_npc_dialogue()` *(future)* | `AINPCDialogueResponse` | NPC's `dialogue_hooks["default"]` |
+| `generate_world_expansion()` | `AIWorldExpansionResponse` (+ optional skill) | None: the action stays logged, nothing is added |
 
 ### Lore constraints (always injected into system prompt)
 - World name: Aethoria
@@ -305,6 +309,24 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 - See `data/world/lore_fragments.json` for full context
 
 ---
+
+## World Growth (typed actions grow the world)
+
+The script is the spine; what the player *types* grows the world around it.
+
+1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option carries `world_action:VERB:SUBJECT` (e.g. `world_action:mine:gold`). If the small model forgets, `world_growth.derive_world_action()` derives one from the label. AI follow-up options are tagged the same way.
+2. **Player picks the option** → `core/world_growth_flow.on_world_action()`:
+   - **New action** (`world_growth.action_key()` normalises "gold veins" and "the gold" to `mine:gold`): recorded in `world_actions`, queued as a background `world_expansion` task, and the player sees a **✦ DISCOVERY** notice.
+   - **Already expanded**: the player gathers the bundle's yield item, at most once every `WORLD_YIELD_COOLDOWN_TURNS` (10).
+   - **No Ollama**: recorded as `no_ai`; nothing is promised.
+3. **Primary model, in the background** (`ContentGenerator.generate_world_expansion`): returns a yield item, up to 3 derived items, 2 recipes, 1 trader, and an optional skill hint (which becomes a real skill via `generate_skill`).
+4. **`systems/world_growth.build_bundle()`** turns that untrusted response into a safe bundle:
+   - every new id is prefixed `gen_` and can never overwrite authored content
+   - only MATERIAL / CONSUMABLE items, with values and heals clamped by `economy.generated_item_value_cap` / `generated_effect_cap`
+   - recipes must reference real items
+   - traders are ambient, placed at `outer_market` / `verath` / `camp` or travelling the `road`, only trade materials and consumables, and sell at 1–3× value (no buy-low / sell-high loops)
+5. **`apply_expansion_result()`** registers the bundle, stores it in `world_expansions`, gives the player the new item (and skill), and announces **✦ NEW ITEM / NEW SKILL / NEW RECIPE / WORD SPREADS**. It also logs to the `[L]` World Log.
+6. **Per save:** `reload_world_growth()` (called on new game and load) clears every `gen_` item / NPC / recipe / skill, then re-registers only this save's bundles.
 
 ## Divergence System (How AI Classes Are Triggered)
 

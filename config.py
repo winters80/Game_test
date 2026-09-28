@@ -64,6 +64,9 @@ AI_MAX_ITEMS_PER_OPTION = 1
 # ── Traders (systems/trade_system.py) ──────────────────────────────────────────
 TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each route zone
 
+# ── World growth (systems/world_growth.py) ─────────────────────────────────────
+WORLD_YIELD_COOLDOWN_TURNS = 10        # turns before repeating an action yields again
+
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP

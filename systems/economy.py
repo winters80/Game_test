@@ -150,3 +150,21 @@ def gear_price_hint(player_level: int) -> str:
                 "shadow dagger 280g, void crystal fragment 80g.")
     return ("At this tier endgame gear and life tokens cost 400–1500g; "
             "the player can plausibly afford a small fortune.")
+
+
+# ── Generated goods (AI world expansion) ─────────────────────────────────────
+#
+# Caps for items the AI invents at runtime, so a gathering action can't mint
+# a fortune. value_gold is whole gold, like authored items.
+
+def generated_item_value_cap(player_level: int, item_type: str) -> int:
+    """Max value_gold for an AI-invented item of this type at this level."""
+    level = max(1, int(player_level))
+    if item_type == "CONSUMABLE":
+        return 5 + 4 * level
+    return 3 + 2 * level          # MATERIAL
+
+
+def generated_effect_cap(player_level: int) -> int:
+    """Max heal amount for an AI-invented consumable."""
+    return 15 + 5 * max(1, int(player_level))

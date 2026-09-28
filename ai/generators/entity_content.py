@@ -38,6 +38,32 @@ class EntityContentGenerators:
             logger.info(f"BG quest generation error: {exc}")
         return None
 
+    def _gen_world_expansion(self, task: dict) -> dict | None:
+        """Primary-model reaction to a player action (see systems/world_growth)."""
+        try:
+            player = task.get("player")
+            if player is None:
+                return None
+            out = self._content_gen.generate_world_expansion(
+                verb=task["verb"],
+                subject=task["subject"],
+                zone_name=task.get("zone_name", ""),
+                scene_title=task.get("scene_title", ""),
+                narrative=task.get("narrative", ""),
+                player=player,
+                known_items=task.get("known_items", []),
+            )
+            if out:
+                return {
+                    "type": "world_expansion",
+                    "action_key": task["action_key"],
+                    "zone_id": task.get("zone_id", ""),
+                    **out,
+                }
+        except Exception as exc:
+            logger.info(f"BG world expansion error: {exc}")
+        return None
+
     def _gen_npc_branch(self, task: dict) -> dict | None:
         try:
             npc_id         = task.get("npc_id", "")

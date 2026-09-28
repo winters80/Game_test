@@ -122,6 +122,13 @@ class NPCRegistry:
         """Add or replace a template at runtime (e.g. AI world expansion)."""
         self._npcs[npc.template_id] = npc
 
+    def remove(self, key: str) -> None:
+        """Drop an entry (used to clear one save's generated content before loading another)."""
+        self._npcs.pop(key, None)
+
+    def ids(self) -> list[str]:
+        return list(self._npcs)
+
     def get(self, template_id: str) -> NPCTemplate | None:
         return self._npcs.get(template_id)
 

@@ -196,6 +196,37 @@ class AIService:
             logger.warning("AI quest async submission failed", exc_info=True)
             return False
 
+    # ── World expansion (primary model, background only) ─────────────────────
+
+    def submit_world_expansion_async(
+        self,
+        action_key: str,
+        verb: str,
+        subject: str,
+        zone_id: str,
+        zone_name: str,
+        scene_title: str,
+        narrative: str,
+        player: Any,
+        known_items: list[str],
+    ) -> bool:
+        """Queue a world expansion on the BG thread. False = unavailable / queue full.
+
+        The result arrives later as a ``world_expansion`` BG result and is
+        applied by core/background_integrator. Never blocks the player.
+        """
+        if self._bg is None:
+            return False
+        try:
+            return self._bg.submit_world_expansion(
+                action_key=action_key, verb=verb, subject=subject,
+                zone_id=zone_id, zone_name=zone_name, scene_title=scene_title,
+                narrative=narrative, player=player, known_items=known_items,
+            )
+        except Exception:
+            logger.info("AI world expansion submission failed", exc_info=True)
+            return False
+
     # ── Guild generation ─────────────────────────────────────────────────────
 
     def generate_guild_intent(self, guild: object, member: object) -> object | None:

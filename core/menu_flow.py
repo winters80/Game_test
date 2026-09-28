@@ -101,3 +101,7 @@ def _attach_engine_handles(engine: "GameEngine") -> None:
     engine.state.class_registry = engine.class_registry
     engine.state.scene_registry = engine.scene_registry
     engine.state.ai_service = engine.ai_service
+    # Per-save world growth: drop any other save's generated content, then
+    # re-register this save's bundles (items, recipes, traders, skills).
+    from core.world_growth_flow import reload_world_growth
+    reload_world_growth(engine)

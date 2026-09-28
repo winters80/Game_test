@@ -45,6 +45,13 @@ class ItemRegistry:
     def register(self, item: Item) -> None:
         self._items[item.item_id] = item
 
+    def remove(self, key: str) -> None:
+        """Drop an entry (used to clear one save's generated content before loading another)."""
+        self._items.pop(key, None)
+
+    def ids(self) -> list[str]:
+        return list(self._items)
+
     def get(self, item_id: str) -> Item | None:
         return self._items.get(item_id)
 

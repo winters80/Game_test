@@ -1784,7 +1784,7 @@ def main() -> None:
         _fresh = Player(name="RuleTester")
         assert any("flag:verath_access" in r for r in _dynamic_option_rules(_fresh))
         _fresh.set_flag("verath_access")
-        assert _dynamic_option_rules(_fresh) == []
+        assert not any("verath_access" in r for r in _dynamic_option_rules(_fresh))
         ok("AI situation prompt offers verath_access only while locked out")
 
         # 24h. flags_any now actually gates Floor 3's sealed door.
@@ -2038,6 +2038,155 @@ def main() -> None:
             if _pp.exists():
                 try: _pp.unlink()
                 except OSError: pass
+        # Leave the shared NPC registry as the rest of the suite expects it.
+        npc_reg.remove("gen_ore_buyer")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("27. World Growth (typed action → primary model → new world content)")
+    _wg_slot = "_world_growth_test_"
+    _wstate = None
+    try:
+        from ai.ai_service import AIService
+        from ai.background_generator import BackgroundGenerator
+        from ai.content_generator import _dynamic_option_rules
+        from ai.response_validator import AIWorldExpansionResponse
+        from config import WORLD_YIELD_COOLDOWN_TURNS
+        from core import background_integrator as _bi2
+        from core import world_growth_flow as _wgf
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from core.situation_query import _convert_ai_option
+        from systems import world_growth as _wg
+        from ui import renderer as _rdr2
+
+        # 27a. Action keys + fallback tags.
+        assert _wg.action_key("Mine", "gold veins") == "mine:gold"
+        assert _wg.action_key("mine", "the gold") == "mine:gold"
+        assert _wg.normalize_subject("wild berries") == "wild_berry"
+        assert _wg.derive_world_action("[AI] Mine the gold vein") == "world_action:mine:gold_vein"
+        assert _wg.derive_world_action("Go") is None
+        assert any("world_action" in r for r in _dynamic_option_rules(Player(name="R")))
+        class _NoTagOpt:
+            option_id = "ai_x"; label = "Forage for wild berries"; narrative = ""
+            triggers = ["flag:x"]; requires = {}
+        class _NoTagEngine:
+            item_registry = item_reg
+            class state:
+                player = Player(name="T"); current_node_id = "root"
+        assert "world_action:forage:wild_berries" in _convert_ai_option(_NoTagOpt(), _NoTagEngine()).triggers
+        ok("Action keys normalise; options without a tag get one derived from the label")
+
+        # 27b. A real engine with a fake primary model + a real BG generator
+        # (not started: the test drives the worker step by step).
+        _response = AIWorldExpansionResponse.model_validate({
+            "summary": "Word spreads: Brenna is buying ore in the outer market.",
+            "yield_item": {"item_id": "gold_ore", "name": "Gold Ore", "value_gold": 500},
+            "items": [{"item_id": "gold_ingot", "name": "Gold Ingot", "value_gold": 9}],
+            "recipes": [{"recipe_id": "smelt_gold", "ingredients": [{"item_id": "gold_ore", "qty": 3}],
+                         "output_item_id": "gold_ingot"}],
+            "trader": {"name": "Brenna", "location": "outer_market", "greeting": "'Ore?'",
+                       "buys": ["gold_ore", "gold_ingot"], "sells": [{"item_id": "gold_ingot", "price_gold": 20}]},
+        })
+        class _FakePrimary:
+            calls = 0
+            def generate_world_expansion(self, **kw):
+                _FakePrimary.calls += 1
+                return {"response": _response, "skill": None}
+        _fake = _FakePrimary()
+        _bg = BackgroundGenerator(_fake)
+        _eng = GameEngine()
+        _orig_print = _rdr2.console.print
+        _rdr2.console.print = lambda *a, **k: None
+        try:
+            _eng.bootstrap()
+        finally:
+            _rdr2.console.print = _orig_print
+        _eng.ai_service = AIService(content_generator=_fake, background_generator=_bg)
+        _wp = Player(name="Miner", base_class="warrior")
+        _wstate = new_game_state(_wp, SAVES_DIR, _wg_slot)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        _wstate.current_scene_id = "dungeon_floor1"
+
+        # 27c. First sighting → recorded, queued, no content yet.
+        _wgf.on_world_action(_eng, "mine", "gold vein", "You chip at a glinting seam.")
+        _row = _wstate.world_db.get_world_action("mine:gold")
+        assert _row and _row["status"] == "pending" and _row["subject"] == "gold"
+        _task = _bg._task_queue.get_nowait()
+        assert _task["type"] == "world_expansion" and _task["action_key"] == "mine:gold"
+        assert "forest_herb" in _task["known_items"]
+        assert _eng.item_registry.get("gen_gold_ore") is None
+        ok("First 'mine gold' logs a discovery and queues a background expansion")
+
+        # 27d. Worker produces the result; the integrator applies it.
+        _result = _bg._process_task(_task)
+        assert _result["type"] == "world_expansion" and _FakePrimary.calls == 1
+        _bi2._dispatch(_eng, _result)
+        _ore = _eng.item_registry.get("gen_gold_ore")
+        assert _ore is not None and _ore.value_gold < 500, "Value clamped by economy"
+        assert _wp.has_item("gen_gold_ore"), "Discovery reward: the new item"
+        assert any(r["recipe_id"] == "gen_smelt_gold" for r in _eng.recipes)
+        _brenna = _eng.npc_registry.get("gen_npc_brenna")
+        assert _brenna and _brenna.ambient and _brenna.zone_id == "village_start"
+        assert _wstate.world_db.get_world_action("mine:gold")["status"] == "expanded"
+        assert any(e["event_type"] == "world_growth" for e in _wstate.world_db.get_recent_events())
+        _bi2._dispatch(_eng, _result)
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 1, \
+            "A duplicate result must not apply twice"
+        ok("Expansion applied: clamped item, recipe, trader, reward, world log; idempotent")
+
+        # 27e. Repeating the action yields ore, on cooldown.
+        _wgf.on_world_action(_eng, "mine", "gold", "")
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 1, "Cooldown"
+        _wp.turn_count += WORLD_YIELD_COOLDOWN_TURNS
+        _wgf.on_world_action(_eng, "Mine", "gold veins", "")
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 2
+        assert _bg._task_queue.empty(), "Known actions never re-query the model"
+        ok("Repeating an expanded action gathers its yield after the cooldown")
+
+        # 27f. The trader is really there and really trades.
+        from core.input_handler import get_current_options
+        _wstate.current_scene_id = "village_start"; _wstate.current_node_id = "root"
+        assert any(o.option_id == "__ambient__gen_npc_brenna" for o in get_current_options(_eng))
+        assert _ts.sell_item(_wp, _brenna, "gen_gold_ore", _eng.item_registry)[0]
+        ok("Generated trader appears in the outer market and buys the new ore")
+
+        # 27g. Per-save: reload restores it; another save never sees it.
+        from persistence.save_manager import load_game as _lg, save_game as _sg
+        _sg(_wstate, _wg_slot, SAVES_DIR)
+        close_game(_wstate); _wstate = None
+        _other = new_game_state(Player(name="Other"), SAVES_DIR, _wg_slot + "b")
+        _eng.state = _other
+        _attach_engine_handles(_eng)
+        assert _eng.item_registry.get("gen_gold_ore") is None
+        assert _eng.npc_registry.get("gen_npc_brenna") is None
+        assert not any(r["recipe_id"].startswith("gen_") for r in _eng.recipes)
+        close_game(_other)
+        _wstate = _lg(_wg_slot, SAVES_DIR)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        assert _eng.item_registry.get("gen_gold_ore") is not None
+        assert _eng.npc_registry.get("gen_npc_brenna") is not None
+        assert any(r["recipe_id"] == "gen_smelt_gold" for r in _eng.recipes)
+        ok("Generated world is per save: restored on load, absent from other saves")
+
+        # 27h. No AI: actions are still recorded, nothing is promised.
+        _eng.ai_service = AIService()
+        _wgf.on_world_action(_eng, "forage", "mushrooms", "")
+        assert _wstate.world_db.get_world_action("forage:mushroom")["status"] == "no_ai"
+        ok("Without Ollama the action is logged as no_ai and play continues")
+    except Exception as e:
+        fail("World growth broken", e)
+        traceback.print_exc()
+    finally:
+        if _wstate is not None:
+            close_game(_wstate)
+        for _slot in (_wg_slot, _wg_slot + "b"):
+            for _ext in (".json", ".db"):
+                _pp = SAVES_DIR / f"{_slot}{_ext}"
+                if _pp.exists():
+                    try: _pp.unlink()
+                    except OSError: pass
 
     _report()
 

@@ -141,13 +141,23 @@ def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
     The option's triggers pass through the AI trigger policy first, so the
     model can only attach allow-listed effects (see systems/ai_trigger_policy).
     """
-    from systems.ai_trigger_policy import ai_required_flag_met, sanitize_ai_triggers
+    from systems.ai_trigger_policy import (
+        WORLD_ACTION_PREFIX, ai_required_flag_met, sanitize_ai_triggers,
+    )
+    from systems.world_growth import derive_world_action
 
     requires = ai_opt.requires or {}
     locked = False
     lock_reason = ""
+    raw_triggers = list(ai_opt.triggers or [])
+    # Every typed action may grow the world: if the small model forgot the
+    # action tag, derive one from the option label.
+    if not any(str(t).startswith(WORLD_ACTION_PREFIX) for t in raw_triggers):
+        derived = derive_world_action(ai_opt.label)
+        if derived:
+            raw_triggers.append(derived)
     triggers = sanitize_ai_triggers(
-        ai_opt.triggers, getattr(engine, "item_registry", None),
+        raw_triggers, getattr(engine, "item_registry", None),
     ).kept
 
     for stat, val in requires.get("min_stats", {}).items():

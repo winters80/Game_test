@@ -79,6 +79,9 @@ def _dispatch(engine: "GameEngine", result: dict) -> None:
         )
     elif rtype in ("world_event", "rumor", "lore_entry", "area_activity"):
         _handle_world_event(engine, result, rtype)
+    elif rtype == "world_expansion":
+        from core.world_growth_flow import apply_expansion_result
+        apply_expansion_result(engine, result)
 
 
 # ── Per-type handlers ────────────────────────────────────────────────────────

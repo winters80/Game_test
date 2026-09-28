@@ -164,6 +164,10 @@ class ChoiceHandlerMixin:
                     renderer.print_system_message("Action taken.", style="dim_text")
             else:
                 renderer.print_system_message("Action taken.", style="dim_text")
+            # World growth: every AI action is recorded; new ones make the
+            # world react, repeated ones may yield what they produce.
+            self._record_world_action(option, narrative_text)
+
             # Remove just this option so it can't be spammed; keep others
             dynamic = self.state._dynamic_options.get(state_key, [])
             self.state._dynamic_options[state_key] = [
@@ -217,6 +221,18 @@ class ChoiceHandlerMixin:
             self.state.current_node_id = option.leads_to_node or "root"
 
         self.state.mark_dirty()
+
+    def _record_world_action(self, option, narrative_text: str) -> None:
+        from systems.ai_trigger_policy import WORLD_ACTION_PREFIX, parse_world_action
+        from systems.world_growth import derive_world_action
+
+        tag = next((t for t in option.triggers or [] if t.startswith(WORLD_ACTION_PREFIX)), None)
+        if tag is None:  # e.g. AI follow-up options, which carry no triggers
+            tag = derive_world_action(option.label.replace("[AI]", ""))
+        parsed = parse_world_action(tag) if tag else None
+        if parsed:
+            from core.world_growth_flow import on_world_action
+            on_world_action(self, parsed[0], parsed[1], narrative_text)
 
     def _current_scene_title_and_text(self, max_text: int) -> tuple[str, str]:
         scene = self.scene_registry.get(self.state.current_scene_id)

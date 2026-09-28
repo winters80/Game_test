@@ -26,7 +26,12 @@ VERATH_ACCESS_FLAG = "verath_access"
 
 def _dynamic_option_rules(player: "Player") -> list[str]:
     """Situational rules for the "Ask about this situation" prompt."""
-    rules: list[str] = []
+    rules: list[str] = [
+        'Every option must include exactly one trigger "world_action:<verb>:<subject>" '
+        'naming what the player does, e.g. "world_action:mine:gold".',
+        'Other allowed triggers: "flag:<snake_name>", "alignment:+N" or "alignment:-N" (max 5). '
+        "Never give gold, items, skills or quests.",
+    ]
     if not player.has_flag(VERATH_ACCESS_FLAG):
         rules.append(
             "If an option would realistically get the player past Verath's "
@@ -406,6 +411,51 @@ class ContentGenerator:
             logger.warning(f"NPC shop-refusal generation failed: {e}")
             return None
         return (raw or "").strip().strip('"') or None
+
+    def generate_world_expansion(
+        self,
+        verb: str,
+        subject: str,
+        zone_name: str,
+        scene_title: str,
+        narrative: str,
+        player: "Player",
+        known_items: list[str],
+    ) -> dict | None:
+        """
+        Ask the primary model how the world should grow around a player
+        action. Returns ``{"response": AIWorldExpansionResponse,
+        "skill": Skill | None}``, or None on failure. Values are NOT yet
+        clamped: systems/world_growth does that before anything is used.
+        Runs in the background worker; never on the main thread.
+        """
+        from ai.prompt_builder import build_world_expansion_prompt
+        from ai.response_validator import AIWorldExpansionResponse
+
+        prompt = build_world_expansion_prompt(
+            verb=verb, subject=subject, zone_name=zone_name,
+            scene_title=scene_title, narrative=narrative,
+            player_level=player.level, known_items=known_items,
+        )
+        try:
+            raw = self.client.generate_json(
+                prompt=prompt, system_prompt=self.system_prompt, temperature=0.6,
+            )
+            response = AIWorldExpansionResponse.model_validate(raw)
+        except Exception as e:
+            logger.info(f"World expansion generation failed: {e}")
+            return None
+
+        skill = None
+        if response.skill_hint:
+            skill = self.generate_skill(
+                player=player,
+                name_hint=response.skill_hint,
+                source="world_action",
+                context={"scene_title": scene_title,
+                         "scene_text": f"The player chose to {verb} {subject}. {narrative[:160]}"},
+            )
+        return {"response": response, "skill": skill}
 
     def token_usage(self) -> list[tuple[str, str, dict]]:
         """
