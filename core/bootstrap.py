@@ -42,6 +42,9 @@ def load_registries(engine: "GameEngine") -> None:
     engine.class_registry.load_from_file(DATA_DIR / "classes" / "combo_classes.json")
     engine.skill_registry.load_from_dir(DATA_DIR / "skills")
     engine.item_registry.load_from_dir(DATA_DIR / "items")
+    # Loaded once so recipes registered at runtime persist for the session.
+    from systems.alchemy_system import load_recipes
+    engine.recipes = load_recipes(DATA_DIR)
     engine.scene_registry.load_from_dir(
         Path(__file__).parent.parent / "scenes" / "data"
     )

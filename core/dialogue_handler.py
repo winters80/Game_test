@@ -36,17 +36,19 @@ class DialogueHandlerMixin:
             renderer.print_scene_text(["There is no one there that you can make out."])
             return
 
-        # Schedule / location check — NPC may have moved to another zone
-        if npc.schedule:
+        # Schedule / route check — NPC may have moved to another zone
+        if npc.schedule or npc.route:
             from systems.npc_system import get_npc_zone
             npc_zone = get_npc_zone(npc, self.state.player.turn_count)
             if npc_zone != self.state.current_scene_id:
-                phase = "day" if (self.state.player.turn_count % 20) < 10 else "night"
-                renderer.print_system_message(
-                    f"{npc.name} isn't here right now. "
-                    f"They're usually in {npc_zone.replace('_', ' ').title()} during the {phase}.",
-                    style="dim",
-                )
+                where = npc_zone.replace('_', ' ').title()
+                if npc.route:
+                    msg = f"{npc.name} has moved on. Word is they're at {where} now."
+                else:
+                    phase = "day" if (self.state.player.turn_count % 20) < 10 else "night"
+                    msg = (f"{npc.name} isn't here right now. "
+                           f"They're usually in {where} during the {phase}.")
+                renderer.print_system_message(msg, style="dim")
                 return
 
         # Register in world_db if first encounter
@@ -76,6 +78,10 @@ class DialogueHandlerMixin:
             ):
                 seed_pairs = self._build_quest_seed_options(npc, disposition)
                 options.extend(opt for opt, _ in seed_pairs)
+
+            # Trader NPCs: buy / sell menus, at the conversation root only.
+            if npc.trades is not None and current_node == npc_system.get_disposition_hook(npc, disposition):
+                options.extend(self._build_trade_options(npc))
 
             if not options:
                 break
@@ -110,6 +116,14 @@ class DialogueHandlerMixin:
 
             if not chosen_opt_scene:
                 break
+
+            # ── Synthetic trade options ───────────────────────────────────────
+            if chosen_opt_scene.option_id == "__trade_buy__":
+                self._trade_buy_menu(npc)
+                continue
+            if chosen_opt_scene.option_id == "__trade_sell__":
+                self._trade_sell_menu(npc)
+                continue
 
             # ── Synthetic quest-seed option ───────────────────────────────────
             if chosen_opt_scene.option_id.startswith("__qseed__"):
@@ -213,6 +227,73 @@ class DialogueHandlerMixin:
 
         self.state.mark_dirty()
         renderer.prompt_any_key()
+
+    # ── Trading ───────────────────────────────────────────────────────────────
+
+    def _build_trade_options(self, npc) -> list:
+        """« Browse wares » / « Sell items » for a trader NPC."""
+        from scenes.scene_base import SceneOption
+        from systems import trade_system
+
+        opts = []
+        if trade_system.wares(npc, self.item_registry):
+            opts.append(SceneOption(
+                option_id="__trade_buy__", label="« Browse wares »",
+                leads_to="__stay__", expected=True, triggers=[],
+            ))
+        if npc.trades.buys:
+            opts.append(SceneOption(
+                option_id="__trade_sell__", label="« Sell items »",
+                leads_to="__stay__", expected=True, triggers=[],
+            ))
+        return opts
+
+    def _trade_buy_menu(self, npc) -> None:
+        from config import format_currency as _fc
+        from systems import trade_system
+
+        while True:
+            offers = trade_system.wares(npc, self.item_registry)
+            renderer.console.print(f"\n  [gold]Your gold: {_fc(self.state.player.gold)}[/gold]")
+            labels = [f"{w.item.name} — {_fc(w.price)}" for w in offers] + ["← Done"]
+            answer = questionary.select(f"{npc.name}'s wares:", choices=labels).ask()
+            if answer is None or answer == "← Done":
+                return
+            offer = offers[labels.index(answer)]
+            ok, msg = trade_system.buy_item(self.state.player, npc, offer.item.item_id, self.item_registry)
+            (renderer.print_success if ok else renderer.print_error)(msg)
+            bus.flush()
+            self.state.mark_dirty()
+
+    def _trade_sell_menu(self, npc) -> None:
+        from config import format_currency as _fc
+        from systems import trade_system
+
+        while True:
+            goods = trade_system.sellable_items(self.state.player, npc, self.item_registry)
+            if not goods:
+                renderer.print_npc_response(npc.name, "Nothing you're carrying interests me.")
+                renderer.prompt_any_key()
+                return
+            labels = [f"{g.item.name} ×{g.quantity} — {_fc(g.unit_price)} each" for g in goods] + ["← Done"]
+            answer = questionary.select(f"Sell to {npc.name}:", choices=labels).ask()
+            if answer is None or answer == "← Done":
+                return
+            chosen = goods[labels.index(answer)]
+            qty = 1
+            if chosen.quantity > 1:
+                raw = questionary.text(
+                    f"How many? (1-{chosen.quantity})", default=str(chosen.quantity),
+                ).ask()
+                try:
+                    qty = int(raw or 1)
+                except ValueError:
+                    qty = 1
+            ok, msg, _earned = trade_system.sell_item(
+                self.state.player, npc, chosen.item.item_id, self.item_registry, qty,
+            )
+            (renderer.print_success if ok else renderer.print_error)(msg)
+            self.state.mark_dirty()
 
     # ── Quest-seed dialogue injection ─────────────────────────────────────────
 

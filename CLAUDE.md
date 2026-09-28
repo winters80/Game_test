@@ -44,6 +44,18 @@ Add to a `data/items/*.json` file. Set `"combo_catalyst": true` if the item shou
 ### New NPC *(npc_system feature flag must be True)*
 Add a template to `data/npcs/*.json`. The NPC is instantiated into `npc_instances` SQLite table on first entry to their home zone.
 
+Optional NPC fields for traders (`systems/trade_system.py`):
+
+| Field | Effect |
+|-------|--------|
+| `trades.buys` | Item ids or `type:ITEM_TYPE` tags the NPC will buy. Price = `value_gold × 100 × buy_rate` copper |
+| `trades.buy_rate` | 0–1, default 0.5 |
+| `trades.sells` | `[{"item_id": ..., "price": copper}]` shown under « Browse wares » |
+| `ambient` | `true` → an automatic "Talk to …" option appears at the root node of whatever zone the NPC is in. No scene edit needed |
+| `route` | Zones a travelling NPC visits in order, `TRADER_ROUTE_STAY_TURNS` (15) turns each. Overrides `schedule` |
+
+Trade menus (« Browse wares » / « Sell items ») are injected at the dialogue root of any NPC with `trades`. The last copy of an equipped item is never sellable. `NPCRegistry.register()` and `alchemy_system.register_recipe()` add NPCs and recipes at runtime; recipes load once into `engine.recipes`.
+
 ### New quest template *(quest_system feature flag must be True)*
 Add to `data/quests/*.json`. Quest state machine states are defined in the JSON.
 
@@ -72,6 +84,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `give_food:X` | Add one food item X to inventory; fires `ITEM_FOUND` event |
 | `give_skill:X` | Add skill_id X to player; fires `SKILL_ACQUIRED` event. If X isn't in the skill registry, a skill is AI-generated (or a deterministic default is built) under that id |
 | `give_gold:N` | Add N to `player.gold`, which is stored in **copper** (`COPPER_PER_GOLD` = 100), so `give_gold:500` is 5g |
+| `spend_gold:N` | Subtract N copper from `player.gold` (never below 0). Gate the option with `requires.min_gold` |
 | `set_base_class:X` | Assign class_id X as player's base class via `class_system.assign_base_class()` |
 | `set_gender:X` | Set `player.gender` |
 | `set_species:X` | *(species_system)* Queue species X; applied after the choice resolves |
@@ -88,6 +101,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `join_guild:X` | *(guild_system)* Join guild X |
 | `update_faction:X:±N` | *(faction_system)* Shift standing with faction X by N |
 | `show_auction` / `buy_life_token` | *(auction_house)* Open the auction house / buy a life token directly |
+| `world_action:VERB:SUBJECT` | AI-only tag describing what the player did (e.g. `world_action:mine:gold`). No direct effect; feeds world expansion |
 
 ### Adding a new trigger type
 1. If it only changes player/game state, add it to `process_triggers()` in `scenes/option_logic.py`
@@ -105,8 +119,12 @@ Option `"requires"` block controls visibility and locking:
   "min_stats": { "INT": 15 },
   "items": ["ancient_tome"],
   "flags": ["found_vault"],
+  "flags_any": ["took_left_path", "took_right_path"],
+  "flags_absent": ["vault_emptied"],
+  "min_gold": 2500,
   "alignment_min": 20,
-  "alignment_max": 100
+  "alignment_max": 100,
+  "lock_reason": "The vault door won't budge."
 }
 ```
 
@@ -114,9 +132,15 @@ Option `"requires"` block controls visibility and locking:
 |-------|---------|
 | `min_stats` | Hard lock if any stat below threshold. Shows lock reason. |
 | `items` | Hard lock if item not in inventory |
-| `flags` | Hard lock if flag not set on player |
+| `flags` | Hard lock if any listed flag is not set on player |
+| `flags_any` | Hard lock unless **at least one** listed flag is set |
+| `flags_absent` | **Hides** the option if any listed flag is set (use for one-shot options) |
+| `min_gold` | Hard lock if `player.gold` (copper) is below the value; pair with a `spend_gold:N` trigger |
 | `alignment_min` | *(alignment_system)* Hard lock if `player.alignment < value` |
 | `alignment_max` | *(alignment_system)* Hard lock if `player.alignment > value` |
+| `lock_reason` | Replaces the generic lock text shown when the option is locked. Write it in-world |
+
+**Verath access:** the capital (`verath_city`) is gated on the `verath_access` flag. It's granted by clearing Floor 1 (both fights, then the survey report), by descending to Floor 2, by one of the divergent routes at `village_start.city_gate` (bribe, INT, LCK, the Gray Wanderer's blind spot), or by the fast AI model when a typed `[?]` action plausibly gets the player past the gate (`ai/content_generator._dynamic_option_rules`).
 
 **Divergence signal:** Set `"expected": false` on any option that represents an unusual player path. This feeds the divergence scorer. The higher the score, the more likely the player gets an AI-generated class at the Class Awakening scene.
 
@@ -186,6 +210,8 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 | `death_records` | Every death: cause, zone, level, alignment, lives_remaining |
 | `world_flags` | Global flags independent of the player |
 | `turn_log` | Lightweight event log for quest/NPC trigger processing |
+| `world_actions` | *(schema v6)* Every AI-option action the player took (`verb:subject`), status `pending` / `expanded` / `empty` / `no_ai`, yield cooldown |
+| `world_expansions` | *(schema v6)* The validated content bundle the world grew for each action; re-registered on load |
 
 **Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
 
@@ -217,6 +243,22 @@ variable. The "No package outside ai/ bypasses AIService" check in
 (e.g. follow-up option flavour) log failures at INFO. The console handler
 shows WARNING and above, so a WARNING would print mid-scene.
 
+### AI trigger policy (`systems/ai_trigger_policy.py`)
+
+Every trigger list the AI authors, whether on `[?]` situation options or on
+background NPC dialogue branches, goes through `sanitize_ai_triggers()` before
+the engine sees it. Only these survive:
+
+| Trigger | Rule |
+|---------|------|
+| `flag:X` | Rewritten to `flag:ai_X`, so the AI can never set an authored story flag. Exception: `config.AI_GRANTABLE_FLAGS` (currently `verath_access`) |
+| `give_item:X` | X must exist and be a COMMON/UNCOMMON **consumable or material**, not a combo catalyst. Max 1 per option |
+| `alignment:±N` | Clamped to `AI_MAX_ALIGNMENT_SHIFT` (5) |
+| `combat:X` | X must be in `combat_system.ENCOUNTERS` |
+| `world_action:VERB:SUBJECT` | Slugged; one per option |
+
+Everything else (gold, skills, classes, quests, NPC talk, shops, factions, rests) is dropped and logged at INFO. AI option `requires.flags` match either the authored flag or its `ai_` form. To let the AI grant a new story flag, add it to `AI_GRANTABLE_FLAGS` deliberately.
+
 ### Economy guard rails
 
 All quest rewards — hand-crafted and AI-generated — are denominated in
@@ -245,6 +287,7 @@ before proposing rewards.
 2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
 3. **Quest generation** *(quest_system)* — fired from `dialogue_handler` when the player picks an injected `« Is there any work I could take on? »` option. Triggered by an explicit `"ai_dynamic"` seed on the NPC, **or implicitly** when the NPC has no available seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN` (default 30) and `_ai_offered_{npc_id}` flag is unset.
 4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
+5. **World growth** — the first time the player takes a new `[?]` action (`world_action:VERB:SUBJECT`), the primary model is asked in the background how the world should respond. See "World Growth" below.
 
 ### AI response schemas (validated by `ai/response_validator.py`)
 All AI calls must return JSON validated against Pydantic models. If validation fails, retry up to `OLLAMA_MAX_RETRIES` times, then use the fallback.
@@ -255,6 +298,7 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 | `generate_narrative()` | plain text string | None (scene uses static text) |
 | `generate_quest()` *(future)* | `AIQuestResponse` | nearest matching template quest |
 | `generate_npc_dialogue()` *(future)* | `AINPCDialogueResponse` | NPC's `dialogue_hooks["default"]` |
+| `generate_world_expansion()` | `AIWorldExpansionResponse` (+ optional skill) | None: the action stays logged, nothing is added |
 
 ### Lore constraints (always injected into system prompt)
 - World name: Aethoria
@@ -265,6 +309,35 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 - See `data/world/lore_fragments.json` for full context
 
 ---
+
+## World Growth (typed actions grow the world)
+
+The script is the spine; what the player *types* grows the world around it.
+
+1. **Fast model** (`[?] Ask about this situation`): answers and offers options. Every option carries `world_action:VERB:SUBJECT` (e.g. `world_action:mine:gold`). If the small model forgets, `world_growth.derive_world_action()` derives one from the label. AI follow-up options are tagged the same way.
+2. **Player picks the option** → `core/world_growth_flow.on_world_action()`:
+   - **New action** (`world_growth.action_key()` normalises "gold veins" and "the gold" to `mine:gold`): recorded in `world_actions`, queued as a background `world_expansion` task, and the player sees a **✦ DISCOVERY** notice.
+   - **Already expanded**: the player gathers the bundle's yield item, at most once every `WORLD_YIELD_COOLDOWN_TURNS` (10).
+   - **No Ollama**: recorded as `no_ai`; nothing is promised.
+3. **Primary model, in the background** (`ContentGenerator.generate_world_expansion`): returns a yield item, up to 3 derived items, 2 recipes, 1 trader, and an optional skill hint (which becomes a real skill via `generate_skill`).
+4. **`systems/world_growth.build_bundle()`** turns that untrusted response into a safe bundle:
+   - every new id is prefixed `gen_` and can never overwrite authored content
+   - only MATERIAL / CONSUMABLE items, with values and heals clamped by `economy.generated_item_value_cap` / `generated_effect_cap`
+   - recipes must reference real items
+   - traders are ambient, placed at `outer_market` / `verath` / `camp` or travelling the `road`, only trade materials and consumables, and sell at 1–3× value (no buy-low / sell-high loops)
+5. **`apply_expansion_result()`** registers the bundle, stores it in `world_expansions`, gives the player the new item (and skill), and announces **✦ NEW ITEM / NEW SKILL / NEW RECIPE / WORD SPREADS**. It also logs to the `[L]` World Log.
+6. **Per save:** `reload_world_growth()` (called on new game and load) clears every `gen_` item / NPC / recipe / skill, then re-registers only this save's bundles.
+
+Guard rails (all in `config.py`):
+
+| Setting | Effect |
+|---------|--------|
+| `WORLD_MAX_TRADERS_PER_LOCATION` (2) | Once a zone (or the road) has this many generated traders, a new bundle's goods are merged into an existing one's stock (`npc_extend`) instead of adding another NPC |
+| `WORLD_MAX_EXPANSIONS` (60) | Per save. Later new actions are recorded as `capped` and never queued |
+| `WORLD_RETRY_ON_LOAD` (3) | On load, up to this many `pending` / `no_ai` actions are re-queued if the AI is available (the background queue doesn't survive quitting) |
+| `WORLD_YIELD_COOLDOWN_TURNS` (10) | Minimum turns between gathering an action's yield |
+
+The admin panel's **World Growth log** lists every recorded action, its status, and what it added.
 
 ## Divergence System (How AI Classes Are Triggered)
 
@@ -289,6 +362,8 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 2 | Added: gender, species_id, alignment, lives_remaining/used, guild_memberships, faction_standing_cache, active/completed_quest_ids, evolution_stage, background, perception_bonus, turn_count, last_safe_zone_id. Paired SQLite .db file introduced. |
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
+
+The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **6** (v6 added `world_actions` + `world_expansions`). Migrations run automatically on open.
 
 ## Skill System
 

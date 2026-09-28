@@ -331,3 +331,154 @@ class AIGuildTemplateResponse(BaseModel):
     @classmethod
     def cap_perks(cls, v: list) -> list:
         return v[:4]
+
+
+# ── World expansion (primary model reacting to a player action) ──────────────
+#
+# Loose on shape, strict on content: ids are slugged, lists capped, and
+# anything numeric is re-clamped by systems/world_growth + systems/economy
+# before it touches the game. Item types are limited to crafting materials
+# and consumables so a model can't mint gear.
+
+def _slug(v: object, max_len: int = 40) -> str:
+    import re
+    s = re.sub(r"[^a-z0-9]+", "_", str(v or "").strip().lower()).strip("_")
+    return s[:max_len].rstrip("_")
+
+
+class AIWorldItem(BaseModel):
+    item_id: str
+    name: str
+    description: str = ""
+    item_type: Literal["MATERIAL", "CONSUMABLE"] = "MATERIAL"
+    value_gold: int = 1
+    effect_type: Literal["", "heal_hp", "heal_mp"] = ""
+    effect_value: int = 0
+
+    @field_validator("item_id", mode="before")
+    @classmethod
+    def _id(cls, v: object) -> str:
+        return _slug(v)
+
+    @field_validator("item_type", mode="before")
+    @classmethod
+    def _type(cls, v: object) -> str:
+        return "CONSUMABLE" if str(v).upper() == "CONSUMABLE" else "MATERIAL"
+
+    @field_validator("effect_type", mode="before")
+    @classmethod
+    def _effect(cls, v: object) -> str:
+        v = str(v or "").lower()
+        return v if v in ("heal_hp", "heal_mp") else ""
+
+    @field_validator("value_gold", "effect_value", mode="before")
+    @classmethod
+    def _int(cls, v: object) -> int:
+        try:
+            return max(0, int(float(v)))
+        except (TypeError, ValueError):
+            return 0
+
+
+class AIWorldIngredient(BaseModel):
+    item_id: str
+    qty: int = 1
+
+    @field_validator("item_id", mode="before")
+    @classmethod
+    def _id(cls, v: object) -> str:
+        return _slug(v)
+
+    @field_validator("qty", mode="before")
+    @classmethod
+    def _qty(cls, v: object) -> int:
+        try:
+            return max(1, min(10, int(v)))
+        except (TypeError, ValueError):
+            return 1
+
+
+class AIWorldRecipe(BaseModel):
+    recipe_id: str
+    name: str = ""
+    ingredients: list[AIWorldIngredient]
+    output_item_id: str
+    output_qty: int = 1
+
+    @field_validator("recipe_id", "output_item_id", mode="before")
+    @classmethod
+    def _id(cls, v: object) -> str:
+        return _slug(v)
+
+    @field_validator("ingredients")
+    @classmethod
+    def _cap(cls, v: list) -> list:
+        return v[:4]
+
+
+class AIWorldTradeOffer(BaseModel):
+    item_id: str
+    price_gold: int = 1
+
+    @field_validator("item_id", mode="before")
+    @classmethod
+    def _id(cls, v: object) -> str:
+        return _slug(v)
+
+    @field_validator("price_gold", mode="before")
+    @classmethod
+    def _price(cls, v: object) -> int:
+        try:
+            return max(1, int(float(v)))
+        except (TypeError, ValueError):
+            return 1
+
+
+class AIWorldTrader(BaseModel):
+    name: str
+    description: str = ""
+    greeting: str = ""
+    location: Literal["outer_market", "verath", "camp", "road"] = "outer_market"
+    buys: list[str] = []
+    sells: list[AIWorldTradeOffer] = []
+
+    @field_validator("location", mode="before")
+    @classmethod
+    def _loc(cls, v: object) -> str:
+        v = _slug(v)
+        return v if v in ("outer_market", "verath", "camp", "road") else "outer_market"
+
+    @field_validator("buys", mode="before")
+    @classmethod
+    def _buys(cls, v: object) -> list[str]:
+        return [str(x) for x in (v or [])][:6]
+
+    @field_validator("sells")
+    @classmethod
+    def _sells(cls, v: list) -> list:
+        return v[:4]
+
+
+class AIWorldExpansionResponse(BaseModel):
+    """What the world grows in response to a player action."""
+    summary: str = ""                       # one in-world sentence ("Word spreads…")
+    yield_item: AIWorldItem | None = None   # what repeating the action produces
+    items: list[AIWorldItem] = []           # derived goods (e.g. smelted ingot)
+    recipes: list[AIWorldRecipe] = []
+    trader: AIWorldTrader | None = None
+    skill_hint: str = ""                    # optional skill the action teaches
+
+    @field_validator("items")
+    @classmethod
+    def _items(cls, v: list) -> list:
+        return v[:3]
+
+    @field_validator("recipes")
+    @classmethod
+    def _recipes(cls, v: list) -> list:
+        return v[:2]
+
+    @field_validator("skill_hint", mode="before")
+    @classmethod
+    def _hint(cls, v: object) -> str:
+        return str(v or "").strip()[:40]

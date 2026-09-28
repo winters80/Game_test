@@ -398,20 +398,67 @@ def build_dynamic_options_prompt(
     player_stats: dict,
     player_flags: list[str],
     lore_data: dict,
+    extra_rules: list[str] | None = None,
 ) -> str:
     """
     Build a prompt for generating dynamic situational options based on player question.
+
+    ``extra_rules`` are short, situational instructions (e.g. which unlock
+    flags the model may grant right now), one line each.
     """
     stats_str = ", ".join(f"{k}:{v}" for k, v in player_stats.items())
     options_str = "\n".join(f"- {o}" for o in current_options)
     flags_str = ", ".join(player_flags[:12]) or "none"
     world_name = lore_data.get("world_name", "Aethoria")
+    rules_str = "".join(f"Rule: {r}\n" for r in (extra_rules or []))
 
     return f"""Scene: {scene_title}
 Context: {scene_text[:200]}
 Player stats: {stats_str}
 Flags: {flags_str}
 Question: "{question}"
-
+{rules_str}
 Return ONLY JSON with 1-2 options:
 {{"situation_text":"1-2 sentence description","options":[{{"option_id":"snake_id","label":"Short label","narrative":"1 sentence outcome","triggers":[]}}]}}"""
+
+
+def build_world_expansion_prompt(
+    verb: str,
+    subject: str,
+    zone_name: str,
+    scene_title: str,
+    narrative: str,
+    player_level: int,
+    known_items: list[str],
+) -> str:
+    """Ask the primary model how the world should grow around a player action.
+
+    The model proposes goods, recipes, a trader and optionally a skill. Every
+    value is re-validated and clamped by systems/world_growth afterwards;
+    the ranges here just steer it towards sensible numbers.
+    """
+    from systems.economy import generated_effect_cap, generated_item_value_cap
+
+    mat_cap = generated_item_value_cap(player_level, "MATERIAL")
+    con_cap = generated_item_value_cap(player_level, "CONSUMABLE")
+    heal_cap = generated_effect_cap(player_level)
+    known = ", ".join(known_items[:30]) or "none"
+    return f"""A player in {zone_name} (scene: {scene_title}) just did this: {verb} {subject.replace('_', ' ')}.
+What happened: {narrative[:240] or 'unknown'}
+Player level: {player_level}
+
+Decide how the world grows so this action matters. Return ONLY JSON:
+{{"summary": "one in-world sentence announcing the change",
+  "yield_item": {{"item_id": "snake_id", "name": "...", "description": "...", "item_type": "MATERIAL", "value_gold": 1}},
+  "items": [{{"item_id": "...", "name": "...", "description": "...", "item_type": "MATERIAL|CONSUMABLE", "value_gold": 1, "effect_type": "|heal_hp|heal_mp", "effect_value": 0}}],
+  "recipes": [{{"recipe_id": "...", "name": "...", "ingredients": [{{"item_id": "...", "qty": 1}}], "output_item_id": "...", "output_qty": 1}}],
+  "trader": {{"name": "...", "description": "...", "greeting": "...", "location": "outer_market|verath|camp|road", "buys": ["item ids"], "sells": [{{"item_id": "...", "price_gold": 1}}]}},
+  "skill_hint": "optional short skill name, or empty"}}
+
+Rules:
+- yield_item is the raw thing the action produces (e.g. gold ore from mining gold). Omit it if the action produces nothing tangible.
+- Items are MATERIAL (max {mat_cap} gold) or CONSUMABLE (max {con_cap} gold, heal max {heal_cap}). No weapons or armour.
+- At most 3 items, 2 recipes, 1 trader. Recipes and trades may use your new item ids or these existing ones: {known}.
+- Add a trader only if someone in the world would plausibly buy or sell these goods. "road" means a travelling trader.
+- Only add skill_hint if the action is a craft or technique worth learning (e.g. "Prospecting").
+- Aethoria is grounded low fantasy after the Fracture. Keep names short and believable."""

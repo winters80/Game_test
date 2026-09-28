@@ -38,7 +38,39 @@ def get_current_options(engine: "GameEngine") -> list[SceneOption]:
     dynamic = engine.state._dynamic_options.get(state_key, [])
     if dynamic:
         options = list(options) + dynamic
+    if engine.state.current_node_id == "root":
+        options = list(options) + _ambient_npc_options(engine, options)
     return options
+
+
+def _ambient_npc_options(engine: "GameEngine", existing: list[SceneOption]) -> list[SceneOption]:
+    """A "Talk to …" option for each ambient NPC currently in this zone.
+
+    Lets traders (hand-authored or AI-generated) turn up in a zone without
+    editing its scene JSON. NPCs the scene already links to are skipped.
+    """
+    if not feature("npc_system") or getattr(engine, "npc_registry", None) is None:
+        return []
+    from systems.trade_system import ambient_npcs_here
+
+    linked = {
+        t[len("talk_npc:"):] for opt in existing for t in (opt.triggers or [])
+        if t.startswith("talk_npc:")
+    }
+    out = []
+    for npc in ambient_npcs_here(engine.npc_registry, engine.state):
+        if npc.template_id in linked:
+            continue
+        role = npc.role.replace("_", " ")
+        out.append(SceneOption(
+            option_id=f"__ambient__{npc.template_id}",
+            label=f"Talk to {npc.name}, the {role}.",
+            leads_to="__stay__",
+            leads_to_node=engine.state.current_node_id,
+            expected=True,
+            triggers=[f"talk_npc:{npc.template_id}"],
+        ))
+    return out
 
 
 # ── Hotkey table ─────────────────────────────────────────────────────────────

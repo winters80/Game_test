@@ -48,6 +48,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self.class_registry = ClassRegistry()
         self.skill_registry = SkillRegistry()
         self.item_registry = ItemRegistry()
+        self.recipes: list[dict] = []   # crafting recipes; bootstrap loads, runtime may add
         self.scene_registry = SceneRegistry()
 
         # Feature-gated registries — None when feature flag off

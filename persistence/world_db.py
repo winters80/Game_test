@@ -16,6 +16,8 @@ Tables created by this module:
   - death_records       — every player death, for narrative use
   - world_flags         — global world-state flags independent of player
   - turn_log            — lightweight event log for quest/NPC triggers
+  - world_actions       — player actions the world has noticed (world growth)
+  - world_expansions    — AI-built content bundles per action, re-registered on load
 """
 
 from __future__ import annotations
@@ -27,7 +29,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 5
+DB_SCHEMA_VERSION = 6
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -239,6 +241,22 @@ CREATE TABLE IF NOT EXISTS guild_projects (
     started_turn    INTEGER NOT NULL,
     FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
 );
+CREATE TABLE IF NOT EXISTS world_actions (
+    action_key      TEXT PRIMARY KEY,
+    verb            TEXT NOT NULL,
+    subject         TEXT NOT NULL,
+    zone_id         TEXT DEFAULT '',
+    times           INTEGER NOT NULL DEFAULT 1,
+    first_turn      INTEGER NOT NULL DEFAULT 0,
+    last_yield_turn INTEGER NOT NULL DEFAULT -1,
+    status          TEXT NOT NULL DEFAULT 'pending'
+);
+CREATE TABLE IF NOT EXISTS world_expansions (
+    action_key      TEXT PRIMARY KEY,
+    bundle          TEXT NOT NULL,
+    yield_item_id   TEXT DEFAULT '',
+    created_turn    INTEGER NOT NULL DEFAULT 0
+);
 """
 
 
@@ -392,6 +410,25 @@ class WorldDatabase:
                     lead_entity_id  TEXT DEFAULT '',
                     started_turn    INTEGER NOT NULL,
                     FOREIGN KEY (guild_id) REFERENCES guild_state(guild_id) ON DELETE CASCADE
+                );
+            """)
+        if from_version < 6:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS world_actions (
+                    action_key      TEXT PRIMARY KEY,
+                    verb            TEXT NOT NULL,
+                    subject         TEXT NOT NULL,
+                    zone_id         TEXT DEFAULT '',
+                    times           INTEGER NOT NULL DEFAULT 1,
+                    first_turn      INTEGER NOT NULL DEFAULT 0,
+                    last_yield_turn INTEGER NOT NULL DEFAULT -1,
+                    status          TEXT NOT NULL DEFAULT 'pending'
+                );
+                CREATE TABLE IF NOT EXISTS world_expansions (
+                    action_key      TEXT PRIMARY KEY,
+                    bundle          TEXT NOT NULL,
+                    yield_item_id   TEXT DEFAULT '',
+                    created_turn    INTEGER NOT NULL DEFAULT 0
                 );
             """)
         self._conn.execute(
@@ -630,6 +667,57 @@ class WorldDatabase:
         from persistence.repos import ai_content_repo
         assert self._conn
         return ai_content_repo.load_ai_skills(self._conn)
+
+    # ── World growth (delegates to persistence/repos/world_growth_repo.py) ───
+
+    def get_world_action(self, action_key: str) -> dict[str, Any] | None:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.get_action(self._conn, action_key)
+
+    def record_world_action(
+        self, action_key: str, verb: str, subject: str, zone_id: str, turn: int,
+    ) -> dict[str, Any]:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.record_action(self._conn, action_key, verb, subject, zone_id, turn)
+
+    def set_world_action_status(self, action_key: str, status: str) -> None:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        world_growth_repo.set_status(self._conn, action_key, status)
+
+    def set_world_action_yield_turn(self, action_key: str, turn: int) -> None:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        world_growth_repo.set_last_yield_turn(self._conn, action_key, turn)
+
+    def list_world_actions(self, status: str | None = None) -> list[dict[str, Any]]:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.list_actions(self._conn, status)
+
+    def store_world_expansion(
+        self, action_key: str, bundle: dict, yield_item_id: str, turn: int,
+    ) -> None:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        world_growth_repo.store_expansion(self._conn, action_key, bundle, yield_item_id, turn)
+
+    def get_world_expansion(self, action_key: str) -> dict[str, Any] | None:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.get_expansion(self._conn, action_key)
+
+    def count_world_expansions(self) -> int:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.count_expansions(self._conn)
+
+    def load_world_expansions(self) -> list[dict[str, Any]]:
+        from persistence.repos import world_growth_repo
+        assert self._conn
+        return world_growth_repo.load_expansions(self._conn)
 
     def store_world_event(
         self, event_type: str, event_text: str, zone_id: str | None = None,

@@ -17,6 +17,8 @@ Result dict shapes:
   {"type": "area_activity","zone_id": str, "event_text": str}
   {"type": "bot_action",   "bot_id": str, "action": str, "target": str}
   {"type": "director_fired","target_count": int}
+  {"type": "world_expansion", "action_key": str, "zone_id": str,
+   "response": AIWorldExpansionResponse, "skill": Skill | None}
 
 Generation logic lives in ai/generators/ mixins:
   DirectorGenerators     — director analysis + target dispatch
@@ -89,6 +91,32 @@ class BackgroundGenerator(DirectorGenerators, WorldContentGenerators, EntityCont
             "zone_id": zone_id,
             "npc_hint": npc_hint,
             "player": player,
+        })
+
+    def submit_world_expansion(
+        self,
+        action_key: str,
+        verb: str,
+        subject: str,
+        zone_id: str,
+        zone_name: str,
+        scene_title: str,
+        narrative: str,
+        player: Any,
+        known_items: list[str],
+    ) -> bool:
+        """Queue a world expansion for a new player action. False if queue full."""
+        return self._submit({
+            "type": "world_expansion",
+            "action_key": action_key,
+            "verb": verb,
+            "subject": subject,
+            "zone_id": zone_id,
+            "zone_name": zone_name,
+            "scene_title": scene_title,
+            "narrative": narrative,
+            "player": player,
+            "known_items": known_items,
         })
 
     def submit_zone_narrative(self, zone_id: str, zone_name: str, context_flags: list[str]) -> bool:
@@ -303,4 +331,5 @@ class BackgroundGenerator(DirectorGenerators, WorldContentGenerators, EntityCont
         if t == "area_activity":  return self._gen_area_activity(task)
         if t == "guild_tick":     return self._gen_guild_tick(task)
         if t == "director_analysis": return self._gen_director_analysis(task)
+        if t == "world_expansion": return self._gen_world_expansion(task)
         return None

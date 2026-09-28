@@ -5,7 +5,8 @@ NPCTemplate     — static definition (name, role, dialogue tree, quest seeds)
 NPCDialogueNode — one "screen" of NPC speech + options
 NPCDialogueOption — a player choice within a dialogue node
 NPCQuestSeed    — which quests an NPC can offer and under what conditions
-NPCRegistry     — loads all templates from a single JSON file
+NPCTrades       — what a trader buys / sells
+NPCRegistry     — loads templates from JSON; ``register`` adds them at runtime
 """
 from __future__ import annotations
 
@@ -54,6 +55,24 @@ class NPCScheduleEntry(BaseModel):
     zone_id: str
 
 
+class NPCTradeOffer(BaseModel):
+    """Something a trader sells. ``price`` is in copper, like player.gold."""
+    item_id: str
+    price: int = Field(ge=1)
+
+
+class NPCTrades(BaseModel):
+    """What a trader NPC buys and sells (systems/trade_system.py).
+
+    ``buys`` entries are item ids or ``type:ITEM_TYPE`` tags (e.g.
+    ``type:MATERIAL``). Sale price to the trader = item.value_gold × 100 ×
+    ``buy_rate``.
+    """
+    buys: list[str] = Field(default_factory=list)
+    sells: list[NPCTradeOffer] = Field(default_factory=list)
+    buy_rate: float = Field(default=0.5, gt=0.0, le=1.0)
+
+
 class NPCTemplate(BaseModel):
     template_id: str                # stable ID, used in talk_npc: triggers
     npc_id: str                     # instance ID written to npc_instances SQLite table
@@ -74,6 +93,14 @@ class NPCTemplate(BaseModel):
     dialogue_nodes: dict[str, NPCDialogueNode] = Field(default_factory=dict)
     quest_seeds: list[NPCQuestSeed] = Field(default_factory=list)
     schedule: list[NPCScheduleEntry] = Field(default_factory=list)
+    # Travelling NPCs: zones visited in order, TRADER_ROUTE_STAY_TURNS each.
+    # Takes precedence over ``schedule`` when non-empty.
+    route: list[str] = Field(default_factory=list)
+    # Ambient NPCs get an automatic "Talk to …" option at the root node of
+    # whatever zone they're currently in, with no scene authoring needed.
+    ambient: bool = False
+    trades: NPCTrades | None = None
+    is_ai_generated: bool = False
 
 
 class NPCRegistry:
@@ -90,6 +117,17 @@ class NPCRegistry:
         """Load all *.json files in a directory. Each file is a JSON array of NPC templates."""
         for json_file in sorted(path.glob("*.json")):
             self.load_from_file(json_file)
+
+    def register(self, npc: NPCTemplate) -> None:
+        """Add or replace a template at runtime (e.g. AI world expansion)."""
+        self._npcs[npc.template_id] = npc
+
+    def remove(self, key: str) -> None:
+        """Drop an entry (used to clear one save's generated content before loading another)."""
+        self._npcs.pop(key, None)
+
+    def ids(self) -> list[str]:
+        return list(self._npcs)
 
     def get(self, template_id: str) -> NPCTemplate | None:
         return self._npcs.get(template_id)

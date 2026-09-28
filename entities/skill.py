@@ -84,6 +84,13 @@ class SkillRegistry:
     def register(self, skill: Skill) -> None:
         self._skills[skill.skill_id] = skill
 
+    def remove(self, key: str) -> None:
+        """Drop an entry (used to clear one save's generated content before loading another)."""
+        self._skills.pop(key, None)
+
+    def ids(self) -> list[str]:
+        return list(self._skills)
+
     def get(self, skill_id: str) -> Skill | None:
         return self._skills.get(skill_id)
 

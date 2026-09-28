@@ -44,10 +44,11 @@ def craft_item(
         return False, f"Requires skill: {required_skill}."
 
     for ing in recipe.get("ingredients", []):
-        if not player.has_item(ing["item_id"]):
+        have = _item_count(player, ing["item_id"])
+        if have < ing["qty"]:
             needed = item_registry.get(ing["item_id"])
             name = needed.name if needed else ing["item_id"]
-            return False, f"Missing ingredient: {name} x{ing['qty']}."
+            return False, f"Missing ingredient: {name} x{ing['qty']} (have {have})."
 
     # All checks passed — consume ingredients
     for ing in recipe.get("ingredients", []):
@@ -60,3 +61,47 @@ def craft_item(
     item = item_registry.get(output_id)
     name = item.name if item else output_id
     return True, f"Crafted {name} x{output_qty}."
+
+
+def _item_count(player: "Player", item_id: str) -> int:
+    return sum(slot.quantity for slot in player.inventory if slot.item_id == item_id)
+
+
+def register_recipe(
+    recipes: list[dict],
+    recipe: dict,
+    item_registry: "ItemRegistry",
+) -> tuple[bool, str]:
+    """Validate a recipe and add it to the live ``recipes`` list.
+
+    Used for recipes created at runtime (AI world expansion). Every
+    ingredient and the output must already exist in the item registry, and
+    the recipe_id must be new, so a generated recipe can't replace an
+    authored one. Returns (added, reason).
+    """
+    recipe_id = str(recipe.get("recipe_id", "")).strip()
+    if not recipe_id:
+        return False, "missing recipe_id"
+    if any(r.get("recipe_id") == recipe_id for r in recipes):
+        return False, f"recipe_id '{recipe_id}' already exists"
+    ingredients = recipe.get("ingredients") or []
+    if not ingredients:
+        return False, "no ingredients"
+    for ing in ingredients:
+        if item_registry.get(ing.get("item_id", "")) is None:
+            return False, f"unknown ingredient '{ing.get('item_id')}'"
+        if int(ing.get("qty", 0)) < 1:
+            return False, "ingredient qty must be >= 1"
+    output = recipe.get("output_item_id", "")
+    if item_registry.get(output) is None:
+        return False, f"unknown output '{output}'"
+    clean = {
+        "recipe_id": recipe_id,
+        "name": str(recipe.get("name") or recipe_id.replace("_", " ").title()),
+        "ingredients": [{"item_id": i["item_id"], "qty": int(i["qty"])} for i in ingredients],
+        "output_item_id": output,
+        "output_qty": max(1, int(recipe.get("output_qty", 1))),
+        "required_skill": recipe.get("required_skill") or None,
+    }
+    recipes.append(clean)
+    return True, "added"

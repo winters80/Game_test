@@ -49,6 +49,28 @@ DIVERGENCE_FLAGS = [
 # quest. Only fires when the NPC has no available pre-written quest seeds.
 AI_QUEST_DISPOSITION_MIN = 30.0
 
+# ── AI trigger policy (systems/ai_trigger_policy.py) ───────────────────────────
+# Effects the AI attaches to generated options are filtered before use.
+# Flags the AI sets are namespaced with AI_FLAG_PREFIX so it can never set an
+# authored story flag — except these, which content deliberately lets it grant.
+AI_FLAG_PREFIX = "ai_"
+AI_GRANTABLE_FLAGS = frozenset({"verath_access"})
+AI_MAX_ALIGNMENT_SHIFT = 5.0           # |alignment:±N| clamp for AI options
+AI_GIVEABLE_RARITIES = frozenset({"COMMON", "UNCOMMON"})
+# No gear, key/quest items or life tokens: those are progression, not flavour.
+AI_GIVEABLE_ITEM_TYPES = frozenset({"CONSUMABLE", "MATERIAL"})
+AI_MAX_ITEMS_PER_OPTION = 1
+
+# ── Traders (systems/trade_system.py) ──────────────────────────────────────────
+TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each route zone
+
+# ── World growth (systems/world_growth.py) ─────────────────────────────────────
+WORLD_YIELD_COOLDOWN_TURNS = 10        # turns before repeating an action yields again
+WORLD_MAX_TRADERS_PER_LOCATION = 2     # generated traders per zone (and on the road);
+                                       # beyond this, new goods join an existing one's stock
+WORLD_MAX_EXPANSIONS = 60              # world expansions per save; later new actions are 'capped'
+WORLD_RETRY_ON_LOAD = 3                # pending / no_ai actions re-queued per load
+
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP

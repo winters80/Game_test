@@ -91,7 +91,7 @@ def validate_scene_links(scene_reg: SceneRegistry) -> None:
 # ── Trigger validator ──────────────────────────────────────────────────────────
 
 VALID_TRIGGER_PREFIXES = {
-    "flag:", "give_item:", "give_skill:", "give_gold:", "set_base_class:",
+    "flag:", "give_item:", "give_skill:", "give_gold:", "spend_gold:", "set_base_class:",
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
     "rest_camp:", "give_food:",
@@ -240,7 +240,7 @@ def define_characters() -> list[SimChar]:
         ),
         SimChar(
             name="Bram",
-            description="Mage path — elf, mage class, visits city",
+            description="Mage path — elf, mage class, bribes the gate into the city",
             path=[
                 ("prologue", "root", "begin_rite"),
                 ("character_creation", "root", "begin_identity"),
@@ -251,7 +251,8 @@ def define_characters() -> list[SimChar]:
                 ("character_creation", "bg_scholar_confirm", "confirm_bg_scholar"),
                 ("character_creation", "affinity", "born_scholar"),
                 ("character_creation", "confirm_mage", "accept_mage"),
-                ("village_start", "root", "head_to_dungeon"),
+                ("village_start", "root", "approach_city_gate"),
+                ("village_start", "city_gate", "bribe_gate_guard"),
                 ("verath_city", "root", "go_mages_spire"),
             ],
         ),
@@ -1676,6 +1677,626 @@ def main() -> None:
     except Exception as e:
         fail("Final game_engine extractions broken", e)
         traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("24. Verath Gate + Option Gates (flags_any / min_gold / lock_reason)")
+    _vstate = None
+    try:
+        from scenes.option_logic import build_option, process_triggers
+
+        # 24a. Every scene is reachable from the prologue. Verath used to be
+        # an island: nothing linked into it.
+        _edges: dict[str, set[str]] = {}
+        for _sid, _sc in scene_reg._scenes.items():
+            _edges[_sid] = {
+                o.get("leads_to") for n in _sc.nodes.values()
+                for o in n.get("options", [])
+                if o.get("leads_to") not in (None, "__stay__")
+            }
+        _seen, _todo = {"prologue"}, ["prologue"]
+        while _todo:
+            for _nxt in _edges.get(_todo.pop(), ()):
+                if _nxt in _edges and _nxt not in _seen:
+                    _seen.add(_nxt); _todo.append(_nxt)
+        _unreachable = sorted(set(_edges) - _seen)
+        assert not _unreachable, f"Scenes unreachable from prologue: {_unreachable}"
+        ok(f"All {len(_edges)} scenes reachable from the prologue")
+
+        _vp = Player(name="GateTester", base_class="warrior")
+        _vstate = new_game_state(_vp, SAVES_DIR, "_verath_gate_test_")
+
+        def _opt(scene_id: str, node_id: str, option_id: str) -> dict:
+            node = scene_reg.get(scene_id).get_node(node_id)
+            return next(o for o in node["options"] if o["option_id"] == option_id)
+
+        # 24b. Generic gate fields.
+        _g = build_option({"option_id": "a", "label": "a",
+                           "requires": {"flags_any": ["x_flag", "y_flag"]}}, _vstate)
+        assert _g.locked, "flags_any with no flag set should lock"
+        _vp.set_flag("y_flag")
+        assert not build_option({"option_id": "a", "label": "a",
+                                 "requires": {"flags_any": ["x_flag", "y_flag"]}}, _vstate).locked
+        _vp.gold = 100
+        _g = build_option({"option_id": "b", "label": "b", "requires": {"min_gold": 2500}}, _vstate)
+        assert _g.locked and "25" in _g.lock_reason, f"min_gold lock reason: {_g.lock_reason!r}"
+        _vp.gold = 2500
+        assert not build_option({"option_id": "b", "label": "b",
+                                 "requires": {"min_gold": 2500}}, _vstate).locked
+        _g = build_option({"option_id": "c", "label": "c",
+                           "requires": {"flags": ["nope"], "lock_reason": "Custom why."}}, _vstate)
+        assert _g.locked and _g.lock_reason == "Custom why."
+        process_triggers(["spend_gold:1000"], _vstate)
+        assert _vp.gold == 1500
+        process_triggers(["spend_gold:999999"], _vstate)
+        assert _vp.gold == 0, "spend_gold must floor at zero"
+        ok("flags_any / min_gold / lock_reason gates + spend_gold trigger behave")
+
+        # 24c. The city gate is locked by default, with an in-world reason,
+        # and opens once verath_access is set.
+        _enter = _opt("village_start", "root", "enter_verath")
+        _g = build_option(_enter, _vstate)
+        assert _g.locked and "gate guards" in _g.lock_reason, _g.lock_reason
+        assert not build_option(_opt("village_start", "root", "approach_city_gate"), _vstate).should_hide
+        _vp.set_flag("verath_access")
+        assert not build_option(_enter, _vstate).locked
+        assert _enter["leads_to"] == "verath_city"
+        assert build_option(_opt("village_start", "root", "approach_city_gate"), _vstate).should_hide
+        del _vp.flags["verath_access"]
+        ok("Verath gate locked with reason until verath_access, then open")
+
+        # 24d. Normal route: both Floor 1 fights → report option → access.
+        _rep = _opt("dungeon_floor1", "root", "report_floor1_cleared")
+        _vp.set_flag("goblins_defeated")
+        assert build_option(_rep, _vstate).locked, "Needs both fights, not one"
+        _vp.set_flag("crystal_spiders_cleared")
+        assert not build_option(_rep, _vstate).locked
+        process_triggers(_rep["triggers"], _vstate)
+        assert _vp.has_flag("verath_access") and _vp.has_flag("floor1_cleared")
+        assert "flag:verath_access" in _opt("dungeon_floor1", "floor2_warning", "descend_anyway")["triggers"]
+        ok("Clearing Floor 1 (or descending to Floor 2) grants verath_access")
+
+        # 24e. Early routes: each is divergent, gated, grants access, lands in Verath.
+        _routes = {
+            "bribe_gate_guard": {"min_gold": 2500},
+            "talk_past_gate_guard": {"min_stats": {"INT": 12}},
+            "stow_away_on_cart": {"min_stats": {"LCK": 12}},
+            "wanderer_blind_spot_route": {"flags": ["wanderer_route_known"]},
+        }
+        for _oid, _req in _routes.items():
+            _o = _opt("village_start", "city_gate", _oid)
+            assert _o["expected"] is False, f"{_oid} should count as divergent"
+            for _k, _v in _req.items():
+                assert _o["requires"][_k] == _v, f"{_oid} gate {_k}"
+            assert "flag:verath_access" in _o["triggers"] and _o["leads_to"] == "verath_city"
+        assert "spend_gold:2500" in _opt("village_start", "city_gate", "bribe_gate_guard")["triggers"]
+        ok("Bribe / INT / LCK / wanderer routes are divergent, gated, and open Verath")
+
+        # 24f. The wanderer reveals his route once you've offered to help.
+        _w = npc_reg.get_by_npc_id("gray_wanderer")
+        _wopts = {o.option_id: o for n in _w.dialogue_nodes.values() for o in n.options}
+        for _oid in ("ask_verath_blind_spot", "ask_verath_blind_spot_friendly"):
+            assert _wopts[_oid].requires.get("flags") == ["wanderer_asked_for_help"]
+            assert "flag:wanderer_route_known" in _wopts[_oid].triggers
+        ok("Gray Wanderer reveals the blind-spot route after the mapping favour")
+
+        # 24g. The fast model may grant access only while the player lacks it.
+        from ai.content_generator import _dynamic_option_rules
+        _fresh = Player(name="RuleTester")
+        assert any("flag:verath_access" in r for r in _dynamic_option_rules(_fresh))
+        _fresh.set_flag("verath_access")
+        assert not any("verath_access" in r for r in _dynamic_option_rules(_fresh))
+        ok("AI situation prompt offers verath_access only while locked out")
+
+        # 24h. flags_any now actually gates Floor 3's sealed door.
+        _door = _opt("dungeon_floor3", "root", "go_core_chamber")
+        _fresh_state_player = Player(name="DoorTester")
+        _vstate.player = _fresh_state_player
+        assert build_option(_door, _vstate).locked, "Sealed door should need recorded data"
+        _fresh_state_player.set_flag("fracture_data_recorded")
+        assert not build_option(_door, _vstate).locked
+        _vstate.player = _vp
+        ok("Floor 3 sealed door honours its flags_any gate")
+    except Exception as e:
+        fail("Verath gate / option gates broken", e)
+        traceback.print_exc()
+    finally:
+        if _vstate is not None:
+            close_game(_vstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"_verath_gate_test_{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("25. AI Trigger Policy (allow-list for AI-authored effects)")
+    try:
+        from systems.ai_trigger_policy import (
+            ai_required_flag_met, parse_world_action, sanitize_ai_triggers,
+        )
+
+        def _san(trigs):
+            return sanitize_ai_triggers(trigs, item_reg)
+
+        # 25a. Economy / progression effects are never allowed from AI.
+        _banned = [
+            "give_gold:999999", "spend_gold:1", "give_skill:god_mode",
+            "set_base_class:paladin", "start_quest:crown_ascension",
+            "talk_npc:gray_wanderer", "buy_item:iron_sword:1", "rest_inn:0",
+            "join_guild:x", "update_faction:verath_crown:+100", "buy_life_token",
+            "complete_quest:x", "set_species:void",
+        ]
+        _v = _san(_banned)
+        assert _v.kept == [] and len(_v.dropped) == len(_banned), _v
+        ok("Gold / skills / classes / quests / NPCs / shops / factions dropped")
+
+        # 25b. Flags are namespaced, except the deliberately grantable ones.
+        _v = _san(["flag:Found Gold Vein", "flag:crown_ruler_candidate_flag",
+                   "flag:verath_access", "flag:ai_already", "flag:!!!"])
+        assert _v.kept == ["flag:ai_found_gold_vein", "flag:ai_crown_ruler_candidate_flag",
+                           "flag:verath_access", "flag:ai_already"], _v.kept
+        assert _v.dropped == ["flag:!!!"]
+        ok("AI flags namespaced to ai_* (story flags untouchable); verath_access passes")
+
+        # 25c. Items: only existing common/uncommon consumables + materials, max 1.
+        assert _san(["give_item:health_potion"]).kept == ["give_item:health_potion"]
+        assert _san(["give_item:forest_herb", "give_item:bread"]).kept == ["give_item:forest_herb"]
+        for _bad in ("no_such_item", "void_shard", "ancient_tome",
+                     "torven_hammer", "room_key", "iron_sword", "chain_shirt"):
+            assert _san([f"give_item:{_bad}"]).kept == [], _bad
+        ok("give_item limited to one real common consumable/material (no gear, keys, catalysts)")
+
+        # 25d. Alignment clamped, combat must be a real encounter.
+        assert _san(["alignment:-50"]).kept == ["alignment:-5"]
+        assert _san(["alignment:+2.5"]).kept == ["alignment:+2.5"]
+        assert _san(["alignment:0", "alignment:abc"]).kept == []
+        assert _san(["combat:wolf_pack", "combat:dragon_army"]).kept == ["combat:wolf_pack"]
+        ok("alignment clamped to ±5; combat only for known encounters")
+
+        # 25e. world_action tags: slugged, one per option, malformed dropped.
+        _v = _san(["world_action:Mine:Gold Vein", "world_action:mine:silver",
+                   "world_action:onlyverb"])
+        assert _v.kept == ["world_action:mine:gold_vein"], _v.kept
+        assert parse_world_action("world_action:forage:wild herbs") == ("forage", "wild_herbs")
+        assert parse_world_action("world_action::gold") is None
+        ok("world_action tags normalised, one per option")
+
+        # 25f. AI requires.flags accept the namespaced form of their own flags.
+        _fp = Player(name="PolicyP")
+        _fp.set_flag("ai_found_gold_vein"); _fp.set_flag("met_the_wanderer")
+        assert ai_required_flag_met(_fp.has_flag, "found_gold_vein")
+        assert ai_required_flag_met(_fp.has_flag, "met_the_wanderer")
+        assert not ai_required_flag_met(_fp.has_flag, "never_set")
+        ok("AI option gates match both ai_-namespaced and authored flags")
+
+        # 25g. Both AI entry points apply the policy.
+        from core import situation_query as _sq2
+        class _AIOptStub:
+            option_id = "ai_mine"
+            label = "Mine the gold"
+            narrative = "You chip at the vein."
+            triggers = ["give_gold:5000", "flag:struck_gold", "world_action:mine:gold"]
+            requires = {"flags": ["struck_gold"]}
+        class _StateStub:
+            player = Player(name="SqPolicy")
+            current_node_id = "root"
+        class _EngineStub:
+            item_registry = item_reg
+            state = _StateStub()
+        _so = _sq2._convert_ai_option(_AIOptStub(), _EngineStub())
+        assert _so.triggers == ["flag:ai_struck_gold", "world_action:mine:gold"], _so.triggers
+        assert _so.locked, "Gate on an unset AI flag should lock"
+        _EngineStub.state.player.set_flag("ai_struck_gold")
+        assert not _sq2._convert_ai_option(_AIOptStub(), _EngineStub()).locked
+        ok("[?] situation options are sanitised before reaching the engine")
+
+        from core import background_integrator as _bi
+        from entities.npc import NPCRegistry as _NR
+        _nreg = _NR(); _nreg.load_from_dir(DATA_DIR / "npcs")
+        class _BiState:
+            world_db = None
+            player = Player(name="BiP")
+            current_scene_id = "village_start"
+        class _BiEngine:
+            npc_registry = _nreg
+            item_registry = item_reg
+            state = _BiState()
+        _bi._handle_npc_branch(_BiEngine(), {
+            "npc_id": "gray_wanderer",
+            "node": {"node_id": "ai_test_branch", "npc_text": "…", "options": [{
+                "option_id": "greedy", "label": "Pay me", "npc_response": "…",
+                "triggers": ["give_gold:100000", "flag:trusted", "give_skill:x"],
+                "leads_to_node": "__exit__",
+            }]},
+        })
+        _branch = _nreg.get("gray_wanderer").dialogue_nodes["ai_test_branch"]
+        assert _branch.options[0].triggers == ["flag:ai_trusted"], _branch.options[0].triggers
+        ok("Background AI NPC dialogue branches are sanitised before registration")
+    except Exception as e:
+        fail("AI trigger policy broken", e)
+        traceback.print_exc()
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("26. Traders: selling, travelling NPCs, runtime NPCs + recipes")
+    _tstate = None
+    try:
+        from config import TRADER_ROUTE_STAY_TURNS
+        from entities.npc import NPCTemplate
+        from systems import trade_system as _ts
+        from systems.npc_system import get_npc_zone
+        from systems.alchemy_system import craft_item, load_recipes, register_recipe
+
+        _wren = npc_reg.get("wren_pedlar")
+        _torven = npc_reg.get("torven_blacksmith")
+        assert _wren and _wren.ambient and _wren.trades and _wren.route
+        assert _torven.trades and "type:WEAPON" in _torven.trades.buys
+
+        # 26a. Travelling route: one zone per TRADER_ROUTE_STAY_TURNS.
+        _n = TRADER_ROUTE_STAY_TURNS
+        assert [get_npc_zone(_wren, t) for t in (0, _n - 1, _n, 2 * _n, 3 * _n)] == \
+            ["village_start", "village_start", "camp_rest", "verath_city", "village_start"]
+        ok("Travelling trader walks outer market → camp → Verath and loops")
+
+        # 26b. Ambient presence → automatic "Talk to …" option at zone root.
+        _tp = Player(name="TraderTester", base_class="warrior")
+        _tstate = new_game_state(_tp, SAVES_DIR, "_trader_test_")
+        _tstate.current_scene_id = "camp_rest"
+        _tp.turn_count = _n
+        assert [n.template_id for n in _ts.ambient_npcs_here(npc_reg, _tstate)] == ["wren_pedlar"]
+        _tp.turn_count = 0
+        assert _ts.ambient_npcs_here(npc_reg, _tstate) == []
+
+        from core import input_handler as _ih
+        class _IHEngine:
+            npc_registry = npc_reg
+            scene_registry = scene_reg
+            state = _tstate
+        _tstate.current_scene_id = "village_start"; _tstate.current_node_id = "root"
+        _ambient = _ih._ambient_npc_options(_IHEngine(), [])
+        assert [o.triggers for o in _ambient] == [["talk_npc:wren_pedlar"]], _ambient
+        assert "Wren" in _ambient[0].label
+        _linked = [_ambient[0]]
+        assert _ih._ambient_npc_options(_IHEngine(), _linked) == [], "No duplicate when already linked"
+        assert any(o.option_id == "__ambient__wren_pedlar" for o in _ih.get_current_options(_IHEngine()))
+        _tstate.current_node_id = "guard_post"
+        assert not any(o.option_id.startswith("__ambient__") for o in _ih.get_current_options(_IHEngine()))
+        _tstate.current_node_id = "root"
+        ok("Ambient NPCs get a Talk-to option at the zone root, no duplicates, not on sub-nodes")
+
+        # 26c. Selling: type/id matching, price, equipped copy kept.
+        _herb = item_reg.get("forest_herb"); _sword = item_reg.get("iron_sword")
+        assert _ts.trader_buys(_wren, _herb) and not _ts.trader_buys(_wren, _sword)
+        assert _ts.trader_buys(_torven, _sword) and not _ts.trader_buys(_torven, _herb)
+        assert _ts.sell_price(_wren, _herb) == int(_herb.value_gold * 100 * 0.5)
+        _tp.inventory.clear(); _tp.gold = 0
+        _tp.add_item("forest_herb", 3); _tp.add_item("iron_sword", 1)
+        _tp.equipped.weapon = "iron_sword"
+        assert _ts.sellable_items(_tp, _torven, item_reg) == [], "Last equipped copy is not sellable"
+        _tp.add_item("iron_sword", 1)
+        assert _ts.sellable_items(_tp, _torven, item_reg)[0].quantity == 1
+        _ok, _msg, _earned = _ts.sell_item(_tp, _wren, "forest_herb", item_reg, 2)
+        assert _ok and _earned == 2 * _ts.sell_price(_wren, _herb) and _tp.gold == _earned
+        assert sum(s.quantity for s in _tp.inventory if s.item_id == "forest_herb") == 1
+        assert not _ts.sell_item(_tp, _wren, "iron_sword", item_reg)[0], "Wren doesn't buy swords"
+        ok("sell_item pays trader rate, removes items, respects equipped + trader interests")
+
+        # 26d. Buying from wares.
+        _tp.gold = 400
+        assert not _ts.buy_item(_tp, _wren, "rations", item_reg)[0], "500c rations, only 400c"
+        _tp.gold = 1000
+        _ok, _msg = _ts.buy_item(_tp, _wren, "rations", item_reg)
+        assert _ok and _tp.gold == 500 and _tp.has_item("rations")
+        assert not _ts.buy_item(_tp, _wren, "iron_sword", item_reg)[0]
+        from core.dialogue_handler import DialogueHandlerMixin
+        class _DH:
+            item_registry = item_reg
+        assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _wren)] == \
+            ["__trade_buy__", "__trade_sell__"]
+        assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _torven)] == \
+            ["__trade_sell__"], "Torven only buys"
+        ok("buy_item checks gold + wares; dialogue offers Browse/Sell as the trader supports")
+
+        # 26e. Runtime NPC registration.
+        _gen = NPCTemplate.model_validate({
+            "template_id": "gen_ore_buyer", "npc_id": "gen_ore_buyer", "name": "Brenna",
+            "role": "merchant", "zone_id": "village_start", "description": "Buys ore.",
+            "ambient": True, "trades": {"buys": ["type:MATERIAL"]}, "is_ai_generated": True,
+            "dialogue_nodes": {"root": {"node_id": "root", "npc_text": "Ore?", "options": []}},
+        })
+        npc_reg.register(_gen)
+        assert npc_reg.get("gen_ore_buyer") is _gen
+        assert "gen_ore_buyer" in [n.template_id for n in _ts.ambient_npcs_here(npc_reg, _tstate)]
+        ok("NPCRegistry.register adds an NPC at runtime; ambient ones appear immediately")
+
+        # 26f. Runtime recipes + the crafting quantity exploit.
+        _recipes = load_recipes(DATA_DIR)
+        _n0 = len(_recipes)
+        assert register_recipe(_recipes, {"recipe_id": "herb_tea", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert len(_recipes) == _n0 + 1 and _recipes[-1]["name"] == "Herb Tea"
+        assert not register_recipe(_recipes, {"recipe_id": "herb_tea", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert not register_recipe(_recipes, {"recipe_id": "x", "ingredients": [
+            {"item_id": "unobtainium", "qty": 1}], "output_item_id": "health_potion"}, item_reg)[0]
+        assert not register_recipe(_recipes, {"recipe_id": "y", "ingredients": [
+            {"item_id": "forest_herb", "qty": 1}], "output_item_id": "nothing"}, item_reg)[0]
+        _tp.inventory.clear(); _tp.add_item("forest_herb", 1); _tp.add_item("empty_vial", 1)
+        _ok, _msg = craft_item(_tp, "basic_health_salve", item_reg, _recipes)
+        assert not _ok and not _tp.has_item("health_potion"), "1 herb must not craft a 2-herb recipe"
+        _tp.add_item("forest_herb", 1)
+        assert craft_item(_tp, "basic_health_salve", item_reg, _recipes)[0]
+        assert _tp.has_item("health_potion") and not _tp.has_item("forest_herb")
+        ok("register_recipe validates; crafting now checks ingredient quantities")
+    except Exception as e:
+        fail("Traders / runtime registration broken", e)
+        traceback.print_exc()
+    finally:
+        if _tstate is not None:
+            close_game(_tstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"_trader_test_{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
+        # Leave the shared NPC registry as the rest of the suite expects it.
+        npc_reg.remove("gen_ore_buyer")
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("27. World Growth (typed action → primary model → new world content)")
+    _wg_slot = "_world_growth_test_"
+    _wstate = None
+    try:
+        from ai.ai_service import AIService
+        from ai.background_generator import BackgroundGenerator
+        from ai.content_generator import _dynamic_option_rules
+        from ai.response_validator import AIWorldExpansionResponse
+        from config import WORLD_YIELD_COOLDOWN_TURNS
+        from core import background_integrator as _bi2
+        from core import world_growth_flow as _wgf
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from core.situation_query import _convert_ai_option
+        from systems import world_growth as _wg
+        from ui import renderer as _rdr2
+
+        # 27a. Action keys + fallback tags.
+        assert _wg.action_key("Mine", "gold veins") == "mine:gold"
+        assert _wg.action_key("mine", "the gold") == "mine:gold"
+        assert _wg.normalize_subject("wild berries") == "wild_berry"
+        assert _wg.derive_world_action("[AI] Mine the gold vein") == "world_action:mine:gold_vein"
+        assert _wg.derive_world_action("Go") is None
+        assert any("world_action" in r for r in _dynamic_option_rules(Player(name="R")))
+        class _NoTagOpt:
+            option_id = "ai_x"; label = "Forage for wild berries"; narrative = ""
+            triggers = ["flag:x"]; requires = {}
+        class _NoTagEngine:
+            item_registry = item_reg
+            class state:
+                player = Player(name="T"); current_node_id = "root"
+        assert "world_action:forage:wild_berries" in _convert_ai_option(_NoTagOpt(), _NoTagEngine()).triggers
+        ok("Action keys normalise; options without a tag get one derived from the label")
+
+        # 27b. A real engine with a fake primary model + a real BG generator
+        # (not started: the test drives the worker step by step).
+        _response = AIWorldExpansionResponse.model_validate({
+            "summary": "Word spreads: Brenna is buying ore in the outer market.",
+            "yield_item": {"item_id": "gold_ore", "name": "Gold Ore", "value_gold": 500},
+            "items": [{"item_id": "gold_ingot", "name": "Gold Ingot", "value_gold": 9}],
+            "recipes": [{"recipe_id": "smelt_gold", "ingredients": [{"item_id": "gold_ore", "qty": 3}],
+                         "output_item_id": "gold_ingot"}],
+            "trader": {"name": "Brenna", "location": "outer_market", "greeting": "'Ore?'",
+                       "buys": ["gold_ore", "gold_ingot"], "sells": [{"item_id": "gold_ingot", "price_gold": 20}]},
+        })
+        class _FakePrimary:
+            calls = 0
+            def generate_world_expansion(self, **kw):
+                _FakePrimary.calls += 1
+                return {"response": _response, "skill": None}
+        _fake = _FakePrimary()
+        _bg = BackgroundGenerator(_fake)
+        _eng = GameEngine()
+        _orig_print = _rdr2.console.print
+        _rdr2.console.print = lambda *a, **k: None
+        try:
+            _eng.bootstrap()
+        finally:
+            _rdr2.console.print = _orig_print
+        _eng.ai_service = AIService(content_generator=_fake, background_generator=_bg)
+        _wp = Player(name="Miner", base_class="warrior")
+        _wstate = new_game_state(_wp, SAVES_DIR, _wg_slot)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        _wstate.current_scene_id = "dungeon_floor1"
+
+        # 27c. First sighting → recorded, queued, no content yet.
+        _wgf.on_world_action(_eng, "mine", "gold vein", "You chip at a glinting seam.")
+        _row = _wstate.world_db.get_world_action("mine:gold")
+        assert _row and _row["status"] == "pending" and _row["subject"] == "gold"
+        _task = _bg._task_queue.get_nowait()
+        assert _task["type"] == "world_expansion" and _task["action_key"] == "mine:gold"
+        assert "forest_herb" in _task["known_items"]
+        assert _eng.item_registry.get("gen_gold_ore") is None
+        ok("First 'mine gold' logs a discovery and queues a background expansion")
+
+        # 27d. Worker produces the result; the integrator applies it.
+        _result = _bg._process_task(_task)
+        assert _result["type"] == "world_expansion" and _FakePrimary.calls == 1
+        _bi2._dispatch(_eng, _result)
+        _ore = _eng.item_registry.get("gen_gold_ore")
+        assert _ore is not None and _ore.value_gold < 500, "Value clamped by economy"
+        assert _wp.has_item("gen_gold_ore"), "Discovery reward: the new item"
+        assert any(r["recipe_id"] == "gen_smelt_gold" for r in _eng.recipes)
+        _brenna = _eng.npc_registry.get("gen_npc_brenna")
+        assert _brenna and _brenna.ambient and _brenna.zone_id == "village_start"
+        assert _wstate.world_db.get_world_action("mine:gold")["status"] == "expanded"
+        assert any(e["event_type"] == "world_growth" for e in _wstate.world_db.get_recent_events())
+        _bi2._dispatch(_eng, _result)
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 1, \
+            "A duplicate result must not apply twice"
+        ok("Expansion applied: clamped item, recipe, trader, reward, world log; idempotent")
+
+        # 27e. Repeating the action yields ore, on cooldown.
+        _wgf.on_world_action(_eng, "mine", "gold", "")
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 1, "Cooldown"
+        _wp.turn_count += WORLD_YIELD_COOLDOWN_TURNS
+        _wgf.on_world_action(_eng, "Mine", "gold veins", "")
+        assert sum(s.quantity for s in _wp.inventory if s.item_id == "gen_gold_ore") == 2
+        assert _bg._task_queue.empty(), "Known actions never re-query the model"
+        ok("Repeating an expanded action gathers its yield after the cooldown")
+
+        # 27f. The trader is really there and really trades.
+        from core.input_handler import get_current_options
+        _wstate.current_scene_id = "village_start"; _wstate.current_node_id = "root"
+        assert any(o.option_id == "__ambient__gen_npc_brenna" for o in get_current_options(_eng))
+        assert _ts.sell_item(_wp, _brenna, "gen_gold_ore", _eng.item_registry)[0]
+        ok("Generated trader appears in the outer market and buys the new ore")
+
+        # 27g. Per-save: reload restores it; another save never sees it.
+        from persistence.save_manager import load_game as _lg, save_game as _sg
+        _sg(_wstate, _wg_slot, SAVES_DIR)
+        close_game(_wstate); _wstate = None
+        _other = new_game_state(Player(name="Other"), SAVES_DIR, _wg_slot + "b")
+        _eng.state = _other
+        _attach_engine_handles(_eng)
+        assert _eng.item_registry.get("gen_gold_ore") is None
+        assert _eng.npc_registry.get("gen_npc_brenna") is None
+        assert not any(r["recipe_id"].startswith("gen_") for r in _eng.recipes)
+        close_game(_other)
+        _wstate = _lg(_wg_slot, SAVES_DIR)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        assert _eng.item_registry.get("gen_gold_ore") is not None
+        assert _eng.npc_registry.get("gen_npc_brenna") is not None
+        assert any(r["recipe_id"] == "gen_smelt_gold" for r in _eng.recipes)
+        ok("Generated world is per save: restored on load, absent from other saves")
+
+        # 27h. No AI: actions are still recorded, nothing is promised.
+        _eng.ai_service = AIService()
+        _wgf.on_world_action(_eng, "forage", "mushrooms", "")
+        assert _wstate.world_db.get_world_action("forage:mushroom")["status"] == "no_ai"
+        ok("Without Ollama the action is logged as no_ai and play continues")
+    except Exception as e:
+        fail("World growth broken", e)
+        traceback.print_exc()
+    finally:
+        if _wstate is not None:
+            close_game(_wstate)
+        for _slot in (_wg_slot, _wg_slot + "b"):
+            for _ext in (".json", ".db"):
+                _pp = SAVES_DIR / f"{_slot}{_ext}"
+                if _pp.exists():
+                    try: _pp.unlink()
+                    except OSError: pass
+
+    # ─────────────────────────────────────────────────────────────────────────
+    section("28. World Growth guard rails (trader cap, expansion cap, retry, log)")
+    _d_slot = "_world_growth_d_test_"
+    _dstate = None
+    try:
+        from ai.ai_service import AIService
+        from ai.background_generator import BackgroundGenerator
+        from ai.response_validator import AIWorldExpansionResponse
+        from config import WORLD_MAX_TRADERS_PER_LOCATION
+        from core import world_growth_flow as _wgf2
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from systems import world_growth as _wg2
+        from ui import renderer as _rdr3
+
+        def _resp(n: int, location: str = "outer_market"):
+            return AIWorldExpansionResponse.model_validate({
+                "yield_item": {"item_id": f"thing_{n}", "name": f"Thing {n}", "value_gold": 2},
+                "trader": {"name": f"Trader {n}", "location": location,
+                           "buys": [f"thing_{n}"], "sells": [{"item_id": f"thing_{n}", "price_gold": 3}]},
+            })
+
+        _deng = GameEngine()
+        _orig_print2 = _rdr3.console.print
+        _rdr3.console.print = lambda *a, **k: None
+        try:
+            _deng.bootstrap()
+            _dp = Player(name="Guard", base_class="warrior")
+            _dstate = new_game_state(_dp, SAVES_DIR, _d_slot)
+            _deng.state = _dstate
+            _attach_engine_handles(_deng)
+
+            # 28a. Trader cap: once a location is full, goods join an existing trader.
+            for _i in range(WORLD_MAX_TRADERS_PER_LOCATION + 1):
+                _dstate.world_db.record_world_action(f"find:thing_{_i}", "find", f"thing_{_i}", "village_start", 0)
+                _wgf2.apply_expansion_result(_deng, {
+                    "type": "world_expansion", "action_key": f"find:thing_{_i}",
+                    "zone_id": "village_start", "response": _resp(_i), "skill": None,
+                })
+            _gen_traders = [n for n in _deng.npc_registry.all()
+                            if n.is_ai_generated and n.zone_id == "village_start" and not n.route]
+            assert len(_gen_traders) == WORLD_MAX_TRADERS_PER_LOCATION, [n.name for n in _gen_traders]
+            _last = _dstate.world_db.get_world_expansion(f"find:thing_{WORLD_MAX_TRADERS_PER_LOCATION}")
+            assert _last["bundle"]["npc"] is None and _last["bundle"]["npc_extend"]
+            _host = _deng.npc_registry.get(_last["bundle"]["npc_extend"]["template_id"])
+            _n = WORLD_MAX_TRADERS_PER_LOCATION
+            assert f"gen_thing_{_n}" in _host.trades.buys
+            assert any(o.item_id == f"gen_thing_{_n}" for o in _host.trades.sells)
+            # Road traders have their own cap.
+            _dstate.world_db.record_world_action("find:road_thing", "find", "road_thing", "camp_rest", 0)
+            _wgf2.apply_expansion_result(_deng, {
+                "type": "world_expansion", "action_key": "find:road_thing", "zone_id": "camp_rest",
+                "response": _resp(99, "road"), "skill": None,
+            })
+            assert _deng.npc_registry.get("gen_npc_trader_99").route
+            ok(f"Max {WORLD_MAX_TRADERS_PER_LOCATION} generated traders per location; extras extend stock")
+
+            # 28b. Merged stock survives a reload, without duplicating offers.
+            _attach_engine_handles(_deng)
+            _host = _deng.npc_registry.get(_last["bundle"]["npc_extend"]["template_id"])
+            assert _host.trades.buys.count(f"gen_thing_{_n}") == 1
+            assert [o.item_id for o in _host.trades.sells].count(f"gen_thing_{_n}") == 1
+            ok("Merged trader stock is restored once on reload")
+
+            # 28c. Expansion cap: new actions past the cap are logged, not queued.
+            class _Gen:
+                def generate_world_expansion(self, **kw): return None
+            _dbg = BackgroundGenerator(_Gen())
+            _deng.ai_service = AIService(content_generator=_Gen(), background_generator=_dbg)
+            _saved_cap = _wgf2.WORLD_MAX_EXPANSIONS
+            _wgf2.WORLD_MAX_EXPANSIONS = _dstate.world_db.count_world_expansions()
+            try:
+                _wgf2.on_world_action(_deng, "carve", "statue", "")
+            finally:
+                _wgf2.WORLD_MAX_EXPANSIONS = _saved_cap
+            assert _dstate.world_db.get_world_action("carve:statue")["status"] == "capped"
+            assert _dbg._task_queue.empty()
+            ok("Past WORLD_MAX_EXPANSIONS new actions are 'capped' and never queued")
+
+            # 28d. Retry on load: offline actions are re-queued once AI is back.
+            _deng.ai_service = AIService()
+            _wgf2.on_world_action(_deng, "fish", "river", "")
+            assert _dstate.world_db.get_world_action("fish:river")["status"] == "no_ai"
+            _deng.ai_service = AIService(content_generator=_Gen(), background_generator=_dbg)
+            _attach_engine_handles(_deng)
+            _queued = [_dbg._task_queue.get_nowait()["action_key"] for _ in range(_dbg._task_queue.qsize())]
+            assert "fish:river" in _queued, _queued
+            assert "carve:statue" not in _queued, "Capped actions stay capped"
+            assert _dstate.world_db.get_world_action("fish:river")["status"] == "pending"
+            ok("Pending / no_ai actions are re-queued on load when the AI is available")
+
+            # 28e. Admin World Growth log.
+            _log = "\n".join(_wgf2.world_growth_report(_deng))
+            assert "find thing 0" in _log and "trader  Trader 0 @ village_start" in _log
+            assert "joined gen_npc_trader_" in _log and "fish river  ·  pending" in _log
+            ok("Admin 'World Growth log' lists actions, statuses and what each added")
+        finally:
+            _rdr3.console.print = _orig_print2
+    except Exception as e:
+        fail("World growth guard rails broken", e)
+        traceback.print_exc()
+    finally:
+        if _dstate is not None:
+            close_game(_dstate)
+        for _ext in (".json", ".db"):
+            _pp = SAVES_DIR / f"{_d_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
 
     _report()
 

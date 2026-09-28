@@ -32,7 +32,10 @@ def build_option(raw: dict[str, Any], state: "GameState") -> "SceneOption":
     min_stats = requires.get("min_stats", {})
     required_items = requires.get("items", [])
     required_flags = requires.get("flags", [])
+    any_flags = requires.get("flags_any", [])
     absent_flags = requires.get("flags_absent", [])
+    min_gold = requires.get("min_gold")
+    custom_lock_reason = requires.get("lock_reason", "")
     align_min = requires.get("alignment_min")
     align_max = requires.get("alignment_max")
     raw_stat_gates = requires.get("stat_gates", [])
@@ -66,12 +69,24 @@ def build_option(raw: dict[str, Any], state: "GameState") -> "SceneOption":
                 lock_reason = "Condition not met"
                 break
 
+    # ── 3a. Any-of flag checks (at least one must be set) ───────────────────
+    if not locked and any_flags:
+        if not any(player.has_flag(flag) for flag in any_flags):
+            locked = True
+            lock_reason = "Condition not met"
+
     # ── 3b. Absent-flag checks ──────────────────────────────────────────────
     if not should_hide:
         for flag in absent_flags:
             if player.has_flag(flag):
                 should_hide = True
                 break
+
+    # ── 3c. Gold check (player.gold is copper) ──────────────────────────────
+    if not locked and min_gold is not None and player.gold < min_gold:
+        from config import format_currency
+        locked = True
+        lock_reason = f"Requires {format_currency(min_gold)}"
 
     # ── 4. Alignment checks ─────────────────────────────────────────────────
     if not locked and feature("alignment_system"):
@@ -100,6 +115,11 @@ def build_option(raw: dict[str, Any], state: "GameState") -> "SceneOption":
                 lock_reason = result.lock_reason or "Condition not met"
                 break
 
+    # Authored lock text replaces the generic reason, so a gate can explain
+    # itself in-world ("The guards only pass ranked adventurers").
+    if locked and custom_lock_reason:
+        lock_reason = custom_lock_reason
+
     return SceneOption(
         option_id=raw.get("option_id", "unknown"),
         label=raw.get("label", "???"),
@@ -122,7 +142,7 @@ def build_option(raw: dict[str, Any], state: "GameState") -> "SceneOption":
 
 def process_triggers(triggers: list[str], state: "GameState") -> None:
     """Apply scene-level triggers (flag, give_item, give_skill, give_gold,
-    alignment, set_species, set_gender, rest_camp, rest_inn, give_food).
+    spend_gold, alignment, set_species, set_gender, rest_camp, rest_inn, give_food).
 
     Triggers the engine handles elsewhere (set_base_class, combat,
     scene_transition) are accepted and silently ignored here.
@@ -165,6 +185,14 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
 
         elif trigger.startswith("give_gold:"):
             state.player.gold += int(trigger[10:])
+
+        elif trigger.startswith("spend_gold:"):
+            # Pair with a requires.min_gold gate; never takes gold below zero.
+            try:
+                cost = int(trigger[11:])
+            except ValueError:
+                cost = 0
+            state.player.gold = max(0, state.player.gold - max(0, cost))
 
         elif trigger.startswith("alignment:"):
             if feature("alignment_system"):
@@ -239,6 +267,8 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass
         elif trigger.startswith("scene_transition:"):
             pass
+        elif trigger.startswith("world_action:"):
+            pass  # AI action tag — recorded by the engine for world expansion
 
     state.mark_dirty()
 

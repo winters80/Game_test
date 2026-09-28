@@ -28,8 +28,13 @@ def get_npc_zone(npc: "NPCTemplate", turn: int) -> str:
     """
     Return the NPC's current zone based on their schedule and the current turn phase.
     Phase: turns 0-9 of every 20-turn cycle = 'day', turns 10-19 = 'night'.
-    NPCs without a schedule always return their home zone_id.
+    Travelling NPCs (``route``) move to the next route zone every
+    TRADER_ROUTE_STAY_TURNS turns. NPCs without either always return their
+    home zone_id.
     """
+    if npc.route:
+        from config import TRADER_ROUTE_STAY_TURNS
+        return npc.route[(max(0, turn) // TRADER_ROUTE_STAY_TURNS) % len(npc.route)]
     if not npc.schedule:
         return npc.zone_id
     phase = "day" if (turn % 20) < 10 else "night"

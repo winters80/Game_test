@@ -5,7 +5,7 @@
     "name": "Sylara",
     "role": "guild_master",
     "zone_id": "verath_city",
-    "description": "The Adventurers' Guild master â€” close-cropped silver hair, Guild insignia, and eyes that read System profiles the way other people read faces.",
+    "description": "The Adventurers' Guild master — close-cropped silver hair, Guild insignia, and eyes that read System profiles the way other people read faces.",
     "flavor_text": "She's been Guild Master since before the Fracture. She remembers what adventuring was like when the System wasn't watching.",
     "starting_disposition": 0.0,
     "appears_requires": {},
@@ -20,14 +20,14 @@
         "npc_text": "Sylara looks up from a stack of reports and glances at your System profile with that slight unfocusing of the eyes. 'What do you need?'",
         "smart_observation": "She's been reviewing incident reports, not contract forms. Something's happened that isn't public yet.",
         "smart_threshold": 10,
-        "perception_reveal": "Her composure is professional but not easy. There's a careful weight behind her words â€” the kind you get from carrying information you can't share.",
+        "perception_reveal": "Her composure is professional but not easy. There's a careful weight behind her words — the kind you get from carrying information you can't share.",
         "perception_threshold": 8,
         "options": [
           {
             "option_id": "ask_about_dungeon",
             "label": "Tell me about the dungeon.",
             "requires": {},
-            "npc_response": "'Standard briefing: Floor 1 is Rank F â€” goblins, slimes, the occasional large spider. Good for new classifications. Stay on the first floor until your rank improves. Don't ignore your System compass.'",
+            "npc_response": "'Standard briefing: Floor 1 is Rank F — goblins, slimes, the occasional large spider. Good for new classifications. Stay on the first floor until your rank improves. Don't ignore your System compass.'",
             "leads_to_node": "dungeon_info"
           },
           {
@@ -58,7 +58,7 @@
                 "knows_dungeon_floors"
               ]
             },
-            "npc_response": "A fraction of a pause. 'You read people well.' She sets down the reports. 'Yes. Two teams. The irregularities are worse than the official summary suggests â€” I was deciding how much to disclose to new classifications.'",
+            "npc_response": "A fraction of a pause. 'You read people well.' She sets down the reports. 'Yes. Two teams. The irregularities are worse than the official summary suggests — I was deciding how much to disclose to new classifications.'",
             "disposition_change": 10.0,
             "leads_to_node": "floor2_full_brief",
             "memory_event_type": "impressed_observation",
@@ -70,7 +70,7 @@
             "requires": {
               "flags_absent": ["contract_dungeon_survey"]
             },
-            "npc_response": "'Floor 1 sweep. Document creature types, patrol patterns, resource nodes. Pays 30g, standard first-contract terms. The contract's yours â€” bring me a clean report.'",
+            "npc_response": "'Floor 1 sweep. Document creature types, patrol patterns, resource nodes. Pays 30g, standard first-contract terms. The contract's yours — bring me a clean report.'",
             "triggers": [
               "flag:contract_dungeon_survey",
               "start_quest:dungeon_survey"
@@ -82,7 +82,7 @@
           },
           {
             "option_id": "request_fracture_inquiry",
-            "label": "Tell me about the Fracture anomaly â€” I'll look into it.",
+            "label": "Tell me about the Fracture anomaly — I'll look into it.",
             "requires": {
               "flags": ["knows_dungeon_floors"],
               "flags_absent": ["started_fracture_inquiry"],
@@ -112,7 +112,7 @@
                 "submitted_dungeon_survey"
               ]
             },
-            "npc_response": "'Goblin patrol documented, crystal chamber located. This is clean work.' She marks the ledger and nods toward the door. 'Reward is being processed â€” check your System balance shortly.'",
+            "npc_response": "'Goblin patrol documented, crystal chamber located. This is clean work.' She marks the ledger and nods toward the door. 'Reward is being processed — check your System balance shortly.'",
             "triggers": [
               "flag:submitted_dungeon_survey"
             ],
@@ -156,7 +156,7 @@
         "options": [
           {
             "option_id": "ask_system_irregularities",
-            "label": "The System's blind spots â€” how many are there?",
+            "label": "The System's blind spots — how many are there?",
             "requires": {
               "flags": [
                 "knows_system_blind_zones"
@@ -169,7 +169,7 @@
                 }
               ]
             },
-            "npc_response": "'More than we're disclosing publicly. The Fracture didn't damage the System â€” it changed what the System chose to see. Some areas went dark deliberately, we think. Floor 2 may be one of them.'",
+            "npc_response": "'More than we're disclosing publicly. The Fracture didn't damage the System — it changed what the System chose to see. Some areas went dark deliberately, we think. Floor 2 may be one of them.'",
             "triggers": [
               "flag:knows_system_chose_blind"
             ],
@@ -182,7 +182,7 @@
             "option_id": "friendly_check_in",
             "label": "Anything new I should know about?",
             "requires": {},
-            "npc_response": "'There's a contract board for that.' But she adds: 'The Riel twins came back from Floor 1 with something unusual â€” a marking on the wall they couldn't classify. I've asked them to file a proper report.'",
+            "npc_response": "'There's a contract board for that.' But she adds: 'The Riel twins came back from Floor 1 with something unusual — a marking on the wall they couldn't classify. I've asked them to file a proper report.'",
             "triggers": [
               "flag:knows_wall_marking"
             ],
@@ -199,7 +199,7 @@
       },
       "dungeon_info": {
         "node_id": "dungeon_info",
-        "npc_text": "'Three registered floors. First floor â€” Rank F. Standard goblin patrol, slime colony in the east corridor, some oversized vermin near the crystal chamber. Good for calibrating your new abilities.' She pauses. 'Second floor has been irregular. Don't go there until you're stronger.'",
+        "npc_text": "'Three registered floors. First floor — Rank F. Standard goblin patrol, slime colony in the east corridor, some oversized vermin near the crystal chamber. Good for calibrating your new abilities.' She pauses. 'Second floor has been irregular. Don't go there until you're stronger.'",
         "options": [
           {
             "option_id": "ask_irregular",
@@ -224,7 +224,7 @@
       },
       "floor2_info": {
         "node_id": "floor2_info",
-        "npc_text": "'Two survey teams. Standard protocol â€” three members each, proper gear, System compass active. Neither returned. We have signal data suggesting rank C behavior from registered rank F creatures. The System's classification data for that floor is unreliable.'",
+        "npc_text": "'Two survey teams. Standard protocol — three members each, proper gear, System compass active. Neither returned. We have signal data suggesting rank C behavior from registered rank F creatures. The System's classification data for that floor is unreliable.'",
         "smart_observation": "She's giving you the sanitized version. The actual data she's reviewed is worse.",
         "smart_threshold": 10,
         "perception_reveal": "She knew at least one of the people who didn't come back. The way she doesn't name them is the kind of careful you do when names hurt.",
@@ -265,7 +265,7 @@
       },
       "floor2_full_brief": {
         "node_id": "floor2_full_brief",
-        "npc_text": "'The first team didn't come back four weeks ago. The second â€” sent to find the first â€” didn't come back two weeks ago. What we got from the signal data: the creatures on Floor 2 aren't behaving like registered Rank F creatures. They're coordinating. Planning. The System has no explanation for why, because as of the Fracture, Floor 2 is partially outside System observation.' She meets your eyes. 'I'm telling you this because you're perceptive enough to find out anyway, and I'd rather you be informed when you do.'",
+        "npc_text": "'The first team didn't come back four weeks ago. The second — sent to find the first — didn't come back two weeks ago. What we got from the signal data: the creatures on Floor 2 aren't behaving like registered Rank F creatures. They're coordinating. Planning. The System has no explanation for why, because as of the Fracture, Floor 2 is partially outside System observation.' She meets your eyes. 'I'm telling you this because you're perceptive enough to find out anyway, and I'd rather you be informed when you do.'",
         "options": [
           {
             "option_id": "ask_fracture_connection",
@@ -313,7 +313,7 @@
       },
       "guild_join_info": {
         "node_id": "guild_join_info",
-        "npc_text": "'Contract completion and Rank E is the formal threshold. Informally â€” show judgment. Not heroics. Judgment. Knowing when to fight, when to observe, when to come back with better information. We've lost too many people to heroics.'",
+        "npc_text": "'Contract completion and Rank E is the formal threshold. Informally — show judgment. Not heroics. Judgment. Knowing when to fight, when to observe, when to come back with better information. We've lost too many people to heroics.'",
         "options": [
           {
             "option_id": "leave_join",
@@ -371,10 +371,10 @@
     "dialogue_nodes": {
       "root": {
         "node_id": "root",
-        "npc_text": "He doesn't react to your approach until you're standing directly in front of him. Then he looks up â€” not startled, just ready. 'You found something the System can't read. Or went somewhere it can't see. That's why you can see me.'",
-        "smart_observation": "He speaks as if choosing from a list of possible phrasings â€” correct, but with the slight formality of someone who learned the language from text rather than conversation.",
+        "npc_text": "He doesn't react to your approach until you're standing directly in front of him. Then he looks up — not startled, just ready. 'You found something the System can't read. Or went somewhere it can't see. That's why you can see me.'",
+        "smart_observation": "He speaks as if choosing from a list of possible phrasings — correct, but with the slight formality of someone who learned the language from text rather than conversation.",
         "smart_threshold": 10,
-        "perception_reveal": "He has no System shadow. No passive ping when you stand close. Not blocked â€” absent. Whatever the System uses to track and categorize, he exists outside it entirely.",
+        "perception_reveal": "He has no System shadow. No passive ping when you stand close. Not blocked — absent. Whatever the System uses to track and categorize, he exists outside it entirely.",
         "perception_threshold": 10,
         "options": [
           {
@@ -395,7 +395,7 @@
                 "void_shard"
               ]
             },
-            "npc_response": "'A remnant. The Fracture didn't create the System â€” it gave the System permission. That shard is material from before permission was granted. It remembers what things felt like when the System wasn't watching.'",
+            "npc_response": "'A remnant. The Fracture didn't create the System — it gave the System permission. That shard is material from before permission was granted. It remembers what things felt like when the System wasn't watching.'",
             "disposition_change": 5.0,
             "leads_to_node": "void_explanation",
             "memory_event_type": "showed_void_shard",
@@ -403,7 +403,7 @@
           },
           {
             "option_id": "unmapped_passage",
-            "label": "That passage in the dungeon â€” the System went silent.",
+            "label": "That passage in the dungeon — the System went silent.",
             "requires": {
               "flags": [
                 "explored_unmapped_passage"
@@ -414,6 +414,20 @@
             "leads_to_node": "mapping_project",
             "memory_event_type": "shared_unmapped_info",
             "memory_summary": "Player discussed the unmapped passage. He confirmed he's mapping System blind spots."
+          },
+          {
+            "option_id": "ask_verath_blind_spot",
+            "label": "You map the System's blind spots. Is there one at the city gate?",
+            "requires": {
+              "flags": ["wanderer_asked_for_help"],
+              "flags_absent": ["wanderer_route_known", "verath_access"]
+            },
+            "npc_response": "'There is. The ledger at the gate reads every traveller, except for the half-second when a cart's shadow crosses the arch. The System sees the cart, not what's under it.' He almost smiles. 'Walk in the shadow. Don't stop. Consider it an advance on the mapping.'",
+            "disposition_change": 5.0,
+            "triggers": ["flag:wanderer_route_known"],
+            "memory_event_type": "shared_gate_blind_spot",
+            "memory_summary": "Told the player how to slip into Verath through the gate's blind spot.",
+            "leads_to_node": "__exit__"
           },
           {
             "option_id": "leave",
@@ -439,7 +453,7 @@
                 "descended_to_floor2"
               ]
             },
-            "npc_response": "'Then you've seen what I needed you to see. The creatures there â€” they're not acting on instinct. They're following something. A pattern that predates the System.' He leans forward slightly. 'Tell me everything.'",
+            "npc_response": "'Then you've seen what I needed you to see. The creatures there — they're not acting on instinct. They're following something. A pattern that predates the System.' He leans forward slightly. 'Tell me everything.'",
             "triggers": [
               "flag:wanderer_knows_floor2_visit"
             ],
@@ -456,9 +470,23 @@
                 "wanderer_asked_for_help"
               ]
             },
-            "npc_response": "'The dungeon. Specifically Floor 2. I can't go in â€” I'm highly visible to anything that operates outside the System's observation, which is exactly what seems to be down there. But you...' He considers. 'You might pass unnoticed. Especially carrying that shard.'",
+            "npc_response": "'The dungeon. Specifically Floor 2. I can't go in — I'm highly visible to anything that operates outside the System's observation, which is exactly what seems to be down there. But you...' He considers. 'You might pass unnoticed. Especially carrying that shard.'",
             "disposition_change": 5.0,
             "leads_to_node": "root"
+          },
+          {
+            "option_id": "ask_verath_blind_spot_friendly",
+            "label": "You map the System's blind spots. Is there one at the city gate?",
+            "requires": {
+              "flags": ["wanderer_asked_for_help"],
+              "flags_absent": ["wanderer_route_known", "verath_access"]
+            },
+            "npc_response": "'There is. The ledger at the gate reads every traveller, except for the half-second when a cart's shadow crosses the arch. The System sees the cart, not what's under it.' He almost smiles. 'Walk in the shadow. Don't stop. Consider it an advance on the mapping.'",
+            "disposition_change": 5.0,
+            "triggers": ["flag:wanderer_route_known"],
+            "memory_event_type": "shared_gate_blind_spot",
+            "memory_summary": "Told the player how to slip into Verath through the gate's blind spot.",
+            "leads_to_node": "__exit__"
           },
           {
             "option_id": "leave_friendly",
@@ -472,9 +500,9 @@
       "identity": {
         "node_id": "identity",
         "npc_text": "'I came from somewhere the System doesn't cover. Whether that makes me an anomaly or a survivor depends on how you define both words. I'm looking for a way home, or a way to close the door behind me so nothing else comes through. I haven't decided which is better.'",
-        "smart_observation": "He's not being evasive. This is a genuine uncertainty â€” the kind you get from sitting with a question for too long without a framework to resolve it.",
+        "smart_observation": "He's not being evasive. This is a genuine uncertainty — the kind you get from sitting with a question for too long without a framework to resolve it.",
         "smart_threshold": 12,
-        "perception_reveal": "His hands, when he shifts â€” the proportions are slightly wrong. Not deformed. Just different. Like someone who learned to gesture from watching, not doing.",
+        "perception_reveal": "His hands, when he shifts — the proportions are slightly wrong. Not deformed. Just different. Like someone who learned to gesture from watching, not doing.",
         "perception_threshold": 11,
         "options": [
           {
@@ -489,7 +517,7 @@
                 }
               ]
             },
-            "npc_response": "'The Fracture. It wasn't a natural event â€” it was an opening. The System came through something, and that something is still open. That's why the dungeons are irregular. That's why Floor 2 is outside the System's observation. The Fracture's edge is still active.' He pauses. 'I am, among other things, evidence of this.'",
+            "npc_response": "'The Fracture. It wasn't a natural event — it was an opening. The System came through something, and that something is still open. That's why the dungeons are irregular. That's why Floor 2 is outside the System's observation. The Fracture's edge is still active.' He pauses. 'I am, among other things, evidence of this.'",
             "triggers": [
               "flag:knows_fracture_is_door"
             ],
@@ -502,14 +530,14 @@
             "option_id": "ask_about_home",
             "label": "Where is home?",
             "requires": {},
-            "npc_response": "'Somewhere the System doesn't reach. I don't know if it exists anymore â€” the Fracture changed things on both sides. But the alternative to looking is deciding it doesn't matter. I'm not ready for that.'",
+            "npc_response": "'Somewhere the System doesn't reach. I don't know if it exists anymore — the Fracture changed things on both sides. But the alternative to looking is deciding it doesn't matter. I'm not ready for that.'",
             "leads_to_node": "root"
           }
         ]
       },
       "void_explanation": {
         "node_id": "void_explanation",
-        "npc_text": "'Before permission. Before the System decided it had the authority to categorize everything. The void shard is from that time â€” it doesn't resist the System so much as it predates the System's claim on it. Hold it near a System registration point and watch the ping fail. The System can't explain something that didn't ask for its classification.'",
+        "npc_text": "'Before permission. Before the System decided it had the authority to categorize everything. The void shard is from that time — it doesn't resist the System so much as it predates the System's claim on it. Hold it near a System registration point and watch the ping fail. The System can't explain something that didn't ask for its classification.'",
         "options": [
           {
             "option_id": "ask_pre_system",
@@ -550,7 +578,7 @@
             "option_id": "offer_help_mapping",
             "label": "I can help with the mapping.",
             "requires": {},
-            "npc_response": "'I was hoping you'd say that. You've already been to one site. The next one the System can't see is deeper â€” Floor 2 of the dungeon. I can't go in. But you can. Come back when you're ready for that, and bring the void shard. It helps.'",
+            "npc_response": "'I was hoping you'd say that. You've already been to one site. The next one the System can't see is deeper — Floor 2 of the dungeon. I can't go in. But you can. Come back when you're ready for that, and bring the void shard. It helps.'",
             "triggers": [
               "flag:wanderer_asked_for_help"
             ],
@@ -570,7 +598,7 @@
       },
       "floor2_debrief": {
         "node_id": "floor2_debrief",
-        "npc_text": "'The creature that looked at you like it was waiting â€” yes. They don't just exist in the dungeon. They're organized around something in the space below Floor 2. If the Fracture is a door, Floor 3 may be where the door is. The Guild has it sealed, which means they know something too.' He pauses. 'I think it's time to compare notes with someone in the Guild who might be willing to listen.'",
+        "npc_text": "'The creature that looked at you like it was waiting — yes. They don't just exist in the dungeon. They're organized around something in the space below Floor 2. If the Fracture is a door, Floor 3 may be where the door is. The Guild has it sealed, which means they know something too.' He pauses. 'I think it's time to compare notes with someone in the Guild who might be willing to listen.'",
         "options": [
           {
             "option_id": "suggest_sylara",
@@ -593,7 +621,7 @@
             "option_id": "stay_independent",
             "label": "I'd rather work with you directly for now.",
             "requires": {},
-            "npc_response": "'Understood. We'll do it the slow way, then. Careful, though. When the System can't see you, it means nothing else can either â€” but it also means you have no backup if something goes wrong.'",
+            "npc_response": "'Understood. We'll do it the slow way, then. Careful, though. When the System can't see you, it means nothing else can either — but it also means you have no backup if something goes wrong.'",
             "leads_to_node": "__exit__"
           }
         ]
@@ -607,7 +635,7 @@
     "name": "Captain Aldis",
     "role": "guard",
     "zone_id": "verath_city",
-    "description": "The Guard Captain of Verath's market district â€” steady, watchful, carrying more political awareness than his rank usually calls for.",
+    "description": "The Guard Captain of Verath's market district — steady, watchful, carrying more political awareness than his rank usually calls for.",
     "flavor_text": "He got his rank six months after the Fracture. Whatever he did in those six months, nobody mentions it openly.",
     "starting_disposition": 0.0,
     "appears_requires": {},
@@ -622,7 +650,7 @@
         "npc_text": "The guard captain watches you approach with the particular stillness of someone who has assessed a lot of people at a lot of checkpoints. 'Move along.'",
         "smart_observation": "He's scanning exit routes, not threats. Like someone who expects to be followed rather than attacked.",
         "smart_threshold": 9,
-        "perception_reveal": "There's a second insignia under his collar â€” not the Guard's standard mark. A different faction symbol, partially visible when he turns.",
+        "perception_reveal": "There's a second insignia under his collar — not the Guard's standard mark. A different faction symbol, partially visible when he turns.",
         "perception_threshold": 8,
         "options": [
           {
@@ -663,7 +691,7 @@
             "option_id": "ask_about_city",
             "label": "How is the city holding up post-Fracture?",
             "requires": {},
-            "npc_response": "'Better than some. Worse than it should be. The classifications created stratification we didn't expect â€” Rank C citizens don't live near Rank F. The System sorted us and left us to figure out what that means.'",
+            "npc_response": "'Better than some. Worse than it should be. The classifications created stratification we didn't expect — Rank C citizens don't live near Rank F. The System sorted us and left us to figure out what that means.'",
             "leads_to_node": "city_talk",
             "memory_event_type": "city_discussed",
             "memory_summary": "Discussed post-Fracture social stratification with new classification."
@@ -704,7 +732,7 @@
                 }
               ]
             },
-            "npc_response": "'You're either telling the truth or you're very good at lying.' A long pause. 'Stay clear of trouble for thirty days. Report any dungeon irregularities to me directly â€” not the Guild, not the board, me. Do that and we'll talk about the record.'",
+            "npc_response": "'You're either telling the truth or you're very good at lying.' A long pause. 'Stay clear of trouble for thirty days. Report any dungeon irregularities to me directly — not the Guild, not the board, me. Do that and we'll talk about the record.'",
             "triggers": [
               "flag:aldis_probation_deal"
             ],
@@ -724,7 +752,7 @@
       },
       "friendly_root": {
         "node_id": "friendly_root",
-        "npc_text": "Aldis gives a brief nod â€” not warm, but genuine. 'Good day. Something I can do for you?'",
+        "npc_text": "Aldis gives a brief nod — not warm, but genuine. 'Good day. Something I can do for you?'",
         "options": [
           {
             "option_id": "report_dungeon",
@@ -741,7 +769,7 @@
                 }
               ]
             },
-            "npc_response": "'I'll pass that up the chain. Good. Keep doing that.' He marks something in a small ledger. 'For what it's worth â€” the record's less of a problem than it used to be.'",
+            "npc_response": "'I'll pass that up the chain. Good. Keep doing that.' He marks something in a small ledger. 'For what it's worth — the record's less of a problem than it used to be.'",
             "triggers": [
               "flag:aldis_cleared_probation"
             ],
@@ -779,8 +807,8 @@
       },
       "patrol_info": {
         "node_id": "patrol_info",
-        "npc_text": "'Standard grid â€” east, north, market center on rotation. If you're doing dungeon work, the road's clear until midnight. After that it's a different situation.'",
-        "perception_reveal": "The schedule he gave you is real but incomplete â€” there's a fourth route he didn't mention, and the timing is slightly off. Deliberate omission, not an error.",
+        "npc_text": "'Standard grid — east, north, market center on rotation. If you're doing dungeon work, the road's clear until midnight. After that it's a different situation.'",
+        "perception_reveal": "The schedule he gave you is real but incomplete — there's a fourth route he didn't mention, and the timing is slightly off. Deliberate omission, not an error.",
         "perception_threshold": 9,
         "options": [
           {
@@ -825,7 +853,7 @@
             "option_id": "agree_stratification",
             "label": "The System created divisions it doesn't want to acknowledge.",
             "requires": {},
-            "npc_response": "'That's the polite version, yes.' A slight shift in his expression â€” not warmth, but recognition. 'Be careful saying that out loud around System registers. They track sentiment in cities now, officially for safety purposes.'",
+            "npc_response": "'That's the polite version, yes.' A slight shift in his expression — not warmth, but recognition. 'Be careful saying that out loud around System registers. They track sentiment in cities now, officially for safety purposes.'",
             "triggers": [
               "flag:aldis_political_ally"
             ],
@@ -846,7 +874,7 @@
       },
       "insignia_reaction": {
         "node_id": "insignia_reaction",
-        "npc_text": "'Whatever you think you saw â€” you didn't. That's not a threat, just practical advice. There are things in Verath that run better when they're not observed. You seem like someone who understands that.'",
+        "npc_text": "'Whatever you think you saw — you didn't. That's not a threat, just practical advice. There are things in Verath that run better when they're not observed. You seem like someone who understands that.'",
         "options": [
           {
             "option_id": "understood",
@@ -871,7 +899,7 @@
             "option_id": "leave_deal",
             "label": "You won't.",
             "requires": {},
-            "npc_response": "'Good. Now move along â€” I have a market district to maintain.'",
+            "npc_response": "'Good. Now move along — I have a market district to maintain.'",
             "leads_to_node": "__exit__"
           }
         ]

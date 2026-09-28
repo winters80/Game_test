@@ -8,6 +8,10 @@
     "description": "A barrel-chested blacksmith with soot-stained hands and the careful eyes of someone who fixes broken things for a living.",
     "flavor_text": "He's had that anvil since before the Fracture. It still rings true.",
     "starting_disposition": 5.0,
+    "trades": {
+      "buys": ["type:WEAPON", "type:ARMOR"],
+      "buy_rate": 0.4
+    },
     "appears_requires": {},
     "disposition_hooks": {
       "default": "root",
@@ -17,16 +21,16 @@
       "root": {
         "node_id": "root",
         "npc_text": "Torven looks up from the anvil. 'Got work to do. What do you need?'",
-        "smart_observation": "You notice the wall rack behind him â€” one hook empty, the leather hanging worn from long use. Whatever went there, he reached for it often.",
+        "smart_observation": "You notice the wall rack behind him — one hook empty, the leather hanging worn from long use. Whatever went there, he reached for it often.",
         "smart_threshold": 9,
-        "perception_reveal": "There's dried blood on his knuckles. Not fresh â€” he's been taking on heavy work to keep busy. Something's weighing on him.",
+        "perception_reveal": "There's dried blood on his knuckles. Not fresh — he's been taking on heavy work to keep busy. Something's weighing on him.",
         "perception_threshold": 7,
         "options": [
           {
             "option_id": "buy_weapons",
             "label": "What do you have in stock?",
             "requires": {},
-            "npc_response": "'Standard kit. Iron sword, leather armor, a few shields. Nothing fancy â€” but nothing that'll snap when you need it.' He gestures toward the rack.",
+            "npc_response": "'Standard kit. Iron sword, leather armor, a few shields. Nothing fancy — but nothing that'll snap when you need it.' He gestures toward the rack.",
             "leads_to_node": "shop"
           },
           {
@@ -46,7 +50,7 @@
               "flags": ["torven_owes_favour"],
               "flags_absent": ["learned_torven_forge_lesson"]
             },
-            "npc_response": "He looks you over once, slow. 'You'll never be a smith. But you've earned the right to ask, and I've got one technique that's worth more than gold. Watch.' He guides your hands through a single deliberate strike â€” the kind that finds a weak spot in iron and exploits it. 'Now you know it. Use it when it counts.'",
+            "npc_response": "He looks you over once, slow. 'You'll never be a smith. But you've earned the right to ask, and I've got one technique that's worth more than gold. Watch.' He guides your hands through a single deliberate strike — the kind that finds a weak spot in iron and exploits it. 'Now you know it. Use it when it counts.'",
             "triggers": [
               "give_skill:torven_forge_lesson",
               "flag:learned_torven_forge_lesson"
@@ -58,7 +62,7 @@
           },
           {
             "option_id": "ask_about_hammer",
-            "label": "That empty hook on the wall â€” something's missing.",
+            "label": "That empty hook on the wall — something's missing.",
             "requires": {
               "stat_gates": [
                 {
@@ -74,7 +78,7 @@
                 "torven_hammer_returned"
               ]
             },
-            "npc_response": "His jaw tightens. 'My journeyman hammer. I've had it fifteen years â€” I tracked the Goblin Looters that took it into the dungeon, but...' He looks at his hands. 'I'm a smith. Not an adventurer.'",
+            "npc_response": "His jaw tightens. 'My journeyman hammer. I've had it fifteen years — I tracked the Goblin Looters that took it into the dungeon, but...' He looks at his hands. 'I'm a smith. Not an adventurer.'",
             "leads_to_node": "hammer_quest_offer",
             "memory_event_type": "noticed_hammer",
             "memory_summary": "Player noticed the missing hammer without being told."
@@ -107,7 +111,7 @@
                 "void_shard"
               ]
             },
-            "npc_response": "He goes very still. 'Where did you get that.' Not a question. He leans forward slightly, then stops himself. 'Put it away. Don't show it around registration checkpoints â€” the System can't read those, which means it can't track who has them.'",
+            "npc_response": "He goes very still. 'Where did you get that.' Not a question. He leans forward slightly, then stops himself. 'Put it away. Don't show it around registration checkpoints — the System can't read those, which means it can't track who has them.'",
             "disposition_change": 8.0,
             "leads_to_node": "void_shard_talk",
             "memory_event_type": "showed_void_shard",
@@ -141,7 +145,7 @@
       },
       "shop": {
         "node_id": "shop",
-        "npc_text": "'Iron Sword â€” 50g, proper balance, forged it myself. Leather Armor â€” 40g. Health Potion â€” 25g. Mana Potion â€” 30g. What'll it be?'",
+        "npc_text": "'Iron Sword — 50g, proper balance, forged it myself. Leather Armor — 40g. Health Potion — 25g. Mana Potion — 30g. What'll it be?'",
         "options": [
           {
             "option_id": "buy_sword",
@@ -231,13 +235,13 @@
       },
       "hammer_quest_offer": {
         "node_id": "hammer_quest_offer",
-        "npc_text": "'My journeyman hammer. Fifteen years with it. Three days ago, a Goblin Looter patrol came up into the market district â€” unusual, but they do it sometimes â€” and one of them grabbed it while I had my back turned. I tracked them to the dungeon entrance before I admitted to myself I'm not built for that kind of work.'",
+        "npc_text": "'My journeyman hammer. Fifteen years with it. Three days ago, a Goblin Looter patrol came up into the market district — unusual, but they do it sometimes — and one of them grabbed it while I had my back turned. I tracked them to the dungeon entrance before I admitted to myself I'm not built for that kind of work.'",
         "options": [
           {
             "option_id": "accept_hammer_quest",
             "label": "I can look for it.",
             "requires": {},
-            "npc_response": "'I'd appreciate that more than I'm going to say out loud. It's got a double-lobe stamp mark on the head with a V between the lobes â€” my journeyman mark. You'll recognize it.'",
+            "npc_response": "'I'd appreciate that more than I'm going to say out loud. It's got a double-lobe stamp mark on the head with a V between the lobes — my journeyman mark. You'll recognize it.'",
             "triggers": [
               "start_quest:blacksmith_hammer",
               "flag:torven_gave_hammer_quest"
@@ -251,7 +255,7 @@
             "option_id": "decline_hammer_quest",
             "label": "Can't make promises. Maybe later.",
             "requires": {},
-            "npc_response": "'Right. No, that's fair.' He goes back to work. 'If you change your mind â€” or if you happen to see it.'",
+            "npc_response": "'Right. No, that's fair.' He goes back to work. 'If you change your mind — or if you happen to see it.'",
             "disposition_change": -3.0,
             "leads_to_node": "root"
           }
@@ -282,7 +286,7 @@
                 "torven_hammer"
               ]
             },
-            "npc_response": "'40g. And my work rate for you is half-price, permanent. That's not a deal â€” that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
+            "npc_response": "'40g. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
             "triggers": [
               "flag:torven_hammer_returned",
               "give_gold:40"
@@ -296,7 +300,7 @@
       },
       "hammer_reward": {
         "node_id": "hammer_reward",
-        "npc_text": "'I said name your price. Don't be modest â€” I've had that hammer fifteen years and I intend to have it fifteen more.' He opens a small lockbox. 'Forty gold. And if you need work done, you come to me first.'",
+        "npc_text": "'I said name your price. Don't be modest — I've had that hammer fifteen years and I intend to have it fifteen more.' He opens a small lockbox. 'Forty gold. And if you need work done, you come to me first.'",
         "options": [
           {
             "option_id": "accept_reward",
@@ -325,7 +329,7 @@
       },
       "void_shard_talk": {
         "node_id": "void_shard_talk",
-        "npc_text": "'I've seen one before. Once, years before the Fracture â€” my old master had a piece he kept wrapped in cloth in a locked drawer. Never explained it.' He pauses. 'The System can't read it. Means it can't track you when you're near it, either. That's useful to some people and very dangerous around others.'",
+        "npc_text": "'I've seen one before. Once, years before the Fracture — my old master had a piece he kept wrapped in cloth in a locked drawer. Never explained it.' He pauses. 'The System can't read it. Means it can't track you when you're near it, either. That's useful to some people and very dangerous around others.'",
         "smart_observation": "He's choosing his words more carefully than a blacksmith usually needs to.",
         "smart_threshold": 10,
         "options": [
@@ -402,7 +406,7 @@
     "name": "Mira",
     "role": "innkeeper",
     "zone_id": "village_start",
-    "description": "The innkeeper of the Iron Compass â€” sharp-eyed, quick with an opinion, and the best source of gossip in Verath that isn't the Guild board.",
+    "description": "The innkeeper of the Iron Compass — sharp-eyed, quick with an opinion, and the best source of gossip in Verath that isn't the Guild board.",
     "flavor_text": "She named the inn after a compass that survived the Fracture pointing the wrong direction. She says that's more honest than one that pretends nothing changed.",
     "starting_disposition": 10.0,
     "appears_requires": {},
@@ -424,7 +428,7 @@
             "option_id": "ask_rumors",
             "label": "What's the gossip lately?",
             "requires": {},
-            "npc_response": "'Let me think.' She wipes the counter without looking at it. 'Three Rank C classifications in the latest batch â€” that's high for a town like Verath. And there's been a man sitting at that corner table three evenings running, ordered water each time. No System profile that I can read.'",
+            "npc_response": "'Let me think.' She wipes the counter without looking at it. 'Three Rank C classifications in the latest batch — that's high for a town like Verath. And there's been a man sitting at that corner table three evenings running, ordered water each time. No System profile that I can read.'",
             "disposition_change": 2.0,
             "leads_to_node": "rumors",
             "memory_event_type": "asked_rumors",
@@ -458,7 +462,7 @@
                 }
               ]
             },
-            "npc_response": "'You noticed.' She stops wiping. 'Three guests this week. Small things â€” a coin purse, a ring, a carved bone token. Happens while they're at the shared bath. Whoever it is knows the schedule.'",
+            "npc_response": "'You noticed.' She stops wiping. 'Three guests this week. Small things — a coin purse, a ring, a carved bone token. Happens while they're at the shared bath. Whoever it is knows the schedule.'",
             "disposition_change": 5.0,
             "leads_to_node": "theft_reveal",
             "memory_event_type": "noticed_thefts",
@@ -481,7 +485,7 @@
             "option_id": "ask_rumors_friendly",
             "label": "Anything new I should know?",
             "requires": {},
-            "npc_response": "'Heard back from my cousin in the next town â€” they've had irregularities with their dungeon too. Different kind, but similar in that the System isn't explaining them clearly. It's not just Verath.'",
+            "npc_response": "'Heard back from my cousin in the next town — they've had irregularities with their dungeon too. Different kind, but similar in that the System isn't explaining them clearly. It's not just Verath.'",
             "triggers": [
               "flag:knows_regional_irregularities"
             ],
@@ -498,7 +502,7 @@
                 "mira_gave_theft_quest"
               ]
             },
-            "npc_response": "'Still watching the patterns. I think it's someone who knows which guests are staying short-term â€” they don't hit anyone who's been here more than three days. That narrows it.'",
+            "npc_response": "'Still watching the patterns. I think it's someone who knows which guests are staying short-term — they don't hit anyone who's been here more than three days. That narrows it.'",
             "triggers": [
               "flag:theft_clue_short_stay"
             ],
@@ -517,7 +521,7 @@
       },
       "rumors": {
         "node_id": "rumors",
-        "npc_text": "'The Rank C batch is the one I keep thinking about. Usually the System spaces those out â€” gives them time to develop before clustering them in a city. Three at once suggests it's responding to something. Some kind of need, or threshold.'",
+        "npc_text": "'The Rank C batch is the one I keep thinking about. Usually the System spaces those out — gives them time to develop before clustering them in a city. Three at once suggests it's responding to something. Some kind of need, or threshold.'",
         "smart_observation": "She's thought about this more than casual gossip. She has a theory she's not sharing yet.",
         "smart_threshold": 9,
         "perception_reveal": "She glances at the corner table when she mentions the man with no profile. He's already gone, but the absence is where she keeps looking.",
@@ -525,7 +529,7 @@
         "options": [
           {
             "option_id": "ask_about_profiler",
-            "label": "The man with no System profile â€” tell me more.",
+            "label": "The man with no System profile — tell me more.",
             "requires": {
               "stat_gates": [
                 {
@@ -537,7 +541,7 @@
                 }
               ]
             },
-            "npc_response": "'Left last night. No check-out, just gone. But when he was here â€” three nights â€” I tried to read his profile. Nothing. Not blocked, not encrypted. Just absent. Like the System doesn't know he exists.'",
+            "npc_response": "'Left last night. No check-out, just gone. But when he was here — three nights — I tried to read his profile. Nothing. Not blocked, not encrypted. Just absent. Like the System doesn't know he exists.'",
             "triggers": [
               "flag:heard_about_wanderer",
               "flag:can_see_wanderer"
@@ -581,13 +585,13 @@
       },
       "theft_reveal": {
         "node_id": "theft_reveal",
-        "npc_text": "'I can't go to the Guard â€” half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay 25g to know who it is. Not for punishment. I just want them to stop.'",
+        "npc_text": "'I can't go to the Guard — half of them drink here and I can't afford that kind of attention. But someone who notices things...' She looks at you assessingly. 'I'd pay 25g to know who it is. Not for punishment. I just want them to stop.'",
         "options": [
           {
             "option_id": "accept_theft_quest",
             "label": "I can look into it.",
             "requires": {},
-            "npc_response": "'Good. Talk to the guests â€” the morning slot is Aldric the merchant, midday is the Riel twins, evenings vary. The thefts happen during the bath schedule. Someone knows when the rooms are empty.'",
+            "npc_response": "'Good. Talk to the guests — the morning slot is Aldric the merchant, midday is the Riel twins, evenings vary. The thefts happen during the bath schedule. Someone knows when the rooms are empty.'",
             "triggers": [
               "start_quest:theft_investigation",
               "flag:mira_gave_theft_quest"
@@ -609,7 +613,7 @@
       },
       "quest_briefing": {
         "node_id": "quest_briefing",
-        "npc_text": "'One more thing: whoever's doing this is patient. They're not taking obviously valuable things â€” just things that won't be missed immediately. That takes observation. Or access to information about the guests.'",
+        "npc_text": "'One more thing: whoever's doing this is patient. They're not taking obviously valuable things — just things that won't be missed immediately. That takes observation. Or access to information about the guests.'",
         "options": [
           {
             "option_id": "note_and_leave",
@@ -622,7 +626,7 @@
       },
       "room_rented": {
         "node_id": "room_rented",
-        "npc_text": "'Breakfast at dawn, candle's included. If you need anything before that, knock on the bar counter â€” I'm a light sleeper.'",
+        "npc_text": "'Breakfast at dawn, candle's included. If you need anything before that, knock on the bar counter — I'm a light sleeper.'",
         "options": [
           {
             "option_id": "leave_room",
@@ -803,5 +807,50 @@
         "zone_id": "village_start"
       }
     ]
+  },
+  {
+    "template_id": "wren_pedlar",
+    "npc_id": "wren_pedlar",
+    "name": "Wren",
+    "role": "merchant",
+    "zone_id": "village_start",
+    "description": "A wiry pedlar with a hand-cart piled high: jars, rope, sacks of dried herbs, a birdcage with no bird in it. She walks the road between the outer market, the campsites and the capital.",
+    "flavor_text": "The System rates her 'Merchant, F-rank'. She rates the System 'bad for business'.",
+    "starting_disposition": 10.0,
+    "ambient": true,
+    "route": ["village_start", "camp_rest", "verath_city"],
+    "trades": {
+      "buys": ["type:MATERIAL", "type:CONSUMABLE"],
+      "buy_rate": 0.5,
+      "sells": [
+        {"item_id": "rations", "price": 500},
+        {"item_id": "empty_vial", "price": 300},
+        {"item_id": "antidote", "price": 2000},
+        {"item_id": "firewood", "price": 300}
+      ]
+    },
+    "appears_requires": {},
+    "disposition_hooks": {"default": "root"},
+    "dialogue_nodes": {
+      "root": {
+        "node_id": "root",
+        "npc_text": "She doesn't stop sorting the cart when you walk up. 'Buying, selling, or asking for directions? Directions are free. Everything else isn't.'",
+        "options": [
+          {
+            "option_id": "ask_route",
+            "label": "Where does your road take you?",
+            "npc_response": "'Outer market, then whichever camp has the best fire, then through the gate into Verath if the guards are feeling generous. Round and round. You'll catch me somewhere on it.'",
+            "disposition_change": 2.0,
+            "leads_to_node": "root"
+          },
+          {
+            "option_id": "leave",
+            "label": "Safe roads.",
+            "npc_response": "'There's no such thing any more. But thank you.'",
+            "leads_to_node": "__exit__"
+          }
+        ]
+      }
+    }
   }
 ]
