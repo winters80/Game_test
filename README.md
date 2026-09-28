@@ -312,7 +312,7 @@ Prints `True` if Ollama is reachable and the model is pulled.
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 158 checks across 30 sections
+python -X utf8 test_characters.py                  # 167 checks across 30 sections
 python -X utf8 test_quests.py                      # 132 checks across 23 sections
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  12 checks (SQLite schema, v6)
@@ -331,9 +331,9 @@ python -X utf8 playthrough_smoke.py                #  24 checks
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 417 checks across 7 test files (all gated by the pre-push hook).**
+**Combined test count: 426 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (158 checks, 30 sections) covers:
+`test_characters.py` (167 checks, 30 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -428,8 +428,8 @@ world-growth prompts against real Ollama playthroughs.
 | Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
 | **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 417 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 417 checks across 7 files + 24-check live playthrough |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 426 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 426 checks across 7 files + 24-check live playthrough |
 | **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
 | **Bot adventurers** | ✅ **Shipped** | 12 rules-driven adventurers per save that fight, level, loot, trade and craft; talk to them, trade with them, `[W]` Who's around |
 | **One-step launchers** | ✅ **Shipped** | `start.bat` / `scripts/start.ps1` / `scripts/start.sh` start Ollama, pull models, run the game; models preloaded |
@@ -444,7 +444,6 @@ world-growth prompts against real Ollama playthroughs.
 | Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:1b` output quality still needs a playthrough |
 | Group up with bots | Invite a bot into your party so it fights alongside you (the next bot stage) |
 | Bots use the auction house and guilds | They already trade with NPC traders and the player; listing loot on the auction house and joining guilds would complete the MMO feel |
-| Fire `on_hit` / `on_low_hp` TRIGGERED skills | Combat only dispatches `on_attack` / `on_kill`, so Battle Mage's starting skill Arcane Strike never fires |
 | Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |
 | Move class-generation off the main thread | The `Future`-based submission path exists (`AIService.submit_class_generation_async`); the Class Awakening scene still calls it synchronously |
 | Cross-skill awareness in the AI prompt | LLM sees `player.skills` but doesn't reason about which new skill would synergize best |
