@@ -1125,15 +1125,14 @@ def main() -> None:
         assert len(many.effects) == 3, f"Effects cap broken: got {len(many.effects)}"
         ok("AISkillResponse caps effects at 3 per skill")
 
-        # 19d. Unknown effect_type rejected with ValidationError
-        try:
-            AISkillResponse.model_validate({
-                "skill_id": "bad", "name": "B", "description": "x",
-                "effects": [{"effect_type": "lol_invalid"}],
-            })
-            fail("Expected ValidationError for unknown effect_type")
-        except ValidationError:
-            ok("Unknown effect_type rejected by AISkillEffectResponse")
+        # 19d. Unknown effect_type maps onto a real one instead of failing the
+        # whole skill (live: a quest skill came back with "reveal" and was lost).
+        odd = AISkillResponse.model_validate({
+            "skill_id": "odd", "name": "O", "description": "x",
+            "effects": [{"effect_type": "lol_invalid"}, {"effect_type": "stun"}, {"effect_type": "shield"}],
+        })
+        assert [e.effect_type for e in odd.effects] == ["buff", "debuff", "shield"], odd.effects
+        ok("Unknown effect_type mapped onto a supported one (buff by default)")
 
         # 19e. Prompt embeds source-specific blurb + tier hints + has_inspect
         from entities.player import Player as _PL

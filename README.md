@@ -59,7 +59,7 @@ pip install -r requirements.txt
 
 ollama serve                # or open the Ollama app (Windows/macOS start it in the tray)
 ollama pull mistral-nemo    # primary model (~7 GB)
-ollama pull gemma3:1b       # fast model (~800 MB)
+ollama pull gemma3:4b       # fast model (~3.3 GB)
 
 python -X utf8 main.py
 ```
@@ -69,7 +69,7 @@ The game uses a **dual-model setup**:
 | Model | Role | Size | Required? |
 |---|---|---|---|
 | `mistral-nemo` | **Primary**: heavy generation in the background (classes, quests, NPC dialogue branches, world events, and **world growth**: the items, recipes, traders and skills that appear in response to your actions) | ~7 GB | recommended |
-| `gemma3:1b` | **Fast**: interactive calls (the `[?]` «Ask about this situation» prompt, anything player-facing where latency matters) | ~800 MB | recommended |
+| `gemma3:4b` | **Fast**: interactive calls (the `[?]` «Ask about this situation» prompt, anything player-facing where latency matters). `gemma3:1b` is quicker but mostly repeats the scene back | ~3.3 GB | recommended |
 
 If a model is missing when the game starts, it names it and offers to **download it right there** (with a progress bar), so running `python main.py` directly works too.
 
@@ -92,9 +92,10 @@ Models that "think" before answering (qwen3, deepseek-r1) are asked not to, so t
 
 | Your GPU memory | Primary | Fast |
 |---|---|---|
-| 8 GB | `mistral-nemo` (default, ~7 GB, partly on CPU) or `qwen3:8b` | `gemma3:1b` (default) |
-| 12–16 GB | `mistral-nemo` or `qwen3:14b` | `gemma3:4b` |
-| 24 GB+ | `qwen3:32b` (~20 GB) | `gemma3:1b` (fits beside it) |
+| 8 GB | `qwen3:8b` or `mistral-nemo` (default, ~7 GB, partly on CPU) | `gemma3:1b` (small enough to fit) |
+| 12–16 GB | `mistral-nemo` (default) or `qwen3:14b` | `gemma3:4b` (default) |
+| 24 GB | `qwen3:32b` (~20 GB) | `gemma3:1b` (fits beside it), or `""` to use qwen3 for everything |
+| 32 GB+ | `qwen3:32b` | `gemma3:4b` (default) |
 
 ### If the AI shows as offline
 
@@ -105,7 +106,7 @@ The game tells you what's wrong at startup:
 | `Ollama not available … Nothing is answering at http://127.0.0.1:11434` | Ollama isn't running. Open the Ollama app, run `ollama serve`, or use the launcher. The same reason shows under Admin → AI Token Usage, which can retry the connection without restarting |
 | `The AI needs … model(s) that aren't downloaded yet` | Accept the download offer, or `ollama pull <model>`, or run the launcher |
 | `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | You declined the download. `ollama pull mistral-nemo`, or point `OLLAMA_MODEL` at a model you have |
-| `Fast model 'gemma3:1b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:1b` |
+| `Fast model 'gemma3:4b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:4b` |
 
 Without Ollama the game stays fully playable, with hand-crafted classes, static dialogue, no dynamic quests and no world growth. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
 
@@ -287,7 +288,7 @@ All AI settings are in `config.py`:
 AI_ENABLED = True                          # master switch — set False to disable all Ollama calls
 OLLAMA_BASE_URL = "http://127.0.0.1:11434" # default Ollama port (override with the OLLAMA_BASE_URL env var)
 OLLAMA_MODEL = "mistral-nemo"              # PRIMARY (env var OLLAMA_MODEL overrides) — used for heavy generation (classes, quests, NPC branches)
-OLLAMA_FAST_MODEL = "gemma3:1b"            # FAST — interactive «Ask…» queries (env var OLLAMA_FAST_MODEL overrides). "" reuses primary.
+OLLAMA_FAST_MODEL = "gemma3:4b"            # FAST — interactive «Ask…» queries (env var OLLAMA_FAST_MODEL overrides). "" reuses primary.
 OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"  # used if primary fails to load
 
 OLLAMA_TIMEOUT_JSON = 60   # seconds for structured (JSON) generation on primary
@@ -435,7 +436,7 @@ world-growth prompts against real Ollama playthroughs.
 | Core game loop, scenes, classes, skills | ✅ Shipped | |
 | AI-generated unique classes (Ollama) | ✅ Shipped | Divergence ≥ 30 triggers generation; opt-in `rich_skills=True` for per-skill AI gen |
 | Background AI world generation | ✅ Shipped | Worker thread; non-blocking |
-| Dual-model Ollama (slow + fast) | ✅ Shipped | `mistral-nemo` + `gemma3:1b` |
+| Dual-model Ollama (slow + fast) | ✅ Shipped | `mistral-nemo` + `gemma3:4b` |
 | NPC system (memory, stat-gated dialogue) | ✅ Shipped | |
 | Species + alignment systems | ✅ Shipped | |
 | Stat gating | ✅ Shipped | |
@@ -467,7 +468,7 @@ world-growth prompts against real Ollama playthroughs.
 
 | Item | Why |
 |------|-----|
-| Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:1b` output quality still needs a playthrough |
+| Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:4b` output quality still needs a playthrough |
 | Group up with bots | Invite a bot into your party so it fights alongside you (the next bot stage) |
 | Bots use the auction house and guilds | They already trade with NPC traders and the player; listing loot on the auction house and joining guilds would complete the MMO feel |
 | Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |

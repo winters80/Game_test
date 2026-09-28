@@ -15,6 +15,7 @@ class doesn't have to own the 130-line orchestration of:
 from __future__ import annotations
 
 import logging
+import re
 from typing import TYPE_CHECKING
 
 import questionary
@@ -96,6 +97,13 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
         renderer.prompt_any_key()
         return
 
+    # Small models echo the prompt: the scene text back as the "answer", and
+    # the existing choices split up as "new" options ("Take a moment." out of
+    # "Take a moment. Examine your surroundings."). Drop both.
+    result.options = [o for o in result.options if not _repeats_choice(o.label, option_labels)]
+    if _norm(result.situation_text) and _norm(result.situation_text) in _norm(scene_text):
+        result.situation_text = ""
+
     # Quality guard: if the AI returned a near-empty situation_text AND no
     # new options, treat it as a non-answer. The player typed something the
     # model didn't understand; nudge them to rephrase instead of showing
@@ -133,6 +141,16 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
 
     renderer.console.print("  [dim_text]New options unlocked. Choose below.[/dim_text]")
     renderer.prompt_any_key()
+
+
+def _norm(text: str) -> str:
+    return " ".join(re.sub(r"[^a-z0-9 ]+", " ", (text or "").lower()).split())
+
+
+def _repeats_choice(label: str, existing: list[str]) -> bool:
+    """True if ``label`` is (part of) a choice the player already has."""
+    mine = _norm(label.replace("[AI]", ""))
+    return bool(mine) and any(mine in _norm(e) or _norm(e) in mine for e in existing if _norm(e))
 
 
 def _convert_ai_option(ai_opt, engine: "GameEngine") -> SceneOption:
