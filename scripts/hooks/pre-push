@@ -9,6 +9,35 @@ cd "$(git rev-parse --show-toplevel)"
 # the background worker, and the guild simulator. All five must pass
 # before a push is allowed.
 
+# Pick a Python that can import the project's dependencies. A bare
+# `python` is often the wrong interpreter on machines with several
+# installs (e.g. a newer Python without pydantic first on PATH), which
+# made every push fail with ModuleNotFoundError. Override with PYTHON=...
+find_python() {
+    if [ -n "$PYTHON" ]; then
+        echo "$PYTHON"
+        return 0
+    fi
+    for candidate in python python3 "py -3.13" "py -3.12" "py -3.11" "py -3.10" py; do
+        if $candidate -c "import pydantic, rich, questionary" >/dev/null 2>&1; then
+            echo "$candidate"
+            return 0
+        fi
+    done
+    return 1
+}
+
+PY="$(find_python)"
+if [ -z "$PY" ]; then
+    echo ""
+    echo "  No Python with the project's dependencies was found."
+    echo "  Run: python -m pip install -r requirements.txt"
+    echo "  or set PYTHON to the right interpreter. Push aborted."
+    echo ""
+    exit 1
+fi
+echo "  Using Python: $PY ($($PY -c 'import sys; print(sys.version.split()[0])'))"
+
 run_suite() {
     label="$1"
     cmd="$2"
@@ -26,13 +55,13 @@ run_suite() {
     fi
 }
 
-run_suite "test_characters.py"        "python -X utf8 test_characters.py"
-run_suite "test_quests.py"            "python -X utf8 test_quests.py"
-run_suite "test_runs.py"              "python -X utf8 test_runs.py"
-run_suite "tests/test_db_migrations"  "python -X utf8 tests/test_db_migrations.py"
-run_suite "tests/test_background_tick" "python -X utf8 tests/test_background_tick.py"
-run_suite "tests/test_guild_betrayal" "python -X utf8 tests/test_guild_betrayal.py"
-run_suite "tests/test_guild_founding" "python -X utf8 tests/test_guild_founding.py"
+run_suite "test_characters.py"        "$PY -X utf8 test_characters.py"
+run_suite "test_quests.py"            "$PY -X utf8 test_quests.py"
+run_suite "test_runs.py"              "$PY -X utf8 test_runs.py"
+run_suite "tests/test_db_migrations"  "$PY -X utf8 tests/test_db_migrations.py"
+run_suite "tests/test_background_tick" "$PY -X utf8 tests/test_background_tick.py"
+run_suite "tests/test_guild_betrayal" "$PY -X utf8 tests/test_guild_betrayal.py"
+run_suite "tests/test_guild_founding" "$PY -X utf8 tests/test_guild_founding.py"
 
 echo ""
 echo "  ✓ All 7 test suites passed. Pushing."

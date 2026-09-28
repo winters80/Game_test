@@ -402,7 +402,18 @@ Three skill types with distinct combat roles:
 | `PASSIVE` | No — contributes via `systems/passive_system.get_passive_modifiers` | Always — see stacking rules below |
 | `TRIGGERED` | No — fires via `systems/passive_system.try_fire_trigger` | When `trigger_condition` matches event: `on_attack`, `on_hit`, `on_kill`, `on_low_hp` |
 
-> **Note:** combat currently dispatches only `on_attack` and `on_kill` (`systems/combat_system.player_attack`). `on_hit` and `on_low_hp` are accepted but never fire, so author new TRIGGERED skills against `on_attack` / `on_kill`.
+### Triggered events (`systems/combat_system.py`)
+
+| Event | Fired from | When | Value |
+|-------|-----------|------|-------|
+| `on_attack` | `player_attack` | Every basic attack | bonus damage |
+| `on_hit` | `player_attack` | Basic attack lands (always, today — no miss mechanic) | bonus damage |
+| `on_kill` | `player_attack` | Basic attack drops the enemy | heals player |
+| `on_low_hp` | `enemy_attack` | Hit takes HP from ≥ `LOW_HP_TRIGGER_THRESHOLD` (30%) of max to below it, player still alive | heals player |
+
+`on_low_hp` fires on the threshold *crossing*, so it can't re-fire until the player climbs back above 30%. `trigger_condition` is matched exactly: list several events with commas (`"on_hit, on_kill"`); `"on_attack_or_kill"` matches nothing. A TRIGGERED skill with `cooldown_turns > 0` goes on the normal per-combat cooldown after firing.
+
+`passive_system.fire_triggers()` returns a `TriggerFiring` per skill that fired (`try_fire_trigger()` is the summed-value shorthand). `player_attack` / `enemy_attack` take an optional `fired` list so `core/combat_handler` can log "✦ Arcane Strike triggers — bonus damage 16".
 
 ### Passive stacking rules (`systems/passive_system.py`)
 

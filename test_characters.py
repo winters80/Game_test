@@ -514,6 +514,161 @@ def main() -> None:
     except Exception as e:
         fail("level_system broken", e)
 
+    # TRIGGERED skills: on_hit (Arcane Strike), on_low_hp, exact matching
+    import random
+    from entities.enums import EffectType, Rarity, SkillType
+    from entities.skill import Skill, SkillEffect
+    from systems import passive_system
+
+    try:
+        arcane = skill_reg.get("arcane_strike")
+        assert arcane is not None, "arcane_strike missing from skill registry"
+        assert "on_hit" in passive_system.parse_trigger_conditions(arcane.trigger_condition)
+
+        def _swing(with_arcane: bool) -> int:
+            p = Player(name="ArcaneTest")
+            p.stats.STR = 10
+            p.stats.INT = 15
+            p.stats.LCK = 0          # no crits → deterministic comparison
+            if with_arcane:
+                p.skills.append("arcane_strike")
+            target = combat_system.spawn_encounter("single_slime")[0]
+            target.max_hp = target.current_hp = 1000   # never dies → no on_kill
+            random.seed(1234)
+            dmg, _ = combat_system.player_attack(p, target, skill_reg)
+            return dmg
+
+        base_dmg, arcane_dmg = _swing(False), _swing(True)
+        expected_bonus = int(4.0 + 15 * 0.8)
+        assert arcane_dmg - base_dmg == expected_bonus, (
+            f"Arcane Strike should add {expected_bonus} dmg, got {arcane_dmg - base_dmg} "
+            f"({base_dmg} → {arcane_dmg})"
+        )
+        ok(f"on_hit fires from player_attack — Arcane Strike adds {expected_bonus} dmg "
+           f"({base_dmg} → {arcane_dmg})")
+    except Exception as e:
+        fail("on_hit trigger (arcane_strike) broken", e)
+
+    # Test-only skills go in a scratch registry so later sections never see them
+    trig_reg = SkillRegistry()
+
+    try:
+        trig_reg.register(Skill(
+            skill_id="test_last_stand", name="Last Stand", rarity=Rarity.RARE,
+            description="Heals when badly wounded.",
+            skill_type=SkillType.TRIGGERED, trigger_condition="on_low_hp",
+            effects=[SkillEffect(effect_type=EffectType.HEAL, base_value=25.0)],
+        ))
+
+        def _low_hp_player(hp: int) -> Player:
+            p = Player(name="LowHPTest")
+            p.stats.AGI = 0          # no dodge
+            p.stats.END = 0          # no END mitigation
+            p.max_hp = 100
+            p.current_hp = hp
+            p.skills.append("test_last_stand")
+            return p
+
+        brute = combat_system.spawn_encounter("single_slime")[0]
+        brute.attack = 20            # 19–22 dmg: 35 HP → below 30% but alive
+
+        p = _low_hp_player(35)
+        dmg = combat_system.enemy_attack(brute, p, trig_reg)
+        assert dmg > 0
+        assert p.current_hp == 35 - dmg + 25, (
+            f"on_low_hp heal expected {35 - dmg + 25} HP, got {p.current_hp}"
+        )
+        ok(f"on_low_hp fires when a hit crosses 30% HP — took {dmg}, healed 25 → {p.current_hp}")
+
+        p = _low_hp_player(25)       # already below threshold → no crossing
+        brute.attack = 5
+        dmg = combat_system.enemy_attack(brute, p, trig_reg)
+        assert p.current_hp == 25 - dmg, (
+            f"on_low_hp should not re-fire while already low, got {p.current_hp} HP"
+        )
+        ok("on_low_hp does not fire again while HP is already below the threshold")
+
+        p = _low_hp_player(35)       # lethal hit → no post-mortem heal
+        brute.attack = 100
+        combat_system.enemy_attack(brute, p, trig_reg)
+        assert p.current_hp == 0, f"on_low_hp must not revive a dead player, got {p.current_hp}"
+        ok("on_low_hp does not fire on a lethal hit")
+    except Exception as e:
+        fail("on_low_hp trigger broken", e)
+
+    try:
+        for sid, cond, cd in (("test_combo_cond", "on_attack_or_kill", 0),
+                              ("test_multi_cond", "on_hit, ON_KILL", 0),
+                              ("test_cd_trigger", "on_hit", 3)):
+            trig_reg.register(Skill(
+                skill_id=sid, name=sid, rarity=Rarity.COMMON, description="test",
+                skill_type=SkillType.TRIGGERED, trigger_condition=cond, cooldown_turns=cd,
+                effects=[SkillEffect(effect_type=EffectType.DAMAGE, base_value=5.0)],
+            ))
+        p = Player(name="MatchTest")
+        p.skills.append("test_combo_cond")
+        assert passive_system.try_fire_trigger(p, "on_attack", trig_reg) == 0
+        assert passive_system.try_fire_trigger(p, "on_kill", trig_reg) == 0
+        ok("trigger_condition matching is exact — 'on_attack_or_kill' matches neither event")
+
+        p = Player(name="MultiTest")
+        p.skills.append("test_multi_cond")
+        assert passive_system.try_fire_trigger(p, "on_hit", trig_reg) == 5
+        assert passive_system.try_fire_trigger(p, "on_kill", trig_reg) == 5
+        assert passive_system.try_fire_trigger(p, "on_attack", trig_reg) == 0
+        ok("comma-separated trigger_condition fires on each listed event")
+
+        p = Player(name="CDTrigTest")
+        p.skills.append("test_cd_trigger")
+        assert passive_system.try_fire_trigger(p, "on_hit", trig_reg) == 5
+        assert p.skill_cooldowns.get("test_cd_trigger") == 3
+        assert passive_system.try_fire_trigger(p, "on_hit", trig_reg) == 0
+        ok("TRIGGERED skill with cooldown_turns goes on cooldown after firing")
+    except Exception as e:
+        fail("trigger_condition matching / cooldown broken", e)
+
+    try:
+        # Combat reports which TRIGGERED skills fired so the UI can log them
+        p = Player(name="FiredTest")
+        p.skills.append("arcane_strike")
+        target = combat_system.spawn_encounter("single_slime")[0]
+        target.max_hp = target.current_hp = 1000
+        fired = []
+        combat_system.player_attack(p, target, skill_reg, fired)
+        assert [(f.skill_name, f.event) for f in fired] == [("Arcane Strike", "on_hit")], fired
+        assert fired[0].value > 0
+
+        p = _low_hp_player(35)
+        brute.attack = 20
+        fired = []
+        combat_system.enemy_attack(brute, p, trig_reg, fired)
+        assert [(f.skill_id, f.value) for f in fired] == [("test_last_stand", 25)], fired
+        ok("player_attack / enemy_attack report fired TRIGGERED skills for the combat log")
+    except Exception as e:
+        fail("fired-trigger reporting broken", e)
+
+    try:
+        # Headless auto-combat applies TRIGGERED skills too (on_kill heal)
+        trig_reg.register(Skill(
+            skill_id="test_kill_heal", name="Bloodrush", rarity=Rarity.RARE,
+            description="Heal on kill.", skill_type=SkillType.TRIGGERED,
+            trigger_condition="on_kill",
+            effects=[SkillEffect(effect_type=EffectType.HEAL, base_value=100.0)],
+        ))
+        p = Player(name="AutoTrigTest")
+        p.stats.STR = 99             # one-shots the slime before it can swing
+        p.max_hp, p.current_hp = 200, 50
+        p.skills.append("test_kill_heal")
+        result = combat_system.resolve_combat_auto(
+            p, combat_system.spawn_encounter("single_slime"), trig_reg,
+        )
+        assert result.victory
+        assert p.current_hp == 150, f"on_kill heal should apply in auto combat, HP={p.current_hp}"
+        assert all(isinstance(i, str) for i in result.loot), f"loot must be item ids: {result.loot}"
+        ok("resolve_combat_auto applies TRIGGERED skills (on_kill healed 50 → 150)")
+    except Exception as e:
+        fail("resolve_combat_auto trigger wiring broken", e)
+
     # ── 8. Background generator lifecycle ────────────────────────────────────
     section("8. Background Generator Lifecycle")
     try:

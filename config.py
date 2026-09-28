@@ -90,6 +90,7 @@ STAT_POINTS_PER_LEVEL = 3
 STARTING_GOLD    = 5000             # copper pieces (50 gold)
 COPPER_PER_GOLD  = 100              # 1 gold = 100 copper
 COPPER_PER_SILVER = 10              # 1 silver = 10 copper
+LOW_HP_TRIGGER_THRESHOLD = 0.30     # on_low_hp skills fire when an enemy hit drops HP below this fraction of max
 
 
 def format_currency(copper: int) -> str:

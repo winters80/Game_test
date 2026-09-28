@@ -39,6 +39,18 @@ def _skill_label(sid: str, player, skill_registry) -> str:
     return label
 
 
+_HEAL_TRIGGER_EVENTS = ("on_kill", "on_low_hp")
+
+
+def _print_triggers(fired) -> None:
+    """Log each TRIGGERED skill that fired (Arcane Strike, Last Stand, ...)."""
+    for f in fired:
+        if f.event in _HEAL_TRIGGER_EVENTS:
+            renderer.print_combat_action(f"✦ {f.skill_name}", "triggers — restores HP", f.value, "success")
+        else:
+            renderer.print_combat_action(f"✦ {f.skill_name}", "triggers — bonus damage", f.value, "rare")
+
+
 class CombatHandlerMixin:
 
     def _run_combat(self, encounter_id: str, surprise: bool = False) -> None:
@@ -78,11 +90,13 @@ class CombatHandlerMixin:
         # Surprise round: player gets one free attack before enemies can respond
         if surprise and alive_enemies:
             target = alive_enemies[0]
-            dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry)
+            fired = []
+            dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry, fired)
             crit_str = " CRITICALLY" if is_crit else ""
             renderer.print_combat_action(
                 "SURPRISE!", f"You strike {target.name}{crit_str} before they react!", dmg, "system_warning"
             )
+            _print_triggers(fired)
             if not target.is_alive:
                 renderer.print_combat_action(target.name, "goes down before the fight begins!", style="success")
             alive_enemies = [e for e in enemies if e.is_alive]
@@ -108,7 +122,7 @@ class CombatHandlerMixin:
             # Only include ACTIVE skills. PASSIVE skills contribute via
             # systems/passive_system (defense/attack bonuses, dodge, etc.).
             # TRIGGERED skills fire automatically from combat_system on the
-            # right event (on_attack / on_kill) — showing them in the menu
+            # right event (on_attack / on_hit / on_kill / on_low_hp) — showing them in the menu
             # would let the player double-fire them.
             skills_available = [
                 sid for sid in player.skills
@@ -147,12 +161,14 @@ class CombatHandlerMixin:
 
                 # ── Execute action ────────────────────────────────────────────
                 if action == "⚔ Basic Attack":
-                    dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry)
+                    fired = []
+                    dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry, fired)
                     crit_str = " CRITICALLY" if is_crit else ""
                     renderer.print_combat_action(
                         "You", f"strike {target.name}{crit_str} for", dmg,
                         "critical" if is_crit else "damage",
                     )
+                    _print_triggers(fired)
                     renderer.console.print(
                         f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
                     )
@@ -208,13 +224,15 @@ class CombatHandlerMixin:
             # ── Enemy turns ───────────────────────────────────────────────────
             for enemy in alive_enemies:
                 if enemy.is_alive and player.current_hp > 0:
-                    dmg = combat_system.enemy_attack(enemy, player, self.skill_registry)
+                    fired = []
+                    dmg = combat_system.enemy_attack(enemy, player, self.skill_registry, fired)
                     if dmg == 0:
                         renderer.print_combat_action(enemy.name, "attacks — you dodge!", style="miss")
                     else:
                         renderer.print_combat_action(
                             enemy.name, f"strikes you for", dmg, "damage"
                         )
+                        _print_triggers(fired)
                         renderer.console.print(
                             f"  [dim_text]→ Your HP: {player.current_hp}/{player.max_hp}[/dim_text]"
                         )
