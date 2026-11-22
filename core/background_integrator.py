@@ -82,6 +82,12 @@ def _dispatch(engine: "GameEngine", result: dict) -> None:
     elif rtype == "world_expansion":
         from core.world_growth_flow import apply_expansion_result
         apply_expansion_result(engine, result)
+    elif rtype == "new_gate":
+        from core.gate_growth import apply_gate_result
+        apply_gate_result(engine, result)
+    elif rtype == "lair_successor":
+        from core.gate_growth import apply_successor_result
+        apply_successor_result(engine, result)
 
 
 # ── Per-type handlers ────────────────────────────────────────────────────────

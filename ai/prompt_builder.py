@@ -465,3 +465,49 @@ Rules:
 - Add a trader only if someone in the world would plausibly buy or sell these goods. "road" means a travelling trader.
 - Only add skill_hint if the action is a craft or technique worth learning (e.g. "Prospecting").
 - Aethoria is grounded low fantasy after the Fracture. Keep names short and believable."""
+
+
+_STATUS_HELP = "poison, bleed, burn, stun, frozen, or empty"
+
+
+def build_gate_prompt(player_level: int, gate_level: int, existing: list[str], themes: list[str]) -> str:
+    """Ask the primary model for a new Gate (rift dungeon). Only names and
+    texts are used: stats, rewards and structure come from the gate level
+    (systems/gate_generation)."""
+    have = ", ".join(existing[:40]) or "none"
+    return f"""A new rift ("Gate") has opened in Aethoria and the System has registered it at level {gate_level}.
+The player is level {player_level}. Gates that already exist: {have}.
+
+Invent a Gate unlike those. Pick a theme from: {", ".join(themes)}, or another that fits post-Fracture Aethoria.
+It has three rooms, two kinds of room enemy, and a chain of 3 masters (bosses). The first master rules it now.
+When it dies, the second moves in, or the third if the first was killed with magic. Each master's "omen" is
+what the empty chamber looks like while it moves in; its "rumour" is what townsfolk say once it has arrived.
+Use {{name}} in a master's texts if it has "names" (a pool of lineage names).
+
+Return ONLY JSON:
+{{"name": "the Something", "theme": "...", "description": "one sentence: where the rift is and what people see",
+  "entry_text": "what you see stepping in", "heart": "the boss chamber's name",
+  "material_name": "a material its enemies drop", "material_description": "...",
+  "mob_names": ["room enemy", "room enemy"], "room_texts": ["room 1 (a fight)", "room 2 (a trap)", "room 3 (a fight)"],
+  "masters": [{{"title": "...", "boss_name": "...", "names": [], "intro": "...", "victory": "...", "omen": "...",
+                "rumour": "...", "status": "{_STATUS_HELP}", "heavy_move": "name of its big telegraphed blow",
+                "second_move": "name of its other move"}}]}}
+
+Keep every text to one or two sentences. Grounded, eerie, specific. No numbers."""
+
+
+def build_successor_prompt(lair_name: str, gate_name: str, dead_title: str, killed_by: str,
+                           killer: str, gate_level: int, others: list[str]) -> str:
+    """Ask the primary model who moves into a lair after its master died."""
+    return f"""In Aethoria, {dead_title} has just been killed in {lair_name} ({gate_name}, a level {gate_level} Gate)
+by {killer}, with {killed_by} force. Masters this lair has had: {", ".join(others[:8])}.
+
+Who or what moves in next? Make it follow from how the last master died (a wizard slain by magic might rise
+as a lich; priests who come to cleanse a lich's den might be corrupted by it). Not one of the masters above.
+
+Return ONLY JSON:
+{{"master": {{"title": "...", "boss_name": "...", "names": [], "intro": "...", "victory": "...",
+  "omen": "what the empty chamber looks like while it moves in", "rumour": "what townsfolk say once it has arrived",
+  "status": "{_STATUS_HELP}", "heavy_move": "...", "second_move": "..."}}}}
+
+One or two sentences per text. Use {{name}} only if you give "names"."""

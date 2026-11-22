@@ -3,7 +3,9 @@ from __future__ import annotations
 import math
 from typing import TYPE_CHECKING
 
-from config import BASE_XP_PER_LEVEL, XP_SCALING_FACTOR, STAT_POINTS_PER_LEVEL
+from config import (
+    BASE_XP_PER_LEVEL, STAT_POINTS_PER_LEVEL, XP_LATE_SCALING, XP_SCALING_FACTOR, XP_SOFT_CAP_LEVEL,
+)
 from core.event_bus import Event, bus
 
 if TYPE_CHECKING:
@@ -13,7 +15,11 @@ if TYPE_CHECKING:
 
 
 def xp_for_level(level: int) -> int:
-    return int(BASE_XP_PER_LEVEL * (XP_SCALING_FACTOR ** (level - 1)))
+    """XP from ``level`` to the next: x1.5 per level up to the soft cap,
+    then x``XP_LATE_SCALING``. Unchanged below the cap (old saves keep pace)."""
+    early = min(level, XP_SOFT_CAP_LEVEL) - 1
+    late = max(0, level - XP_SOFT_CAP_LEVEL)
+    return int(BASE_XP_PER_LEVEL * (XP_SCALING_FACTOR ** early) * (XP_LATE_SCALING ** late))
 
 
 def add_experience(

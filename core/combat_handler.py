@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import random
 import time as _time
 from typing import TYPE_CHECKING
 
@@ -16,6 +17,8 @@ if TYPE_CHECKING:
     pass
 
 logger = logging.getLogger(__name__)
+
+COMPANION_DRAW_CHANCE = 0.3     # chance each enemy attacks your companion instead of you
 
 
 def _enemy_bar(e) -> str:
@@ -89,6 +92,9 @@ class CombatHandlerMixin:
         # per combat turn (see end of the loop below).
         from systems.skill_system import reset_cooldowns_for_combat
         reset_cooldowns_for_combat(player)
+        from systems import combat_effects as fx
+        player_statuses: dict = {}      # statuses end with the fight
+        self._last_combat_rounds = 0
         turn = 0
         alive_enemies = [e for e in enemies if e.is_alive]
 
@@ -117,10 +123,14 @@ class CombatHandlerMixin:
             # Show all enemies with HP bars
             renderer.console.print(f"  [system_warning]⚔  TURN {turn}[/system_warning]")
             for i, enemy in enumerate(alive_enemies, 1):
+                st = fx.status_label(enemy.statuses)
                 renderer.console.print(
                     f"  [{i}] [damage]{enemy.name}[/damage]  {_enemy_bar(enemy)}  "
-                    f"[dim_text]ATK {enemy.attack}  DEF {enemy.defense}[/dim_text]"
+                    f"[dim_text]ATK {enemy.attack}  DEF {enemy.defense}{'  ' + st if st else ''}"
+                    f"{'  ENRAGED' if enemy.enraged else ''}[/dim_text]"
                 )
+            if player_statuses:
+                renderer.console.print(f"  [system_warning]You: {fx.status_label(player_statuses)}[/system_warning]")
             renderer.console.print()
 
             # ── Choose action ─────────────────────────────────────────────────
@@ -134,115 +144,165 @@ class CombatHandlerMixin:
                 if (sk := self.skill_registry.get(sid)) and sk.skill_type == SkillType.ACTIVE
             ]
             action_choices = ["⚔ Basic Attack"] + [_skill_label(sid, player, self.skill_registry) for sid in skills_available] + ["🏃 Flee"]
-            action = questionary.select("Your action:", choices=action_choices).ask()
-
-            if action is None:
-                # Treat cancellation as re-prompt (loop continues naturally)
-                continue
-
-            if action == "🏃 Flee":
-                if combat_system.try_flee(player, alive_enemies[0]):
-                    renderer.print_scene_text(["You flee from combat!"])
-                    renderer.prompt_any_key()
-                    return "fled"
-                else:
-                    renderer.print_scene_text(["You failed to flee!"])
-
+            if fx.consume_stun(player_statuses):
+                renderer.print_combat_action("You", "are stunned and lose your turn!", style="system_warning")
+                action = "__stunned__"
             else:
-                # ── Choose target (if more than one enemy alive) ──────────────
-                if len(alive_enemies) > 1 and action != "🏃 Flee":
-                    target_choices = [
-                        f"[{i}] {e.name}  ({e.current_hp}/{e.max_hp} HP)"
-                        for i, e in enumerate(alive_enemies, 1)
-                    ]
-                    t_answer = questionary.select("Target:", choices=target_choices).ask()
-                    try:
-                        t_idx = int(t_answer.split("]")[0].lstrip("[")) - 1
-                        target = alive_enemies[t_idx]
-                    except Exception:
-                        target = alive_enemies[0]
-                else:
-                    target = alive_enemies[0]
+                action = questionary.select("Your action:", choices=action_choices).ask()
 
-                # ── Execute action ────────────────────────────────────────────
-                if action == "⚔ Basic Attack":
-                    fired = []
-                    dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry, fired)
-                    crit_str = " CRITICALLY" if is_crit else ""
-                    renderer.print_combat_action(
-                        "You", f"strike {target.name}{crit_str} for", dmg,
-                        "critical" if is_crit else "damage",
-                    )
-                    _print_triggers(fired)
-                    renderer.console.print(
-                        f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
-                    )
-                    if not target.is_alive:
-                        self._last_killing_blow = "physical"
-                        renderer.print_combat_action(target.name, "is defeated!", style="success")
+                if action is None:
+                    # Treat cancellation as re-prompt (loop continues naturally)
+                    continue
 
-                else:
-                    # Skill / spell
-                    skill_id = next(
-                        (sid for sid in skills_available if _skill_label(sid, player, self.skill_registry) == action), None
-                    )
-                    if skill_id:
-                        skill = self.skill_registry.get(skill_id)
-                        cd = player.skill_cooldowns.get(skill_id, 0)
-                        if cd > 0:
-                            renderer.print_scene_text([f"{skill.name} is on cooldown ({cd} turns remaining)."])
-                        elif skill.mp_cost > 0 and player.current_mp < skill.mp_cost:
-                            renderer.print_scene_text([f"Not enough MP! Need {skill.mp_cost}, have {player.current_mp}."])
-                        else:
-                            from entities.enums import EffectType
-                            is_heal = skill.effects and any(
-                                e.effect_type == EffectType.HEAL for e in skill.effects
-                            )
-                            if is_heal:
-                                from systems.skill_system import calculate_skill_damage
-                                heal_val = calculate_skill_damage(skill, player)
-                                player.current_mp -= skill.mp_cost
-                                player.current_hp = min(player.max_hp, player.current_hp + heal_val)
-                                if skill.cooldown_turns > 0:
-                                    player.skill_cooldowns[skill_id] = skill.cooldown_turns
-                                renderer.print_scene_text([
-                                    f"You cast {skill.name}. Healed {heal_val} HP. "
-                                    f"({player.current_hp}/{player.max_hp})"
-                                ])
-                            else:
-                                val, success = combat_system.player_skill_attack(
-                                    player, skill_id, target, self.skill_registry
-                                )
-                                if success:
-                                    if skill.cooldown_turns > 0:
-                                        player.skill_cooldowns[skill_id] = skill.cooldown_turns
-                                    renderer.print_combat_action(
-                                        "You", f"cast {skill.name} on {target.name} for", val, "rare"
-                                    )
-                                    renderer.console.print(
-                                        f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
-                                    )
-                                else:
-                                    renderer.print_scene_text(["Not enough MP!"])
-                                if not target.is_alive:
-                                    self._last_killing_blow = lair_system.killing_blow_kind(skill)
-                                    renderer.print_combat_action(target.name, "is defeated!", style="success")
-
-            # ── Enemy turns ───────────────────────────────────────────────────
-            for enemy in alive_enemies:
-                if enemy.is_alive and player.current_hp > 0:
-                    fired = []
-                    dmg = combat_system.enemy_attack(enemy, player, self.skill_registry, fired)
-                    if dmg == 0:
-                        renderer.print_combat_action(enemy.name, "attacks — you dodge!", style="miss")
+                if action == "🏃 Flee":
+                    if combat_system.try_flee(player, alive_enemies[0]):
+                        renderer.print_scene_text(["You flee from combat!"])
+                        renderer.prompt_any_key()
+                        return "fled"
                     else:
+                        renderer.print_scene_text(["You failed to flee!"])
+
+                else:
+                    # ── Choose target (if more than one enemy alive) ──────────────
+                    if len(alive_enemies) > 1 and action != "🏃 Flee":
+                        target_choices = [
+                            f"[{i}] {e.name}  ({e.current_hp}/{e.max_hp} HP)"
+                            for i, e in enumerate(alive_enemies, 1)
+                        ]
+                        t_answer = questionary.select("Target:", choices=target_choices).ask()
+                        try:
+                            t_idx = int(t_answer.split("]")[0].lstrip("[")) - 1
+                            target = alive_enemies[t_idx]
+                        except Exception:
+                            target = alive_enemies[0]
+                    else:
+                        target = alive_enemies[0]
+
+                    # ── Execute action ────────────────────────────────────────────
+                    if action == "⚔ Basic Attack":
+                        fired = []
+                        dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry, fired)
+                        crit_str = " CRITICALLY" if is_crit else ""
                         renderer.print_combat_action(
-                            enemy.name, f"strikes you for", dmg, "damage"
+                            "You", f"strike {target.name}{crit_str} for", dmg,
+                            "critical" if is_crit else "damage",
                         )
                         _print_triggers(fired)
+                        for eff, chance in fx.trigger_statuses(fired):
+                            if target.is_alive and random.random() < chance and fx.inflict(target.statuses, eff, target.rank):
+                                renderer.print_combat_action(target.name, f"is {eff}ed" if eff == "poison" else f"suffers {eff}", style="success")
+                        renderer.console.print(
+                            f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
+                        )
+                        if not target.is_alive:
+                            self._last_killing_blow = "physical"
+                            renderer.print_combat_action(target.name, "is defeated!", style="success")
+
+                    else:
+                        # Skill / spell
+                        skill_id = next(
+                            (sid for sid in skills_available if _skill_label(sid, player, self.skill_registry) == action), None
+                        )
+                        if skill_id:
+                            skill = self.skill_registry.get(skill_id)
+                            cd = player.skill_cooldowns.get(skill_id, 0)
+                            if cd > 0:
+                                renderer.print_scene_text([f"{skill.name} is on cooldown ({cd} turns remaining)."])
+                            elif skill.mp_cost > 0 and player.current_mp < skill.mp_cost:
+                                renderer.print_scene_text([f"Not enough MP! Need {skill.mp_cost}, have {player.current_mp}."])
+                            else:
+                                from entities.enums import EffectType
+                                is_heal = skill.effects and any(
+                                    e.effect_type == EffectType.HEAL for e in skill.effects
+                                )
+                                if is_heal:
+                                    from systems.skill_system import calculate_skill_damage
+                                    heal_val = calculate_skill_damage(skill, player)
+                                    player.current_mp -= skill.mp_cost
+                                    player.current_hp = min(player.max_hp, player.current_hp + heal_val)
+                                    if skill.cooldown_turns > 0:
+                                        player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                                    renderer.print_scene_text([
+                                        f"You cast {skill.name}. Healed {heal_val} HP. "
+                                        f"({player.current_hp}/{player.max_hp})"
+                                    ])
+                                else:
+                                    val, success = combat_system.player_skill_attack(
+                                        player, skill_id, target, self.skill_registry
+                                    )
+                                    if success:
+                                        if skill.cooldown_turns > 0:
+                                            player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                                        renderer.print_combat_action(
+                                            "You", f"cast {skill.name} on {target.name} for", val, "rare"
+                                        )
+                                        _st = fx.skill_status(skill)
+                                        if _st and target.is_alive and random.random() < _st[1]:
+                                            if fx.inflict(target.statuses, _st[0], target.rank):
+                                                renderer.print_combat_action(target.name, f"is afflicted: {_st[0]}", style="success")
+                                            else:
+                                                renderer.print_combat_action(target.name, f"resists {_st[0]}", style="miss")
+                                        renderer.console.print(
+                                            f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
+                                        )
+                                    else:
+                                        renderer.print_scene_text(["Not enough MP!"])
+                                    if not target.is_alive:
+                                        self._last_killing_blow = lair_system.killing_blow_kind(skill)
+                                        renderer.print_combat_action(target.name, "is defeated!", style="success")
+
+            # ── Companion (a bot on this gate run) ────────────────────────────
+            party = [c for c in (getattr(self, "_companions", None) or []) if c.hp > 1]
+            for comp in party:
+                if not any(e.is_alive for e in enemies):
+                    break
+                from systems.bot_brain import bot_attack
+                foe = random.choice([e for e in enemies if e.is_alive])
+                hit = max(1, round((bot_attack(comp) - foe.defense) * random.uniform(0.8, 1.2)))
+                foe.current_hp = max(0, foe.current_hp - hit)
+                renderer.print_combat_action(comp.name, f"strikes {foe.name} for", hit, "rare")
+                if not foe.is_alive:
+                    renderer.print_combat_action(foe.name, "is defeated!", style="success")
+            alive_enemies = [e for e in enemies if e.is_alive]
+
+            # ── Enemy turns ───────────────────────────────────────────────────
+            for enemy in list(alive_enemies):
+                party = [c for c in party if c.hp > 1]
+                if (party and enemy.is_alive and not enemy.statuses.get("stun")
+                        and random.random() < min(0.6, COMPANION_DRAW_CHANCE * len(party))):
+                    from systems.bot_brain import bot_defense
+                    comp = random.choice(party)
+                    taken = max(1, enemy.attack - bot_defense(comp))
+                    comp.hp = max(1, comp.hp - taken)
+                    renderer.print_combat_action(enemy.name, f"turns on {comp.name} for", taken, "damage")
+                    if comp.hp <= 1:
+                        renderer.print_combat_action(comp.name, "is knocked down and drags themself out of the fight.",
+                                                     style="system_warning")
+                    continue
+                if enemy.is_alive and player.current_hp > 0:
+                    res = fx.enemy_turn(enemy, player, player_statuses, self.skill_registry, enemies)
+                    for text, style in res.lines:
+                        renderer.console.print(f"  [{style}]{text}[/{style}]")
+                    _print_triggers(res.fired)
+                    if res.damage:
                         renderer.console.print(
                             f"  [dim_text]→ Your HP: {player.current_hp}/{player.max_hp}[/dim_text]"
                         )
+
+            # ── End of round: damage over time ────────────────────────────────
+            for enemy in enemies:
+                if enemy.is_alive:
+                    for eff, dot in fx.tick_enemy(enemy):
+                        renderer.print_combat_action(enemy.name, f"takes {eff} damage", dot, "success")
+                    if not enemy.is_alive:
+                        renderer.print_combat_action(enemy.name, "is defeated!", style="success")
+            if player.current_hp > 0 and player_statuses:
+                player.current_hp, hits = fx.tick(player_statuses, player.current_hp)
+                for eff, dot in hits:
+                    renderer.print_combat_action("You", f"take {eff} damage", dot, "damage")
+            if player.current_hp > 0:
+                combat_system.combat_mp_regen(player)
+            self._last_combat_rounds = turn
 
             # End-of-round cooldown tick — F5: per combat turn, not per game-loop turn
             from systems.skill_system import tick_combat_cooldowns

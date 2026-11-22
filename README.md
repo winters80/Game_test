@@ -14,6 +14,8 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 
 **The world grows around what you do.** Follow the script, or type your own questions with `[?]`. The fast model answers on the spot. When you *act* on something new (mine a gold seam, forage strange mushrooms, carve a trail marker), the primary model quietly builds the world around it: new items and recipes, a trader who buys what you gather, sometimes a new skill. Every save grows its own world.
 
+**The dungeons are alive.** Kill a boss and something else moves in: a wizard rises as a lich, the priests who come to cleanse it are corrupted. Two dozen other adventurers level up, run Gates, form parties and kill bosses while you're away. New rifts keep opening, invented by the AI or echoing old ones deeper.
+
 Built with:
 - Python 3.11 + Pydantic v2 (all data models)
 - [Rich](https://github.com/Textualize/rich) for terminal UI
@@ -138,7 +140,7 @@ Your saves upgrade automatically when you load them.
 Game_Test/
 ├── main.py                 # Entry point
 ├── start.bat               # Windows: double-click to play (runs scripts/start.ps1)
-├── scripts/                # start.ps1 / start.sh launchers, git hook installers
+├── scripts/                # start.ps1 / start.sh launchers, git hook installers, balance_sim.py
 ├── config.py               # All constants and feature flags — change here only
 ├── CLAUDE.md               # Developer reference (architecture, triggers, schemas)
 │
@@ -147,7 +149,7 @@ Game_Test/
 ├── systems/                # Pure game logic (class resolution, combat, quests, levels)
 ├── ai/                     # Ollama integration (client, prompts, validators)
 ├── scenes/data/            # All narrative content as JSON (scene scripts)
-├── data/                   # All static content (classes, skills, items, NPCs, quests)
+├── data/                   # All static content (classes, skills, items, NPCs, quests, dungeons/Gates, recipes)
 ├── ui/                     # All Rich terminal rendering
 ├── persistence/            # Save/load (JSON player data + SQLite world state)
 └── saves/                  # Runtime save files (gitignored)
@@ -186,39 +188,71 @@ Game_Test/
 
 Everything the AI adds is validated and price-capped. It can't hand out gold, gear, quest items, classes or story flags, and it can't overwrite anything hand-written. Generated traders only appear in safe places: the outer market, Verath, the roadside camp, or travelling the road between them. The admin panel's **World Growth log** shows every action you've taken and what it added.
 
-### Other adventurers
+### Time
 
-You're not alone. A dozen other adventurers (**bots**, like playerbots in an MMO) live in every save:
-- **What they do:** they head into the dungeon, fight real encounters, loot, level up, sell their haul to traders, brew potions, and wander between the outer market, the camp and Verath.
-- **When they're near you:** you'll see the occasional line, like *"Ryn took down a goblin patrol."* or *"✦ Dova and Kael are about."* Each bot in your zone also gets a "Talk to …" option.
-- **Talking to them:** they tell you what they've really been doing, and you can **buy their spare loot** or **sell them** materials and consumables. They pay better than NPC traders, but only what they can afford.
-- **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
+The clock in your status panel runs on game time: **Day 1, 08:00** at the start, and every ordinary choice takes about ten minutes. Bigger things take longer, and the world keeps moving while they happen:
+- a Gate room takes an hour, and so does its master's chamber
+- a full rest takes 8 hours, a short one 2, and a night at the inn 8
+- walking between the outer market, the camp, Verath and the dungeon takes half an hour
 
-Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
+NPCs keep day hours (06:00–20:00) and night hours. Bosses come back in hours or days, not menu clicks. Bots act, rumours spread and buffs wear off while you sleep.
 
-### Boss succession
+### Combat
 
-Boss rooms don't stay the same. When a boss dies, the dungeon finds a replacement, and **how it died decides what comes next**:
-- **Floor 3, the Drowned Sanctum:** Archmage Veyl studies the Fracture. Kill him and leave the body, and he comes back as **Veyl, the Hollow Lich**. Smash his phylactery instead and his apprentices move in. The priests of the Pale Lamp come down to cleanse the lich's den and are corrupted by it. Relight their lamp and a Lampwarden guards it; leave it dark and a blind saint keeps praying to it. Eventually a new scholar moves in, and the cycle starts again.
-- **Floor 2, the Crystal Heart:** the Crystal Golem. Kill it with magic and its shards wake as the Shardmind; otherwise a spider matriarch nests in the remains. Goblins come to mine the place, and when they leave the crystal grows a new, stronger Golem.
-
-After a kill the lair stays empty for a while (30 to 35 turns), with signs of what's moving in. Then a rumour spreads in town. A boss that takes its lair back is 10% stronger each time (up to +40%). With enough INT or WIS you can **study** a boss first and get the first strike.
+- **Statuses:** poison, bleed and burn hurt every round; **stun** costs you a turn (then you can't be stunned again for two rounds); **frozen** makes you slower to dodge. Many monsters inflict them on a hit. Your spells do too: fire burns, ice freezes, arcane and curse effects can stun. Bosses (rank C and up) shrug off half of all stuns.
+- **Boss moves:** every boss has signature moves, such as a heavy blow it **announces a turn ahead** (*"⚠ Asterion is gathering itself for Horned Charge!"*), a heal, a curse, a summon, or a life drain. Below a third of its health it becomes **ENRAGED** and hits 25% harder.
+- **Study** a boss first (if your INT or WIS is high enough) for a free first strike.
+- Casters regain a little MP every round (1 + WIS/5). Basic attacks use the better of STR and AGI.
 
 ### Gates
 
 There's more to Aethoria than the three dungeon floors. **32 Gates** (rifts the System registers, rated from level 2 to 18) open across the world: a Minotaur's bronze labyrinth, a fae court under a hill, a dragon's hoard, a clockwork foundry, a derelict skyship, a haunted manor, a plague asylum, a hall of ten thousand mirrors, forges and tombs of the elements, a fallen star, a clocktower stuck at the moment of the Fracture, and a rift you can only reach in your dreams.
 
-Each Gate has three rooms (fights, traps and treasure, some with stat checks) and then a boss, and every Gate boss follows the succession rules above. Find them at the **Gate Hall** in the village and in Verath: the Registry there shows every Gate's level and who rules it this week.
+Find them at the **Gate Hall** in the village and in Verath. The Registry there lists every Gate's level and who rules it this week, who's in the hall, and the latest news from the rifts.
+
+- **A run:** three rooms (fights, traps and treasure, some with stat checks), then the Gate's master. You catch your breath between rooms (15% HP and MP back) and can withdraw at any point.
+- **Rewards:** a **FIRST CLEAR** bonus the first time, a **SWIFT CLEAR** bonus if you win every fight fast, and a **trophy** the first time you kill each master. Lady Vos in Verath buys trophies.
+- **Companions:** an adventurer in town can come along. They fight beside you, take some hits, and keep a share of the gold.
+- **Group Gates** (`[party of 2–4]` in the Registry) need companions: the Hydra Fen, the Drowned Bell, the Phoenix Ashery and Bellfall Cathedral take two; the Dragon's Hoard, the Thaumic Reactor, the Dawnspire Observatory and the Hollow of Unmaking take three; the Dreamer's Abyss takes four. Their masters are built for a party. Six levels over a group Gate, you may go in alone.
+- **Every Gate master follows the succession rules above.** Each Gate has a chain of four that branches on how you killed the first one or what you did with the body.
+
+### New rifts open by themselves
+
+The world keeps growing:
+- **Rift surges:** every two in-game days a new Gate opens (up to 16 per save). With Ollama running, the AI invents it: its name, its rooms and a chain of masters. Its stats, rewards and structure come from the Gate's level, never from the AI. With the AI offline, a **Deep Echo** opens instead: an old Gate reopened 6–10 levels deeper, with the same story and stronger masters. That's where the content past level 18 lives.
+- **Quest lines open rifts too:** Mira's **Uncharted Rifts** chain charts a brand-new Gate at every step.
+- **New masters:** when a boss dies, the AI may invent who moves in next ("a wizard killed by fire rises as a burned lich"). The authored chain carries on after it.
+
+Everything new is saved with your world and comes back when you load.
+
+### Other adventurers
+
+You're not alone. **24 other adventurers** (bots, like playerbots in an MMO) live in every save:
+- **What they do:** they fight on the dungeon floors (pushing deeper as they level), run Gates from town, form **parties** for group Gates, kill bosses, loot, sell their haul to traders, brew potions and craft, and wander between the outer market, the camp and Verath.
+- **When they're near you:** you'll see the occasional line, like *"Ryn took down a goblin patrol."*, *"Kael and Dova came back from the Hydra Fen together."* or *"✦ Dova and Kael are about."* Each bot in your zone gets a "Talk to …" option.
+- **Talking to them:** they tell you what they've really been doing, and you can **buy their spare loot** or **sell them** materials and consumables.
+- **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
+- **They change the world without you:** come back from Verath and Ryn may have killed the Golem. The World Log (`[L]`) shows who holds every lair. Bots leave each lair's first boss alone for 250 turns, so you get the first shot.
+
+Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
 
 ### Quests
 
-The Gate Halls (and the wardens' fire at the camp) are full of people with work: **205 quests** from 13 new patrons, including **51 quest chains**. Ten chains teach you a new skill (Bull Rush, Stormcall, Ember Rebirth, Void Step and more), and ten end with a forged item (Asterion's Horn Axe, the Stormcaller Staff, the Wyrmscale Bulwark…). Finish a step, go back and choose **« Report: … »**, and the next step opens. There are also Gate bounties and material orders.
+The Gate Halls (and the wardens' fire at the camp) are full of people with work: **213 quests** from 13 patrons, including **53 quest chains**:
+- **10 skill chains** end with a new skill (Bull Rush, Stormcall, Ember Rebirth, Void Step, Gorgon's Gaze…)
+- **10 item chains** end with a forged item (Asterion's Horn Axe, the Stormcaller Staff, the Wyrmscale Bulwark, the Dreamthread Ring…)
+- **33 story chains**, including the Drowned Sanctum's wizard → lich → priests cycle, Mira's **Uncharted Rifts** (each step opens a new Gate) and Registrar Ostra's **Wardens of the Breach** (the group Gates)
+- plus 32 Gate bounties and 32 material orders
 
-The other adventurers fight bosses too. Come back from Verath and Ryn may have killed the Golem while you were away. The World Log (`[L]`) shows who holds each lair now. Bots leave each lair's first boss alone for the first 250 turns, so you get the first shot. New chains are pure JSON in `data/dungeons/` (see CLAUDE.md).
+Finish a step, go back and choose **« Report: … »**, and the next step opens. The **`[J]` journal** shows each quest's chain progress (*skill chain 2/3*), which ones are ready to report and to whom, and **leads**: work you could pick up now, and where.
+
+### Crafting
+
+`[C] Craft` appears once you carry something worth crafting with. Every Gate material has a use. There are 32 Gate recipes: stronger potions, stat tonics (Bronze Whetstone Tonic: STR +2 for 30 turns), and eight pieces of gear such as a Star-Metal Dagger, a Chrono Pendant and the Voidglass Blade. Recipes you can make right now are marked ✓.
 
 ### Trading
 
-Traders offer **« Browse wares »** and **« Sell items »** in conversation. **Wren**, a travelling pedlar, walks between the outer market, the camp and Verath, buying materials and consumables. **Torven** buys weapons and armour. AI-generated traders appear as the world grows. You can never sell the last copy of something you have equipped.
+Traders offer **« Browse wares »** and **« Sell items »** in conversation. **Wren**, a travelling pedlar, walks between the outer market, the camp and Verath, buying materials and consumables. **Torven** buys weapons and armour. **Lady Vos** buys Gate trophies. AI-generated traders appear as the world grows. You can never sell the last copy of something you have equipped.
 
 ### What triggers AI generation?
 
@@ -243,8 +277,14 @@ Create `scenes/data/my_scene.json`. The filename stem becomes the scene ID. See 
 ### New NPC
 Add a template to any file in `data/npcs/`. Enable `"npc_system": true` in `config.FEATURES` if not already on.
 
-### New quest
-Add a template to `data/quests/quest_templates.json`. Trigger it from a scene or NPC with `"start_quest:template_id"`.
+### New quest or quest chain
+Add a template to any file in `data/quests/`. Offer it from an NPC's `quest_seeds` (chain steps unlock each other with `done_<id>` flags), or trigger it from a scene with `"start_quest:template_id"`. Objectives can check items, flags, Gate clears, boss kills, level, and « Report » hand-ins.
+
+### New dungeon (Gate) or boss chain
+Add a Gate to `data/dungeons/gates/*.json`, or a fixed boss lair to `data/dungeons/lairs.json`. The Registry lists new Gates automatically. Run `python scripts/balance_sim.py` afterwards to check it's beatable at its level.
+
+### New recipe
+Add to any file in `data/crafting/`.
 
 ### New item
 Add to `data/items/*.json`. Set `"combo_catalyst": true` if it should contribute to AI divergence scoring.
@@ -295,9 +335,9 @@ Save files live in `saves/`. Each slot creates two files:
 - `<slot>.json` — player data (Pydantic model)
 - `<slot>.db` — world state (SQLite: NPC memory, quest instances, etc.)
 
-Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 7), both upgraded on load.
+Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 8), both upgraded on load.
 
-Each save has its **own grown world**. Items, recipes, traders and skills the AI created for one save are stored in that save's `.db`, restored when you load it, and never appear in another save.
+Each save has its **own grown world**. Items, recipes, traders, skills, new Gates and new bosses created for one save are stored in that save's `.db`, restored when you load it, and never appear in another save. So are who rules each lair, the history of every boss kill, and the bots.
 
 ---
 
@@ -329,9 +369,16 @@ WORLD_MAX_EXPANSIONS = 60              # per save
 WORLD_RETRY_ON_LOAD = 3                # unfinished actions re-queued per load
 
 # Bot adventurers
-BOT_COUNT = 12                    # adventurers per save
+BOT_COUNT = 24                    # adventurers per save
 BOT_ACT_EVERY_TURNS = 2           # each bot acts once every N turns
 BOT_AI_DECISIONS = False          # True = ask the primary model for every bot decision (slow)
+
+# Gates, bosses and the world clock
+MINUTES_PER_TURN = 10             # an ordinary choice; TIME_COSTS sets rests, Gate rooms, travel
+RIFT_SURGE_EVERY_TURNS = 288      # a new rift every 2 in-game days (AI-made, or a Deep Echo offline)
+RIFT_MAX_GENERATED = 16           # generated Gates per save
+AI_SUCCESSOR_CHANCE = 0.25        # chance the AI invents who moves into a lair after a kill
+XP_SOFT_CAP_LEVEL = 8             # the XP curve flattens past this level (x1.12 per level)
 
 # What AI-generated options may do (everything else is dropped)
 AI_GRANTABLE_FLAGS = frozenset({"verath_access"})
@@ -339,7 +386,7 @@ AI_MAX_ALIGNMENT_SHIFT = 5.0
 AI_GIVEABLE_ITEM_TYPES = frozenset({"CONSUMABLE", "MATERIAL"})
 ```
 
-If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back to the nearest pre-written class from `data/classes/combo_classes.json`. NPC dialogue uses its `dialogue_hooks["default"]`. The dynamic quest path simply skips its option. World growth records your actions as `no_ai` and retries them the next time you load with Ollama available.
+If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back to the nearest pre-written class from `data/classes/combo_classes.json`. NPC dialogue uses its `dialogue_hooks["default"]`. The dynamic quest path simply skips its option. World growth records your actions as `no_ai` and retries them the next time you load with Ollama available. Rift surges open Deep Echoes instead of AI-made Gates, and bosses follow their authored chains.
 
 ### Verifying the AI is wired up
 
@@ -360,28 +407,31 @@ Prints `True` if Ollama is reachable and the model is pulled.
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 167 checks across 30 sections
-python -X utf8 test_quests.py                      # 132 checks across 23 sections
+python -X utf8 test_characters.py                  # 187 checks across 33 sections
+python -X utf8 test_quests.py                      # 771 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
-python -X utf8 tests/test_db_migrations.py         #  12 checks (SQLite schema, v6)
+python -X utf8 tests/test_db_migrations.py         #  15 checks (SQLite schema, v8)
 python -X utf8 tests/test_background_tick.py       #   9 checks (BG worker)
 python -X utf8 tests/test_guild_betrayal.py        #  22 checks
 python -X utf8 tests/test_guild_founding.py        #  10 checks
+
+# Balance: can each build clear every Gate at its rated level? (real combat rules)
+python -X utf8 scripts/balance_sim.py 20 --class mage
 
 # Headless smoke test — bootstrap the engine without launching the UI
 python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstrap(); print('OK')"
 
 # Live playthrough — drives the engine the way a player would, asserts
 # quest rewards / skill generation / save round-trip end-to-end. Requires Ollama.
-python -X utf8 playthrough_smoke.py                #  24 checks
+python -X utf8 playthrough_smoke.py                #  23 checks
 
 # Start a feature branch
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 426 checks across 7 test files (all gated by the pre-push hook).**
+**Combined test count: 1,088 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (167 checks, 30 sections) covers:
+`test_characters.py` (187 checks, 33 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -409,9 +459,11 @@ git checkout -b feature/my-feature
 - **Every scene `combat:X` spawns real enemies** (caught a crash and two missing Floor 2 fights)
 - **Bot adventurers:** generation and per-save persistence, a 120-turn brain run (fights, loot, trade, craft), retreat, level gates, trader solvency, Talk-to options, `[W]`, trading both ways, AI/fallback talk, no per-bot AI calls
 - **Boss succession:** lair content is valid with no dead ends; wizard → lich → priests and the choices that steer it; killing blow (magic) changes the successor; returning bosses scale; fight → aftermath → save/load → arrival rumour; study gives the first strike; bots clear bosses after the grace period
+- **Gates and quest chains:** 30+ branching Gates with real enemies and drops; 200+ quests and 50+ chains whose every objective is achievable and every step unlocks the next; a full gate run; a skill chain from seed to skill; bots running Gates
+- **Living world:** statuses and stun guard, telegraphed boss moves / heal / summon / one-time enrage, the XP curve, every Gate material craftable, the clock passing time (bots act meanwhile), trophies and FIRST / SWIFT CLEAR, group Gates refusing a lone player and paying the bot party, journal chain progress and leads, Deep Echoes / quest rifts / AI Gates (stats from level, not the AI) / AI successors all surviving save and load
 
-`test_quests.py` (132 checks, 23 sections) covers:
-- Schema integrity for every quest template
+`test_quests.py` (771 checks, 23 sections) covers:
+- Schema integrity for every quest template (all files in `data/quests/`)
 - NPC giver references resolve; dialogue triggers reference real templates
 - Reward references (items, factions, guilds) point to real entities
 - Full lifecycles for 2-stage, 3-stage, and 4-stage quests
@@ -426,7 +478,7 @@ git checkout -b feature/my-feature
 - **AI quest skill rewards** — AIQuestResponse parses/clamps/coerces `reward_skill_hints`; hand-crafted demos (`blacksmith_hammer` → 'Forge-Born Strike', `theft_investigation` → 'Hushed Step')
 - **Polish items** — `SKILL_LEVELED_UP` listener wired, stat-points menu present, `_inspect_existing_skill` helper, trainer NPC option on Torven, NPC-dialogue start paths for `dungeon_survey` / `fracture_investigation` / `verath_courier`, v1 → v4 chained migration
 
-`playthrough_smoke.py` (24 checks) — headless live playthrough with real Ollama:
+`playthrough_smoke.py` (23 checks) — headless live playthrough with real Ollama:
 - Engine bootstrap (registries, AIService, BG generator, WorldDirector, bot manager)
 - Character creation
 - 2-stage quest lifecycle (`blacksmith_hammer`) with reward gold/XP/flag/**AI-generated skill** assertions
@@ -444,7 +496,7 @@ See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax
 
 ## Roadmap
 
-### Current stage: **Phase 4: the world grows around the player**
+### Current stage: **Phase 5: a living world of dungeons**
 
 The AI-as-co-author premise now reaches the world itself. Classes, quests and
 skills all flow through one `AIService` boundary with contextual prompts,
@@ -477,10 +529,17 @@ world-growth prompts against real Ollama playthroughs.
 | Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
 | **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 426 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 426 checks across 7 files + 24-check live playthrough |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 1,088 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 1,088 checks across 7 files + 23-check live playthrough + `scripts/balance_sim.py` |
 | **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
-| **Bot adventurers** | ✅ **Shipped** | 12 rules-driven adventurers per save that fight, level, loot, trade and craft; talk to them, trade with them, `[W]` Who's around |
+| **Bot adventurers** | ✅ **Shipped** | 24 rules-driven adventurers per save that fight, level, loot, trade, craft, run Gates and form parties; talk to them, trade with them, take them along, `[W]` Who's around |
+| **Boss succession** | ✅ **Shipped** | Bosses are replaced after a kill, steered by how they died and what you did; bots kill bosses too |
+| **Gates** | ✅ **Shipped** | 32 instanced dungeons (9 group Gates), trophies, FIRST / SWIFT CLEAR, companions, the Gate Hall |
+| **Growing dungeons** | ✅ **Shipped** | Rift surges (AI-made Gates, or Deep Echoes offline), quest-opened rifts, AI-invented successors; per save |
+| **Quest chains** | ✅ **Shipped** | 213 quests, 53 chains (10 skill, 10 item), « Report » hand-ins, journal chain progress and leads |
+| **Combat depth** | ✅ **Shipped** | Statuses, telegraphed boss moves, enrage, combat MP regen, finesse attacks |
+| **World clock** | ✅ **Shipped** | Day / time, activities pass time, NPC day and night |
+| **Balance pass** | ✅ **Shipped** | `scripts/balance_sim.py`: every Gate beatable at its level by warrior, mage and rogue builds; flatter XP curve past level 8 |
 | **One-step launchers** | ✅ **Shipped** | `start.bat` / `scripts/start.ps1` / `scripts/start.sh` start Ollama, pull models, run the game; models preloaded |
 | **AI trigger allow-list** | ✅ **Shipped** | AI-authored options can't give gold, gear, classes, quests or story flags (`systems/ai_trigger_policy.py`) |
 | **Traders** | ✅ **Shipped** | Buy/sell menus, travelling traders (Wren), AI-generated traders in the outer market / Verath / camp / road |
@@ -491,7 +550,8 @@ world-growth prompts against real Ollama playthroughs.
 | Item | Why |
 |------|-----|
 | Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:4b` output quality still needs a playthrough |
-| Group up with bots | Invite a bot into your party so it fights alongside you (the next bot stage) |
+| Tune AI Gate and successor prompts on live Ollama | Tested with fake model output; real `mistral-nemo` output needs a playthrough |
+| Warrior builds are strong | The balance sim shows warriors clearing many Gates with 75%+ HP to spare; mages and rogues are closer to the line |
 | Bots use the auction house and guilds | They already trade with NPC traders and the player; listing loot on the auction house and joining guilds would complete the MMO feel |
 | Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |
 | Move class-generation off the main thread | The `Future`-based submission path exists (`AIService.submit_class_generation_async`); the Class Awakening scene still calls it synchronously |
@@ -499,7 +559,19 @@ world-growth prompts against real Ollama playthroughs.
 | `GameEngine` mixin → composition refactor | Low priority — 169 lines, budget-guarded. Working fine. |
 | `world_db.py` further split | Per-table repos already cover queries; further splitting the facade is mechanical with low payoff |
 
-### Recently shipped (PRs #30 and #32)
+### Recently shipped (PRs #40 and #41)
+
+**Dungeons that change, and a world that grows them:**
+- **Boss succession**: kill a boss and something else moves in, steered by the killing blow, your choice over the body, and who killed it (you or a bot). Returning bosses grow stronger. Floor 2 and Floor 3 have chains (wizard → lich → corrupted priests).
+- **32 Gates** with branching four-master chains, signature materials, trophies, FIRST / SWIFT CLEAR bonuses, bot companions and **9 group Gates** that need a party. Bots form parties for them too.
+- **New rifts open by themselves**: AI-made Gates, Deep Echoes when offline, quest-opened rifts, AI-invented successors. All per save (world DB v8).
+- **213 quests, 53 chains**, « Report » hand-ins, new objective types, journal chain progress and leads.
+- **Combat**: statuses now apply, bosses telegraph signature moves and enrage, casters regain MP, basic attacks use STR or AGI.
+- **World clock**: activities take time and the world moves meanwhile; NPC day / night follows it.
+- **Balance**: flatter XP curve past level 8 (level 15 → 16 is 3,777 XP, was 29,192); `scripts/balance_sim.py`; Power Strike gets a cooldown.
+- **Bot fix**: bots never left Floor 1; now they push deeper.
+
+### Earlier (PRs #30 and #32)
 
 **The world grows around the player:**
 - **World growth**: every `[?]` option carries a `world_action:VERB:SUBJECT` tag. New actions queue a background expansion. The primary model's bundle (yield item, derived items, recipes, trader, optional skill) is made safe: `gen_` ids, materials and consumables only, values clamped by `economy.py`, recipes checked, and traders who sell at 1–3× value. It's stored per save (world DB v6), and repeating an action gathers its yield.

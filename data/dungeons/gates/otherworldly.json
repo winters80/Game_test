@@ -72,7 +72,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Dirty Haymaker",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Second Wind",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "redcap_fortress_new_chief_boss": {
    "name": "Chief {name} the Bloody",
@@ -103,7 +118,22 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Brutal Cleave",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Second Wind",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "redcap_fortress_goblin_squatters_boss": {
    "name": "Boss Nibbles",
@@ -130,7 +160,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Backstab",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Call the Gang",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "redcap_fortress_ghost_garrison_boss": {
    "name": "Captain Hale of the Old Garrison",
@@ -161,7 +206,22 @@
    "status_on_hit": [
     "frozen",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Dirty Haymaker",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Call the Gang",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "mycelial_kingdom_sporeling": {
    "name": "Sporeling",
@@ -183,7 +243,7 @@
    ],
    "status_on_hit": [
     "poison",
-    0.2
+    0.1
    ]
   },
   "mycelial_kingdom_myconid": {
@@ -234,7 +294,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spore Burst",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Mycelial Mend",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "mycelial_kingdom_rot_queen_boss": {
    "name": "the Rot Queen",
@@ -265,7 +340,22 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spore Burst",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Mycelial Mend",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "mycelial_kingdom_hivemind_boss": {
    "name": "the Mycelial Mind",
@@ -296,7 +386,23 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Rot Slam",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Blight Cloud",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "mycelial_kingdom_truffle_beast_boss": {
    "name": "the Truffle Beast",
@@ -327,7 +433,23 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spore Burst",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Mycelial Mend",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "chitin_hive_drone": {
    "name": "Hive Drone",
@@ -404,7 +526,22 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Stinger Lance",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Call the Swarm",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "chitin_hive_new_queen_boss": {
    "name": "the Hive Princess",
@@ -435,7 +572,22 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Stinger Lance",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Call the Swarm",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "chitin_hive_swarm_boss": {
    "name": "the Swarm Mind",
@@ -466,7 +618,23 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Stinger Lance",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Royal Venom",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "chitin_hive_spider_hunter_boss": {
    "name": "the Hive-Hunter Spider",
@@ -497,7 +665,23 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Mandible Crush",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Call the Swarm",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "starfall_crater_star_spawn": {
    "name": "Star-Spawn",
@@ -570,7 +754,23 @@
    "status_on_hit": [
     "burn",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Gravity Well",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Cosmic Flare",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "starfall_crater_cultists_boss": {
    "name": "Prophet {name}",
@@ -601,7 +801,22 @@
    "status_on_hit": [
     "burn",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Gravity Well",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Cosmic Flare",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "starfall_crater_star_child_boss": {
    "name": "the Star-Child",
@@ -632,7 +847,23 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Starfall",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Cosmic Flare",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "starfall_crater_star_eater_boss": {
    "name": "the Star-Eater",
@@ -663,7 +894,23 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Gravity Well",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Cosmic Flare",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stopped_clocktower_time_echo": {
    "name": "Time Echo",
@@ -736,7 +983,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Stopped Moment",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Paradox",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stopped_clocktower_frozen_moment_boss": {
    "name": "the Frozen Moment",
@@ -767,7 +1030,23 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Stopped Moment",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Paradox",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stopped_clocktower_future_self_boss": {
    "name": "Your Future Self",
@@ -798,7 +1077,23 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Rewind Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Paradox",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stopped_clocktower_time_thief_boss": {
    "name": "the Time Thief",
@@ -829,11 +1124,27 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Rewind Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Paradox",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dawnspire_observatory_cherub": {
    "name": "Burning Cherub",
-   "max_hp": 119,
+   "max_hp": 190,
    "attack": 23,
    "defense": 6,
    "xp_reward": 145,
@@ -856,7 +1167,7 @@
   },
   "dawnspire_observatory_sentinel": {
    "name": "Lens Sentinel",
-   "max_hp": 119,
+   "max_hp": 190,
    "attack": 23,
    "defense": 6,
    "xp_reward": 145,
@@ -879,11 +1190,11 @@
   },
   "dawnspire_observatory_seraph_boss": {
    "name": "the Watching Seraph",
-   "max_hp": 285,
-   "attack": 32,
+   "max_hp": 627,
+   "attack": 44,
    "defense": 11,
-   "xp_reward": 510,
-   "gold_reward": 4150,
+   "xp_reward": 1122,
+   "gold_reward": 9130,
    "rank": "A",
    "loot_table": [
     [
@@ -906,15 +1217,31 @@
    "status_on_hit": [
     "burn",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Radiant Smite",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Benediction",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dawnspire_observatory_fallen_boss": {
    "name": "the Fallen Watcher",
-   "max_hp": 313,
-   "attack": 35,
+   "max_hp": 688,
+   "attack": 49,
    "defense": 11,
-   "xp_reward": 561,
-   "gold_reward": 4565,
+   "xp_reward": 1234,
+   "gold_reward": 10043,
    "rank": "A",
    "loot_table": [
     [
@@ -937,15 +1264,30 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Judgement",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Choir of Light",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dawnspire_observatory_choir_boss": {
    "name": "the Celestial Choir",
-   "max_hp": 327,
-   "attack": 36,
+   "max_hp": 719,
+   "attack": 50,
    "defense": 11,
-   "xp_reward": 586,
-   "gold_reward": 4772,
+   "xp_reward": 1289,
+   "gold_reward": 10498,
    "rank": "A",
    "loot_table": [
     [
@@ -968,15 +1310,30 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Judgement",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Choir of Light",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dawnspire_observatory_lens_god_boss": {
    "name": "the Eye in the Lens",
-   "max_hp": 356,
-   "attack": 40,
+   "max_hp": 783,
+   "attack": 56,
    "defense": 11,
-   "xp_reward": 637,
-   "gold_reward": 5187,
+   "xp_reward": 1401,
+   "gold_reward": 11411,
    "rank": "A",
    "loot_table": [
     [
@@ -999,11 +1356,27 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Judgement",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Choir of Light",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dreamers_abyss_nightmare": {
    "name": "Nightmare",
-   "max_hp": 140,
+   "max_hp": 266,
    "attack": 27,
    "defense": 7,
    "xp_reward": 172,
@@ -1026,7 +1399,7 @@
   },
   "dreamers_abyss_thought": {
    "name": "Stray Thought",
-   "max_hp": 140,
+   "max_hp": 266,
    "attack": 27,
    "defense": 7,
    "xp_reward": 172,
@@ -1049,11 +1422,11 @@
   },
   "dreamers_abyss_dreamer_boss": {
    "name": "the Dreamer's Avatar",
-   "max_hp": 333,
-   "attack": 36,
+   "max_hp": 932,
+   "attack": 57,
    "defense": 12,
-   "xp_reward": 600,
-   "gold_reward": 4900,
+   "xp_reward": 1680,
+   "gold_reward": 13720,
    "rank": "A",
    "loot_table": [
     [
@@ -1076,15 +1449,31 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Dream Crush",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Waking Nightmare",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dreamers_abyss_dream_child_boss": {
    "name": "the Dream-Born",
-   "max_hp": 399,
-   "attack": 44,
+   "max_hp": 1117,
+   "attack": 70,
    "defense": 12,
-   "xp_reward": 720,
-   "gold_reward": 5880,
+   "xp_reward": 2015,
+   "gold_reward": 16464,
    "rank": "A",
    "loot_table": [
     [
@@ -1107,15 +1496,31 @@
    "status_on_hit": [
     "stun",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Dream Crush",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Devour Thought",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dreamers_abyss_waking_boss": {
    "name": "the Waking Eye",
-   "max_hp": 416,
-   "attack": 46,
+   "max_hp": 1164,
+   "attack": 73,
    "defense": 12,
-   "xp_reward": 750,
-   "gold_reward": 6125,
+   "xp_reward": 2100,
+   "gold_reward": 17150,
    "rank": "A",
    "loot_table": [
     [
@@ -1138,15 +1543,31 @@
    "status_on_hit": [
     "frozen",
     0.4
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Madness Unbound",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Waking Nightmare",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dreamers_abyss_dream_eater_boss": {
    "name": "the Dream-Eater",
-   "max_hp": 399,
-   "attack": 44,
+   "max_hp": 1117,
+   "attack": 70,
    "defense": 12,
-   "xp_reward": 720,
-   "gold_reward": 5880,
+   "xp_reward": 2015,
+   "gold_reward": 16464,
    "rank": "A",
    "loot_table": [
     [
@@ -1169,7 +1590,22 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Madness Unbound",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Devour Thought",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   }
  },
  "gates": [
@@ -1178,6 +1614,7 @@
    "name": "Redcap Fortress",
    "theme": "outlaw",
    "min_level": 3,
+   "party_size": 1,
    "region": "village_start",
    "description": "A ruined border fort, swallowed by a rift on the village road, has been taken over by bandits who dip their caps in their victims' blood.",
    "entry_text": "Gallows line the approach. Someone has painted 'TOLL' on the gate in letters a foot high.",
@@ -1209,9 +1646,8 @@
     },
     {
      "kind": "fight",
-     "text": "Archers on the battlements and a thug at the keep door.",
+     "text": "An archer on the battlements and a thug at the keep door.",
      "enemies": [
-      "redcap_fortress_archer",
       "redcap_fortress_archer",
       "redcap_fortress_thug"
      ]
@@ -1241,6 +1677,7 @@
        "Mad Molly",
        "Hob"
       ],
+      "trophy": "trophy_redcap_fortress_chief",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1292,6 +1729,7 @@
        "Sable",
        "Gutter"
       ],
+      "trophy": "trophy_redcap_fortress_new_chief",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1313,6 +1751,7 @@
       "victory": "Boss Nibbles runs off, still wearing the hat.",
       "arrival_omen": "Little goblin footprints all over the empty fort. Someone has been trying on the bandits' caps.",
       "arrival_rumour": "Goblins have moved into the old Redcap fort. They're charging a toll, too, but it's only a copper.",
+      "trophy": "trophy_redcap_fortress_goblin_squatters",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1334,6 +1773,7 @@
       "victory": "Captain Hale salutes as he fades. 'Hold the fort,' he says.",
       "arrival_omen": "An old, tattered flag flies over the keep again. Nobody raised it.",
       "arrival_rumour": "The ghosts of the old garrison have retaken Redcap Fortress. They challenge anyone on the road.",
+      "trophy": "trophy_redcap_fortress_ghost_garrison",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1353,6 +1793,7 @@
    "name": "the Mycelial Kingdom",
    "theme": "fungal",
    "min_level": 4,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift in the forest floor opens into caves of giant mushrooms that glow in the dark. Spores drift out of it on the wind and make the village dogs dream.",
    "entry_text": "Mushrooms as tall as trees glow blue and violet. The air is thick with spores that taste like rain.",
@@ -1361,7 +1802,6 @@
      "kind": "fight",
      "text": "Small mushroom-people wobble out of the undergrowth, puffing spores.",
      "enemies": [
-      "mycelial_kingdom_sporeling",
       "mycelial_kingdom_sporeling",
       "mycelial_kingdom_sporeling"
      ]
@@ -1415,6 +1855,7 @@
       "victory": "The Spore King slumps, and its crown of mushrooms wilts.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_mycelial_kingdom_spore_king",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1444,6 +1885,7 @@
       "victory": "The Rot Queen dissolves into a puddle of black slime.",
       "arrival_omen": "Black mould is spreading over the Spore Throne. The glowing mushrooms near it are going dark.",
       "arrival_rumour": "The Mycelial Kingdom has a Rot Queen. The village crops are getting blight.",
+      "trophy": "trophy_mycelial_kingdom_rot_queen",
       "study": {
        "stat": "VIT",
        "min": 12,
@@ -1464,6 +1906,7 @@
       "victory": "The Mycelial Mind's great thought stops, unfinished.",
       "arrival_omen": "Every mushroom in the kingdom is pulsing with light at the same rate.",
       "arrival_rumour": "The mushrooms in the forest are thinking. All of them. Together.",
+      "trophy": "trophy_mycelial_kingdom_hivemind",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1484,6 +1927,7 @@
       "victory": "The Truffle Beast lies down and dies, looking full.",
       "arrival_omen": "Huge tusk marks gouge the mushroom stems. Half the kingdom has been eaten.",
       "arrival_rumour": "Something is eating the Mycelial Kingdom. Truffle hunters say it's a boar the size of a house.",
+      "trophy": "trophy_mycelial_kingdom_truffle_beast",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1503,6 +1947,7 @@
    "name": "the Chitin Hive",
    "theme": "insect",
    "min_level": 7,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A rift outside Verath is surrounded by a mound of hardened mud the size of a hill. Things buzz inside it day and night.",
    "entry_text": "The tunnels are lined with wax and the buzzing never stops. Something is aware that you have arrived.",
@@ -1511,7 +1956,6 @@
      "kind": "fight",
      "text": "Drones as big as dogs pour out of the walls.",
      "enemies": [
-      "chitin_hive_drone",
       "chitin_hive_drone",
       "chitin_hive_drone"
      ]
@@ -1561,6 +2005,7 @@
       "victory": "The Queen shudders and goes still. The buzzing falters.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_chitin_hive_hive_queen",
       "study": {
        "stat": "INT",
        "min": 14,
@@ -1605,6 +2050,7 @@
       "victory": "The Hive Princess goes down. The hive's buzzing is confused.",
       "arrival_omen": "The hive is buzzing louder than ever. A new royal chamber has been built.",
       "arrival_rumour": "The Chitin Hive has raised a new queen. Swarms are stripping the fields outside Verath.",
+      "trophy": "trophy_chitin_hive_new_queen",
       "study": {
        "stat": "INT",
        "min": 14,
@@ -1625,6 +2071,7 @@
       "victory": "The Swarm Mind breaks up into a thousand confused insects.",
       "arrival_omen": "Dead drones litter the tunnels. The living ones fly in circles.",
       "arrival_rumour": "The Chitin Hive has lost its queen and gone mad. The swarms attack anything.",
+      "trophy": "trophy_chitin_hive_swarm",
       "study": {
        "stat": "WIS",
        "min": 14,
@@ -1645,6 +2092,7 @@
       "victory": "The Hive-Hunter falls, tangled in its own web.",
       "arrival_omen": "Webs are strung across the hive tunnels. Dried-out drones hang in them.",
       "arrival_rumour": "A spider is eating the Chitin Hive from the inside.",
+      "trophy": "trophy_chitin_hive_spider_hunter",
       "study": {
        "stat": "AGI",
        "min": 15,
@@ -1664,6 +2112,7 @@
    "name": "the Starfall Crater",
    "theme": "cosmic",
    "min_level": 10,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A star fell during the Fracture and made a crater by the road to Verath. The System upgraded it to a Gate when the crater started to glow.",
    "entry_text": "The ground is glass. Crystals glow in colours that don't have names. Above you, through the rift, you can see stars in daylight.",
@@ -1720,6 +2169,7 @@
       "victory": "The Star's Heart dims, and its light goes out.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_starfall_crater_star_heart",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -1754,6 +2204,7 @@
        "Orrin",
        "Vega"
       ],
+      "trophy": "trophy_starfall_crater_cultists",
       "study": {
        "stat": "WIS",
        "min": 16,
@@ -1774,6 +2225,7 @@
       "victory": "The Star-Child rises into the sky and goes home.",
       "arrival_omen": "A small light floats above the crater, going up and down like something learning to fly.",
       "arrival_rumour": "A child of light lives in the Starfall Crater. It sometimes visits the road.",
+      "trophy": "trophy_starfall_crater_star_child",
       "study": {
        "stat": "WIS",
        "min": 17,
@@ -1794,6 +2246,7 @@
       "victory": "The Star-Eater flees back up into the dark between the stars.",
       "arrival_omen": "The crater is darker now. The glow is fading, as if something is eating it.",
       "arrival_rumour": "Something is eating the light of the Starfall Crater. The stars above it are going out.",
+      "trophy": "trophy_starfall_crater_star_eater",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -1813,6 +2266,7 @@
    "name": "the Clocktower of Stopped Hours",
    "theme": "time",
    "min_level": 12,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A clocktower in Verath that stopped at the moment of the Fracture. Those who enter come out older, or younger, or not at all.",
    "entry_text": "Dust hangs motionless in the air. A pigeon is frozen in mid-flight. The ticking of the clock is deafening, though the hands don't move.",
@@ -1847,8 +2301,7 @@
      "text": "Sentries made of clock parts tick into motion.",
      "enemies": [
       "stopped_clocktower_clockwork_sentry",
-      "stopped_clocktower_clockwork_sentry",
-      "stopped_clocktower_time_echo"
+      "stopped_clocktower_clockwork_sentry"
      ]
     }
    ],
@@ -1870,6 +2323,7 @@
       "victory": "The Keeper falls, and for a moment, the clock's hands twitch.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_stopped_clocktower_keeper",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -1915,6 +2369,7 @@
       "victory": "The Frozen Moment shatters, and the moment passes.",
       "arrival_omen": "The clock's hands are frozen, and the air around them is cracked like glass.",
       "arrival_rumour": "The Clocktower of Stopped Hours is colder than ever. Something is keeping the moment from passing.",
+      "trophy": "trophy_stopped_clocktower_frozen_moment",
       "study": {
        "stat": "WIS",
        "min": 17,
@@ -1935,6 +2390,7 @@
       "victory": "Your future self fades. 'Remember this,' they say.",
       "arrival_omen": "The clock is running backwards. Someone who looks a lot like you is waiting at the top of the tower.",
       "arrival_rumour": "Visitors to the Clocktower say they've met themselves, years older.",
+      "trophy": "trophy_stopped_clocktower_future_self",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -1955,6 +2411,7 @@
       "victory": "The Time Thief's watch shatters, and it is caught in its own stopped time.",
       "arrival_omen": "A pocket watch dangles from the clock's hands. The tower has lost a few hours.",
       "arrival_rumour": "Someone is stealing time from the Clocktower. People in Verath keep losing whole afternoons.",
+      "trophy": "trophy_stopped_clocktower_time_thief",
       "study": {
        "stat": "INT",
        "min": 18,
@@ -1974,6 +2431,7 @@
    "name": "the Dawnspire Observatory",
    "theme": "celestial",
    "min_level": 15,
+   "party_size": 3,
    "region": "verath_city",
    "description": "An observatory on a mountain peak, its dome always open to the sky. Light pours out of it at night, and the System says it's a Gate to somewhere bright.",
    "entry_text": "Golden light fills the halls. You hear singing from somewhere above, and your wounds itch as they start to heal.",
@@ -2031,6 +2489,7 @@
       "victory": "The Seraph folds its wings and fades into the light.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_dawnspire_observatory_seraph",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -2060,6 +2519,7 @@
       "victory": "The Fallen Watcher looks at the sky one last time and falls still.",
       "arrival_omen": "Black feathers are falling through the dome of the observatory.",
       "arrival_rumour": "The light in the Dawnspire Observatory has gone dark. Something fell from the sky.",
+      "trophy": "trophy_dawnspire_observatory_fallen",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -2081,6 +2541,7 @@
       "victory": "The Choir's song ends on a single, perfect note.",
       "arrival_omen": "Music is coming from the empty Great Lens. It is getting louder.",
       "arrival_rumour": "A choir sings in the Dawnspire Observatory. People who hear it weep.",
+      "trophy": "trophy_dawnspire_observatory_choir",
       "study": {
        "stat": "WIS",
        "min": 19,
@@ -2101,6 +2562,7 @@
       "victory": "The Eye blinks, once, and closes.",
       "arrival_omen": "The Great Lens is glowing, though it's daytime. Something is on the other side of it.",
       "arrival_rumour": "Something is watching Aethoria through the Dawnspire Observatory.",
+      "trophy": "trophy_dawnspire_observatory_lens_god",
       "study": {
        "stat": "INT",
        "min": 19,
@@ -2120,6 +2582,7 @@
    "name": "the Dreamer's Abyss",
    "theme": "eldritch",
    "min_level": 18,
+   "party_size": 4,
    "region": "verath_city",
    "description": "A rift that only opens when you sleep. People who find it wake screaming, or don't wake. The System rates it S-class and will not say why.",
    "entry_text": "You are falling, and then you are standing, and the ground is made of eyelids. Somewhere below you, something vast is dreaming, and you are in its dream.",
@@ -2177,6 +2640,7 @@
       "victory": "The Avatar dissolves, and far below, the Dreamer turns over in its sleep.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_dreamers_abyss_dreamer",
       "study": {
        "stat": "WIS",
        "min": 20,
@@ -2222,6 +2686,7 @@
       "victory": "The Dream-Born fades like a dream at sunrise.",
       "arrival_omen": "Faces have appeared in the walls of the Abyss. Some of them look like you.",
       "arrival_rumour": "People who visit the Dreamer's Abyss say they dream of themselves for weeks after.",
+      "trophy": "trophy_dreamers_abyss_dream_child",
       "study": {
        "stat": "WIS",
        "min": 20,
@@ -2242,6 +2707,7 @@
       "victory": "The Waking Eye closes. Far below, the Dreamer sighs, and sleeps again.",
       "arrival_omen": "The Abyss is shaking. Something far below is stirring.",
       "arrival_rumour": "Something in the Dreamer's Abyss has woken up. Everyone in Verath had the same nightmare last night.",
+      "trophy": "trophy_dreamers_abyss_waking",
       "study": {
        "stat": "WIS",
        "min": 21,
@@ -2263,6 +2729,7 @@
       "victory": "The Dream-Eater chokes on a dream it can't swallow.",
       "arrival_omen": "The Abyss is quieter, as if part of the dream has been eaten.",
       "arrival_rumour": "People are waking up in Verath without any dreams at all. Something in the Abyss is eating them.",
+      "trophy": "trophy_dreamers_abyss_dream_eater",
       "study": {
        "stat": "WIS",
        "min": 21,

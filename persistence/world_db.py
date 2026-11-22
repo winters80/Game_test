@@ -20,6 +20,7 @@ Tables created by this module:
   - world_expansions    — AI-built content bundles per action, re-registered on load
   - dungeon_lairs       — who holds each boss lair now (boss succession)
   - lair_history        — every boss kill: who, how, and who moved in next
+  - generated_dungeons  — AI / procedurally grown Gates and lair successors, re-registered on load
 """
 
 from __future__ import annotations
@@ -31,7 +32,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 7
+DB_SCHEMA_VERSION = 8
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -259,6 +260,13 @@ CREATE TABLE IF NOT EXISTS world_expansions (
     yield_item_id   TEXT DEFAULT '',
     created_turn    INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS generated_dungeons (
+    content_id      TEXT PRIMARY KEY,
+    kind            TEXT NOT NULL,
+    lair_id         TEXT DEFAULT '',
+    payload         TEXT NOT NULL,
+    created_turn    INTEGER NOT NULL DEFAULT 0
+);
 CREATE TABLE IF NOT EXISTS dungeon_lairs (
     lair_id         TEXT PRIMARY KEY,
     state           TEXT NOT NULL,
@@ -474,6 +482,16 @@ class WorldDatabase:
                     successor_id    TEXT DEFAULT '',
                     zone_id         TEXT DEFAULT '',
                     turn            INTEGER DEFAULT 0
+                );
+            """)
+        if from_version < 8:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS generated_dungeons (
+                    content_id      TEXT PRIMARY KEY,
+                    kind            TEXT NOT NULL,
+                    lair_id         TEXT DEFAULT '',
+                    payload         TEXT NOT NULL,
+                    created_turn    INTEGER NOT NULL DEFAULT 0
                 );
             """)
         self._conn.execute(
@@ -806,6 +824,17 @@ class WorldDatabase:
         from persistence.repos import lair_repo
         assert self._conn
         lair_repo.add_history(self._conn, row)
+
+    def store_generated_dungeon(self, content_id: str, kind: str, payload: dict,
+                                lair_id: str = "", turn: int = 0) -> None:
+        from persistence.repos import lair_repo
+        assert self._conn
+        lair_repo.store_generated(self._conn, content_id, kind, payload, lair_id, turn)
+
+    def load_generated_dungeons(self) -> list[dict[str, Any]]:
+        from persistence.repos import lair_repo
+        assert self._conn
+        return lair_repo.load_generated(self._conn)
 
     def get_lair_history(self, lair_id: str | None = None) -> list[dict[str, Any]]:
         from persistence.repos import lair_repo

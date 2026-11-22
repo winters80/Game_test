@@ -287,6 +287,10 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass  # engine-delegated: core/lair_flow.enter_lair
         elif trigger == "gate_registry" or trigger.startswith("enter_gate:"):
             pass  # engine-delegated: core/gate_flow
+        elif trigger.startswith("open_rift:"):
+            # open_rift:N (level N) / open_rift:+N (player level + N); opened
+            # by core/gate_growth.tick_gate_growth on the next turn.
+            state._pending_rifts = list(getattr(state, "_pending_rifts", []) or []) + [trigger[len("open_rift:"):]]
 
     state.mark_dirty()
 

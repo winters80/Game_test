@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 # Milestones worth a World Log ([L]) line. Everyday fights, trades and moves
 # would crowd out rumours and lore (the log shows the last 30 entries).
-_LOGGED_KINDS = {"defeat", "level"}
+_LOGGED_KINDS = {"defeat", "level", "party"}
 # Shown in the player's zone: milestones whenever they happen, routine
 # actions at most every other turn; rest / gather / potion never.
 _MILESTONE_KINDS = {"defeat", "level", "boss_kill"}
-_ROUTINE_KINDS = {"fight", "craft", "trade"}
+_ROUTINE_KINDS = {"fight", "craft", "trade", "party"}
 
 
 def setup_bots(engine: "GameEngine") -> None:
@@ -64,12 +64,17 @@ def bot_world(engine: "GameEngine"):
     from core.gate_flow import bot_gate_view
     from core.lair_flow import bot_lair_view
     lairs = bot_lair_view(engine)
+    allies: dict[str, list] = {}
+    if engine._bot_manager is not None:
+        for b in engine._bot_manager.all():
+            allies.setdefault(b.current_zone_id, []).append(b)
     return BotWorld(engine.item_registry, traders_at, engine.recipes, yields, turn,
-                    lairs=lairs, gates=bot_gate_view(engine, lairs))
+                    lairs=lairs, gates=bot_gate_view(engine, lairs), allies=allies)
 
 
-def tick_bots(engine: "GameEngine") -> list["BotEvent"]:
-    """Let due bots act; surface what happens near the player. Returns all events."""
+def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
+    """Let due bots act; surface what happens near the player (unless
+    ``quiet``, e.g. while time passes during a rest). Returns all events."""
     if not feature("bot_system") or not engine._bot_manager or engine.state is None:
         return []
     from systems.bot_brain import tick_bot
@@ -100,7 +105,8 @@ def tick_bots(engine: "GameEngine") -> list["BotEvent"]:
                 bot = engine._bot_manager.get(ev.bot_id)
                 if bot is not None:
                     bot_killed_boss(engine, ev.lair_id, bot, ev.killed_by)
-    _surface(engine, events)
+    if not quiet:
+        _surface(engine, events)
     _persist(engine, acted, events)
     return events
 

@@ -332,4 +332,6 @@ class BackgroundGenerator(DirectorGenerators, WorldContentGenerators, EntityCont
         if t == "guild_tick":     return self._gen_guild_tick(task)
         if t == "director_analysis": return self._gen_director_analysis(task)
         if t == "world_expansion": return self._gen_world_expansion(task)
+        if t == "new_gate":       return self._gen_new_gate(task)
+        if t == "lair_successor": return self._gen_lair_successor(task)
         return None

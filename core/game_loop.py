@@ -47,8 +47,10 @@ def run_game_loop(engine: "GameEngine") -> None:
             if choice is None:
                 continue
 
+            scene_before = engine.state.current_scene_id
             try:
                 engine._handle_choice(choice)
+                _travel_time(engine, scene_before, choice)
             except KeyboardInterrupt:
                 raise
             except Exception as exc:
@@ -73,6 +75,27 @@ def run_game_loop(engine: "GameEngine") -> None:
             engine.ai_service.shutdown()
 
 
+_TRAVEL_ZONES = {"village_start", "camp_rest", "verath_city", "dungeon_floor1", "dungeon_floor2", "dungeon_floor3"}
+
+
+def _travel_time(engine: "GameEngine", scene_before: str, choice) -> None:
+    """Walking between towns, the camp and the dungeon takes time; so does a
+    night at the inn (systems/world_clock)."""
+    from config import TIME_COSTS
+    from core.time_flow import pass_time
+
+    if engine.state is None:
+        return
+    here = engine.state.current_scene_id
+    extra = 0
+    if here != scene_before and here in _TRAVEL_ZONES and scene_before in _TRAVEL_ZONES:
+        extra += TIME_COSTS["travel"]
+    if any(t.startswith("rest_inn:") for t in (choice.triggers or [])):
+        extra += TIME_COSTS["rest_inn"]
+    if extra:
+        pass_time(engine, extra)
+
+
 def _per_turn_ticks(engine: "GameEngine") -> None:
     """Run all the bookkeeping that happens once per loop iteration before
     rendering the scene: BG result drain, world director, buffs, cooldowns,
@@ -90,6 +113,9 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
     # Boss lairs: a dead boss's successor moves in once its time comes.
     from core.lair_flow import tick_lairs
     tick_lairs(engine)
+    # New rifts: quest-opened ones, and the periodic rift surge (AI or echo).
+    from core.gate_growth import tick_gate_growth
+    tick_gate_growth(engine)
 
     # Buff tick — decrement durations
     if engine.state.player.active_buffs:

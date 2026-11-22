@@ -419,11 +419,18 @@ class GameMenusMixin:
             renderer.clear()
             renderer.print_title()
             renderer.console.print("\n  [system_msg][ CRAFTING ][/system_msg]\n")
-            choices = [r["name"] for r in recipes] + ["← Back"]
-            selected = questionary.select("Select recipe:", choices=choices).ask()
+            player = self.state.player
+            from systems.quest_system import item_quantity
+
+            def _can(r):
+                return all(item_quantity(player, i["item_id"]) >= i["qty"] for i in r.get("ingredients", []))
+            ordered = sorted(recipes, key=lambda r: (not _can(r), r["name"]))
+            labels = [("✓ " if _can(r) else "  ") + r["name"] for r in ordered]
+            selected = questionary.select("Select recipe (✓ = you have everything):",
+                                          choices=labels + ["← Back"]).ask()
             if selected is None or selected == "← Back":
                 break
-            recipe = next((r for r in recipes if r["name"] == selected), None)
+            recipe = ordered[labels.index(selected)] if selected in labels else None
             if not recipe:
                 continue
             # Show ingredients required
@@ -589,7 +596,7 @@ class GameMenusMixin:
             active = qs.get_active_quest_summaries(self.state, self.quest_registry)
             completed_ids = list(player.completed_quest_ids)
 
-            if not active and not completed_ids:
+            if not active and not completed_ids and not qs.available_work(self.state, self.quest_registry, self.npc_registry):
                 renderer.console.print("  [dim_text]No quests yet. Talk to NPCs to find work.[/dim_text]")
                 renderer.console.print()
                 renderer.prompt_any_key()
@@ -601,7 +608,12 @@ class GameMenusMixin:
             if active:
                 renderer.console.print("  [subtitle]Active[/subtitle]")
                 for s in active:
-                    label = f"  ● {s['title']}  [dim_text]— {s['objective']}[/dim_text]"
+                    chain = f" [gold]({s['chain']})[/gold]" if s.get("chain") else ""
+                    report = ""
+                    if s.get("ready_to_report"):
+                        giver = self.npc_registry.get(s["giver_npc_id"]) if self.npc_registry and s.get("giver_npc_id") else None
+                        report = f"  [success]→ report to {giver.name}[/success]" if giver else "  [success]→ ready to report[/success]"
+                    label = f"  ● {s['title']}{chain}  [dim_text]— {s['objective']}[/dim_text]{report}"
                     renderer.console.print(label)
                     pick = f"● {s['title']}"
                     choices.append(pick)
@@ -620,6 +632,22 @@ class GameMenusMixin:
                 if completed_count == 0:
                     renderer.console.print("  [dim_text](none readable)[/dim_text]")
                 renderer.console.print()
+
+            leads = qs.available_work(self.state, self.quest_registry, self.npc_registry)
+            if leads:
+                from systems.bot_brain import place
+                renderer.console.print(f"  [subtitle]Leads[/subtitle]  [dim_text]({len(leads)} available)[/dim_text]")
+                for npc, tmpl in leads[:6]:
+                    step, total = qs.chain_progress(tmpl, self.quest_registry)
+                    chain = f" ({tmpl.chain_kind} chain {step}/{total})" if total > 1 else ""
+                    renderer.console.print(f"  [dim_text]◦ {tmpl.title}{chain} — {npc.name}, {place(npc.zone_id)}[/dim_text]")
+                renderer.console.print()
+
+            chains = {q.chain_id for q in self.quest_registry.all() if q.chain_id}
+            done_chains = sum(1 for c in chains if all(
+                player.has_flag(f"done_{q.template_id}") for q in self.quest_registry.all() if q.chain_id == c))
+            if chains:
+                renderer.console.print(f"  [dim_text]Quest chains finished: {done_chains}/{len(chains)}[/dim_text]\n")
 
             choices.append("← Close")
             answer = questionary.select("Inspect quest:", choices=choices).ask()

@@ -6,47 +6,62 @@
       "name": "Brood Matriarch", "max_hp": 70, "attack": 13, "defense": 5,
       "xp_reward": 110, "gold_reward": 900, "rank": "D",
       "status_on_hit": ["poison", 0.35],
-      "loot_table": [["matriarch_silk", 0.8], ["void_crystal", 0.3]]
+      "loot_table": [["matriarch_silk", 0.8], ["void_crystal", 0.3]],
+      "abilities": [{"name": "Web Burst", "kind": "status", "every": 3, "status": "stun"}, {"name": "Hatch the Brood", "kind": "summon", "every": 4, "summon": "crystal_spider"}],
+      "enrage_below": 0.35
     },
     "shardmind": {
       "name": "The Shardmind", "max_hp": 80, "attack": 16, "defense": 5,
       "xp_reward": 150, "gold_reward": 1200, "rank": "D",
       "status_on_hit": ["frozen", 0.25],
-      "loot_table": [["void_crystal", 0.9], ["crystal_shard", 0.15]]
+      "loot_table": [["void_crystal", 0.9], ["crystal_shard", 0.15]],
+      "abilities": [{"name": "Shard Storm", "kind": "heavy", "every": 3, "power": 1.8}, {"name": "Resonance", "kind": "status", "every": 4, "status": "frozen"}],
+      "enrage_below": 0.35
     },
     "goblin_warchief": {
       "name": "Warchief {name}", "max_hp": 75, "attack": 13, "defense": 6,
       "xp_reward": 120, "gold_reward": 1800, "rank": "D",
-      "loot_table": [["void_crystal", 0.4], ["health_potion", 0.5]]
+      "loot_table": [["void_crystal", 0.4], ["health_potion", 0.5]],
+      "abilities": [{"name": "War Cry", "kind": "summon", "every": 4, "summon": "goblin_scout"}, {"name": "Skull Splitter", "kind": "heavy", "every": 3, "power": 1.8}],
+      "enrage_below": 0.35
     },
     "reforged_golem": {
       "name": "Reforged Crystal Golem", "max_hp": 110, "attack": 15, "defense": 8,
       "xp_reward": 170, "gold_reward": 1700, "rank": "D",
-      "loot_table": [["void_crystal", 0.8], ["mountain_root", 0.5], ["crystal_shard", 0.1]]
+      "loot_table": [["void_crystal", 0.8], ["mountain_root", 0.5], ["crystal_shard", 0.1]],
+      "abilities": [{"name": "Crystal Crush", "kind": "heavy", "every": 3, "power": 2.0}, {"name": "Regrow", "kind": "heal", "every": 5, "power": 0.15}],
+      "enrage_below": 0.35
     },
     "archmage": {
       "name": "Archmage {name}", "max_hp": 85, "attack": 18, "defense": 5,
       "xp_reward": 200, "gold_reward": 2500, "rank": "C",
       "status_on_hit": ["burn", 0.3],
-      "loot_table": [["mana_potion_major", 0.6], ["void_crystal", 0.4]]
+      "loot_table": [["mana_potion_major", 0.6], ["void_crystal", 0.4]],
+      "abilities": [{"name": "Arcane Detonation", "kind": "heavy", "every": 3, "power": 1.9}, {"name": "Fireball", "kind": "status", "every": 4, "status": "burn"}],
+      "enrage_below": 0.35
     },
     "hollow_lich": {
       "name": "{name}, the Hollow Lich", "max_hp": 110, "attack": 19, "defense": 7,
       "xp_reward": 240, "gold_reward": 2200, "rank": "C",
       "status_on_hit": ["frozen", 0.3],
-      "loot_table": [["phylactery_shard", 0.7], ["mana_potion_major", 0.4]]
+      "loot_table": [["phylactery_shard", 0.7], ["mana_potion_major", 0.4]],
+      "abilities": [{"name": "Soul Drain", "kind": "drain", "every": 3, "power": 0.6}, {"name": "Grave Frost", "kind": "heavy", "every": 4, "power": 2.0}],
+      "enrage_below": 0.35
     },
     "cabal_apprentice": {
       "name": "Ashen Apprentice", "max_hp": 35, "attack": 11, "defense": 3,
       "xp_reward": 60, "gold_reward": 500, "rank": "D",
       "status_on_hit": ["burn", 0.15],
-      "loot_table": [["mana_potion", 0.5]]
+      "loot_table": [["mana_potion", 0.5]],
+      "abilities": [{"name": "Ash Bolt", "kind": "status", "every": 4, "status": "burn"}]
     },
     "pale_high_priest": {
       "name": "High Priest {name}", "max_hp": 70, "attack": 15, "defense": 5,
       "xp_reward": 130, "gold_reward": 1400, "rank": "C",
       "status_on_hit": ["bleed", 0.25],
-      "loot_table": [["pale_lamp_oil", 0.8], ["health_potion_major", 0.3]]
+      "loot_table": [["pale_lamp_oil", 0.8], ["health_potion_major", 0.3]],
+      "abilities": [{"name": "Purple Litany", "kind": "heal", "every": 4, "power": 0.2}, {"name": "Rite of Kneeling", "kind": "status", "every": 3, "status": "stun"}],
+      "enrage_below": 0.35
     },
     "pale_acolyte": {
       "name": "Pale Lamp Acolyte", "max_hp": 32, "attack": 10, "defense": 3,
@@ -57,12 +72,16 @@
       "name": "Saint {name} the Lampless", "max_hp": 130, "attack": 20, "defense": 8,
       "xp_reward": 280, "gold_reward": 2600, "rank": "C",
       "status_on_hit": ["bleed", 0.3],
-      "loot_table": [["pale_lamp_oil", 0.9], ["phylactery_shard", 0.2]]
+      "loot_table": [["pale_lamp_oil", 0.9], ["phylactery_shard", 0.2]],
+      "abilities": [{"name": "Lightless Vision", "kind": "heavy", "every": 3, "power": 2.0}, {"name": "Bleeding Prayer", "kind": "drain", "every": 4, "power": 0.5}],
+      "enrage_below": 0.35
     },
     "lampwarden": {
       "name": "{name}, Lampwarden", "max_hp": 120, "attack": 18, "defense": 9,
       "xp_reward": 250, "gold_reward": 2400, "rank": "C",
-      "loot_table": [["pale_lamp_oil", 0.9], ["health_potion_major", 0.5]]
+      "loot_table": [["pale_lamp_oil", 0.9], ["health_potion_major", 0.5]],
+      "abilities": [{"name": "Shield of the Flame", "kind": "heal", "every": 4, "power": 0.18}, {"name": "Lamplight Smite", "kind": "heavy", "every": 3, "power": 1.8}],
+      "enrage_below": 0.35
     }
   },
 

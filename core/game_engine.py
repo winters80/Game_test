@@ -61,6 +61,7 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self.lair_registry = None      # boss lairs (entities/lair.py); state per save in _lair_states
         self._lair_states: dict = {}
         self.gate_registry = None      # Gates: instanced dungeons with lairs (entities/gate.py)
+        self._companions: list = []    # bots fighting alongside the player for one gate run
 
         # World content
         self.system_messages: dict = {}

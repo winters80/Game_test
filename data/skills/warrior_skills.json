@@ -7,7 +7,7 @@
     "flavor_text": "Simple. Effective. Devastating.",
     "skill_type": "ACTIVE",
     "mp_cost": 0,
-    "cooldown_turns": 0,
+    "cooldown_turns": 2,
     "effects": [{"effect_type": "damage", "scaling_stat": "STR", "base_value": 5.0, "scaling_coefficient": 1.5}]
   },
   {

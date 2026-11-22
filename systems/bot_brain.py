@@ -89,6 +89,7 @@ class BotWorld:
     # Gates bots can run from town (core/gate_flow.bot_gate_view): gate_id,
     # name, min_level, region, rooms (enemy lists), lair (or None), material.
     gates: list[dict] = field(default_factory=list)
+    allies: dict[str, list] = field(default_factory=dict)   # zone → bots there (group Gates)
 
 
 @dataclass
@@ -175,12 +176,17 @@ def _try_boss(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotE
     return []
 
 
-def _fight_boss(bot: "BotAgent", lair: dict, rng: random.Random, world: BotWorld) -> list[BotEvent]:
+def _fight_boss(bot: "BotAgent", lair: dict, rng: random.Random, world: BotWorld,
+                party: list | None = None) -> list[BotEvent]:
     from systems.combat_system import roll_loot
 
+    party = party or [bot]
     enemies = lair["enemies"]
     zone = bot.current_zone_id
-    taken = int(expected_damage(bot, enemies) * rng.uniform(0.75, 1.3))
+    taken = int(expected_damage(bot, enemies) * rng.uniform(0.75, 1.3) / len(party) ** 1.5)
+    for m in party[1:]:
+        m.hp = max(1, m.hp - taken)
+        m.remember(f"Fought {lair['title']} in {lair['lair_name']} with {bot.name} (turn {world.turn})")
     if taken >= bot.hp:
         bot.hp = 1
         bot.current_zone_id = HOME
@@ -200,7 +206,8 @@ def _fight_boss(bot: "BotAgent", lair: dict, rng: random.Random, world: BotWorld
             gate["lair"] = None
     bot.activity = f"celebrating a kill on {place(zone)}"
     bot.remember(f"Slew {lair['title']} in {lair['lair_name']} (turn {world.turn})")
-    events = [BotEvent(bot.bot_id, zone, f"{bot.name} slew {lair['title']} in {lair['lair_name']}!",
+    who = _names(party)
+    events = [BotEvent(bot.bot_id, zone, f"{who} slew {lair['title']} in {lair['lair_name']}!",
                        "boss_kill", lair_id=lair["lair_id"], killed_by=bot_blow(bot))]
     events += _gain_xp(bot, sum(e.xp_reward for e in enemies))
     return events
@@ -212,32 +219,69 @@ def _gate_run(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotE
     from config import LAIR_BOT_CHALLENGE_CHANCE, LAIR_BOT_SAFETY
     from systems.combat_system import roll_loot
 
-    fits = [g for g in world.gates if g["min_level"] <= bot.level <= g["min_level"] + 6 and g["rooms"]]
-    if not fits:
-        return []
-    gate = rng.choice(fits)
-    enemies = [e for room in gate["rooms"] for e in room]
-    taken = int(sum(expected_damage(bot, room) for room in gate["rooms"]) * rng.uniform(0.75, 1.3))
-    if taken >= bot.hp * 0.8:
-        return []
     zone = bot.current_zone_id
-    bot.hp -= taken
-    bot.gold += sum(e.gold_reward for e in enemies)
-    bot.kills += len(enemies)
+    fits = [g for g in world.gates if g["min_level"] <= bot.level <= g["min_level"] + 6 and g["rooms"]]
+    rng.shuffle(fits)
+    if rng.random() < 0.5:     # half the time, look for a party first
+        fits.sort(key=lambda g: -g.get("party_size", 1))
+    for gate in fits:
+        size = gate.get("party_size", 1)
+        party = [bot]
+        if size > 1:          # a group Gate: find allies in town, or try another Gate
+            pool = [b for b in world.allies.get(zone, []) if b is not bot and b.hp > b.max_hp * 0.5
+                    and b.level >= gate["min_level"] - 3 and b.archetype in ("fighter", "explorer", "gatherer")]
+            if len(pool) < size - 1:
+                continue
+            party += rng.sample(pool, size - 1)
+        return _run_gate_as_party(bot, party, gate, rng, world)
+    return []
+
+
+def _run_gate_as_party(bot: "BotAgent", party: list, gate: dict, rng: random.Random,
+                       world: BotWorld) -> list[BotEvent]:
+    """The party clears the rooms (if survivable) and maybe the master; the
+    damage is shared, everyone gets the XP, the leader carries the loot."""
+    from config import LAIR_BOT_CHALLENGE_CHANCE, LAIR_BOT_SAFETY
+    from systems.combat_system import roll_loot
+
+    zone = bot.current_zone_id
+    n = len(party)
+    enemies = [e for room in gate["rooms"] for e in room]
+    # A party shares the hits and kills faster: damage per member falls as n^1.5.
+    taken = int(sum(expected_damage(bot, room) for room in gate["rooms"]) * rng.uniform(0.75, 1.3) / n ** 1.5)
+    if any(taken >= m.hp * 0.8 for m in party):
+        return []
+    gold = sum(e.gold_reward for e in enemies)
+    xp = sum(e.xp_reward for e in enemies)
+    for m in party:
+        m.hp -= taken
+        m.gold += gold // n
+        m.kills += len(enemies) // n
     for item_id in roll_loot(enemies):
         bot.add_item(item_id)
-    bot.activity = f"back from the {gate['name']} gate"
-    bot.remember(f"Ran the {gate['name']} gate (turn {world.turn})")
-    events = [BotEvent(bot.bot_id, zone, f"{bot.name} came back through the {gate['name']} rift.", "fight")]
-    events += _gain_xp(bot, sum(e.xp_reward for e in enemies))
+    names = _names(party)
+    for m in party:
+        m.activity = f"back from {gate['name']}"
+        m.remember(f"Ran {gate['name']}{' with ' + _names([x for x in party if x is not m]) if n > 1 else ''} (turn {world.turn})")
+    kind = "party" if n > 1 else "fight"
+    events = [BotEvent(bot.bot_id, zone, f"{names} came back from {gate['name']}"
+                       f"{' together' if n > 1 else ''}.", kind)]
+    for m in party:
+        events += _gain_xp(m, xp)
     lair = gate.get("lair")
     if (lair and bot.level >= lair["min_level"] and rng.random() < LAIR_BOT_CHALLENGE_CHANCE
-            and expected_damage(bot, lair["enemies"]) < bot.hp * LAIR_BOT_SAFETY):
-        boss = _fight_boss(bot, lair, rng, world)
+            and expected_damage(bot, lair["enemies"]) / n ** 1.5 < min(m.hp for m in party) * LAIR_BOT_SAFETY):
+        boss = _fight_boss(bot, lair, rng, world, party=party)
         if boss and boss[0].kind == "defeat":
-            bot.current_zone_id = zone        # beaten inside a gate: home is where it is
+            for m in party:
+                m.current_zone_id = zone      # beaten inside a gate: home is where it is
         events += boss
     return events
+
+
+def _names(bots: list) -> str:
+    names = [b.name for b in bots]
+    return names[0] if len(names) == 1 else ", ".join(names[:-1]) + f" and {names[-1]}"
 
 
 def _gain_xp(bot: "BotAgent", xp: int) -> list[BotEvent]:

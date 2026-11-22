@@ -72,7 +72,23 @@
    "status_on_hit": [
     "frozen",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spectral Rend",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "ashgrove_manor_reflection_boss": {
    "name": "the Lady in the Glass",
@@ -103,7 +119,23 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spectral Rend",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "ashgrove_manor_children_boss": {
    "name": "Little Master Edmund",
@@ -134,7 +166,22 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spectral Rend",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Life Leech",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "ashgrove_manor_butler_boss": {
    "name": "Hollis, Who Still Serves",
@@ -165,7 +212,22 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spectral Rend",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Life Leech",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "witchs_bog_crow": {
    "name": "Witch Crow",
@@ -238,7 +300,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Soul Rip",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Life Leech",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "witchs_bog_coven_boss": {
    "name": "Sister Moll of the Coven",
@@ -269,7 +346,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Haunting Blow",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "witchs_bog_cauldron_boss": {
    "name": "the Cauldron Thing",
@@ -300,7 +392,23 @@
    "status_on_hit": [
     "poison",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Soul Rip",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "witchs_bog_bog_wife_boss": {
    "name": "the Bog Wife",
@@ -331,7 +439,23 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Haunting Blow",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dollmaker_workshop_doll": {
    "name": "Porcelain Doll",
@@ -408,7 +532,22 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Life Leech",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dollmaker_workshop_your_doll_boss": {
    "name": "the Doll With Your Face",
@@ -439,7 +578,23 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Haunting Blow",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Mourning Hymn",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dollmaker_workshop_ash_puppets_boss": {
    "name": "the Burnt Ringmaster",
@@ -470,7 +625,22 @@
    "status_on_hit": [
     "burn",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "dollmaker_workshop_doll_queen_boss": {
    "name": "the Doll Queen",
@@ -501,7 +671,22 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Grave Grasp",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Mourning Hymn",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "veras_asylum_patient": {
    "name": "Hollow Patient",
@@ -578,7 +763,22 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Mourning Hymn",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "veras_asylum_matron_boss": {
    "name": "Matron {name}",
@@ -609,7 +809,22 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Mourning Hymn",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "veras_asylum_saint_vera_boss": {
    "name": "Saint Vera, Who Could Not Save Them",
@@ -640,7 +855,23 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Grave Grasp",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "veras_asylum_plague_boss": {
    "name": "the Grey Plague",
@@ -671,7 +902,23 @@
    "status_on_hit": [
     "poison",
     0.4
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hall_of_mirrors_reflection": {
    "name": "Hostile Reflection",
@@ -693,7 +940,7 @@
    ],
    "status_on_hit": [
     "bleed",
-    0.2
+    0.1
    ]
   },
   "hall_of_mirrors_clown": {
@@ -716,7 +963,7 @@
    ],
    "status_on_hit": [
     "stun",
-    0.2
+    0.1
    ]
   },
   "hall_of_mirrors_ringmaster_boss": {
@@ -748,7 +995,22 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Grave Grasp",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hall_of_mirrors_true_self_boss": {
    "name": "Your True Reflection",
@@ -779,7 +1041,23 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Soul Rip",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hall_of_mirrors_shard_swarm_boss": {
    "name": "the Shard Legion",
@@ -810,7 +1088,23 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Spectral Rend",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hall_of_mirrors_empty_one_boss": {
    "name": "the Man Without a Reflection",
@@ -841,11 +1135,27 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Grave Grasp",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bellfall_cathedral_choir": {
    "name": "Hollow Chorister",
-   "max_hp": 105,
+   "max_hp": 136,
    "attack": 20,
    "defense": 5,
    "xp_reward": 127,
@@ -868,7 +1178,7 @@
   },
   "bellfall_cathedral_gargoyle": {
    "name": "Belfry Gargoyle",
-   "max_hp": 105,
+   "max_hp": 136,
    "attack": 20,
    "defense": 5,
    "xp_reward": 127,
@@ -887,11 +1197,11 @@
   },
   "bellfall_cathedral_bishop_boss": {
    "name": "Bishop {name}",
-   "max_hp": 253,
-   "attack": 28,
+   "max_hp": 404,
+   "attack": 33,
    "defense": 10,
-   "xp_reward": 450,
-   "gold_reward": 3650,
+   "xp_reward": 720,
+   "gold_reward": 5840,
    "rank": "A",
    "loot_table": [
     [
@@ -914,15 +1224,30 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Soul Rip",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Life Leech",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bellfall_cathedral_bell_ringer_boss": {
    "name": "the Hunchbacked Bell-Ringer",
-   "max_hp": 278,
-   "attack": 31,
+   "max_hp": 444,
+   "attack": 37,
    "defense": 10,
-   "xp_reward": 495,
-   "gold_reward": 4015,
+   "xp_reward": 792,
+   "gold_reward": 6424,
    "rank": "A",
    "loot_table": [
     [
@@ -945,15 +1270,30 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Haunting Blow",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Chill of the Grave",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bellfall_cathedral_congregation_boss": {
    "name": "the Risen Congregation",
-   "max_hp": 303,
-   "attack": 34,
+   "max_hp": 484,
+   "attack": 40,
    "defense": 10,
-   "xp_reward": 540,
-   "gold_reward": 4380,
+   "xp_reward": 864,
+   "gold_reward": 7008,
    "rank": "A",
    "loot_table": [
     [
@@ -976,15 +1316,31 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Wail of the Dead",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bellfall_cathedral_angel_of_bells_boss": {
    "name": "the Angel of the Bells",
-   "max_hp": 303,
-   "attack": 34,
+   "max_hp": 484,
+   "attack": 40,
    "defense": 10,
-   "xp_reward": 540,
-   "gold_reward": 4380,
+   "xp_reward": 864,
+   "gold_reward": 7008,
    "rank": "A",
    "loot_table": [
     [
@@ -1007,7 +1363,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Soul Rip",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Life Leech",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   }
  },
  "gates": [
@@ -1016,6 +1388,7 @@
    "name": "Ashgrove Manor",
    "theme": "paranormal",
    "min_level": 2,
+   "party_size": 1,
    "region": "village_start",
    "description": "A manor house that burned down a century ago stands whole again inside a rift by the village well. Its windows are lit every night.",
    "entry_text": "The front door opens before you knock. Portraits follow you with their eyes, and the dust on the floor shows footprints that end mid-step.",
@@ -1081,6 +1454,7 @@
        "Margery",
        "Constance"
       ],
+      "trophy": "trophy_ashgrove_manor_lady",
       "study": {
        "stat": "WIS",
        "min": 10,
@@ -1126,6 +1500,7 @@
       "victory": "The Lady in the Glass shatters into a thousand cold pieces.",
       "arrival_omen": "The mirror in the master bedroom is fogged from the inside. A handprint is pressed against the glass.",
       "arrival_rumour": "Ashgrove Manor's lady is gone, but her reflection walks the halls now.",
+      "trophy": "trophy_ashgrove_manor_reflection",
       "study": {
        "stat": "WIS",
        "min": 10,
@@ -1147,6 +1522,7 @@
       "victory": "Little Master Edmund sits down on the floor and cries, and fades.",
       "arrival_omen": "Toys are scattered all down the dark hall. A skipping rope turns by itself.",
       "arrival_rumour": "The ghost children of Ashgrove Manor want visitors. They play hide and seek, and they always find you.",
+      "trophy": "trophy_ashgrove_manor_children",
       "study": {
        "stat": "WIS",
        "min": 10,
@@ -1168,6 +1544,7 @@
       "victory": "Hollis bows as he fades. 'The house is yours, then.'",
       "arrival_omen": "The manor is spotless again. Someone has set the table for one.",
       "arrival_rumour": "Ashgrove Manor has a butler again. He keeps the house perfect and the guests out.",
+      "trophy": "trophy_ashgrove_manor_butler",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1187,6 +1564,7 @@
    "name": "Grandmother Rook's Bog",
    "theme": "paranormal",
    "min_level": 5,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift in the wetlands near the camp, full of crooked trees hung with charms. Livestock in the area have started to vanish.",
    "entry_text": "The path is made of bones laid like cobbles. Crows watch you from every branch and do not caw.",
@@ -1195,7 +1573,6 @@
      "kind": "fight",
      "text": "A flock of crows descends all at once, silent.",
      "enemies": [
-      "witchs_bog_crow",
       "witchs_bog_crow",
       "witchs_bog_crow"
      ]
@@ -1250,6 +1627,7 @@
        "Hagatha",
        "Nettle"
       ],
+      "trophy": "trophy_witchs_bog_rook",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1280,6 +1658,7 @@
       "victory": "Sister Moll falls, and the coven breaks. The others flee into the bog.",
       "arrival_omen": "Three brooms lean against the cottage door. Three cups of tea are steaming inside.",
       "arrival_rumour": "A coven has taken Grandmother Rook's cottage in the bog. The crows are back.",
+      "trophy": "trophy_witchs_bog_coven",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1300,6 +1679,7 @@
       "victory": "The Cauldron Thing collapses into a puddle of cooling stew.",
       "arrival_omen": "The cauldron is bubbling with no fire under it. Something inside it is singing to itself.",
       "arrival_rumour": "The witch's cauldron in the bog has come to life. It's eating the sheep.",
+      "trophy": "trophy_witchs_bog_cauldron",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1320,6 +1700,7 @@
       "victory": "The Bog Wife sinks back into the mud, and the bog is quiet.",
       "arrival_omen": "The bog is rising. The cottage is half-sunk, and drowned flowers bloom on the water.",
       "arrival_rumour": "The bog by the camp has woken up. Something in it takes people who walk alone.",
+      "trophy": "trophy_witchs_bog_bog_wife",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1339,6 +1720,7 @@
    "name": "the Dollmaker's Workshop",
    "theme": "paranormal",
    "min_level": 6,
+   "party_size": 1,
    "region": "village_start",
    "description": "A toyshop on a Verath side street was swallowed by a rift. Through the window, the dolls on the shelves have been rearranged every morning.",
    "entry_text": "Hundreds of porcelain faces watch you from the shelves. A music box plays somewhere, slightly too slow.",
@@ -1347,7 +1729,6 @@
      "kind": "fight",
      "text": "The dolls on the bottom shelf climb down, very slowly, all together.",
      "enemies": [
-      "dollmaker_workshop_doll",
       "dollmaker_workshop_doll",
       "dollmaker_workshop_doll"
      ]
@@ -1402,6 +1783,7 @@
        "Coppel",
        "Lenz"
       ],
+      "trophy": "trophy_dollmaker_workshop_dollmaker",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1447,6 +1829,7 @@
       "victory": "Your doll breaks, and its face cracks across your own smile.",
       "arrival_omen": "Your own footprints, small and porcelain-light, circle the workbench.",
       "arrival_rumour": "The Dollmaker's Workshop has a new doll in the window. People say it looks like an adventurer they know.",
+      "trophy": "trophy_dollmaker_workshop_your_doll",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1468,6 +1851,7 @@
       "victory": "The Burnt Ringmaster takes his final bow, and the curtain of ash falls.",
       "arrival_omen": "A tiny theatre has been built from the ashes of the workshop. Charred tickets lie on the floor.",
       "arrival_rumour": "The burnt dolls of the Dollmaker's Workshop put on a show every night. Nobody who attends leaves.",
+      "trophy": "trophy_dollmaker_workshop_ash_puppets",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1490,6 +1874,7 @@
       "victory": "The Doll Queen comes apart at every seam, and the other dolls go still.",
       "arrival_omen": "The dolls have been arranged in a court, bowing to an empty throne made of a doll's house.",
       "arrival_rumour": "The dolls in the workshop have a queen now. People hear her calling for a heart.",
+      "trophy": "trophy_dollmaker_workshop_doll_queen",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1509,6 +1894,7 @@
    "name": "Saint Vera's Asylum",
    "theme": "paranormal",
    "min_level": 7,
+   "party_size": 1,
    "region": "verath_city",
    "description": "An asylum for the sick, abandoned after a plague long ago, has surfaced in a rift outside Verath's walls. Its bell rings for meals no one eats.",
    "entry_text": "The halls smell of carbolic and rot. Gurneys sit where they were left, some still with their straps buckled.",
@@ -1517,7 +1903,6 @@
      "kind": "fight",
      "text": "Patients in grey gowns shuffle out of their cells, coughing.",
      "enemies": [
-      "veras_asylum_patient",
       "veras_asylum_patient",
       "veras_asylum_patient"
      ]
@@ -1567,6 +1952,7 @@
       "victory": "The Plague Doctor's mask falls away. There is nothing under it but dried herbs.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_veras_asylum_doctor",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1602,6 +1988,7 @@
        "Hester",
        "Prudence"
       ],
+      "trophy": "trophy_veras_asylum_matron",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1622,6 +2009,7 @@
       "victory": "Saint Vera bows her head. 'I tried,' she says, and is gone.",
       "arrival_omen": "A soft light glows in the theatre. Someone has laid fresh flowers on every bed.",
       "arrival_rumour": "The ghost of Saint Vera walks her asylum again. She heals anyone she touches, whether they want it or not.",
+      "trophy": "trophy_veras_asylum_saint_vera",
       "study": {
        "stat": "WIS",
        "min": 14,
@@ -1642,6 +2030,7 @@
       "victory": "The Grey Plague scatters like smoke on a fresh wind.",
       "arrival_omen": "The grey dust in the asylum has begun to drift, all in one direction, toward the theatre.",
       "arrival_rumour": "Something in Saint Vera's Asylum is spreading. The guards on Verath's west gate are wearing masks.",
+      "trophy": "trophy_veras_asylum_plague",
       "study": {
        "stat": "VIT",
        "min": 14,
@@ -1661,6 +2050,7 @@
    "name": "the Hall of Ten Thousand Mirrors",
    "theme": "paranormal",
    "min_level": 9,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A carnival tent pitched in a rift in Verath's market district. Everyone who enters comes out swearing they saw themselves die.",
    "entry_text": "Your reflection is in every mirror, and in each one it is doing something slightly different. One of them waves.",
@@ -1695,8 +2085,7 @@
      "text": "Mimes press against the glass, then step through it.",
      "enemies": [
       "hall_of_mirrors_clown",
-      "hall_of_mirrors_clown",
-      "hall_of_mirrors_reflection"
+      "hall_of_mirrors_clown"
      ]
     }
    ],
@@ -1719,6 +2108,7 @@
       "victory": "The Ringmaster's hat rolls across the floor, and the carnival music stops.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_hall_of_mirrors_ringmaster",
       "study": {
        "stat": "WIS",
        "min": 15,
@@ -1764,6 +2154,7 @@
       "victory": "Your reflection kneels and becomes glass again, then nothing.",
       "arrival_omen": "The last mirror shows the room, but you aren't in it.",
       "arrival_rumour": "The Hall of Mirrors in the market sends your own reflection to fight you. Only the strange come out.",
+      "trophy": "trophy_hall_of_mirrors_true_self",
       "study": {
        "stat": "WIS",
        "min": 15,
@@ -1784,6 +2175,7 @@
       "victory": "The Shard Legion falls like glittering rain.",
       "arrival_omen": "Ten thousand glass shards hang in the air of the last room, turning slowly.",
       "arrival_rumour": "Someone broke the last mirror in the carnival tent. Now the shards fly out at night.",
+      "trophy": "trophy_hall_of_mirrors_shard_swarm",
       "study": {
        "stat": "AGI",
        "min": 15,
@@ -1804,6 +2196,7 @@
       "victory": "The Man Without a Reflection falls, and every mirror in the hall shows him at last.",
       "arrival_omen": "Every mirror in the hall now reflects only an empty room.",
       "arrival_rumour": "Visitors to the Hall of Mirrors are coming out with no reflection. Something in there is collecting them.",
+      "trophy": "trophy_hall_of_mirrors_empty_one",
       "study": {
        "stat": "WIS",
        "min": 16,
@@ -1823,6 +2216,7 @@
    "name": "the Cathedral of Bellfall",
    "theme": "paranormal",
    "min_level": 13,
+   "party_size": 2,
    "region": "verath_city",
    "description": "A cathedral that sank into the ground during the Fracture, congregation and all. Its spire still pokes from a rift east of Verath, and its bells ring at midnight.",
    "entry_text": "You enter through the belfry window and climb down into the nave. The pews are full. Nobody turns around.",
@@ -1890,6 +2284,7 @@
        "Lucien",
        "Ottilie"
       ],
+      "trophy": "trophy_bellfall_cathedral_bishop",
       "study": {
        "stat": "WIS",
        "min": 17,
@@ -1919,6 +2314,7 @@
       "victory": "The Bell-Ringer falls with his hand still on the rope, and the bell gives a last, cracked toll.",
       "arrival_omen": "The ropes in the belfry sway with no wind. Someone is climbing down.",
       "arrival_rumour": "The bells of Bellfall Cathedral ring every hour now, not just at midnight. People in Verath can't sleep.",
+      "trophy": "trophy_bellfall_cathedral_bell_ringer",
       "study": {
        "stat": "AGI",
        "min": 17,
@@ -1939,6 +2335,7 @@
       "victory": "The congregation sits down, all together, and is still.",
       "arrival_omen": "Every pew is empty. Hundreds of footprints lead up the aisle to the altar.",
       "arrival_rumour": "The congregation of Bellfall Cathedral has stood up. They're walking the aisle, singing.",
+      "trophy": "trophy_bellfall_cathedral_congregation",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -1959,6 +2356,7 @@
       "victory": "The Angel of the Bells rings out one last pure note and goes silent.",
       "arrival_omen": "The statue that used to stand in the belfry is gone. A bronze feather lies on the altar.",
       "arrival_rumour": "An angel guards the belfry of Bellfall Cathedral now. It rings when it strikes.",
+      "trophy": "trophy_bellfall_cathedral_angel_of_bells",
       "study": {
        "stat": "INT",
        "min": 18,

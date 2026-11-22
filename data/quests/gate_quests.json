@@ -5590,6 +5590,320 @@
   "chain_kind": "story"
  },
  {
+  "template_id": "uncharted_rifts_1",
+  "title": "A Reading at the Roots",
+  "description": "Mira's compass spins near rifts that aren't on any register. She needs a calibration run through the Rootdeep Caverns, and then she thinks she can find a new one.",
+  "giver_npc_id": "cartographer_mira",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Rootdeep Caverns.",
+    "objective_text": "Clear the Rootdeep Caverns.",
+    "completion_condition": {
+     "has_flag": "cleared_rootdeep_caverns"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Mira the Cartographer.",
+    "objective_text": "Report back to Mira the Cartographer.",
+    "completion_condition": {
+     "turn_in": "cartographer_mira"
+    },
+    "on_advance_triggers": [
+     "open_rift:+2"
+    ],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 80,
+  "reward_xp": 200,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_uncharted_rifts_1"
+  ],
+  "chain_id": "uncharted_rifts",
+  "chain_step": 1,
+  "chain_kind": "rift"
+ },
+ {
+  "template_id": "uncharted_rifts_2",
+  "title": "The First Uncharted Rift",
+  "description": "Mira's reading found a rift nobody has registered. Go in, clear it, and come back with a map.",
+  "giver_npc_id": "cartographer_mira",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear a newly opened (uncharted) Gate.",
+    "objective_text": "Clear a newly opened (uncharted) Gate.",
+    "completion_condition": {
+     "has_flag": "charted_new_rift"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Mira the Cartographer.",
+    "objective_text": "Report back to Mira the Cartographer.",
+    "completion_condition": {
+     "turn_in": "cartographer_mira"
+    },
+    "on_advance_triggers": [
+     "open_rift:+3"
+    ],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 100,
+  "reward_xp": 250,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_uncharted_rifts_2"
+  ],
+  "chain_id": "uncharted_rifts",
+  "chain_step": 2,
+  "chain_kind": "rift"
+ },
+ {
+  "template_id": "uncharted_rifts_3",
+  "title": "Deeper Echoes",
+  "description": "Mira thinks the old rifts are echoing, deeper each time. She needs someone strong enough to follow the echoes down.",
+  "giver_npc_id": "cartographer_mira",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Reach level 10.",
+    "objective_text": "Reach level 10.",
+    "completion_condition": {
+     "min_level": 10
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Mira the Cartographer.",
+    "objective_text": "Report back to Mira the Cartographer.",
+    "completion_condition": {
+     "turn_in": "cartographer_mira"
+    },
+    "on_advance_triggers": [
+     "open_rift:+4"
+    ],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 120,
+  "reward_xp": 300,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_uncharted_rifts_3"
+  ],
+  "chain_id": "uncharted_rifts",
+  "chain_step": 3,
+  "chain_kind": "rift"
+ },
+ {
+  "template_id": "uncharted_rifts_4",
+  "title": "Rift Cartographer",
+  "description": "The last reading points at the Clocktower of Stopped Hours. If time is broken there, so is space. Clear it and Mira will chart a rift no one has ever seen.",
+  "giver_npc_id": "cartographer_mira",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Clocktower of Stopped Hours.",
+    "objective_text": "Clear the Clocktower of Stopped Hours.",
+    "completion_condition": {
+     "has_flag": "cleared_stopped_clocktower"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Mira the Cartographer.",
+    "objective_text": "Report back to Mira the Cartographer.",
+    "completion_condition": {
+     "turn_in": "cartographer_mira"
+    },
+    "on_advance_triggers": [
+     "open_rift:+6"
+    ],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 280,
+  "reward_xp": 700,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_uncharted_rifts_4"
+  ],
+  "chain_id": "uncharted_rifts",
+  "chain_step": 4,
+  "chain_kind": "rift"
+ },
+ {
+  "template_id": "wardens_of_the_breach_1",
+  "title": "Strength in Numbers",
+  "description": "Some Gates are too much for one adventurer. Ostra wants to see you lead a party through the Hydra Fen.",
+  "giver_npc_id": "registrar_ostra",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Hydra Fen (a group Gate: bring companions).",
+    "objective_text": "Clear the Hydra Fen (a group Gate: bring companions).",
+    "completion_condition": {
+     "has_flag": "cleared_hydra_fen"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Registrar Ostra.",
+    "objective_text": "Report back to Registrar Ostra.",
+    "completion_condition": {
+     "turn_in": "registrar_ostra"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 120,
+  "reward_xp": 300,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_wardens_of_the_breach_1"
+  ],
+  "chain_id": "wardens_of_the_breach",
+  "chain_step": 1,
+  "chain_kind": "story"
+ },
+ {
+  "template_id": "wardens_of_the_breach_2",
+  "title": "The Bell Tolls for Parties",
+  "description": "The Drowned Bell is a group Gate too. Ostra wants it cleared by a proper party.",
+  "giver_npc_id": "registrar_ostra",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Temple of the Drowned Bell (group Gate).",
+    "objective_text": "Clear the Temple of the Drowned Bell (group Gate).",
+    "completion_condition": {
+     "has_flag": "cleared_drowned_bell"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Registrar Ostra.",
+    "objective_text": "Report back to Registrar Ostra.",
+    "completion_condition": {
+     "turn_in": "registrar_ostra"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 140,
+  "reward_xp": 350,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_wardens_of_the_breach_2"
+  ],
+  "chain_id": "wardens_of_the_breach",
+  "chain_step": 2,
+  "chain_kind": "story"
+ },
+ {
+  "template_id": "wardens_of_the_breach_3",
+  "title": "Into the Hoard Together",
+  "description": "A party of three, Ostra says, and not one fewer, for the Hoard of Vael-Ashar.",
+  "giver_npc_id": "registrar_ostra",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Hoard of Vael-Ashar (group Gate).",
+    "objective_text": "Clear the Hoard of Vael-Ashar (group Gate).",
+    "completion_condition": {
+     "has_flag": "cleared_wyrm_hoard"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Registrar Ostra.",
+    "objective_text": "Report back to Registrar Ostra.",
+    "completion_condition": {
+     "turn_in": "registrar_ostra"
+    },
+    "on_advance_triggers": [
+     "open_rift:+3"
+    ],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 160,
+  "reward_xp": 400,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_wardens_of_the_breach_3"
+  ],
+  "chain_id": "wardens_of_the_breach",
+  "chain_step": 3,
+  "chain_kind": "story"
+ },
+ {
+  "template_id": "wardens_of_the_breach_4",
+  "title": "The Dreamers' Party",
+  "description": "The hardest Gate on the register takes four. Gather the best adventurers in Verath and wake up together.",
+  "giver_npc_id": "registrar_ostra",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear the Dreamer's Abyss (group Gate, party of 4).",
+    "objective_text": "Clear the Dreamer's Abyss (group Gate, party of 4).",
+    "completion_condition": {
+     "has_flag": "cleared_dreamers_abyss"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Registrar Ostra.",
+    "objective_text": "Report back to Registrar Ostra.",
+    "completion_condition": {
+     "turn_in": "registrar_ostra"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 360,
+  "reward_xp": 900,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_wardens_of_the_breach_4"
+  ],
+  "chain_id": "wardens_of_the_breach",
+  "chain_step": 4,
+  "chain_kind": "story"
+ },
+ {
   "template_id": "order_labyrinth_bronze",
   "title": "Bronze for the Forge",
   "description": "Halvard always needs bronze that moves. Don't ask what for. Labyrinth Bronze comes from the Bronze Labyrinth.",

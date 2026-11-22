@@ -476,13 +476,47 @@ def get_active_quest_summaries(
         if not template:
             continue
         stage = template.get_stage(row["current_state"])
+        step, total = chain_progress(template, quest_registry)
+        ready = bool(stage) and any(
+            q[0] == instance_id
+            for npc_id in _turn_in_npcs(stage.completion_condition)
+            for q in reportable_quests(npc_id, state, quest_registry))
         summaries.append({
             "instance_id": instance_id,
             "title": template.title,
             "objective": stage.objective_text if stage else "???",
             "turns_active": state.turn_number - row.get("accepted_turn", 0),
+            "chain": f"{template.chain_kind or 'chain'} {step}/{total}" if total > 1 else "",
+            "ready_to_report": ready,
+            "giver_npc_id": template.giver_npc_id,
         })
     return summaries
+
+
+def chain_progress(template: "QuestTemplate", quest_registry: "QuestRegistry") -> tuple[int, int]:
+    """(this quest's step, steps in its chain); (1, 1) for a standalone quest."""
+    if not template.chain_id:
+        return 1, 1
+    total = sum(1 for q in quest_registry.all() if q.chain_id == template.chain_id)
+    return template.chain_step, total
+
+
+def available_work(state: "GameState", quest_registry: "QuestRegistry", npc_registry) -> list[tuple]:
+    """Quests the player could pick up right now: (npc, template), lowest level first."""
+    from systems.npc_system import get_available_quest_seeds
+
+    out = []
+    if npc_registry is None:
+        return out
+    for npc in npc_registry.all():
+        if npc.is_ai_generated:
+            continue
+        for seed in get_available_quest_seeds(npc, state):
+            tmpl = quest_registry.get(seed.quest_template_id)
+            if tmpl is not None:
+                out.append((npc, tmpl, seed.min_level))
+    out.sort(key=lambda t: (t[2], t[1].chain_step > 1, t[1].title))
+    return [(n, t) for n, t, _ in out]
 
 
 def _grant_quest_skill_rewards(template: "QuestTemplate", state: "GameState") -> None:

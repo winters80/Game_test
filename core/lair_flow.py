@@ -43,6 +43,8 @@ def setup_lairs(engine: "GameEngine") -> None:
     engine._lair_states = {}
     if not feature("boss_succession") or engine.lair_registry is None:
         return
+    from core.gate_growth import reload_generated_dungeons
+    reload_generated_dungeons(engine)
     db = _db(engine)
     stored = {}
     if db is not None:
@@ -91,6 +93,11 @@ def _log(engine: "GameEngine", text: str, zone_id: str, title: str = "Dungeon") 
 def _finish_kill(engine: "GameEngine", lair: "LairDefinition", state: LairState, kill: KillInfo) -> dict:
     row = lair_system.record_kill(lair, state, kill, _turn(engine))
     _save(engine, state)
+    try:
+        from core.gate_growth import request_successor
+        request_successor(engine, lair, state, kill)
+    except Exception:
+        logger.info("Could not request an AI successor", exc_info=True)
     db = _db(engine)
     if db is not None:
         try:
@@ -135,7 +142,9 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     if not state.occupied:
         renderer.print_system_message(
             f"ENCOUNTER ZONE VACANT · {lair.name.upper()} · NEW OCCUPANT EXPECTED", style="system_msg")
-        lines = [lair_system.omen_text(lair, state)]
+        from systems.world_clock import duration
+        lines = [lair_system.omen_text(lair, state),
+                 f"The System estimates a new occupant in {duration(state.arrives_turn - _turn(engine))}."]
         prev = _previous_line(engine, lair_id)
         if prev:
             lines.append(prev)
@@ -213,7 +222,15 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     )
     _finish_kill(engine, lair, state, kill)
     _grant_clear_flags(engine, lair)
+    first_kill = not player.has_flag(f"slew_{occ.occupant_id}")
     player.set_flag(f"slew_{occ.occupant_id}")
+    if first_kill and occ.trophy and engine.item_registry.get(occ.trophy):
+        from core.event_bus import Event, bus
+        trophy = engine.item_registry.get(occ.trophy)
+        player.add_item(occ.trophy)
+        bus.publish(Event("ITEM_FOUND", {"item_id": occ.trophy, "item_name": trophy.name,
+                                         "rarity": getattr(trophy.rarity, "value", str(trophy.rarity))}))
+        bus.flush()
     _log(engine, f"{player.name} slew {title} in {lair.name}.", lair.zone_id)
     renderer.print_system_message(
         "ENCOUNTER ZONE CLEARED. The System notes: something will take its place.", style="system_msg")
@@ -223,7 +240,7 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
 
 # ── The world moves on ───────────────────────────────────────────────────────
 
-def tick_lairs(engine: "GameEngine") -> list[str]:
+def tick_lairs(engine: "GameEngine", quiet: bool = False) -> list[str]:
     """Move successors into vacant lairs whose time has come. Returns the
     rumours spread (shown when the player is in a town or on that floor)."""
     if not feature("boss_succession") or engine.lair_registry is None or engine.state is None:
@@ -243,7 +260,7 @@ def tick_lairs(engine: "GameEngine") -> list[str]:
         _log(engine, text, lair.zone_id, title="Rumour")
         rumours.append(text)
         here = engine.state.current_scene_id
-        if here in SAFE_ZONES or here == lair.zone_id:
+        if not quiet and (here in SAFE_ZONES or here == lair.zone_id):
             renderer.console.print(f"  [dim_text]✦ RUMOUR — {text}[/dim_text]")
     return rumours
 

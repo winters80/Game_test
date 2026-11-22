@@ -65,6 +65,9 @@ class GateDefinition(BaseModel):
     entry_text: str
     rooms: list[GateRoom] = Field(min_length=1)
     material: str = ""              # signature material the gate drops (quests ask for it)
+    # Group Gates: the player needs this many in the party (themself + bot
+    # companions). Bots only run them as a party too. Masters are scaled for it.
+    party_size: int = Field(default=1, ge=1, le=5)
     lair: LairDefinition
 
     @model_validator(mode="before")
@@ -109,6 +112,10 @@ class GateRegistry:
     def register(self, gate: GateDefinition, lair_registry: "LairRegistry") -> None:
         self._gates[gate.gate_id] = gate
         lair_registry.register(gate.lair)
+
+    def unregister(self, gate_id: str, lair_registry: "LairRegistry") -> None:
+        self._gates.pop(gate_id, None)
+        lair_registry.unregister(gate_id)
 
     def get(self, gate_id: str) -> GateDefinition | None:
         return self._gates.get(gate_id)

@@ -1,7 +1,7 @@
 """
 Alchemy / crafting system.
 
-Recipes are defined in data/crafting/recipes.json.
+Recipes are defined in data/crafting/*.json (recipes.json, gate_recipes.json, ...).
 Each recipe lists ingredients (item_id + qty), an output item, and an optional required skill.
 """
 from __future__ import annotations
@@ -16,11 +16,16 @@ if TYPE_CHECKING:
 
 
 def load_recipes(data_dir: Path) -> list[dict]:
-    """Load all crafting recipes from data/crafting/recipes.json."""
-    path = data_dir / "crafting" / "recipes.json"
-    if not path.exists():
+    """Load all crafting recipes: data/crafting/recipes.json first, then every
+    other file there (gate_recipes.json, ...)."""
+    folder = data_dir / "crafting"
+    if not folder.exists():
         return []
-    return json.loads(path.read_text(encoding="utf-8"))
+    files = sorted(folder.glob("*.json"), key=lambda p: (p.name != "recipes.json", p.name))
+    out: list[dict] = []
+    for path in files:
+        out.extend(json.loads(path.read_text(encoding="utf-8")))
+    return out
 
 
 def craft_item(

@@ -72,9 +72,16 @@ class Enemy:
     gold_reward: int = 5
     loot_table: list[str] = field(default_factory=list)
     rank: str = "F"
-    # (status, chance) inflicted on hit, e.g. ("poison", 0.3). Declared so
-    # templates that carry it can spawn; combat doesn't apply statuses yet.
+    # (status, chance) inflicted on hit, e.g. ("poison", 0.3); applied by
+    # systems/combat_effects.enemy_turn.
     status_on_hit: tuple[str, float] | None = None
+    statuses: dict = field(default_factory=dict)      # {status: turns left}
+    # Signature moves: [{name, kind: heavy|status|heal|summon|drain, every, power, status, summon}]
+    abilities: list = field(default_factory=list)
+    enrage_below: float = 0.0       # share of max HP; hits 25% harder once below it
+    enraged: bool = False
+    turns_taken: int = 0
+    summoned: bool = False
 
     @property
     def is_alive(self) -> bool:
@@ -165,6 +172,9 @@ ENEMY_TEMPLATES: dict[str, dict] = {
         "xp_reward": 140, "gold_reward": 1500,
         "rank": "D",
         "loot_table": [("void_crystal", 0.6), ("mountain_root", 0.5)],
+        "abilities": [{"name": "Crystal Fist", "kind": "heavy", "every": 3, "power": 1.8},
+                      {"name": "Shard Spray", "kind": "status", "every": 4, "status": "bleed"}],
+        "enrage_below": 0.35,
     },
     "unknown_creature": {
         "enemy_id": "unknown_creature",
@@ -191,9 +201,13 @@ def spawn_enemy(enemy_id: str) -> Enemy | None:
     template = ENEMY_TEMPLATES.get(enemy_id)
     if not template:
         return None
-    data = dict(template)
+    import copy
+    data = copy.deepcopy(template)
     data["current_hp"] = data["max_hp"]
-    return Enemy(**data)
+    if isinstance(data.get("status_on_hit"), list):
+        data["status_on_hit"] = tuple(data["status_on_hit"])
+    known = Enemy.__dataclass_fields__
+    return Enemy(**{k: v for k, v in data.items() if k in known})
 
 
 # encounter_id → enemy template ids. Scene `combat:X` triggers name these.
@@ -257,7 +271,8 @@ def player_attack(
 
     mods = get_passive_modifiers(player, skill_registry) if skill_registry else None
 
-    base_dmg = max(1, player.stats.STR + random.randint(1, 4) - enemy.defense)
+    # Finesse: a basic attack uses the better of STR and AGI (rogues, rangers).
+    base_dmg = max(1, max(player.stats.STR, player.stats.AGI) + random.randint(1, 4) - enemy.defense)
     if mods:
         base_dmg += mods.attack_bonus
     crit_chance = player.stats.LCK * 0.01  # 1% per LCK
@@ -316,8 +331,10 @@ def enemy_attack(
     enemy: Enemy, player: "Player",
     skill_registry: "SkillRegistry | None" = None,
     fired: "list[TriggerFiring] | None" = None,
+    player_statuses: dict | None = None,
 ) -> int:
-    """Enemy attacks player. Returns damage dealt.
+    """Enemy attacks player. Returns damage dealt. A frozen player
+    (``player_statuses``) dodges less.
 
     PASSIVE skills apply: defense_bonus subtracts flat damage,
     dodge_chance adds to the player's chance to dodge entirely.
@@ -348,6 +365,9 @@ def enemy_attack(
     dodge_chance = player.stats.AGI * 0.008 + _extra_dodge
     if mods:
         dodge_chance += mods.dodge_chance
+    if player_statuses and player_statuses.get("frozen"):
+        from systems.combat_effects import FROZEN_DODGE_PENALTY
+        dodge_chance = max(0.0, dodge_chance - FROZEN_DODGE_PENALTY)
     if random.random() < dodge_chance:
         return 0  # dodged
     hp_before = player.current_hp
@@ -373,7 +393,34 @@ def try_flee(player: "Player", enemy: Enemy) -> bool:
     return random.random() < flee_chance
 
 
-def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: "SkillRegistry") -> CombatResult:
+def combat_mp_regen(player: "Player") -> int:
+    """MP a player recovers at the end of each combat round: 1 + WIS // 5.
+    Keeps casters casting in long fights. Returns the amount restored."""
+    before = player.current_mp
+    player.current_mp = min(player.max_mp, player.current_mp + 1 + player.stats.WIS // 5)
+    return player.current_mp - before
+
+
+def _best_skill(player: "Player", skill_registry: "SkillRegistry | None") -> str | None:
+    """The ACTIVE damage skill a player would pick now: affordable, off cooldown, hardest-hitting."""
+    from entities.enums import EffectType, SkillType
+    if skill_registry is None:
+        return None
+    best, best_val = None, 0
+    for sid in player.skills:
+        sk = skill_registry.get(sid)
+        if (not sk or sk.skill_type != SkillType.ACTIVE or sk.mp_cost > player.current_mp
+                or player.skill_cooldowns.get(sid, 0) > 0
+                or not any(e.effect_type == EffectType.DAMAGE for e in sk.effects)):
+            continue
+        val = calculate_skill_damage(sk, player)
+        if val > best_val:
+            best, best_val = sid, val
+    return best
+
+
+def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: "SkillRegistry",
+                        companions: list | None = None, use_skills: bool = False) -> CombatResult:
     """Run a full combat to completion without player input.
 
     Interactive fights go through ``core/combat_handler._run_combat``; this
@@ -389,46 +436,68 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
     all_loot: list[str] = []
     turn = 0
 
-    # Wrap enemies as dicts for status effect tracking
-    enemy_status: dict[str, dict] = {
-        e.enemy_id + str(i): {"hp": e.current_hp, "statuses": {}}
-        for i, e in enumerate(enemies)
-    }
-    enemy_keys = list(enemy_status.keys())
+    from systems import combat_effects as fx
+
+    player_statuses: dict = {}
+    enemies = list(enemies)
+    counted: set[int] = set()
+
+    def _collect(e) -> None:
+        nonlocal total_xp, total_gold
+        if not e.is_alive and id(e) not in counted:
+            counted.add(id(e))
+            total_xp += e.xp_reward
+            total_gold += e.gold_reward
+            all_loot.extend(roll_loot([e]))
 
     while any(e.is_alive for e in enemies) and player.current_hp > 0:
         turn += 1
-        # Player attacks first alive enemy
         target = next((e for e in enemies if e.is_alive), None)
-        if target:
-            dmg, _ = player_attack(player, target, skill_registry)
-            # Chance to apply bleed on physical attacks (10% base)
-            if random.random() < 0.10:
-                idx = enemies.index(target)
-                ekey = enemy_keys[idx]
-                enemy_status[ekey]["hp"] = target.current_hp
-                apply_status_effect(enemy_status[ekey], "bleed")
-            if not target.is_alive:
-                total_xp += target.xp_reward
-                total_gold += target.gold_reward
-                all_loot.extend(roll_loot([target]))
+        if target and not fx.consume_stun(player_statuses):
+            sid = _best_skill(player, skill_registry) if use_skills else None
+            if sid:
+                sk = skill_registry.get(sid)
+                value, ok = player_skill_attack(player, sid, target, skill_registry)
+                if ok and sk.cooldown_turns:
+                    player.skill_cooldowns[sid] = sk.cooldown_turns
+                st = fx.skill_status(sk)
+                if ok and st and target.is_alive and random.random() < st[1]:
+                    fx.inflict(target.statuses, st[0], target.rank)
+            else:
+                fired: list = []
+                player_attack(player, target, skill_registry, fired)
+                for eff, chance in fx.trigger_statuses(fired):
+                    if target.is_alive and random.random() < chance:
+                        fx.inflict(target.statuses, eff, target.rank)
+            _collect(target)
 
-        # Tick status effects and apply DoT to enemies, then let alive enemies attack
-        for i, enemy in enumerate(enemies):
-            if not enemy.is_alive:
+        # Bot companions (same rules as core/combat_handler): strike, and draw attacks.
+        party = [c for c in (companions or []) if c.hp > 1]
+        if party:
+            from systems.bot_brain import bot_attack, bot_defense
+            for comp in party:
+                foe = next((e for e in enemies if e.is_alive), None)
+                if foe:
+                    foe.current_hp = max(0, foe.current_hp - max(1, bot_attack(comp) - foe.defense))
+                    _collect(foe)
+
+        for enemy in list(enemies):
+            party = [c for c in party if c.hp > 1]
+            if party and enemy.is_alive and random.random() < min(0.6, 0.3 * len(party)):
+                comp = random.choice(party)
+                comp.hp = max(1, comp.hp - max(1, enemy.attack - bot_defense(comp)))
                 continue
-            ekey = enemy_keys[i]
-            enemy_status[ekey]["hp"] = enemy.current_hp
-            status_msgs = tick_status_effects(enemy_status[ekey])
-            # Sync hp back to Enemy object
-            enemy.current_hp = enemy_status[ekey]["hp"]
-            if enemy.current_hp <= 0:
-                total_xp += enemy.xp_reward
-                total_gold += enemy.gold_reward
-                all_loot.extend(roll_loot([enemy]))
-                continue  # enemy died from DoT
-            if player.current_hp > 0:
-                enemy_attack(enemy, player, skill_registry)
+            if enemy.is_alive and player.current_hp > 0:
+                fx.enemy_turn(enemy, player, player_statuses, skill_registry, enemies)
+
+        # End of round: damage over time on everyone.
+        for enemy in enemies:
+            if enemy.is_alive:
+                fx.tick_enemy(enemy)
+                _collect(enemy)
+        if player.current_hp > 0:
+            player.current_hp, _ = fx.tick(player_statuses, player.current_hp)
+            combat_mp_regen(player)
 
         tick_combat_cooldowns(player)
         if turn > 50:  # safety cap

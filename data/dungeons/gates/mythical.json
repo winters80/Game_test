@@ -72,7 +72,23 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bronze_labyrinth_ghost_warden_boss": {
    "name": "the Penned Ghost",
@@ -103,7 +119,23 @@
    "status_on_hit": [
     "frozen",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Doom of Legend",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bronze_labyrinth_maze_cult_boss": {
    "name": "High Priestess {name}",
@@ -134,7 +166,22 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "bronze_labyrinth_bronze_bull_boss": {
    "name": "the Bronze Bull",
@@ -161,7 +208,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "drain",
+     "every": 5,
+     "power": 0.5
+    }
+   ],
+   "enrage_below": 0.35
   },
   "fae_hollow_pixie": {
    "name": "Thorn Pixie",
@@ -234,7 +296,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "fae_hollow_jester_boss": {
    "name": "the Thornwood Jester",
@@ -265,7 +342,23 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Horned Charge",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "fae_hollow_wild_hunt_boss": {
    "name": "the Antlered Huntsman",
@@ -296,7 +389,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Doom of Legend",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "fae_hollow_changeling_boss": {
    "name": "the Changeling Prince",
@@ -327,11 +435,27 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hydra_fen_lizardfolk": {
    "name": "Fen Lizardman",
-   "max_hp": 56,
+   "max_hp": 72,
    "attack": 11,
    "defense": 3,
    "xp_reward": 64,
@@ -354,7 +478,7 @@
   },
   "hydra_fen_leech": {
    "name": "Bloat Leech",
-   "max_hp": 56,
+   "max_hp": 72,
    "attack": 11,
    "defense": 3,
    "xp_reward": 64,
@@ -377,11 +501,11 @@
   },
   "hydra_fen_hydra_boss": {
    "name": "the Fen Hydra",
-   "max_hp": 141,
-   "attack": 17,
+   "max_hp": 225,
+   "attack": 20,
    "defense": 6,
-   "xp_reward": 240,
-   "gold_reward": 1900,
+   "xp_reward": 384,
+   "gold_reward": 3040,
    "rank": "C",
    "loot_table": [
     [
@@ -404,15 +528,31 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hydra_fen_brood_boss": {
    "name": "the Brood Mother",
-   "max_hp": 141,
-   "attack": 17,
+   "max_hp": 225,
+   "attack": 20,
    "defense": 6,
-   "xp_reward": 240,
-   "gold_reward": 1900,
+   "xp_reward": 384,
+   "gold_reward": 3040,
    "rank": "C",
    "loot_table": [
     [
@@ -435,15 +575,30 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hydra_fen_cauterized_boss": {
    "name": "the Cauterized Hydra",
-   "max_hp": 162,
-   "attack": 20,
+   "max_hp": 259,
+   "attack": 24,
    "defense": 6,
-   "xp_reward": 276,
-   "gold_reward": 2185,
+   "xp_reward": 441,
+   "gold_reward": 3496,
    "rank": "C",
    "loot_table": [
     [
@@ -466,15 +621,31 @@
    "status_on_hit": [
     "burn",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Earthshaker",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hydra_fen_fen_witch_boss": {
    "name": "{name} the Fen Witch",
-   "max_hp": 155,
-   "attack": 19,
+   "max_hp": 248,
+   "attack": 22,
    "defense": 6,
-   "xp_reward": 264,
-   "gold_reward": 2090,
+   "xp_reward": 422,
+   "gold_reward": 3344,
    "rank": "C",
    "loot_table": [
     [
@@ -497,7 +668,22 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Earthshaker",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "gorgon_garden_snake": {
    "name": "Stone Asp",
@@ -570,7 +756,23 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "gorgon_garden_headless_boss": {
    "name": "Stheno, the Headless Sister",
@@ -601,7 +803,23 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "gorgon_garden_mourners_boss": {
    "name": "the First Mourner",
@@ -632,7 +850,22 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Earthshaker",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "gorgon_garden_basilisk_boss": {
    "name": "the Garden Basilisk",
@@ -663,11 +896,27 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "drowned_bell_deep_one": {
    "name": "Temple Deep One",
-   "max_hp": 84,
+   "max_hp": 109,
    "attack": 17,
    "defense": 4,
    "xp_reward": 100,
@@ -690,7 +939,7 @@
   },
   "drowned_bell_eel": {
    "name": "Lantern Eel",
-   "max_hp": 84,
+   "max_hp": 109,
    "attack": 17,
    "defense": 4,
    "xp_reward": 100,
@@ -713,11 +962,11 @@
   },
   "drowned_bell_kraken_boss": {
    "name": "the Bell-Ringer Kraken",
-   "max_hp": 205,
-   "attack": 24,
+   "max_hp": 328,
+   "attack": 28,
    "defense": 8,
-   "xp_reward": 360,
-   "gold_reward": 2900,
+   "xp_reward": 576,
+   "gold_reward": 4640,
    "rank": "B",
    "loot_table": [
     [
@@ -740,15 +989,31 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Doom of Legend",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "drowned_bell_high_priest_boss": {
    "name": "Tide-Priest {name}",
-   "max_hp": 215,
-   "attack": 25,
+   "max_hp": 344,
+   "attack": 30,
    "defense": 8,
-   "xp_reward": 378,
-   "gold_reward": 3045,
+   "xp_reward": 604,
+   "gold_reward": 4872,
    "rank": "B",
    "loot_table": [
     [
@@ -771,15 +1036,30 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Doom of Legend",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "drowned_bell_bell_spirit_boss": {
    "name": "the Bell's Voice",
-   "max_hp": 235,
-   "attack": 27,
+   "max_hp": 376,
+   "attack": 32,
    "defense": 8,
-   "xp_reward": 413,
-   "gold_reward": 3334,
+   "xp_reward": 660,
+   "gold_reward": 5334,
    "rank": "B",
    "loot_table": [
     [
@@ -802,15 +1082,31 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "drowned_bell_leviathan_spawn_boss": {
    "name": "the Leviathan Spawn",
-   "max_hp": 246,
-   "attack": 28,
+   "max_hp": 393,
+   "attack": 33,
    "defense": 8,
-   "xp_reward": 432,
-   "gold_reward": 3480,
+   "xp_reward": 691,
+   "gold_reward": 5568,
    "rank": "B",
    "loot_table": [
     [
@@ -833,11 +1129,27 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "phoenix_ashery_cinder_bird": {
    "name": "Cinder Roc Chick",
-   "max_hp": 98,
+   "max_hp": 127,
    "attack": 19,
    "defense": 5,
    "xp_reward": 118,
@@ -860,7 +1172,7 @@
   },
   "phoenix_ashery_ash_wight": {
    "name": "Ash Wight",
-   "max_hp": 98,
+   "max_hp": 127,
    "attack": 19,
    "defense": 5,
    "xp_reward": 118,
@@ -879,11 +1191,11 @@
   },
   "phoenix_ashery_phoenix_boss": {
    "name": "Ignis the Phoenix",
-   "max_hp": 237,
-   "attack": 27,
+   "max_hp": 379,
+   "attack": 32,
    "defense": 9,
-   "xp_reward": 420,
-   "gold_reward": 3400,
+   "xp_reward": 672,
+   "gold_reward": 5440,
    "rank": "B",
    "loot_table": [
     [
@@ -906,15 +1218,31 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "phoenix_ashery_reborn_boss": {
    "name": "Ignis Reborn",
-   "max_hp": 272,
-   "attack": 31,
+   "max_hp": 435,
+   "attack": 37,
    "defense": 9,
-   "xp_reward": 482,
-   "gold_reward": 3909,
+   "xp_reward": 771,
+   "gold_reward": 6254,
    "rank": "B",
    "loot_table": [
     [
@@ -937,15 +1265,31 @@
    "status_on_hit": [
     "burn",
     0.4
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Earthshaker",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "phoenix_ashery_cold_lord_boss": {
    "name": "the Cold Ash Lord",
-   "max_hp": 260,
-   "attack": 29,
+   "max_hp": 416,
+   "attack": 34,
    "defense": 9,
-   "xp_reward": 462,
-   "gold_reward": 3740,
+   "xp_reward": 739,
+   "gold_reward": 5984,
    "rank": "B",
    "loot_table": [
     [
@@ -968,15 +1312,30 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "phoenix_ashery_egg_thieves_boss": {
    "name": "Captain {name} of the Egg-Thieves",
-   "max_hp": 248,
-   "attack": 28,
+   "max_hp": 396,
+   "attack": 33,
    "defense": 9,
-   "xp_reward": 441,
-   "gold_reward": 3570,
+   "xp_reward": 705,
+   "gold_reward": 5712,
    "rank": "B",
    "loot_table": [
     [
@@ -999,11 +1358,26 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Curse of the Old Ones",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "wyrm_hoard_kobold": {
    "name": "Hoard Kobold",
-   "max_hp": 112,
+   "max_hp": 179,
    "attack": 22,
    "defense": 5,
    "xp_reward": 136,
@@ -1026,7 +1400,7 @@
   },
   "wyrm_hoard_drake": {
    "name": "Ash Drake",
-   "max_hp": 112,
+   "max_hp": 179,
    "attack": 22,
    "defense": 5,
    "xp_reward": 136,
@@ -1049,11 +1423,11 @@
   },
   "wyrm_hoard_dragon_boss": {
    "name": "Vael-Ashar the Old",
-   "max_hp": 269,
-   "attack": 30,
+   "max_hp": 591,
+   "attack": 42,
    "defense": 10,
-   "xp_reward": 480,
-   "gold_reward": 3900,
+   "xp_reward": 1056,
+   "gold_reward": 8580,
    "rank": "A",
    "loot_table": [
     [
@@ -1076,15 +1450,31 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "wyrm_hoard_kobold_king_boss": {
    "name": "King {name}",
-   "max_hp": 269,
-   "attack": 30,
+   "max_hp": 591,
+   "attack": 42,
    "defense": 10,
-   "xp_reward": 480,
-   "gold_reward": 3900,
+   "xp_reward": 1056,
+   "gold_reward": 8580,
    "rank": "A",
    "loot_table": [
     [
@@ -1107,15 +1497,30 @@
    "status_on_hit": [
     "burn",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Titan's Wrath",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "wyrm_hoard_dracolich_boss": {
    "name": "Vael-Ashar the Dracolich",
-   "max_hp": 322,
-   "attack": 36,
+   "max_hp": 708,
+   "attack": 50,
    "defense": 10,
-   "xp_reward": 576,
-   "gold_reward": 4680,
+   "xp_reward": 1267,
+   "gold_reward": 10296,
    "rank": "A",
    "loot_table": [
     [
@@ -1138,15 +1543,31 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Ancient Fury",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Primordial Roar",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "wyrm_hoard_heir_boss": {
    "name": "{name} the Young Dragon",
-   "max_hp": 309,
-   "attack": 34,
+   "max_hp": 679,
+   "attack": 47,
    "defense": 10,
-   "xp_reward": 552,
-   "gold_reward": 4485,
+   "xp_reward": 1214,
+   "gold_reward": 9867,
    "rank": "A",
    "loot_table": [
     [
@@ -1169,7 +1590,23 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Earthshaker",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Hero's Bane",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   }
  },
  "gates": [
@@ -1178,6 +1615,7 @@
    "name": "the Bronze Labyrinth",
    "theme": "mythical",
    "min_level": 3,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift in a sheep field outside the village opens onto corridors of green bronze that rearrange themselves when no one is looking.",
    "entry_text": "The walls are warm, like the flank of a sleeping animal. Somewhere ahead, hooves strike metal in a slow, patient rhythm.",
@@ -1234,6 +1672,7 @@
       "victory": "Asterion kneels, and the walls of the labyrinth go still for the first time.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_bronze_labyrinth_minotaur",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1279,6 +1718,7 @@
       "victory": "The ghost breaks apart like breath on a cold morning.",
       "arrival_omen": "Hoofprints of frost circle the ring at the labyrinth's heart, though nothing walks there.",
       "arrival_rumour": "Shepherds near the Bronze Labyrinth say a ghost bull still walks its ring at night.",
+      "trophy": "trophy_bronze_labyrinth_ghost_warden",
       "study": {
        "stat": "WIS",
        "min": 11,
@@ -1305,6 +1745,7 @@
        "Ariadna",
        "Thera"
       ],
+      "trophy": "trophy_bronze_labyrinth_maze_cult",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1325,6 +1766,7 @@
       "victory": "The Bronze Bull topples, ringing like a struck bell, and its furnace eyes go dark.",
       "arrival_omen": "The walls have gone hot. Something is being cast in the heart of the maze.",
       "arrival_rumour": "The Bronze Labyrinth has made itself a guardian of solid metal. Hunters hear it bellow through the walls.",
+      "trophy": "trophy_bronze_labyrinth_bronze_bull",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1344,6 +1786,7 @@
    "name": "the Hollow Under the Hill",
    "theme": "mythical",
    "min_level": 5,
+   "party_size": 1,
    "region": "village_start",
    "description": "A ring of white mushrooms by the roadside camp has become a door. People who step in come out a day later, sure only an hour has passed.",
    "entry_text": "The light is the gold of late afternoon, always. Music plays from no direction, and the trees lean in to listen to you.",
@@ -1352,7 +1795,6 @@
      "kind": "fight",
      "text": "A swarm of thorn pixies giggles in a hawthorn, then dives at your eyes.",
      "enemies": [
-      "fae_hollow_pixie",
       "fae_hollow_pixie",
       "fae_hollow_pixie"
      ]
@@ -1411,6 +1853,7 @@
        "Maebh",
        "Oriel"
       ],
+      "trophy": "trophy_fae_hollow_queen",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1439,6 +1882,7 @@
       "victory": "The Jester takes a last bow and falls over, still grinning.",
       "arrival_omen": "Bells jingle somewhere in the Thornwood. The empty throne wears a crooked paper crown.",
       "arrival_rumour": "The fae court under the hill has crowned its fool. Travellers lose their purses and their sense of direction.",
+      "trophy": "trophy_fae_hollow_jester",
       "study": {
        "stat": "AGI",
        "min": 12,
@@ -1460,6 +1904,7 @@
       "victory": "The Huntsman's horn cracks, and the Hunt's baying fades into the hills.",
       "arrival_omen": "A horn sounds far off in the Thornwood. The mushrooms have all turned to face the gate.",
       "arrival_rumour": "The Wild Hunt rides out of the hollow under the hill. Lock your doors on the nights the horn sounds.",
+      "trophy": "trophy_fae_hollow_wild_hunt",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1480,6 +1925,7 @@
       "victory": "The Changeling's borrowed face slides off like water, and under it there is only bark.",
       "arrival_omen": "A cradle has appeared beside the empty throne, rocking gently by itself.",
       "arrival_rumour": "A changeling prince rules the hollow under the hill now. He wears whatever face you miss the most.",
+      "trophy": "trophy_fae_hollow_changeling",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1499,6 +1945,7 @@
    "name": "the Hydra Fen",
    "theme": "mythical",
    "min_level": 6,
+   "party_size": 2,
    "region": "village_start",
    "description": "South of the village a rift has drowned an orchard. The water is warm, and something under it breathes in nine places at once.",
    "entry_text": "The fen steams. Every ripple seems to start at the center and come straight for you.",
@@ -1556,6 +2003,7 @@
       "victory": "The last head sinks with a long, tired hiss.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_hydra_fen_hydra",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1585,6 +2033,7 @@
       "victory": "The brood scatters into the reeds, and the biggest of them stays down.",
       "arrival_omen": "Leathery eggs float at the edge of the pool, and something inside them is scratching.",
       "arrival_rumour": "The Fen Hydra left eggs. The fen south of the village is full of small heads now, and they are growing.",
+      "trophy": "trophy_hydra_fen_brood",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1605,6 +2054,7 @@
       "victory": "The Cauterized Hydra goes down in a cloud of its own steam.",
       "arrival_omen": "The pool is boiling. Something under it is growing back with scar tissue instead of heads.",
       "arrival_rumour": "Someone burned the Fen Hydra's stumps. It came back anyway, and now it breathes steam.",
+      "trophy": "trophy_hydra_fen_cauterized",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1631,6 +2081,7 @@
        "Morrow",
        "Hesk"
       ],
+      "trophy": "trophy_hydra_fen_fen_witch",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1650,6 +2101,7 @@
    "name": "the Gorgon's Garden",
    "theme": "mythical",
    "min_level": 8,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A walled garden of statues, every one of them an adventurer, every one of them wearing the same last expression.",
    "entry_text": "The roses are stone. The birds in the trees are stone. You catch a flicker of movement in a fountain and look away just in time.",
@@ -1658,7 +2110,6 @@
      "kind": "fight",
      "text": "Asps with stone-grey scales slither out of the hedges.",
      "enemies": [
-      "gorgon_garden_snake",
       "gorgon_garden_snake",
       "gorgon_garden_snake"
      ]
@@ -1707,6 +2158,7 @@
       "victory": "Euryale's snakes go limp, and she sighs, almost relieved.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_gorgon_garden_gorgon",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1754,6 +2206,7 @@
       "victory": "Stheno falls beside the empty plinth where her sister sat.",
       "arrival_omen": "A second set of snake tracks circles the fountain, around and around, searching.",
       "arrival_rumour": "Someone took the gorgon's head. Now her sister walks the garden, and she is blind with rage.",
+      "trophy": "trophy_gorgon_garden_headless",
       "study": {
        "stat": "AGI",
        "min": 13,
@@ -1776,6 +2229,7 @@
       "victory": "The First Mourner cracks down the middle, and the others settle back onto their plinths.",
       "arrival_omen": "The statues have turned on their plinths to face the new grave.",
       "arrival_rumour": "The statues in the Gorgon's Garden are moving. They gather at a grave at night.",
+      "trophy": "trophy_gorgon_garden_mourners",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1796,6 +2250,7 @@
       "victory": "The Basilisk catches its reflection in your blade and goes still as the garden.",
       "arrival_omen": "Every rose in the garden is turning to stone, one by one, from the center outward.",
       "arrival_rumour": "A basilisk has hatched in the Gorgon's Garden. Not even the hunters who just look are coming back.",
+      "trophy": "trophy_gorgon_garden_basilisk",
       "study": {
        "stat": "WIS",
        "min": 14,
@@ -1815,6 +2270,7 @@
    "name": "the Temple of the Drowned Bell",
    "theme": "mythical",
    "min_level": 10,
+   "party_size": 2,
    "region": "verath_city",
    "description": "A rift in the river near Verath opens on a sea temple, its pillars hung with weed. A bell tolls under the water at every high tide.",
    "entry_text": "The air is wet enough to drink. Fish swim past at head height, in water that isn't there.",
@@ -1876,6 +2332,7 @@
       "victory": "The Kraken lets go of the bell, and it rings once more, by itself, and falls silent.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_drowned_bell_kraken",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1911,6 +2368,7 @@
        "Ulmo",
        "Pelagia"
       ],
+      "trophy": "trophy_drowned_bell_high_priest",
       "study": {
        "stat": "WIS",
        "min": 15,
@@ -1931,6 +2389,7 @@
       "victory": "The bell cracks from lip to crown, and the Voice dies in the middle of a note.",
       "arrival_omen": "The bell is humming, very low, with nobody near it.",
       "arrival_rumour": "The Drowned Bell rings by itself now. Fishermen on the river hear it in their bones.",
+      "trophy": "trophy_drowned_bell_bell_spirit",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1951,6 +2410,7 @@
       "victory": "The Leviathan Spawn slides back down into the dark water and does not rise.",
       "arrival_omen": "The water in the Bell Chamber has dropped a full fathom, as if something enormous drank it.",
       "arrival_rumour": "Something huge has come up from the deep under the Drowned Bell. The river is running backwards some nights.",
+      "trophy": "trophy_drowned_bell_leviathan_spawn",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -1970,6 +2430,7 @@
    "name": "the Phoenix Ashery",
    "theme": "mythical",
    "min_level": 12,
+   "party_size": 2,
    "region": "verath_city",
    "description": "A hill north of Verath burns without fuel. The System registers it as a Gate, and as a nest.",
    "entry_text": "The ash is ankle deep and warm, and in it you see footprints of birds the size of horses.",
@@ -2027,6 +2488,7 @@
       "victory": "Ignis folds its wings and collapses into a heap of ash. Something in the ash still glows.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_phoenix_ashery_phoenix",
       "study": {
        "stat": "WIS",
        "min": 16,
@@ -2072,6 +2534,7 @@
       "victory": "Ignis falls again, and this time the ash is quieter.",
       "arrival_omen": "The ash heap on the summit is pulsing, brighter every day.",
       "arrival_rumour": "The Phoenix of the Ashery has risen again, and it remembers who killed it.",
+      "trophy": "trophy_phoenix_ashery_reborn",
       "study": {
        "stat": "WIS",
        "min": 16,
@@ -2093,6 +2556,7 @@
       "victory": "The Cold Ash Lord crumbles. Under it, a single coal still glows.",
       "arrival_omen": "Frost has formed on the ash of the summit, and grey figures stand very still in it.",
       "arrival_rumour": "The burning hill north of Verath has gone cold, and something grey walks on it.",
+      "trophy": "trophy_phoenix_ashery_cold_lord",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -2119,6 +2583,7 @@
        "Varro",
        "Isna"
       ],
+      "trophy": "trophy_phoenix_ashery_egg_thieves",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -2138,6 +2603,7 @@
    "name": "the Hoard of Vael-Ashar",
    "theme": "mythical",
    "min_level": 14,
+   "party_size": 3,
    "region": "verath_city",
    "description": "A mountain rift east of Verath, rated A-class. Its first master was a dragon who has slept on his gold since before the Fracture.",
    "entry_text": "Gold coins have spilled down the tunnel like scree. Your torch catches eyes in the dark that are only the gems in old crowns.",
@@ -2199,6 +2665,7 @@
       "victory": "Vael-Ashar's great head sinks onto his gold, and his last breath is only smoke.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_wyrm_hoard_dragon",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -2235,6 +2702,7 @@
        "Gribble",
        "Taz"
       ],
+      "trophy": "trophy_wyrm_hoard_kobold_king",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -2255,6 +2723,7 @@
       "victory": "The green fire gutters out, and Vael-Ashar's bones collapse into his gold for the last time.",
       "arrival_omen": "The dragon's bones are gone from the hoard. Something has been dragged across the gold, toward the deeper caves.",
       "arrival_rumour": "Vael-Ashar has risen as a dracolich. The miners east of Verath have abandoned their tunnels.",
+      "trophy": "trophy_wyrm_hoard_dracolich",
       "study": {
        "stat": "INT",
        "min": 18,
@@ -2280,6 +2749,7 @@
        "Ombrex",
        "Kaelith"
       ],
+      "trophy": "trophy_wyrm_hoard_heir",
       "study": {
        "stat": "AGI",
        "min": 17,

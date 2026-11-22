@@ -72,7 +72,7 @@ AI_MAX_ITEMS_PER_OPTION = 1
 TRADER_ROUTE_STAY_TURNS = 15           # turns a travelling NPC stays in each route zone
 
 # ── Bots (systems/bot_system.py, systems/bot_brain.py) ─────────────────────────
-BOT_COUNT = 12                         # adventurers per save (authored ones + generated)
+BOT_COUNT = 24                         # adventurers per save (authored ones + generated)
 BOT_ACT_EVERY_TURNS = 2                # each bot acts once every N player turns (staggered)
 BOT_AI_DECISIONS = False               # True = old behaviour: ask the primary model for every
                                        # bot decision (slow; bots freeze without Ollama)
@@ -86,19 +86,39 @@ WORLD_MAX_TRADERS_PER_LOCATION = 2     # generated traders per zone (and on the 
 WORLD_MAX_EXPANSIONS = 60              # world expansions per save; later new actions are 'capped'
 WORLD_RETRY_ON_LOAD = 3                # pending / no_ai actions re-queued per load
 
+# ── World clock (systems/world_clock.py, core/time_flow.py) ─────────────────────
+MINUTES_PER_TURN = 10                  # an ordinary menu choice
+START_HOUR = 8                         # turn 0 = Day 1, 08:00
+DAY_START_HOUR = 6                     # NPC schedules: 'day' from 06:00 ...
+NIGHT_START_HOUR = 20                  # ... to 20:00, then 'night'
+TIME_COSTS = {                         # extra turns an activity takes, on top of its menu choice
+    "gate_room": 6,                    # 1 hour per Gate room
+    "gate_master": 6,                  # 1 hour for the master's chamber
+    "rest_full": 47,                   # 8 hours
+    "rest_short": 11,                  # 2 hours
+    "rest_inn": 47,                    # a night at the inn
+    "travel": 2,                       # 30 minutes between towns, camp and dungeon
+}
+
 # ── Boss succession (systems/lair_system.py, data/dungeons/*.json) ─────────────
 LAIR_SCALING_PER_RETURN = 0.10         # +10% HP/ATK/rewards each time an occupant retakes its lair
 LAIR_MAX_SCALING = 0.40                # cap on that bonus
 LAIR_BOT_CHALLENGE_CHANCE = 0.3       # chance a fighter bot on a lair's floor tries the boss
 LAIR_BOT_SAFETY = 0.85                 # bots only try if expected damage < this share of their HP
 GATE_LEVEL_GRACE = 1                   # a gate can be entered from (rated level - this)
+GATE_BREATHER = 0.15                   # HP and MP recovered between Gate rooms (catch your breath)
 BOT_GATE_CHANCE = 0.12                 # chance a fighter/explorer in town runs a gate this act
+RIFT_SURGE_EVERY_TURNS = 288           # a new rift opens every 2 in-game days (AI-made, or an echo offline)
+RIFT_MAX_GENERATED = 16                # generated Gates per save
+AI_SUCCESSOR_CHANCE = 0.25             # chance the AI invents who moves into a lair after a kill
 LAIR_BOT_GRACE_TURNS = 250             # bots leave each lair's first boss alone this long,
                                        # so the player gets the first shot at it
 
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
-XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP
+XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP, up to XP_SOFT_CAP_LEVEL
+XP_SOFT_CAP_LEVEL = 8                 # past this level the curve flattens ...
+XP_LATE_SCALING = 1.12                # ... to x1.12 per level, so level-18 Gates are reachable
 STAT_POINTS_PER_LEVEL = 3
 STARTING_GOLD    = 5000             # copper pieces (50 gold)
 COPPER_PER_GOLD  = 100              # 1 gold = 100 copper

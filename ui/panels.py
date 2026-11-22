@@ -77,6 +77,8 @@ def build_status_panel(player: "Player") -> Panel:
     table.add_row("HP", hp_text)
     table.add_row("MP", mp_text)
     table.add_row("Gold", f"[gold]{format_currency(player.gold)}[/gold]")
+    from systems.world_clock import label as _clock
+    table.add_row("Time", f"[dim_text]{_clock(player.turn_count)}[/dim_text]")
 
     if feature("species_system") and player.species_id:
         species_str = player.species_id.replace("_", " ").title()

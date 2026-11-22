@@ -72,7 +72,23 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Cataclysm",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Surging Tide",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rootdeep_caverns_mole_king_boss": {
    "name": "King {name} the Burrower",
@@ -103,7 +119,22 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Primal Eruption",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rootdeep_caverns_crystal_heart_boss": {
    "name": "the Awakened Geode",
@@ -134,7 +165,23 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Storm of Ruin",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rootdeep_caverns_world_root_boss": {
    "name": "the Old Oak's Root",
@@ -165,7 +212,23 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Storm of Ruin",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "cinder_forge_salamander": {
    "name": "Fire Salamander",
@@ -238,7 +301,23 @@
    "status_on_hit": [
     "burn",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Storm of Ruin",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "cinder_forge_forged_one_boss": {
    "name": "the Forged Champion",
@@ -269,7 +348,23 @@
    "status_on_hit": [
     "burn",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Elemental Surge",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "cinder_forge_smith_dwarves_boss": {
    "name": "Forgemaster {name}",
@@ -300,7 +395,22 @@
    "status_on_hit": [
     "burn",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Primal Eruption",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "cinder_forge_magma_wyrm_boss": {
    "name": "the Magma Wyrm",
@@ -331,7 +441,23 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Cataclysm",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "tidecall_grotto_crab": {
    "name": "Reef Crab",
@@ -404,7 +530,23 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Primal Eruption",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "tidecall_grotto_sea_hag_boss": {
    "name": "the Sea Hag",
@@ -435,7 +577,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Primal Eruption",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "tidecall_grotto_maelstrom_boss": {
    "name": "the Living Maelstrom",
@@ -466,7 +623,23 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Cataclysm",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "tidecall_grotto_crab_king_boss": {
    "name": "the Crab King",
@@ -493,7 +666,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Avalanche",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rime_tomb_ice_wight": {
    "name": "Ice Wight",
@@ -570,7 +758,22 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Elemental Surge",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Surging Tide",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rime_tomb_frost_queen_boss": {
    "name": "Queen {name} of Winter",
@@ -601,7 +804,23 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Elemental Surge",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rime_tomb_thaw_dead_boss": {
    "name": "the Thawed King",
@@ -632,7 +851,22 @@
    "status_on_hit": [
     "poison",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Avalanche",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "rime_tomb_frost_giant_boss": {
    "name": "Jotun the Frost Giant",
@@ -663,7 +897,23 @@
    "status_on_hit": [
     "frozen",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Avalanche",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stormcrown_eyrie_harpy": {
    "name": "Storm Harpy",
@@ -740,7 +990,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Elemental Surge",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.9
+    },
+    {
+     "name": "Surging Tide",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stormcrown_eyrie_harpy_queen_boss": {
    "name": "Queen {name} of the Harpies",
@@ -771,7 +1037,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Elemental Surge",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stormcrown_eyrie_storm_lord_boss": {
    "name": "the Storm Lord",
@@ -802,7 +1083,23 @@
    "status_on_hit": [
     "stun",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Cataclysm",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "stormcrown_eyrie_fledgling_boss": {
    "name": "the Thunderbird Fledgling",
@@ -833,11 +1130,27 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Cataclysm",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hollow_of_unmaking_void_wisp": {
    "name": "Void Wisp",
-   "max_hp": 126,
+   "max_hp": 201,
    "attack": 24,
    "defense": 6,
    "xp_reward": 154,
@@ -860,7 +1173,7 @@
   },
   "hollow_of_unmaking_unmade": {
    "name": "Unmade Thing",
-   "max_hp": 126,
+   "max_hp": 201,
    "attack": 24,
    "defense": 6,
    "xp_reward": 154,
@@ -883,11 +1196,11 @@
   },
   "hollow_of_unmaking_void_lord_boss": {
    "name": "the Unmaker",
-   "max_hp": 301,
-   "attack": 33,
+   "max_hp": 662,
+   "attack": 46,
    "defense": 11,
-   "xp_reward": 540,
-   "gold_reward": 4400,
+   "xp_reward": 1188,
+   "gold_reward": 9680,
    "rank": "A",
    "loot_table": [
     [
@@ -910,15 +1223,31 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Primal Eruption",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Surging Tide",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hollow_of_unmaking_void_spawn_boss": {
    "name": "the Void Spawn",
-   "max_hp": 361,
-   "attack": 40,
+   "max_hp": 794,
+   "attack": 56,
    "defense": 11,
-   "xp_reward": 648,
-   "gold_reward": 5280,
+   "xp_reward": 1425,
+   "gold_reward": 11616,
    "rank": "A",
    "loot_table": [
     [
@@ -941,15 +1270,31 @@
    "status_on_hit": [
     "bleed",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Storm of Ruin",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Elemental Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "bleed"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hollow_of_unmaking_remade_boss": {
    "name": "the Remade",
-   "max_hp": 331,
-   "attack": 36,
+   "max_hp": 728,
+   "attack": 50,
    "defense": 11,
-   "xp_reward": 594,
-   "gold_reward": 4840,
+   "xp_reward": 1306,
+   "gold_reward": 10648,
    "rank": "A",
    "loot_table": [
     [
@@ -972,15 +1317,30 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Avalanche",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Ember Wreath",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "hollow_of_unmaking_nothing_boss": {
    "name": "Nothing",
-   "max_hp": 376,
-   "attack": 42,
+   "max_hp": 827,
+   "attack": 58,
    "defense": 11,
-   "xp_reward": 675,
-   "gold_reward": 5500,
+   "xp_reward": 1485,
+   "gold_reward": 12100,
    "rank": "A",
    "loot_table": [
     [
@@ -1003,7 +1363,23 @@
    "status_on_hit": [
     "frozen",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Storm of Ruin",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Surging Tide",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "frozen"
+    }
+   ],
+   "enrage_below": 0.35
   }
  },
  "gates": [
@@ -1012,6 +1388,7 @@
    "name": "the Rootdeep Caverns",
    "theme": "elemental",
    "min_level": 3,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift under an old oak near the village leads into caves where the roots of the world run like veins through living stone.",
    "entry_text": "The tunnel walls are made of root and rock grown together. They creak when you touch them, like an old man stretching.",
@@ -1046,8 +1423,7 @@
      "text": "Crawlers made of roots scuttle across the ceiling.",
      "enemies": [
       "rootdeep_caverns_root_crawler",
-      "rootdeep_caverns_root_crawler",
-      "rootdeep_caverns_rockling"
+      "rootdeep_caverns_root_crawler"
      ]
     }
    ],
@@ -1069,6 +1445,7 @@
       "victory": "The Elemental crumbles into a heap of earth, and its heartstone dims.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_rootdeep_caverns_earth_elemental",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1103,6 +1480,7 @@
        "Moldwarp",
        "Tunnelo"
       ],
+      "trophy": "trophy_rootdeep_caverns_mole_king",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1123,6 +1501,7 @@
       "victory": "The Awakened Geode shatters along its planes.",
       "arrival_omen": "Crystals are pushing out through the grotto walls, glowing.",
       "arrival_rumour": "The Rootdeep Caverns are growing crystals. Something sharp lives in the deep stone now.",
+      "trophy": "trophy_rootdeep_caverns_crystal_heart",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1143,6 +1522,7 @@
       "victory": "The great root withers and goes still.",
       "arrival_omen": "The oak's roots have broken through the grotto ceiling, and they are moving.",
       "arrival_rumour": "The old oak by the village is moving its roots. The Rootdeep Caverns have a new master: the tree itself.",
+      "trophy": "trophy_rootdeep_caverns_world_root",
       "study": {
        "stat": "STR",
        "min": 12,
@@ -1162,6 +1542,7 @@
    "name": "the Cinder Forge",
    "theme": "elemental",
    "min_level": 4,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift that opened on the slopes above the village glows red at night. The System calls it a FORGE-CLASS GATE.",
    "entry_text": "The heat hits you like a wall. Rivers of lava run in channels cut by someone, or something, with a purpose.",
@@ -1218,6 +1599,7 @@
       "victory": "Pyrrhos sputters out, and the anvil cools.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_cinder_forge_fire_elemental",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1261,6 +1643,7 @@
       "victory": "The Champion falls and its armour cracks as it cools.",
       "arrival_omen": "The anvil rings by itself. Something is being forged in the crucible.",
       "arrival_rumour": "The Cinder Forge has made itself a champion. Its armour glows red.",
+      "trophy": "trophy_cinder_forge_forged_one",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1287,6 +1670,7 @@
        "Coalhand",
        "Hammerfell"
       ],
+      "trophy": "trophy_cinder_forge_smith_dwarves",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1307,6 +1691,7 @@
       "victory": "The Magma Wyrm sinks back into the lava and does not rise.",
       "arrival_omen": "The lava channels are bubbling and rising. Something large is moving under them.",
       "arrival_rumour": "A wyrm has come up through the Cinder Forge. The slopes above the village are hot to the touch.",
+      "trophy": "trophy_cinder_forge_magma_wyrm",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1326,6 +1711,7 @@
    "name": "the Tidecall Grotto",
    "theme": "elemental",
    "min_level": 5,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift on the lakeshore by the camp opens onto a sea cave, though there is no sea for a hundred miles. The tide comes in twice a day.",
    "entry_text": "Salt spray hits your face. Phosphorescent algae light the cave in shades of blue and green.",
@@ -1360,8 +1746,7 @@
      "text": "Nixies laugh in the shallows, then drag at your ankles.",
      "enemies": [
       "tidecall_grotto_nixie",
-      "tidecall_grotto_nixie",
-      "tidecall_grotto_crab"
+      "tidecall_grotto_nixie"
      ]
     }
    ],
@@ -1383,6 +1768,7 @@
       "victory": "The Undine splashes down into the pool as plain water.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_tidecall_grotto_water_elemental",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1412,6 +1798,7 @@
       "victory": "The Sea Hag falls back into the pool with a shriek.",
       "arrival_omen": "Dead fish float in the moon pool. Seaweed has been woven into the shape of a chair.",
       "arrival_rumour": "A sea hag lives in the Tidecall Grotto now. She buys voices, and pays in pearls.",
+      "trophy": "trophy_tidecall_grotto_sea_hag",
       "study": {
        "stat": "WIS",
        "min": 12,
@@ -1432,6 +1819,7 @@
       "victory": "The Maelstrom slows, and stops, and is only water.",
       "arrival_omen": "The moon pool is turning slowly, like water going down a drain.",
       "arrival_rumour": "There's a whirlpool in the Tidecall Grotto now. It pulls at boats on the lake.",
+      "trophy": "trophy_tidecall_grotto_maelstrom",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1454,6 +1842,7 @@
       "victory": "The Crab King's shell caves in, and it scuttles back into the deep.",
       "arrival_omen": "Huge claw marks have scored the stone around the moon pool.",
       "arrival_rumour": "The Tidecall Grotto has a Crab King, wearing a shipwreck for a shell.",
+      "trophy": "trophy_tidecall_grotto_crab_king",
       "study": {
        "stat": "STR",
        "min": 13,
@@ -1473,6 +1862,7 @@
    "name": "the Rime Tomb",
    "theme": "elemental",
    "min_level": 6,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift in the northern hills opens into a tomb of blue ice. The kings buried in it are frozen in mid-step, and their eyes follow you.",
    "entry_text": "Your breath freezes into clouds that fall to the floor as snow. The cold reaches into your bones.",
@@ -1507,8 +1897,7 @@
      "text": "Wolves with fur of frost lope out of the dark.",
      "enemies": [
       "rime_tomb_frost_wolf",
-      "rime_tomb_frost_wolf",
-      "rime_tomb_ice_wight"
+      "rime_tomb_frost_wolf"
      ]
     }
    ],
@@ -1536,6 +1925,7 @@
        "Isolf",
        "Vintra"
       ],
+      "trophy": "trophy_rime_tomb_frost_king",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1584,6 +1974,7 @@
        "Hela",
        "Rime"
       ],
+      "trophy": "trophy_rime_tomb_frost_queen",
       "study": {
        "stat": "WIS",
        "min": 13,
@@ -1605,6 +1996,7 @@
       "victory": "The Thawed King falls in a wet heap, and the others sink back into the slush.",
       "arrival_omen": "Water drips everywhere in the tomb. In the slush, something is moving.",
       "arrival_rumour": "Someone thawed the Rime Tomb, and the dead kings are walking.",
+      "trophy": "trophy_rime_tomb_thaw_dead",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1625,6 +2017,7 @@
       "victory": "Jotun topples and smashes into a pile of snow.",
       "arrival_omen": "Enormous footprints in the ice lead to the throne. The ceiling is cracked.",
       "arrival_rumour": "A Frost Giant has squeezed into the Rime Tomb. You can hear him complaining from the hills.",
+      "trophy": "trophy_rime_tomb_frost_giant",
       "study": {
        "stat": "STR",
        "min": 13,
@@ -1644,6 +2037,7 @@
    "name": "the Stormcrown Eyrie",
    "theme": "elemental",
    "min_level": 8,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A rift has lifted a mountaintop into the sky above the eastern road. Lightning strikes it a hundred times a day.",
    "entry_text": "Wind tears at your clothes. Below you, the clouds. Above you, the storm.",
@@ -1678,8 +2072,7 @@
      "text": "Sprites of living wind whip around you.",
      "enemies": [
       "stormcrown_eyrie_air_spirit",
-      "stormcrown_eyrie_air_spirit",
-      "stormcrown_eyrie_harpy"
+      "stormcrown_eyrie_air_spirit"
      ]
     }
    ],
@@ -1701,6 +2094,7 @@
       "victory": "The Thunderbird falls and its storm breaks into a gentle rain.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_stormcrown_eyrie_thunderbird",
       "study": {
        "stat": "INT",
        "min": 14,
@@ -1735,6 +2129,7 @@
        "Ocypete",
        "Celaeno"
       ],
+      "trophy": "trophy_stormcrown_eyrie_harpy_queen",
       "study": {
        "stat": "AGI",
        "min": 14,
@@ -1755,6 +2150,7 @@
       "victory": "The Storm Lord dissolves into the wind.",
       "arrival_omen": "The storm over the Eyrie has stopped moving. It hangs in place, waiting.",
       "arrival_rumour": "Something lives in the storm over the Stormcrown Eyrie, and it is not a bird.",
+      "trophy": "trophy_stormcrown_eyrie_storm_lord",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1775,6 +2171,7 @@
       "victory": "The Fledgling flaps away, wobbling, into the clouds.",
       "arrival_omen": "Eggshell litters the nest, and static crackles from a small, angry shape in the corner.",
       "arrival_rumour": "A Thunderbird egg has hatched on the Stormcrown Eyrie. The lightning there is wild and young.",
+      "trophy": "trophy_stormcrown_eyrie_fledgling",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1794,6 +2191,7 @@
    "name": "the Hollow of Unmaking",
    "theme": "elemental",
    "min_level": 16,
+   "party_size": 3,
    "region": "verath_city",
    "description": "A rift full of void, the same stuff as the Fracture's wound. The System marks it with a red border and a single word: DON'T.",
    "entry_text": "The ground is a suggestion. Colours drain out of you as you walk, and come back slowly when you look at them.",
@@ -1851,6 +2249,7 @@
       "victory": "The Unmaker folds in on itself and is gone, leaving a hole in the shape of a man.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_hollow_of_unmaking_void_lord",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -1896,6 +2295,7 @@
       "victory": "The Void Spawn scatters into darkness.",
       "arrival_omen": "The man-shaped hole is wider now. Something is pressing through it.",
       "arrival_rumour": "Something came out of the Hollow of Unmaking. The System has upgraded it to S-class.",
+      "trophy": "trophy_hollow_of_unmaking_void_spawn",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -1917,6 +2317,7 @@
       "victory": "The Remade fades, and leaves behind a little light.",
       "arrival_omen": "A soft light glows at the center of the Hollow, flickering on and off like a breath.",
       "arrival_rumour": "The Hollow of Unmaking has a light in it now. Something is living in the light.",
+      "trophy": "trophy_hollow_of_unmaking_remade",
       "study": {
        "stat": "WIS",
        "min": 18,
@@ -1937,6 +2338,7 @@
       "victory": "Nothing withdraws. That's all. For now.",
       "arrival_omen": "The center of the Hollow is completely empty. That's the problem.",
       "arrival_rumour": "The Hollow of Unmaking is empty. The System says that's worse.",
+      "trophy": "trophy_hollow_of_unmaking_nothing",
       "study": {
        "stat": "WIS",
        "min": 19,

@@ -227,6 +227,34 @@ class AIService:
             logger.info("AI world expansion submission failed", exc_info=True)
             return False
 
+    # ── Generated Gates / lair successors (primary model, background only) ───
+
+    def submit_gate_async(self, player_level: int, gate_level: int, existing: list[str],
+                          themes: list[str]) -> bool:
+        """Queue a new Gate. The result arrives as a ``new_gate`` BG result
+        (core/gate_growth). False = unavailable / queue full."""
+        if self._bg is None:
+            return False
+        try:
+            return self._bg._submit({"type": "new_gate", "player_level": player_level,
+                                     "gate_level": gate_level, "existing": existing, "themes": themes})
+        except Exception:
+            logger.info("AI gate submission failed", exc_info=True)
+            return False
+
+    def submit_lair_successor_async(self, lair_id: str, lair_name: str, gate_name: str, dead_title: str,
+                                    killed_by: str, killer: str, gate_level: int, others: list[str]) -> bool:
+        """Queue a new successor for a vacant lair (``lair_successor`` BG result)."""
+        if self._bg is None:
+            return False
+        try:
+            return self._bg._submit({"type": "lair_successor", "lair_id": lair_id, "lair_name": lair_name,
+                                     "gate_name": gate_name, "dead_title": dead_title, "killed_by": killed_by,
+                                     "killer": killer, "gate_level": gate_level, "others": others})
+        except Exception:
+            logger.info("AI lair successor submission failed", exc_info=True)
+            return False
+
     # ── Guild generation ─────────────────────────────────────────────────────
 
     def generate_guild_intent(self, guild: object, member: object) -> object | None:

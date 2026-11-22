@@ -45,7 +45,8 @@ class DialogueHandlerMixin:
                 if npc.route:
                     msg = f"{npc.name} has moved on. Word is they're at {where} now."
                 else:
-                    phase = "day" if (self.state.player.turn_count % 20) < 10 else "night"
+                    from systems.world_clock import phase as _phase
+                    phase = _phase(self.state.player.turn_count)
                     msg = (f"{npc.name} isn't here right now. "
                            f"They're usually in {where} during the {phase}.")
                 renderer.print_system_message(msg, style="dim")

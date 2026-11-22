@@ -2837,6 +2837,7 @@ def main() -> None:
 
     _test_boss_succession(item_reg)
     _test_gates_and_quest_chains(item_reg)
+    _test_living_world(item_reg)
     _report()
 
 
@@ -3251,7 +3252,7 @@ def _test_gates_and_quest_chains(item_reg) -> None:
             for _i in range(30):
                 _bot.hp = _bot.max_hp
                 _evs += _bb32._gate_run(_bot, _w, _rnd32.Random(_i))
-        assert any(e.kind == "fight" and "rift" in e.text for e in _evs), _evs[:3]
+        assert any(e.kind in ("fight", "party") and "came back from" in e.text for e in _evs), _evs[:3]
         assert _bot.current_zone_id == "verath_city", "Gate runs happen from town"
         _gstate.player.turn_count = 300
         _w2 = __import__("core.bot_flow", fromlist=["bot_world"]).bot_world(_eng)
@@ -3273,6 +3274,198 @@ def _test_gates_and_quest_chains(item_reg) -> None:
             _pp2 = SAVES_DIR / f"{_g_slot}{_ext}"
             if _pp2.exists():
                 try: _pp2.unlink()
+                except OSError: pass
+
+
+def _test_living_world(item_reg) -> None:
+    section("33. Living world: statuses, boss moves, clock, crafting, trophies, parties, new rifts")
+    _w_slot = "_world_test_"
+    _wstate = None
+    try:
+        import random as _r33
+        from unittest import mock as _m33
+        import questionary as _q33
+        from config import TIME_COSTS, XP_SOFT_CAP_LEVEL
+        from core import gate_flow as _gf33, gate_growth as _gg, lair_flow as _lf33, time_flow as _tf
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from systems import combat_effects as fx, combat_system as cs, quest_system as _qs33, world_clock as wc
+        from systems.alchemy_system import craft_item
+        from systems.bot_system import BotAgent, bot_max_hp
+        from systems.level_system import xp_for_level
+        from ui import renderer as _r
+
+        # 33a. Statuses: on-hit poison, damage over time, stun loses a turn, no stun-lock, spells inflict.
+        cs.ENEMY_TEMPLATES["_t33"] = {"enemy_id": "_t33", "name": "Tester", "max_hp": 80, "current_hp": 80,
+                                      "attack": 6, "defense": 0, "status_on_hit": ("poison", 1.0),
+                                      "abilities": [{"name": "Crush", "kind": "heavy", "every": 3, "power": 2.0},
+                                                    {"name": "Mend", "kind": "heal", "every": 4, "power": 0.25},
+                                                    {"name": "Call", "kind": "summon", "every": 5, "summon": "goblin_scout"}],
+                                      "enrage_below": 0.5}
+        _p = Player(name="FX", base_class="warrior")
+        _p.max_hp = _p.current_hp = 500
+        _p.stats.AGI = 0
+        bag: dict = {}
+        e = cs.spawn_enemy("_t33")
+        t1 = fx.enemy_turn(e, _p, bag, None, [e], rng=_r33.Random(1))
+        assert t1.damage > 0 and bag.get("poison"), (t1, bag)
+        hp0 = _p.current_hp
+        _p.current_hp, hits = fx.tick(bag, _p.current_hp)
+        assert hits and _p.current_hp == hp0 - hits[0][1]
+        assert fx.inflict(bag, "stun") and fx.consume_stun(bag) and not fx.inflict(bag, "stun"), "Stun guard"
+        assert fx.skill_status(type("S", (), {"spell_type": "fire", "effects": []})()) == ("burn", 0.5)
+        _ebag = {}
+        assert sum(fx.inflict(_ebag, "stun", "A", _r33.Random(i)) for i in range(40)) < 35, "Bosses resist stun"
+        ok("Statuses apply: on-hit poison ticks, stun costs a turn then guards, spells burn, bosses resist stuns")
+
+        # 33b. Boss moves on schedule: telegraph → heavy, heal, summon, enrage once.
+        e = cs.spawn_enemy("_t33")
+        allies = [e]
+        log = []
+        for _ in range(5):
+            log += [t for t, _s in fx.enemy_turn(e, _p, {}, None, allies, rng=_r33.Random(2)).lines]
+        assert any("gathering itself for Crush" in l for l in log) and any("uses Crush" in l for l in log)
+        assert any("uses Mend" in l for l in log) and any("joins the fight" in l for l in log) and len(allies) == 2
+        e.current_hp = 10
+        atk = e.attack
+        fx.enemy_turn(e, _p, {}, None, allies)
+        assert e.enraged and e.attack > atk
+        fx.enemy_turn(e, _p, {}, None, allies)
+        assert e.attack == round(atk * fx.ENRAGE_MULT), "Enrage only once"
+        _eng = GameEngine()
+        with _m33.patch.object(_r.console, "print", lambda *a, **k: None):
+            _eng.bootstrap()
+        _bosses = [o.enemies[0] for g in _eng.gate_registry.all() for o in g.lair.occupants.values()]
+        assert all(cs.ENEMY_TEMPLATES[b].get("abilities") for b in _bosses), "Every gate master has moves"
+        ok(f"Boss moves fire on schedule (telegraphed heavy, heal, summon, one-time enrage); all {len(_bosses)} gate masters have them")
+
+        # 33c. Level curve: unchanged up to the soft cap, then gentle.
+        assert xp_for_level(XP_SOFT_CAP_LEVEL) == 1708 and xp_for_level(5) == 506
+        assert xp_for_level(15) < 4000 and xp_for_level(18) < 6000
+        ok(f"XP curve: L8 {xp_for_level(8)}, L15 {xp_for_level(15)}, L18 {xp_for_level(18)} (was 29,192 / 98,526)")
+
+        # 33d. Crafting: every gate material has a use; crafting works; [C] shows up.
+        mats = {g.material for g in _eng.gate_registry.all()}
+        used = {i["item_id"] for r in _eng.recipes for i in r["ingredients"]}
+        assert mats <= used, mats - used
+        _cp = Player(name="Crafter", base_class="warrior")
+        _cp.add_item("labyrinth_bronze"); _cp.add_item("empty_vial")
+        okc, _msg = craft_item(_cp, "craft_bronze_whetstone_tonic", _eng.item_registry, _eng.recipes)
+        assert okc and _cp.has_item("bronze_whetstone_tonic") and not _cp.has_item("labyrinth_bronze")
+        ok(f"{sum(1 for r in _eng.recipes if r['output_item_id'] in {i.item_id for i in item_reg.all()} and any(x['item_id'] in mats for x in r['ingredients']))} Gate recipes; all {len(mats)} materials used; crafting consumes and produces")
+
+        # 33e. Clock: labels, phase, time passing moves the world.
+        assert wc.label(0) == "Day 1, 08:00 (morning)" and wc.phase(0) == "day" and wc.phase(wc.hours(13)) == "night"
+        assert wc.label(wc.TURNS_PER_DAY) == "Day 2, 08:00 (morning)"
+        _wp = Player(name="Walker", base_class="warrior")
+        _wstate = new_game_state(_wp, SAVES_DIR, _w_slot)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        t0 = _wp.turn_count
+        out = _tf.pass_time(_eng, TIME_COSTS["rest_full"])
+        assert _wp.turn_count == t0 + TIME_COSTS["rest_full"] and out["bot_events"] > 0
+        ok(f"World clock: {wc.label(_wp.turn_count)} after an 8-hour rest; {out['bot_events']} bot actions happened meanwhile")
+
+        # 33f. Gate runs: trophy, FIRST CLEAR, SWIFT CLEAR; group Gates need a party.
+        def _sel(_msg, choices=None, **_k):
+            labels = [c if isinstance(c, str) else c.title for c in choices]
+            hit = next((l for l in labels if l.startswith(("Fight", "Press on", "Bring", "Set off", "Enter"))), labels[0])
+            return _m33.Mock(ask=lambda: hit)
+        def _win(enc, surprise=False, enemies=None):
+            _eng._last_combat_rounds = 2
+            return "victory"
+        for b in _eng._bot_manager.all():
+            b.current_zone_id = "camp_rest"
+        _quiet = [_m33.patch.object(_r.console, "print", lambda *a, **k: None),
+                  _m33.patch.object(_r, "prompt_any_key", lambda: None),
+                  _m33.patch.object(_eng, "_run_combat", _win), _m33.patch.object(_q33, "select", _sel)]
+        for q in _quiet:
+            q.start()
+        try:
+            _wstate.current_scene_id = "village_start"
+            g0, x0 = _wp.gold, _wp.experience + sum(xp_for_level(l) for l in range(1, _wp.level))
+            assert _gf33.run_gate(_eng, "clockwork_foundry", rng=_r33.Random(1)) == "cleared"
+            assert _wp.has_item("trophy_clockwork_foundry_automaton"), "First kill of a master gives its trophy"
+            assert _wp.has_flag("swift_clockwork_foundry") and _wp.gold > g0
+            g1 = _wp.gold
+            assert _gf33.run_gate(_eng, "clockwork_foundry", rng=_r33.Random(2)) == "cleared"
+            assert _wp.gold - g1 < g1 - g0, "No second FIRST CLEAR bonus"
+            # Group Gate: nobody here → can't go; two bots here → party of 3.
+            _wp.level = 14
+            assert _gf33.run_gate(_eng, "wyrm_hoard") == "no_party"
+            pals = _eng._bot_manager.all()[:2]
+            for b in pals:
+                b.current_zone_id, b.level, b.archetype = "village_start", 14, "fighter"
+                b.max_hp = b.hp = bot_max_hp(b)
+            gp = _wp.gold
+            assert _gf33.run_gate(_eng, "wyrm_hoard", rng=_r33.Random(3)) == "cleared"
+            assert all(b.gold > 0 and any("Cleared the Hoard" in m for m in b.memory) for b in pals)
+            _wp.level = 14 + 6
+            assert _gf33.needed_companions(_eng, _eng.gate_registry.get("wyrm_hoard")) == 0, "Overlevelled: solo OK"
+        finally:
+            for q in _quiet:
+                q.stop()
+        ok("Gate runs: trophy on first kill, FIRST + SWIFT CLEAR once; group Gate refuses a lone player, clears with 2 bots who get paid")
+
+        # 33g. Journal: chain progress, report hints, leads.
+        _wp.level = 3
+        _qid = _qs33.start_quest("clockwork_precision_1", "tinker_odo", _wstate, _eng.quest_registry)
+        _qs33.tick_quests(_wstate, _eng.quest_registry)
+        summ = next(s for s in _qs33.get_active_quest_summaries(_wstate, _eng.quest_registry) if s["instance_id"] == _qid)
+        assert summ["chain"] == "skill 1/3" and summ["ready_to_report"], summ
+        leads = _qs33.available_work(_wstate, _eng.quest_registry, _eng.npc_registry)
+        assert leads and all(t.template_id != "clockwork_precision_2" for _n, t in leads)
+        ok(f"Journal: '{summ['title']}' shows {summ['chain']} and → report; {len(leads)} leads listed")
+
+        # 33h. New rifts: echoes (no AI), quest rifts, surges, AI results (clamped), successors; all persist.
+        n0 = len(_gg.generated_gates(_eng))
+        assert _gg.open_rift(_eng, 12, rng=_r33.Random(4))
+        echo = next(g for g in _gg.generated_gates(_eng) if g.min_level == 12)
+        assert echo.gate_id.startswith("gen_echo_") and echo.min_level == 12 and item_reg.get(echo.material)
+        from scenes.option_logic import process_triggers as _pt
+        _pt(["open_rift:+2"], _wstate)
+        _gg.tick_gate_growth(_eng)
+        assert len(_gg.generated_gates(_eng)) == n0 + 2
+        from ai.response_validator import AIGateResponse, AISuccessorResponse
+        resp = AIGateResponse.model_validate({
+            "name": "the Salt Wound", "theme": "elemental", "description": "Salt crusts a split in the moor.",
+            "mob_names": ["Brine Crawler", "Salt Wraith"], "room_texts": ["a", "b", "c"],
+            "masters": [{"title": "the Salt Mother", "status": "poison", "heavy_move": "Brine Crush"},
+                        {"title": "the Rimed Son"}, {"title": "the Last Grain"}]})
+        _gg.apply_gate_result(_eng, {"type": "new_gate", "gate_level": 9, "response": resp})
+        ai_gate = next(g for g in _gg.generated_gates(_eng) if g.name == "the Salt Wound")
+        boss = cs.ENEMY_TEMPLATES[ai_gate.lair.occupants[ai_gate.lair.first_occupant].enemies[0]]
+        from systems.gate_generation import boss_stats
+        assert ai_gate.name == "the Salt Wound" and boss["max_hp"] == boss_stats(9)["max_hp"], "Stats from level, not AI"
+        assert boss["abilities"][0]["name"] == "Brine Crush"
+        lair = _eng.lair_registry.get("bronze_labyrinth")
+        st = _lf33.get_state(_eng, "bronze_labyrinth")
+        if st.occupied:                      # its master just died, someone is on the way
+            from systems.lair_system import KillInfo, record_kill
+            record_kill(lair, st, KillInfo("player", "T", 5), _wp.turn_count)
+        planned = st.next_occupant_id
+        _gg.apply_successor_result(_eng, {"type": "lair_successor", "lair_id": "bronze_labyrinth",
+            "response": AISuccessorResponse.model_validate({"master": {"title": "the Bronze Widow", "status": "bleed"}})})
+        new_id = _lf33.get_state(_eng, "bronze_labyrinth").next_occupant_id
+        assert new_id.startswith("gen_") and lair.occupants[new_id].successors[0].to == planned
+        save_game(_wstate, _w_slot, SAVES_DIR)
+        close_game(_wstate); _wstate = None
+        _wstate = load_game(_w_slot, SAVES_DIR)
+        _eng.state = _wstate
+        _attach_engine_handles(_eng)
+        assert len(_gg.generated_gates(_eng)) == n0 + 3 and _eng.lair_registry.get("bronze_labyrinth").occupant(new_id)
+        assert _lf33.get_state(_eng, "bronze_labyrinth").next_occupant_id == new_id
+        ok(f"New rifts: echo, quest rift and AI gate open (stats from level), AI successor slots in; all {n0 + 3} survive save/load")
+    except Exception as e:
+        fail("Living world broken", e)
+        traceback.print_exc()
+    finally:
+        if _wstate is not None:
+            close_game(_wstate)
+        for _ext in (".json", ".db", ".db-wal", ".db-shm"):
+            _pp = SAVES_DIR / f"{_w_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
                 except OSError: pass
 
 

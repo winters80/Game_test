@@ -425,6 +425,37 @@ class ContentGenerator:
             return None
         return (raw or "").strip().strip('"') or None
 
+    def generate_gate(self, player_level: int, gate_level: int, existing: list[str],
+                      themes: list[str]) -> "object | None":
+        """A new Gate's names and texts (AIGateResponse), or None. Background only."""
+        from ai.prompt_builder import build_gate_prompt
+        from ai.response_validator import AIGateResponse
+        try:
+            raw = self.client.generate_json(
+                prompt=build_gate_prompt(player_level, gate_level, existing, themes),
+                system_prompt=self.system_prompt, temperature=0.8,
+            )
+            return AIGateResponse.model_validate(raw)
+        except Exception as e:
+            logger.info(f"Gate generation failed: {e}")
+            return None
+
+    def generate_lair_successor(self, lair_name: str, gate_name: str, dead_title: str, killed_by: str,
+                                killer: str, gate_level: int, others: list[str]) -> "object | None":
+        """Who moves into a lair after its master died (AISuccessorResponse), or None."""
+        from ai.prompt_builder import build_successor_prompt
+        from ai.response_validator import AISuccessorResponse
+        try:
+            raw = self.client.generate_json(
+                prompt=build_successor_prompt(lair_name, gate_name, dead_title, killed_by, killer,
+                                              gate_level, others),
+                system_prompt=self.system_prompt, temperature=0.8,
+            )
+            return AISuccessorResponse.model_validate(raw)
+        except Exception as e:
+            logger.info(f"Lair successor generation failed: {e}")
+            return None
+
     def generate_world_expansion(
         self,
         verb: str,

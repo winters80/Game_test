@@ -64,6 +64,28 @@ class EntityContentGenerators:
             logger.info(f"BG world expansion error: {exc}")
         return None
 
+    def _gen_new_gate(self, task: dict) -> dict | None:
+        """A new Gate's names and texts (core/gate_growth builds the rest)."""
+        try:
+            resp = self._content_gen.generate_gate(
+                task["player_level"], task["gate_level"], task.get("existing", []), task.get("themes", []))
+            if resp is not None:
+                return {"type": "new_gate", "gate_level": task["gate_level"], "response": resp}
+        except Exception as exc:
+            logger.info(f"BG new gate error: {exc}")
+        return None
+
+    def _gen_lair_successor(self, task: dict) -> dict | None:
+        try:
+            resp = self._content_gen.generate_lair_successor(
+                task["lair_name"], task["gate_name"], task["dead_title"], task["killed_by"],
+                task["killer"], task["gate_level"], task.get("others", []))
+            if resp is not None:
+                return {"type": "lair_successor", "lair_id": task["lair_id"], "response": resp}
+        except Exception as exc:
+            logger.info(f"BG lair successor error: {exc}")
+        return None
+
     def _gen_npc_branch(self, task: dict) -> dict | None:
         try:
             npc_id         = task.get("npc_id", "")

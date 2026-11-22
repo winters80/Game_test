@@ -1,0 +1,562 @@
+[
+  {
+    "recipe_id": "craft_bronze_whetstone_tonic",
+    "name": "Bronze Whetstone Tonic",
+    "ingredients": [
+      {
+        "item_id": "labyrinth_bronze",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "bronze_whetstone_tonic",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_dewglass_draught",
+    "name": "Dewglass Draught",
+    "ingredients": [
+      {
+        "item_id": "fae_dewglass",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "dewglass_draught",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_hydra_blood_salve",
+    "name": "Hydra Blood Salve",
+    "ingredients": [
+      {
+        "item_id": "hydra_scale",
+        "qty": 1
+      },
+      {
+        "item_id": "forest_herb",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "hydra_blood_salve",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_stoneskin_balm",
+    "name": "Stoneskin Balm",
+    "ingredients": [
+      {
+        "item_id": "gorgon_tear",
+        "qty": 1
+      },
+      {
+        "item_id": "herb_bundle",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "stoneskin_balm",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_abyssal_tonic",
+    "name": "Abyssal Tonic",
+    "ingredients": [
+      {
+        "item_id": "abyssal_pearl",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "abyssal_tonic",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_phoenix_draught",
+    "name": "Phoenix Draught",
+    "ingredients": [
+      {
+        "item_id": "phoenix_cinder",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "phoenix_draught",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_dragonheart_brew",
+    "name": "Dragonheart Brew",
+    "ingredients": [
+      {
+        "item_id": "dragon_scale",
+        "qty": 1
+      },
+      {
+        "item_id": "mountain_root",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "dragonheart_brew",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_oiled_gearwork",
+    "name": "Oiled Gearwork Elixir",
+    "ingredients": [
+      {
+        "item_id": "brass_cog",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "oiled_gearwork",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_core_battery",
+    "name": "Golem Core Battery",
+    "ingredients": [
+      {
+        "item_id": "golem_core",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "core_battery",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_aether_inhaler",
+    "name": "Aether Inhaler",
+    "ingredients": [
+      {
+        "item_id": "aether_coil",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "aether_inhaler",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_memory_crystal_tea",
+    "name": "Memory Crystal Tea",
+    "ingredients": [
+      {
+        "item_id": "data_crystal",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "memory_crystal_tea",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_storm_shot",
+    "name": "Storm Shot",
+    "ingredients": [
+      {
+        "item_id": "storm_capacitor",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "storm_shot",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_reactor_stimulant",
+    "name": "Reactor Stimulant",
+    "ingredients": [
+      {
+        "item_id": "reactor_slag",
+        "qty": 1
+      },
+      {
+        "item_id": "herb_bundle",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "reactor_stimulant",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_ectoplasm_elixir",
+    "name": "Ectoplasm Elixir",
+    "ingredients": [
+      {
+        "item_id": "ectoplasm",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "ectoplasm_elixir",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_hex_ward_charm",
+    "name": "Hex-Ward Tea",
+    "ingredients": [
+      {
+        "item_id": "hag_charm",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "hex_ward_charm",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_porcelain_dust_tonic",
+    "name": "Porcelain Dust Tonic",
+    "ingredients": [
+      {
+        "item_id": "porcelain_shard",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "porcelain_dust_tonic",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_plague_cure",
+    "name": "Saint Vera's Cure",
+    "ingredients": [
+      {
+        "item_id": "plague_ash",
+        "qty": 1
+      },
+      {
+        "item_id": "forest_herb",
+        "qty": 2
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "plague_cure",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_mirror_focus",
+    "name": "Mirror Focus Draught",
+    "ingredients": [
+      {
+        "item_id": "mirror_shard",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "mirror_focus",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_bellwater",
+    "name": "Blessed Bellwater",
+    "ingredients": [
+      {
+        "item_id": "hallowed_bronze",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "bellwater",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_heartstone_tea",
+    "name": "Heartstone Tea",
+    "ingredients": [
+      {
+        "item_id": "heartstone_chip",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "heartstone_tea",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_ember_tonic",
+    "name": "Ember Tonic",
+    "ingredients": [
+      {
+        "item_id": "ember_ore",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "ember_tonic",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_tide_draught",
+    "name": "Tide Draught",
+    "ingredients": [
+      {
+        "item_id": "tide_pearl",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "tide_draught",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_frostbite_flask",
+    "name": "Frostbite Flask",
+    "ingredients": [
+      {
+        "item_id": "everfrost",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "frostbite_flask",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_dream_draught",
+    "name": "Dream Draught",
+    "ingredients": [
+      {
+        "item_id": "dream_ichor",
+        "qty": 1
+      },
+      {
+        "item_id": "empty_vial",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "dream_draught",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_bandit_bane_band",
+    "name": "Bandit-Bane Band",
+    "ingredients": [
+      {
+        "item_id": "bandit_insignia",
+        "qty": 4
+      },
+      {
+        "item_id": "brass_cog",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "bandit_bane_band",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_glowcap_lantern",
+    "name": "Glowcap Lantern Charm",
+    "ingredients": [
+      {
+        "item_id": "glowcap_spore",
+        "qty": 3
+      },
+      {
+        "item_id": "heartstone_chip",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "glowcap_lantern",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_chitin_cuirass",
+    "name": "Chitin Cuirass",
+    "ingredients": [
+      {
+        "item_id": "royal_jelly",
+        "qty": 2
+      },
+      {
+        "item_id": "hydra_scale",
+        "qty": 2
+      }
+    ],
+    "output_item_id": "chitin_cuirass",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_thunderfeather_cloak",
+    "name": "Thunderfeather Cloak",
+    "ingredients": [
+      {
+        "item_id": "thunder_feather",
+        "qty": 3
+      },
+      {
+        "item_id": "aether_coil",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "thunderfeather_cloak",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_starmetal_dagger",
+    "name": "Star-Metal Dagger",
+    "ingredients": [
+      {
+        "item_id": "star_metal",
+        "qty": 2
+      },
+      {
+        "item_id": "mirror_shard",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "starmetal_dagger",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_chrono_pendant",
+    "name": "Chrono Pendant",
+    "ingredients": [
+      {
+        "item_id": "chronoshard",
+        "qty": 2
+      },
+      {
+        "item_id": "storm_capacitor",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "chrono_pendant",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_seraph_quill_charm",
+    "name": "Seraph-Quill Charm",
+    "ingredients": [
+      {
+        "item_id": "seraph_feather",
+        "qty": 2
+      },
+      {
+        "item_id": "hallowed_bronze",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "seraph_quill_charm",
+    "output_qty": 1,
+    "required_skill": null
+  },
+  {
+    "recipe_id": "craft_voidglass_blade",
+    "name": "Voidglass Blade",
+    "ingredients": [
+      {
+        "item_id": "void_essence",
+        "qty": 2
+      },
+      {
+        "item_id": "dragon_scale",
+        "qty": 1
+      },
+      {
+        "item_id": "star_metal",
+        "qty": 1
+      }
+    ],
+    "output_item_id": "voidglass_blade",
+    "output_qty": 1,
+    "required_skill": null
+  }
+]

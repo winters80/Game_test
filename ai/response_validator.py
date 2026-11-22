@@ -552,3 +552,81 @@ class AIWorldExpansionResponse(BaseModel):
     @classmethod
     def _hint(cls, v: object) -> str:
         return str(v or "").strip()[:40]
+
+
+# ── Generated Gates and lair successors (systems/gate_generation.py) ─────────
+
+def _clip(n: int):
+    def _v(v: object) -> str:
+        return " ".join(str(v or "").split())[:n]
+    return _v
+
+
+_STATUSES = {"", "poison", "bleed", "burn", "stun", "frozen"}
+
+
+class AIGateMaster(BaseModel):
+    """One boss the model proposes. Stats are NOT taken from the model:
+    systems/gate_generation derives them from the gate level."""
+    title: str
+    boss_name: str = ""
+    names: list[str] = []          # optional lineage names ({name} in texts)
+    intro: str = ""
+    victory: str = ""
+    omen: str = ""                 # what the empty lair looks like while it moves in
+    rumour: str = ""               # what people say once it has arrived
+    status: str = ""               # what its hits inflict
+    heavy_move: str = ""           # name of its telegraphed heavy blow
+    second_move: str = ""
+
+    _t = field_validator("title", "boss_name", "heavy_move", "second_move", mode="before")(classmethod(lambda c, v: _clip(60)(v)))
+    _x = field_validator("intro", "victory", mode="before")(classmethod(lambda c, v: _clip(420)(v)))
+    _o = field_validator("omen", "rumour", mode="before")(classmethod(lambda c, v: _clip(260)(v)))
+
+    @field_validator("status", mode="before")
+    @classmethod
+    def _status(cls, v: object) -> str:
+        v = str(v or "").strip().lower()
+        return v if v in _STATUSES else ""
+
+    @field_validator("names", mode="before")
+    @classmethod
+    def _names(cls, v: object) -> list[str]:
+        if not isinstance(v, list):
+            return []
+        return [_clip(20)(x) for x in v if str(x or "").strip()][:4]
+
+
+class AIGateResponse(BaseModel):
+    """A new Gate the world grows."""
+    name: str
+    theme: str = "mythical"
+    description: str = ""
+    entry_text: str = ""
+    heart: str = ""                # name of the boss chamber
+    material_name: str = ""
+    material_description: str = ""
+    mob_names: list[str] = []      # two room enemies
+    room_texts: list[str] = []     # three rooms
+    masters: list[AIGateMaster]    # 2-4, the first one rules it now
+
+    _n = field_validator("name", "heart", "material_name", mode="before")(classmethod(lambda c, v: _clip(60)(v)))
+    _th = field_validator("theme", mode="before")(classmethod(lambda c, v: _clip(20)(v).lower() or "mythical"))
+    _d = field_validator("description", "entry_text", "material_description", mode="before")(classmethod(lambda c, v: _clip(360)(v)))
+
+    @field_validator("mob_names", "room_texts", mode="before")
+    @classmethod
+    def _lists(cls, v: object) -> list[str]:
+        return [_clip(300)(x) for x in (v if isinstance(v, list) else []) if str(x or "").strip()][:3]
+
+    @field_validator("masters")
+    @classmethod
+    def _masters(cls, v: list) -> list:
+        if len(v) < 2:
+            raise ValueError("a gate needs at least 2 masters")
+        return v[:4]
+
+
+class AISuccessorResponse(BaseModel):
+    """A new boss that moves into a lair whose master just died."""
+    master: AIGateMaster

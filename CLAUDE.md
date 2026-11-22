@@ -112,6 +112,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `gate_registry` | *(boss_succession)* Open the Gate Registry: every gate, its rated level and current master (`core/gate_flow.open_gate_registry`) |
 | `enter_gate:X` | *(boss_succession)* Run gate X directly: rooms, then its lair (`core/gate_flow.run_gate`) |
 | `take_item:X[:N]` | Remove up to N (default 1) of item X, never below zero. Quest hand-ins use it |
+| `open_rift:N` / `open_rift:+N` | *(boss_succession)* Open a new Gate at level N, or the player's level + N, on the next turn (AI-made if online, else a Deep Echo). Special quest lines use it |
 | `alignment:+N` | Shift player alignment by +N (float) |
 | `alignment:-N` | Shift player alignment by -N (float) |
 | `rest_camp:full` / `rest_camp:short` | Restore all / half of HP + MP, then run the rest flow (`systems/rest_system.handle_rest`) |
@@ -192,7 +193,7 @@ if feature("npc_system"):
 | `lives_system` | 9-lives death mechanic (replaces instant game over) |
 | `crafting_system` | Recipe + material crafting |
 | `stat_gating` | INT/Perception/LCK/WIS content gates via `systems/stat_gate.py` |
-| `boss_succession` | Boss lairs whose occupant changes after each kill (`data/dungeons/`). State needs `world_db` to persist |
+| `boss_succession` | Boss lairs whose occupant changes after each kill, Gates, and new rifts (`data/dungeons/`). State needs `world_db` to persist |
 
 **Enable order matters.** `world_db` must be True before `npc_system`, `quest_system`, `faction_system`, or `auction_house`. `stat_gating` should be enabled before `npc_system`.
 
@@ -238,6 +239,7 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 | `world_expansions` | *(schema v6)* The validated content bundle the world grew for each action; re-registered on load |
 | `dungeon_lairs` | *(schema v7)* Who holds each boss lair now, as a `LairState` JSON blob (occupant, lineage name, generation, vacant/occupied, who's coming and when) |
 | `lair_history` | *(schema v7)* Every boss kill: occupant, killer (player / bot, name, level), killing blow, aftermath, successor |
+| `generated_dungeons` | *(schema v8)* Gates and lair successors the world grew (`kind` gate / occupant), re-registered on load by `core/gate_growth.reload_generated_dungeons` |
 
 **Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
 
@@ -314,6 +316,8 @@ before proposing rewards.
 3. **Quest generation** *(quest_system)* — fired from `dialogue_handler` when the player picks an injected `« Is there any work I could take on? »` option. Triggered by an explicit `"ai_dynamic"` seed on the NPC, **or implicitly** when the NPC has no available seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN` (default 30) and `_ai_offered_{npc_id}` flag is unset.
 4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
 5. **World growth** — the first time the player takes a new `[?]` action (`world_action:VERB:SUBJECT`), the primary model is asked in the background how the world should respond. See "World Growth" below.
+6. **New Gates** — on a rift surge or `open_rift:` (background `new_gate` task, `AIService.submit_gate_async`).
+7. **Lair successors** — after a boss kill, with chance `AI_SUCCESSOR_CHANCE` (background `lair_successor` task, `AIService.submit_lair_successor_async`). See "Growing dungeons" below.
 
 ### AI response schemas (validated by `ai/response_validator.py`)
 All AI calls must return JSON validated against Pydantic models. If validation fails, retry up to `OLLAMA_MAX_RETRIES` times, then use the fallback.
@@ -325,6 +329,8 @@ All AI calls must return JSON validated against Pydantic models. If validation f
 | `generate_quest()` *(future)* | `AIQuestResponse` | nearest matching template quest |
 | `generate_npc_dialogue()` *(future)* | `AINPCDialogueResponse` | NPC's `dialogue_hooks["default"]` |
 | `generate_world_expansion()` | `AIWorldExpansionResponse` (+ optional skill) | None: the action stays logged, nothing is added |
+| `generate_gate()` | `AIGateResponse` (names and texts only) | A Deep Echo opens instead |
+| `generate_lair_successor()` | `AISuccessorResponse` | The authored successor moves in |
 
 ### Lore constraints (always injected into system prompt)
 - World name: Aethoria
@@ -367,7 +373,7 @@ The admin panel's **World Growth log** lists every recorded action, its status, 
 
 ## Bot Adventurers (other "players" in the world)
 
-`BOT_COUNT` (12) adventurers live alongside the player in every save, like
+`BOT_COUNT` (24) adventurers live alongside the player in every save, like
 playerbots: they level, fight, loot, trade and craft on their own.
 
 | Piece | Where |
@@ -446,11 +452,51 @@ Gate fields: `gate_id`, `name`, `theme`, `min_level` (enterable from `min_level 
 
 Every gate master's chain branches at the first master (on a magic kill, or on the first vs. second aftermath choice) and loops back, so a gate never runs out of bosses. Occupant ids are globally unique (`<gate>_<occupant>`) because quests check `slew_<occupant_id>`. Clearing a gate sets `cleared_<gate_id>` and counts `gate_clears_<gate_id>`.
 
-Bots: fighters and explorers in town run a gate with chance `BOT_GATE_CHANCE` when its level fits (`bot_brain._gate_run`): they clear the rooms if they can survive them and may fight the master (same rules as lairs, including the grace period).
+Bots: fighters and explorers in town run a gate with chance `BOT_GATE_CHANCE` when its level fits (`bot_brain._gate_run`): they clear the rooms if they can survive them and may fight the master (same rules as lairs, including the grace period). For a group Gate they recruit allies in the same town (`BotWorld.allies`) and run it as a party (`_run_gate_as_party`: damage per member falls as n^1.5, everyone gets the XP, the leader carries the loot; logged as `party`).
+
+**Player runs** (`core/gate_flow.run_gate`): optional companions from the bots in your zone (`companion_candidates`: fighter / explorer / gatherer, level ≥ gate level − 3, HP > 50%). Group Gates (`party_size` 2-5) need `party_size − 1` companions unless the player is `SOLO_OVERRIDE_LEVELS` (6) over the Gate's level; otherwise `run_gate` returns `"no_party"`. Companions strike each round and draw up to 60% of enemy attacks (`core/combat_handler`), are knocked out at 1 HP rather than killed, and take `COMPANION_SHARE` (25%) of the run's gold each (max 60% in all) plus XP. Between rooms the player recovers `GATE_BREATHER` (15%) of HP and MP. Each room and the master's chamber pass an hour (`TIME_COSTS`).
+
+**Rewards:** each occupant has a `trophy` item (`data/items/gate_trophies.json`), given on the player's first kill of it; Lady Vos buys them. FIRST CLEAR pays a standard quest reward for the Gate's level once; SWIFT CLEAR (all fights within `swift_par` = 3 rounds per fight room + 6) pays half that again, and records the best round count in `swift_<gate_id>`.
+
+**Crafting:** `data/crafting/gate_recipes.json` uses all 32 Gate materials (24 consumables in `data/items/gate_crafts.json`, 8 pieces of gear). `alchemy_system.load_recipes` loads every file in `data/crafting/`. `[C]` appears for alchemists or anyone holding a recipe ingredient other than basic reagents.
+
+**Balance:** `python scripts/balance_sim.py [runs] [--class warrior|mage|rogue] [--offset N]` builds a character at each Gate's level (plus level-matched companions for group Gates), runs every room and the first master with the real rules, and flags Gates that are too hard (< 40%) or trivial. Run it after changing Gate stats, enemy formulas, class skills or the XP curve.
 
 ### Quest content
 
-`data/quests/gate_quests.json` has **205 quests**: 51 chains (10 skill chains whose last step grants a skill from `data/skills/quest_skills.json`, 10 item chains whose last step grants an item from `data/items/quest_rewards.json`, 31 story chains), 32 gate bounties and 32 material orders. Givers are the 13 NPCs in `data/npcs/npcs_questgivers.json`, reached from the Gate Halls. Rewards come from `economy.recommended_quest_reward` (the last step of a chain is `hard`). Every objective is a gate clear, a specific master kill, materials that gates drop, or a level, and every step ends with a report to the giver.
+`data/quests/gate_quests.json` has **213 quests**: 53 chains (10 skill chains whose last step grants a skill from `data/skills/quest_skills.json`, 10 item chains whose last step grants an item from `data/items/quest_rewards.json`, 32 story chains, and the `rift` chain "Uncharted Rifts" whose steps fire `open_rift:+N`), 32 gate bounties and 32 material orders.
+
+The `[J]` journal shows chain progress (`quest_system.chain_progress`), report-ready quests and who to report to, and **leads** (`quest_system.available_work`: seeds the player can take now, by NPC and place). Givers are the 13 NPCs in `data/npcs/npcs_questgivers.json`, reached from the Gate Halls. Rewards come from `economy.recommended_quest_reward` (the last step of a chain is `hard`). Every objective is a gate clear, a specific master kill, materials that gates drop, or a level, and every step ends with a report to the giver.
+
+## Growing dungeons (`core/gate_growth.py`, `systems/gate_generation.py`)
+
+New Gates open three ways, all stored in `generated_dungeons` and re-registered per save:
+
+| Source | When | What |
+|--------|------|------|
+| Rift surge | Every `RIFT_SURGE_EVERY_TURNS` (288 = 2 days), up to `RIFT_MAX_GENERATED` (16) | AI online: the primary model's `AIGateResponse`. Offline: a **Deep Echo** (an authored Gate 6-10 levels below, reopened at the new level with its texts, new ids and its original material) |
+| `open_rift:` trigger | Next turn (queued on `state._pending_rifts`) | The same, at a fixed or relative level. Mira's "Uncharted Rifts" chain uses it |
+| Lair successor | After a kill, `AI_SUCCESSOR_CHANCE` | An AI-invented master that moves in first, then hands over to the planned successor |
+
+`systems/gate_generation` is the safety layer: the model supplies names and texts only; ids are new `gen_*`; enemy stats, XP and gold come from `mob_stats` / `boss_stats` for the level (the same formulas as the authored Gates, so `build_gates`-style content and generated content match); the material's value is capped; the chain always loops. `group_scale` gives group masters party-sized HP and rewards but only +20% attack per extra member.
+
+Clearing any generated Gate sets `charted_new_rift`.
+
+## Combat depth (`systems/combat_effects.py`)
+
+| Mechanic | Rule |
+|----------|------|
+| Statuses | `combat_system.STATUS_EFFECTS`. Enemies roll `status_on_hit` on every hit; spells by `spell_type` (fire → burn, ice → frozen, arcane → stun 15%), DEBUFF effects → stun, TRIGGERED skills named venom / poison → poison. Player statuses are combat-local |
+| Stun | Loses the next action; then `STUN_GUARD_ROUNDS` (2) of immunity (stored as `_stun_guard`, hidden from labels). Rank C+ enemies resist half of all stuns |
+| Boss abilities | `abilities: [{name, kind, every, power, status, summon}]` on enemy templates (`LairAbility` in lair / gate files). Kinds: `heavy` (announced one turn ahead), `status`, `heal`, `summon` (max 2 summons alive), `drain`. `enrage_below` → +25% attack once |
+| MP regen | `combat_system.combat_mp_regen`: 1 + WIS // 5 per round |
+| Basic attack | Uses `max(STR, AGI)` |
+
+`resolve_combat_auto(player, enemies, skill_registry, companions=None, use_skills=False)` runs the same rules headlessly; `use_skills` casts the best affordable damage skill each round (the balance sim uses it).
+
+## World clock (`systems/world_clock.py`, `core/time_flow.py`)
+
+One turn = `MINUTES_PER_TURN` (10) minutes; turn 0 = Day 1, 08:00. `world_clock.phase(turn)` (day 06:00-20:00) drives NPC schedules. `time_flow.pass_time(engine, turns)` advances extra turns and runs the world ticks quietly (bots, lairs, buffs, quests). `TIME_COSTS`: Gate room / master 6, full rest 47, short rest 11, inn 47, travel between `village_start` / `camp_rest` / `verath_city` / dungeon floors 2 (on top of the choice's own turn).
 
 ## Divergence System (How AI Classes Are Triggered)
 
@@ -476,7 +522,7 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
 
-The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **7** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`). Migrations run automatically on open.
+The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **8** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`, v8 added `generated_dungeons`). Migrations run automatically on open.
 
 ## Skill System
 
@@ -529,6 +575,10 @@ Skills grow with use. Every `USES_PER_LEVEL` (=5) casts in combat, the skill lev
 - `+LEVEL_BONUS_COEFF` (10%) to stat scaling
 
 Per-player level + use-count live in `player.skill_levels` and `player.skill_uses` dicts. `calculate_skill_damage` reads them automatically.
+
+### XP curve
+
+`level_system.xp_for_level(L)`: `BASE_XP_PER_LEVEL` × 1.5^(L−1) up to `XP_SOFT_CAP_LEVEL` (8), then × `XP_LATE_SCALING` (1.12) per level, so level 15 → 16 costs 3,777 XP instead of 29,192 and the level-18 Gates are reachable. Unchanged below the cap.
 
 ### Auto-learn on level-up (F9)
 

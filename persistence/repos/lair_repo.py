@@ -44,3 +44,23 @@ def lair_history(conn: sqlite3.Connection, lair_id: str | None = None) -> list[d
     else:
         rows = conn.execute("SELECT * FROM lair_history ORDER BY id").fetchall()
     return [dict(r) for r in rows]
+
+
+def store_generated(conn: sqlite3.Connection, content_id: str, kind: str, payload: dict,
+                    lair_id: str, turn: int) -> None:
+    conn.execute(
+        """INSERT OR REPLACE INTO generated_dungeons (content_id, kind, lair_id, payload, created_turn)
+           VALUES (?, ?, ?, ?, ?)""",
+        (content_id, kind, lair_id, json.dumps(payload), turn),
+    )
+    conn.commit()
+
+
+def load_generated(conn: sqlite3.Connection) -> list[dict[str, Any]]:
+    rows = conn.execute("SELECT * FROM generated_dungeons ORDER BY created_turn, content_id").fetchall()
+    out = []
+    for r in rows:
+        d = dict(r)
+        d["payload"] = json.loads(d["payload"])
+        out.append(d)
+    return out

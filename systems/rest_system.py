@@ -42,8 +42,12 @@ def handle_rest(engine: "GameEngine", rest_type: str = "short") -> None:
     player.current_hp = min(player.max_hp, player.current_hp + healed_hp)
     player.current_mp = min(player.max_mp, player.current_mp + healed_mp)
 
-    for _ in range(tick_count):
-        tick_buffs(player)
+    # Time passes while you rest: the world (bots, lairs, buffs, quests) moves on.
+    from config import TIME_COSTS
+    from core.time_flow import pass_time
+    from systems.world_clock import label as _clock
+    pass_time(engine, TIME_COSTS["rest_full" if rest_type == "full" else "rest_short"])
+    label = f"{label} · now {_clock(player.turn_count)}"
 
     renderer.print_divider()
     renderer.print_system_message(

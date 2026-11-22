@@ -103,6 +103,9 @@ def _ambient_npc_options(engine: "GameEngine", existing: list[SceneOption]) -> l
 # Kept as data so adding a hotkey is a single line in _build_extras() and
 # _dispatch_hotkey() doesn't need a new branch.
 
+# Ingredients too common to count as "you've found something to craft with".
+_BASIC_REAGENTS = {"empty_vial", "forest_herb", "herb_bundle", "mountain_root", "firewood"}
+
 _HOTKEYS: list[tuple[str, str, str]] = [
     # (key prefix, engine method, label)
     ("[?]", "_handle_situation_query", "Ask about this situation"),
@@ -131,7 +134,12 @@ def _build_extras(engine: "GameEngine") -> list[str]:
             if not feature("crafting_system"):
                 continue
             player = engine.state.player
-            if not (player.has_flag("alchemist") or player.has_flag("crafter")):
+            # Alchemists always; anyone else once they carry an ingredient
+            # of a known recipe (e.g. a Gate material).
+            held = {s.item_id for s in getattr(player, "inventory", [])}
+            if not (player.has_flag("alchemist") or player.has_flag("crafter") or any(
+                    ing["item_id"] in held and ing["item_id"] not in _BASIC_REAGENTS
+                    for r in getattr(engine, "recipes", []) for ing in r.get("ingredients", []))):
                 continue
         elif key == "[J]":
             if not (feature("quest_system") and engine.quest_registry):

@@ -68,7 +68,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Repair Protocol",
+     "kind": "drain",
+     "every": 5,
+     "power": 0.5
+    }
+   ],
+   "enrage_below": 0.35
   },
   "clockwork_foundry_tinker_gnome_boss": {
    "name": "Tinker {name}",
@@ -99,7 +114,22 @@
    "status_on_hit": [
     "burn",
     0.15
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Core Overload",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "clockwork_foundry_spark_ghost_boss": {
    "name": "the Spark in the Machine",
@@ -130,7 +160,23 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "clockwork_foundry_mainspring_boss": {
    "name": "the Mainspring Colossus",
@@ -157,7 +203,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "drain",
+     "every": 5,
+     "power": 0.5
+    }
+   ],
+   "enrage_below": 0.35
   },
   "golem_assembly_worker": {
    "name": "Assembly Golem",
@@ -230,7 +291,23 @@
    "status_on_hit": [
     "stun",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "golem_assembly_prototype_boss": {
    "name": "Prototype Omega",
@@ -257,7 +334,22 @@
      "mana_potion",
      0.25
     ]
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "System Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.15
+    }
+   ],
+   "enrage_below": 0.35
   },
   "golem_assembly_scrappers_boss": {
    "name": "Boss {name} of the Scrappers",
@@ -288,7 +380,22 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Railgun Burst",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Repair Protocol",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "golem_assembly_core_mind_boss": {
    "name": "the Core Mind",
@@ -319,7 +426,23 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "derelict_skyship_sky_pirate": {
    "name": "Sky Pirate",
@@ -392,7 +515,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Core Overload",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "derelict_skyship_first_mate_boss": {
    "name": "First Mate Grell",
@@ -423,7 +561,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "System Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "derelict_skyship_ship_mind_boss": {
    "name": "MERIDIAN, Ship Intelligence",
@@ -454,7 +607,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Core Overload",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "derelict_skyship_storm_wraith_boss": {
    "name": "the Drowned Navigator",
@@ -485,7 +654,22 @@
    "status_on_hit": [
     "frozen",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "System Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "archive_vault_warden": {
    "name": "Archive Warden",
@@ -558,7 +742,23 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "archive_vault_restored_boss": {
    "name": "the Restored Curator",
@@ -589,7 +789,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Core Overload",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "archive_vault_corrupted_boss": {
    "name": "the Corrupted Index",
@@ -620,7 +836,22 @@
    "status_on_hit": [
     "bleed",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Railgun Burst",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "Repair Protocol",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "archive_vault_system_auditor_boss": {
    "name": "System Auditor #{name}",
@@ -651,7 +882,23 @@
    "status_on_hit": [
     "stun",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "storm_engine_arc_drone": {
    "name": "Arc Drone",
@@ -673,7 +920,7 @@
    ],
    "status_on_hit": [
     "stun",
-    0.2
+    0.1
    ]
   },
   "storm_engine_tesla_hound": {
@@ -728,7 +975,22 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Core Overload",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "System Siphon",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "storm_engine_apprentices_boss": {
    "name": "Senior Apprentice Kel",
@@ -759,7 +1021,22 @@
    "status_on_hit": [
     "burn",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Piston Strike",
+     "kind": "heavy",
+     "every": 4,
+     "power": 2.0
+    },
+    {
+     "name": "Repair Protocol",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "storm_engine_living_storm_boss": {
    "name": "the Living Storm",
@@ -790,7 +1067,23 @@
    "status_on_hit": [
     "stun",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Railgun Burst",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.8
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "storm_engine_copper_titan_boss": {
    "name": "the Copper Titan",
@@ -821,11 +1114,27 @@
    "status_on_hit": [
     "stun",
     0.25
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Overclock Slam",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.9
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "stun"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "thaumic_reactor_mutant": {
    "name": "Glowing Mutant",
-   "max_hp": 119,
+   "max_hp": 190,
    "attack": 23,
    "defense": 6,
    "xp_reward": 145,
@@ -848,7 +1157,7 @@
   },
   "thaumic_reactor_hazmat": {
    "name": "Hazmat Sentinel",
-   "max_hp": 119,
+   "max_hp": 190,
    "attack": 23,
    "defense": 6,
    "xp_reward": 145,
@@ -867,11 +1176,11 @@
   },
   "thaumic_reactor_director_boss": {
    "name": "Director {name}",
-   "max_hp": 285,
-   "attack": 32,
+   "max_hp": 627,
+   "attack": 44,
    "defense": 11,
-   "xp_reward": 510,
-   "gold_reward": 4150,
+   "xp_reward": 1122,
+   "gold_reward": 9130,
    "rank": "A",
    "loot_table": [
     [
@@ -894,15 +1203,31 @@
    "status_on_hit": [
     "poison",
     0.3
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.7
+    },
+    {
+     "name": "Repair Protocol",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "thaumic_reactor_meltdown_boss": {
    "name": "the Meltdown Elemental",
-   "max_hp": 342,
-   "attack": 38,
+   "max_hp": 752,
+   "attack": 53,
    "defense": 11,
-   "xp_reward": 612,
-   "gold_reward": 4980,
+   "xp_reward": 1346,
+   "gold_reward": 10956,
    "rank": "A",
    "loot_table": [
     [
@@ -925,15 +1250,31 @@
    "status_on_hit": [
     "burn",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Hydraulic Crush",
+     "kind": "heavy",
+     "every": 3,
+     "power": 2.0
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "burn"
+    }
+   ],
+   "enrage_below": 0.35
   },
   "thaumic_reactor_survivors_boss": {
    "name": "Overseer {name}",
-   "max_hp": 299,
-   "attack": 33,
+   "max_hp": 657,
+   "attack": 46,
    "defense": 11,
-   "xp_reward": 535,
-   "gold_reward": 4357,
+   "xp_reward": 1177,
+   "gold_reward": 9585,
    "rank": "A",
    "loot_table": [
     [
@@ -956,15 +1297,30 @@
    "status_on_hit": [
     "bleed",
     0.2
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Overclock Slam",
+     "kind": "heavy",
+     "every": 4,
+     "power": 1.8
+    },
+    {
+     "name": "Shock Pulse",
+     "kind": "heal",
+     "every": 5,
+     "power": 0.12
+    }
+   ],
+   "enrage_below": 0.35
   },
   "thaumic_reactor_fuel_god_boss": {
    "name": "the Fuel-God",
-   "max_hp": 356,
-   "attack": 40,
+   "max_hp": 783,
+   "attack": 56,
    "defense": 11,
-   "xp_reward": 637,
-   "gold_reward": 5187,
+   "xp_reward": 1401,
+   "gold_reward": 11411,
    "rank": "A",
    "loot_table": [
     [
@@ -987,7 +1343,23 @@
    "status_on_hit": [
     "poison",
     0.35
-   ]
+   ],
+   "abilities": [
+    {
+     "name": "Overclock Slam",
+     "kind": "heavy",
+     "every": 3,
+     "power": 1.7
+    },
+    {
+     "name": "System Siphon",
+     "kind": "status",
+     "every": 5,
+     "power": 1.0,
+     "status": "poison"
+    }
+   ],
+   "enrage_below": 0.35
   }
  },
  "gates": [
@@ -996,6 +1368,7 @@
    "name": "the Clockwork Foundry",
    "theme": "technology",
    "min_level": 2,
+   "party_size": 1,
    "region": "village_start",
    "description": "A pre-Fracture workshop, dug out of a hillside near the village, ticks like a giant pocket watch.",
    "entry_text": "Brass gears turn in the walls. Every machine in here is still running, and none of them remember why.",
@@ -1030,8 +1403,7 @@
      "text": "Rivet drones buzz out of a vent, spitting hot nails.",
      "enemies": [
       "clockwork_foundry_drone",
-      "clockwork_foundry_drone",
-      "clockwork_foundry_spider"
+      "clockwork_foundry_drone"
      ]
     }
    ],
@@ -1053,6 +1425,7 @@
       "victory": "The Foreman winds down mid-sentence: 'SHIFT... NOT...'",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_clockwork_foundry_automaton",
       "study": {
        "stat": "INT",
        "min": 10,
@@ -1087,6 +1460,7 @@
        "Fizzwick",
        "Nell"
       ],
+      "trophy": "trophy_clockwork_foundry_tinker_gnome",
       "study": {
        "stat": "INT",
        "min": 10,
@@ -1107,6 +1481,7 @@
       "victory": "The Spark fizzles out in a shower of blue light, and the machines stop, all at once.",
       "arrival_omen": "Blue light crawls along the gears of the Mainspring Hall. The machines move when no one is watching.",
       "arrival_rumour": "Something is alive in the wires of the Clockwork Foundry. It switches the machines on at night.",
+      "trophy": "trophy_clockwork_foundry_spark_ghost",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1127,6 +1502,7 @@
       "victory": "The Colossus collapses into its parts, and a single gear rolls to your feet.",
       "arrival_omen": "The foundry is running full shifts with no one in it. Something big is on the assembly line.",
       "arrival_rumour": "The Clockwork Foundry has built something huge from scrap, and it has started to walk.",
+      "trophy": "trophy_clockwork_foundry_mainspring",
       "study": {
        "stat": "INT",
        "min": 11,
@@ -1146,6 +1522,7 @@
    "name": "the Golem Assembly Line",
    "theme": "technology",
    "min_level": 4,
+   "party_size": 1,
    "region": "village_start",
    "description": "A rift into a factory that made war golems for a kingdom that no longer exists. The line still runs.",
    "entry_text": "Conveyor belts carry stone limbs past you in an endless procession. A loudspeaker announces quotas in a dead language.",
@@ -1206,6 +1583,7 @@
       "victory": "The Overseer's clipboard clatters to the floor. The line stops.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_golem_assembly_overseer",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1251,6 +1629,7 @@
       "victory": "Prototype Omega's cannons melt, and it topples off the line.",
       "arrival_omen": "The belts are running faster. Something new is coming down the line, much bigger than the others.",
       "arrival_rumour": "The Golem Assembly Line built a war machine. Its cannons can be heard from the village.",
+      "trophy": "trophy_golem_assembly_prototype",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1277,6 +1656,7 @@
        "Gearjaw",
        "Mags"
       ],
+      "trophy": "trophy_golem_assembly_scrappers",
       "study": {
        "stat": "INT",
        "min": 12,
@@ -1297,6 +1677,7 @@
       "victory": "The Core Mind shatters, and every golem in the factory sits down where it stands.",
       "arrival_omen": "The golem cores in the bay are glowing in sync, pulsing like a single heart.",
       "arrival_rumour": "The golems in the Assembly Line all move together now, like one mind. Nobody knows who's thinking.",
+      "trophy": "trophy_golem_assembly_core_mind",
       "study": {
        "stat": "INT",
        "min": 13,
@@ -1316,6 +1697,7 @@
    "name": "the Derelict Skyship Meridian",
    "theme": "technology",
    "min_level": 7,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A flying ship from before the Fracture hangs in a rift above the forest, motionless, its running lights still blinking.",
    "entry_text": "Rope ladders lead up through a hatch. Inside, the decks tilt slightly, and the engines hum a note that sets your teeth on edge.",
@@ -1350,8 +1732,7 @@
      "text": "Automated turrets on the gun deck swivel to track you.",
      "enemies": [
       "derelict_skyship_deck_turret",
-      "derelict_skyship_deck_turret",
-      "derelict_skyship_sky_pirate"
+      "derelict_skyship_deck_turret"
      ]
     }
    ],
@@ -1379,6 +1760,7 @@
        "Vesper",
        "Joss"
       ],
+      "trophy": "trophy_derelict_skyship_captain",
       "study": {
        "stat": "INT",
        "min": 14,
@@ -1409,6 +1791,7 @@
       "victory": "Grell's hook clangs to the deck. The crew loses heart.",
       "arrival_omen": "The pirate flag is still flying, but a new name has been painted over the Captain's on the bridge door.",
       "arrival_rumour": "The pirates of the Meridian have a new captain. He is meaner than the last.",
+      "trophy": "trophy_derelict_skyship_first_mate",
       "study": {
        "stat": "AGI",
        "min": 14,
@@ -1429,6 +1812,7 @@
       "victory": "MERIDIAN's voice slows to a crawl. 'Thank... you...' it says, and falls silent.",
       "arrival_omen": "The ship's lights have all turned red. A voice on the intercom counts down from a number it never reaches.",
       "arrival_rumour": "The skyship over the forest has woken up. Its guns track anything that flies.",
+      "trophy": "trophy_derelict_skyship_ship_mind",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1450,6 +1834,7 @@
       "victory": "The Navigator looks at the forest below and understands, finally. The crew fades.",
       "arrival_omen": "Wet footprints on every deck, though no rain falls. Someone has been checking the charts.",
       "arrival_rumour": "The ghosts of the skyship's first crew have taken it back. They are still trying to land.",
+      "trophy": "trophy_derelict_skyship_storm_wraith",
       "study": {
        "stat": "WIS",
        "min": 15,
@@ -1469,6 +1854,7 @@
    "name": "the Silent Archive",
    "theme": "technology",
    "min_level": 9,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A rift beneath Verath opens into a vault full of humming crystal pillars. The System's own records call it an ARCHIVE NODE, and then refuse to say more.",
    "entry_text": "Each pillar holds a flicker of light that looks like a memory: a wedding, a battle, a child laughing. The air smells like ozone and old paper.",
@@ -1525,6 +1911,7 @@
       "victory": "The Curator's light stutters and freezes on a single word: ERROR.",
       "arrival_omen": "",
       "arrival_rumour": "",
+      "trophy": "trophy_archive_vault_curator",
       "study": {
        "stat": "INT",
        "min": 15,
@@ -1571,6 +1958,7 @@
       "victory": "The Restored Curator crashes. Somewhere, a backup of the backup begins to load.",
       "arrival_omen": "Lights flicker through the stacks in patterns, like a mind booting up.",
       "arrival_rumour": "The Silent Archive under Verath has restored its Curator. It remembers everyone who visited.",
+      "trophy": "trophy_archive_vault_restored",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -1592,6 +1980,7 @@
       "victory": "The Corrupted Index falls silent, and a thousand stolen memories drift out of it like sparks.",
       "arrival_omen": "The pillars flicker with broken memories, the same moments over and over: a door, a scream, a door.",
       "arrival_rumour": "Something broke in the Silent Archive under Verath. Now it shows people memories that aren't theirs.",
+      "trophy": "trophy_archive_vault_corrupted",
       "study": {
        "stat": "WIS",
        "min": 16,
@@ -1617,6 +2006,7 @@
        "19",
        "41"
       ],
+      "trophy": "trophy_archive_vault_system_auditor",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -1636,6 +2026,7 @@
    "name": "the Lightning Engine",
    "theme": "technology",
    "min_level": 11,
+   "party_size": 1,
    "region": "verath_city",
    "description": "A copper spire stands in a rift west of Verath, wrapped in coils and crowned with a crackling sphere. Birds that fly near it never land again.",
    "entry_text": "Every hair on your body stands up. Blue sparks jump from your fingertips to the copper walls.",
@@ -1670,8 +2061,7 @@
      "text": "Hounds of crackling copper bound out of a charging bay.",
      "enemies": [
       "storm_engine_tesla_hound",
-      "storm_engine_tesla_hound",
-      "storm_engine_arc_drone"
+      "storm_engine_tesla_hound"
      ]
     }
    ],
@@ -1699,6 +2089,7 @@
        "Ampera",
        "Sten"
       ],
+      "trophy": "trophy_storm_engine_engineer",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -1729,6 +2120,7 @@
       "victory": "Senior Apprentice Kel drops the notes. The spire sputters.",
       "arrival_omen": "The spire's lights flicker on again, unevenly, like someone is reading the manual.",
       "arrival_rumour": "Someone has restarted the Lightning Engine. Badly. The spire west of Verath sparks all night.",
+      "trophy": "trophy_storm_engine_apprentices",
       "study": {
        "stat": "INT",
        "min": 16,
@@ -1749,6 +2141,7 @@
       "victory": "The Living Storm discharges into the copper floor all at once, and the chamber goes quiet.",
       "arrival_omen": "The sky over the spire is a permanent thunderhead now, and it moves against the wind.",
       "arrival_rumour": "A storm with a mind lives in the Lightning Engine. It follows travellers along the west road.",
+      "trophy": "trophy_storm_engine_living_storm",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -1769,6 +2162,7 @@
       "victory": "The Copper Titan sags like a puppet with its strings cut.",
       "arrival_omen": "The coils have unwound from the spire and lie coiled on the floor of the chamber, moving slightly.",
       "arrival_rumour": "The Lightning Engine has made itself a body of copper. The lights in Verath flicker when it walks.",
+      "trophy": "trophy_storm_engine_copper_titan",
       "study": {
        "stat": "INT",
        "min": 17,
@@ -1788,6 +2182,7 @@
    "name": "the Thaumic Reactor",
    "theme": "technology",
    "min_level": 15,
+   "party_size": 3,
    "region": "verath_city",
    "description": "A sealed facility from before the Fracture, where someone tried to make the arcane arts into fuel. The rift around it glows a faint, sick green.",
    "entry_text": "Warning signs in an old language line the walls. Your skin tingles, then itches. The System adds a status: THAUMIC EXPOSURE (MILD).",
@@ -1850,6 +2245,7 @@
        "Ines",
        "Moreau"
       ],
+      "trophy": "trophy_thaumic_reactor_director",
       "study": {
        "stat": "INT",
        "min": 18,
@@ -1895,6 +2291,7 @@
       "victory": "The Meltdown Elemental cools in an instant into a statue of green glass, and cracks.",
       "arrival_omen": "The containment doors are bulging outward, glowing hot. The floor has started to melt.",
       "arrival_rumour": "The Thaumic Reactor is melting down. The grass for a mile around it has turned to glass.",
+      "trophy": "trophy_thaumic_reactor_meltdown",
       "study": {
        "stat": "INT",
        "min": 18,
@@ -1921,6 +2318,7 @@
        "Calder",
        "Pim"
       ],
+      "trophy": "trophy_thaumic_reactor_survivors",
       "study": {
        "stat": "WIS",
        "min": 17,
@@ -1941,6 +2339,7 @@
       "victory": "The Fuel-God withdraws into the core like a tide going out. The rift dims.",
       "arrival_omen": "The reactor core is pulsing again, though nobody restarted it. Something on the other side of it is drinking.",
       "arrival_rumour": "Something came through the Thaumic Reactor's core. The System won't name it.",
+      "trophy": "trophy_thaumic_reactor_fuel_god",
       "study": {
        "stat": "INT",
        "min": 19,

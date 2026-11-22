@@ -26,6 +26,16 @@ from pydantic import BaseModel, Field, model_validator
 logger = logging.getLogger(__name__)
 
 
+class LairAbility(BaseModel):
+    """A boss's signature move (systems/combat_effects.enemy_turn)."""
+    name: str
+    kind: Literal["heavy", "status", "heal", "summon", "drain"]
+    every: int = Field(default=3, ge=2, le=10)
+    power: float = Field(default=1.8, ge=0.05, le=3.0)   # heavy: damage ×; heal: share of max HP; drain: share healed
+    status: str = ""                                     # status: what it inflicts
+    summon: str = ""                                     # summon: enemy template id
+
+
 class LairEnemyTemplate(BaseModel):
     name: str
     max_hp: int = Field(ge=1, le=2000)
@@ -36,6 +46,8 @@ class LairEnemyTemplate(BaseModel):
     rank: str = "D"
     status_on_hit: tuple[str, float] | None = None
     loot_table: list[tuple[str, float]] = Field(default_factory=list)
+    abilities: list[LairAbility] = Field(default_factory=list)
+    enrage_below: float = Field(default=0.0, ge=0.0, le=0.9)
 
 
 class LairSuccessorWhen(BaseModel):
@@ -84,6 +96,7 @@ class LairOccupant(BaseModel):
     # omen / rumour, so a branching chain always hints at what really comes.
     arrival_omen: str = ""
     arrival_rumour: str = ""
+    trophy: str = ""        # item id given the first time the player kills this occupant
     successors: list[LairSuccessor] = Field(default_factory=list)
 
     @property
@@ -142,6 +155,9 @@ class LairRegistry:
 
     def register(self, lair: LairDefinition) -> None:
         self._lairs[lair.lair_id] = lair
+
+    def unregister(self, lair_id: str) -> None:
+        self._lairs.pop(lair_id, None)
 
     def get(self, lair_id: str) -> LairDefinition | None:
         return self._lairs.get(lair_id)
