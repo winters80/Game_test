@@ -77,4 +77,4 @@ if ($aiOn -eq "1") {
 }
 
 if ($Check) { Say "Ready."; exit 0 }
-& $py -X utf8 main.py
+& $py -X utf8 main.py @args

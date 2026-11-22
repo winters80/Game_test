@@ -40,6 +40,8 @@ def clear() -> None:
 
 def print_title() -> None:
     from config import GAME_TITLE, GAME_SUBTITLE
+    if _ui_hook("hides_title"):          # the Textual app has its own title bar
+        return
     console.print()
     console.print(Align.center(Text(GAME_TITLE, style="title")))
     console.print(Align.center(Text(GAME_SUBTITLE, style="subtitle")))
@@ -148,6 +150,12 @@ class DownloadProgress:
     ``update`` as the ``on_progress(status, completed, total)`` callback."""
 
     def __init__(self, label: str) -> None:
+        self._label = label
+        self._spin = _ui_hook("spinner")       # Textual: show it on the busy line
+        self._cm = None
+        self._biggest = 0
+        if self._spin:
+            return
         from rich.progress import (BarColumn, DownloadColumn, Progress, TextColumn,
                                    TransferSpeedColumn)
         self._progress = Progress(
@@ -159,13 +167,26 @@ class DownloadProgress:
         self._biggest = 0
 
     def __enter__(self) -> "DownloadProgress":
+        if self._spin:
+            self._cm = self._spin(self._label)
+            self._cm.__enter__()
+            return self
         self._progress.start()
         return self
 
     def __exit__(self, *exc) -> None:
+        if self._cm is not None:
+            self._cm.__exit__(*exc)
+            return
         self._progress.stop()
 
     def update(self, status: str, completed: int, total: int) -> None:
+        if self._spin:
+            if total and total >= self._biggest:
+                self._biggest = total
+                setter = getattr(_ui_hook("set_busy_text") or (lambda m: None), "__call__")
+                setter(f"{self._label}: {completed * 100 // total}%")
+            return
         # Ollama reports one layer at a time. Track the biggest (the weights),
         # so the small layers after it don't make the bar jump backwards.
         if total and total >= self._biggest:

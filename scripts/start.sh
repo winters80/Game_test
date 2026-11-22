@@ -79,4 +79,4 @@ if [ "$AI_ON" = "1" ]; then
 fi
 
 [ "${1:-}" = "--check" ] && { say "Ready."; exit 0; }
-exec "$PY" -X utf8 main.py
+exec "$PY" -X utf8 main.py "$@"
