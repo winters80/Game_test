@@ -20,6 +20,16 @@ def main() -> None:
     log.info("=" * 60)
     log.info("SYSTEM BREAKER starting up")
 
+    if "--web" in sys.argv:              # the Textual app, in a browser
+        from ui.tui_app import run_web
+        run_web()
+        return
+    if "--tui" in sys.argv:              # the Textual app, in this terminal
+        from ui.tui_app import run_tui
+        log.info("Starting the Textual interface")
+        run_tui()
+        return
+
     try:
         from core.game_engine import GameEngine
         engine = GameEngine()

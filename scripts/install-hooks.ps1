@@ -36,5 +36,5 @@ Get-ChildItem $src -File | ForEach-Object {
 }
 
 Write-Host ""
-Write-Host "Hooks installed. The pre-push hook will now run all 7 test suites"
+Write-Host "Hooks installed. The pre-push hook will now run all 8 test suites"
 Write-Host "before every push, and abort on failure."

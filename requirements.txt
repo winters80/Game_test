@@ -2,3 +2,5 @@ ollama>=0.5.0
 pydantic>=2.0.0
 rich>=13.0.0
 questionary>=2.0.0
+textual>=8.0.0         # panel interface: python main.py --tui
+textual-serve>=1.1.0   # the same in a browser: python main.py --web

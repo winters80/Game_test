@@ -155,16 +155,25 @@ def _build_extras(engine: "GameEngine") -> list[str]:
 
 def prompt_choice(engine: "GameEngine", options: list[SceneOption]) -> SceneOption | None:
     """Render options, prompt the player, dispatch hotkeys, or return a chosen option."""
-    renderer.print_options(options)
-
     available = [(i + 1, opt) for i, opt in enumerate(options) if not opt.locked]
     if not available:
+        renderer.print_options(options)
         renderer.print_error("All options are locked.")
         return None
 
+    # Locked options stay in the list, greyed out with the reason, so the
+    # numbers match and the player sees what they could unlock.
+    entries: list = []
+    for i, opt in enumerate(options, 1):
+        if opt.locked:
+            reason = opt.lock_reason or "locked"
+            if opt.hint_text:
+                reason += f" ~ {opt.hint_text}"
+            entries.append(uip.Choice(f"{i}. {opt.label}", disabled=reason))
+        else:
+            entries.append(f"{i}. {opt.label}")
     extras = _build_extras(engine)
-    choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extras
-    answer = uip.select("Choose:", choices=choice_labels).ask()
+    answer = uip.select("Choose:", choices=entries + extras).ask()
 
     if answer is None:
         engine._running = False
