@@ -538,6 +538,17 @@ class ContentGenerator:
             return None
         return self._decider.decide(question, options, context)
 
+    def decide_many(self, questions: list, context: str = "") -> list:
+        """Several independent decisions in one call (ai/decision)."""
+        if not questions:
+            return []
+        if not hasattr(self, "_decider"):
+            from ai.decision import build_decider
+            self._decider = build_decider(self.fast_client)
+        if self._decider is None:
+            return [None] * len(questions)
+        return self._decider.decide_many(questions, context)
+
     def generate_bot_reply(self, profile: dict, player_name: str, topic: str,
                            facts: str, said_so_far: list[str]) -> str | None:
         """A bot adventurer's reply on ``topic``, written like another player

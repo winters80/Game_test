@@ -82,6 +82,7 @@ class Enemy:
     enraged: bool = False
     turns_taken: int = 0
     summoned: bool = False
+    ability_last: dict = field(default_factory=dict)  # ability name → turn last used (tactics)
 
     @property
     def is_alive(self) -> bool:

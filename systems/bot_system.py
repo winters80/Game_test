@@ -55,6 +55,9 @@ class BotAgent(BaseModel):
     guild_id: str = ""                  # an authored guild, or a player-founded one
     guild_rank: str = ""
     waiting_until: int = 0              # agreed to team up: stays in town until this turn
+    goal_zone: str = ""                 # where the AI planner sent it (bot_brain.goal_options)
+    goal_reason: str = ""
+    goal_until: int = 0                 # the goal lapses after this turn
 
     @field_validator("inventory", mode="before")
     @classmethod

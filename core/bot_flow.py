@@ -104,6 +104,7 @@ def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
     if not bots:
         return []
     turn = engine.state.player.turn_count
+    plan_bot_goals(engine, bots, turn)
     world = None
     events: list = []
     acted = []
@@ -131,6 +132,59 @@ def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
         _surface(engine, events)
     _persist(engine, acted, events)
     return events
+
+
+def plan_bot_goals(engine: "GameEngine", bots: list, turn: int) -> int:
+    """Every BOT_GOAL_EVERY_TURNS, ask one batched decision where each bot
+    should head (in the background), and apply the answers once they're in.
+    Offline or with decisions off, nothing happens and the rules decide.
+    Returns how many goals were applied this call."""
+    from config import BOT_GOAL_EVERY_TURNS, BOT_GOAL_HOLD_TURNS, DECISION_PROVIDER
+    from systems.bot_brain import apply_goal, goal_options, goal_question
+
+    applied = 0
+    pending = getattr(engine, "_bot_goal_job", None)
+    if pending is not None:
+        future, plans = pending
+        if not future.done():
+            return 0
+        engine._bot_goal_job = None
+        try:
+            answers = future.result()
+        except Exception:
+            answers = []
+        for (bot, zones), d in zip(plans, answers or []):
+            if d is not None and 0 <= d.index < len(zones):
+                apply_goal(bot, zones[d.index], turn, BOT_GOAL_HOLD_TURNS)
+                applied += 1
+        if applied:
+            logger.info("Bot planner set %d goal(s)", applied)
+        return applied
+    if DECISION_PROVIDER == "off" or not engine._ai_online():
+        return 0
+    if turn - getattr(engine, "_bot_goal_turn", -10**9) < BOT_GOAL_EVERY_TURNS:
+        return 0
+    engine._bot_goal_turn = turn
+    plans, questions = [], []
+    for bot in bots:
+        if bot.waiting_until > turn:
+            continue                         # promised the player a Gate run
+        opts = goal_options(bot)
+        if len(opts) < 2:
+            continue
+        plans.append((bot, [z for z, _ in opts]))
+        questions.append((goal_question(bot), [label for _, label in opts]))
+    if not questions:
+        return 0
+    p = engine.state.player
+    from systems.bot_brain import place
+    context = (f"Aethoria, a world of dungeon floors and Gates. Adventurers go where they can grow: "
+               f"fight where their level allows, sell when the bag is full, rest when hurt. The player "
+               f"{p.name} (level {p.level}) is at {place(engine.state.current_scene_id)}.")
+    future = engine.ai_service.submit_decide_many_async(questions, context)
+    if future is not None:
+        engine._bot_goal_job = (future, plans)
+    return 0
 
 
 AUCTION_HOUSE_FEE = 0.1        # the house keeps 10% of a bot's sale

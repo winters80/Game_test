@@ -190,9 +190,101 @@ def decisions() -> None:
               "questions always get a real answer")
 
 
+def planning() -> None:
+    """Batched decisions: bot goals and boss tactics."""
+    from concurrent.futures import Future
+    from ai import decision as dc
+    from ai.ai_service import AIService
+
+    got = dc._parse_batch({"q0": 1, "q1": 9, "q2": "x"}, [3, 3, 3], "t")
+    check(got[0].index == 1 and got[1] is None and got[2] is None, "batch answers parse; bad ones are None")
+
+    class FakeClient:
+        model = "fake"
+
+        def generate_json(self, **kw):
+            self.kw = kw
+            return {"q0": 2, "q1": 0}
+    fc = FakeClient()
+    res = dc.OllamaDecider(fc).decide_many([("A?", ["a", "b", "c"]), ("B?", ["x", "y"])])
+    check([d.index for d in res] == [2, 0] and fc.kw["schema"]["properties"]["q1"]["enum"] == [0, 1],
+          "several questions go in one schema-constrained call")
+    check(AIService().decide_many([("q", ["a"])] * 3) == [None, None, None], "offline batch → all None")
+
+    # ── Bot goals ──
+    from systems.bot_system import BotAgent
+    from systems import bot_brain as bb
+    from core import bot_flow as bf
+    bot = BotAgent(bot_id="g1", name="Goaly", archetype="trader", level=4, current_zone_id="village_start")
+    zones = [z for z, _ in bb.goal_options(bot)]
+    check("dungeon_floor2" in zones and "dungeon_floor3" not in zones, "goal options respect the bot's level")
+
+    class Svc:
+        def __init__(self):
+            self.asked = None
+
+        def submit_decide_many_async(self, questions, context=""):
+            self.asked = questions
+            f = Future()
+            f.set_result([dc.Decision(zones.index("dungeon_floor2"), 0.6, "t")])
+            return f
+
+    class Eng:
+        pass
+    eng = Eng()
+    eng.ai_service = Svc()
+    eng._ai_online = lambda: True
+    eng.state = type("S", (), {"player": type("P", (), {"name": "P", "level": 3})(),
+                               "current_scene_id": "village_start"})()
+    bf.plan_bot_goals(eng, [bot], 100)
+    check(eng.ai_service.asked and "Goaly" in eng.ai_service.asked[0][0], "the planner asks about each bot")
+    n = bf.plan_bot_goals(eng, [bot], 101)
+    check(n == 1 and bot.goal_zone == "dungeon_floor2", "the answer becomes the bot's goal")
+    world = bb.BotWorld(None, lambda z: [], {}, {}, 102)
+    import random as _r
+    target, doing = bb._destination(bot, world, _r.Random(1))
+    check(target == "dungeon_floor2", f"a trader heads where the planner sent it ({doing})")
+    check(bf.plan_bot_goals(eng, [bot], 110) == 0 and eng.ai_service.asked is not None,
+          "no new plan until BOT_GOAL_EVERY_TURNS pass")
+    eng._ai_online = lambda: False
+    eng._bot_goal_turn = -10**6
+    eng.ai_service.asked = None
+    bf.plan_bot_goals(eng, [bot], 500)
+    check(eng.ai_service.asked is None, "offline: no planning call")
+
+    # ── Boss tactics ──
+    from systems import combat_effects as fx
+    from systems.combat_system import Enemy
+    from entities.player import Player
+    boss = Enemy(enemy_id="b", name="Priest", max_hp=100, current_hp=100, attack=10, defense=0,
+                 xp_reward=1, gold_reward=1,
+                 abilities=[{"name": "Crush", "kind": "heavy", "every": 3, "power": 2.0},
+                            {"name": "Litany", "kind": "heal", "every": 4, "power": 0.2},
+                            {"name": "Kneel", "kind": "status", "every": 3, "status": "stun"}])
+    names = [o.get("name") for o in fx.tactic_options(boss)]
+    check("Crush" not in names and "Litany" not in names and "Kneel" in names,
+          f"heavy stays scheduled; no heal at full HP ({names})")
+    boss.current_hp = 40
+    opts = fx.tactic_options(boss)
+    check(any(o.get("name") == "Litany" for o in opts), "a hurt boss may heal")
+    q, labels = fx.tactic_question(boss, Player(name="P"), {}, opts)
+    check("40/100" in q and len(labels) == len(opts), "the question describes the fight")
+    heal = next(o for o in opts if o.get("name") == "Litany")
+    p = Player(name="P")
+    fx.enemy_turn(boss, p, {}, chosen=heal)
+    check(boss.current_hp == 60, "a chosen heal heals")
+    check(not any(o.get("name") == "Litany" for o in fx.tactic_options(boss)), "a used ability waits its cooldown")
+    boss.turns_taken = 2                     # next turn (3) is the announced heavy blow
+    check(fx.heavy_due(boss), "the announced heavy turn is detected")
+    hp0 = p.current_hp
+    fx.enemy_turn(boss, p, {}, chosen=fx.BASIC)
+    check(p.current_hp < hp0 and boss.ability_last.get("Crush") == 3, "a choice never replaces an announced heavy blow")
+
+
 if __name__ == "__main__":
     main()
     decisions()
+    planning()
     print()
     if failures:
         print(f"  {len(failures)} model check(s) failed.")

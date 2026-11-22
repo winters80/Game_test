@@ -61,6 +61,34 @@ _SYSTEM = ("You are a decision function inside a game. You never write prose. "
            "You pick exactly one of the numbered options.")
 
 
+# ── Batches: many independent questions in one call ──────────────────────────
+
+def _batch_schema(sizes: list[int]) -> dict:
+    return {"type": "object",
+            "properties": {f"q{i}": {"type": "integer", "enum": list(range(n))} for i, n in enumerate(sizes)},
+            "required": [f"q{i}" for i in range(len(sizes))]}
+
+
+def _batch_prompt(questions: list[tuple[str, list[str]]], context: str) -> str:
+    parts = [f"Context: {context}"] if context else []
+    for i, (q, opts) in enumerate(questions):
+        listing = "; ".join(f"{j}: {o}" for j, o in enumerate(opts))
+        parts.append(f"q{i}. {q} Options: {listing}")
+    parts.append("For every question qN, answer with the number of the best option.")
+    return "\n".join(parts)
+
+
+def _parse_batch(data: object, sizes: list[int], source: str) -> list["Decision | None"]:
+    out: list[Decision | None] = []
+    for i, n in enumerate(sizes):
+        try:
+            idx = int(data.get(f"q{i}"))                       # type: ignore[union-attr]
+            out.append(Decision(idx, 0.6, source) if 0 <= idx < n else None)
+        except (AttributeError, TypeError, ValueError):
+            out.append(None)
+    return out
+
+
 def _parse(data: object, n: int, source: str) -> Decision | None:
     if not isinstance(data, dict):
         return None
@@ -91,12 +119,40 @@ class OllamaDecider:
             num_predict=30, timeout=OLLAMA_TIMEOUT_FAST)
         return _parse(data, len(options), f"ollama:{self.client.model}")
 
+    def decide_many(self, questions: list[tuple[str, list[str]]], context: str = "") -> list:
+        from config import OLLAMA_TIMEOUT_JSON
+        sizes = [len(o) for _, o in questions]
+        data = self.client.generate_json(
+            prompt=_batch_prompt(questions, context), system_prompt=_SYSTEM,
+            schema=_batch_schema(sizes), temperature=0.2, max_retries=1,
+            num_predict=12 * len(questions) + 20, timeout=OLLAMA_TIMEOUT_JSON)
+        return _parse_batch(data, sizes, f"ollama:{self.client.model}")
+
 
 class OpenAICompatibleDecider:
     """Decisions from an OpenAI-compatible endpoint (opt-in, see module doc)."""
 
     def __init__(self, endpoint: str, model: str, api_key: str, timeout: float = 15.0) -> None:
         self.endpoint, self.model, self.api_key, self.timeout = endpoint.rstrip("/"), model, api_key, timeout
+
+    def _post(self, body: dict) -> dict:
+        req = urllib.request.Request(
+            f"{self.endpoint}/chat/completions", data=json.dumps(body).encode("utf-8"),
+            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"})
+        with urllib.request.urlopen(req, timeout=self.timeout) as resp:      # noqa: S310 (configured URL)
+            payload = json.loads(resp.read().decode("utf-8"))
+        return json.loads(payload["choices"][0]["message"]["content"])
+
+    def decide_many(self, questions: list[tuple[str, list[str]]], context: str = "") -> list:
+        sizes = [len(o) for _, o in questions]
+        data = self._post({
+            "model": self.model, "temperature": 0, "max_tokens": 12 * len(questions) + 20,
+            "messages": [{"role": "system", "content": _SYSTEM},
+                         {"role": "user", "content": _batch_prompt(questions, context)}],
+            "response_format": {"type": "json_schema",
+                                "json_schema": {"name": "decisions", "schema": _batch_schema(sizes)}},
+        })
+        return _parse_batch(data, sizes, f"remote:{self.model}")
 
     def decide(self, question: str, options: list[str], context: str = "") -> Decision | None:
         body = {
@@ -108,13 +164,7 @@ class OpenAICompatibleDecider:
             "response_format": {"type": "json_schema",
                                 "json_schema": {"name": "decision", "schema": _schema(len(options))}},
         }
-        req = urllib.request.Request(
-            f"{self.endpoint}/chat/completions", data=json.dumps(body).encode("utf-8"),
-            headers={"Content-Type": "application/json", "Authorization": f"Bearer {self.api_key}"})
-        with urllib.request.urlopen(req, timeout=self.timeout) as resp:      # noqa: S310 (configured URL)
-            payload = json.loads(resp.read().decode("utf-8"))
-        content = payload["choices"][0]["message"]["content"]
-        return _parse(json.loads(content), len(options), f"remote:{self.model}")
+        return _parse(self._post(body), len(options), f"remote:{self.model}")
 
 
 def build_decider(fast_client):

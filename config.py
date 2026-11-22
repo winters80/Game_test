@@ -43,6 +43,9 @@ DECISION_MODEL = os.environ.get("DECISION_MODEL", "")              # the remote 
 # The remote key is read from the DECISION_API_KEY environment variable only.
 DECISION_MATCH_CONFIDENCE = 0.7    # [?] text that matches an existing choice this surely just does it
 
+BOSS_TACTICS = True                # bosses pick non-heavy moves by decision (fixed cycle offline)
+BOSS_TACTIC_WAIT = 1.5             # seconds an enemy turn waits for its answer, then uses the cycle
+
 # ── Background AI generation ────────────────────────────────────────────────
 BG_GEN_ENABLED  = True    # master switch for background content generation
 BG_GEN_INTERVAL = 5       # turns between background task submissions
@@ -92,6 +95,8 @@ BOT_AI_DECISIONS = False               # True = old behaviour: ask the primary m
                                        # bot decision (slow; bots freeze without Ollama)
 BOT_MAX_EVENT_LINES = 1                # bot activity lines shown per turn in your zone
 BOT_ARRIVALS_EVERY_TURNS = 4           # batch "X and Y are about." to once per N turns
+BOT_GOAL_EVERY_TURNS = 36              # every 6 in-game hours, one batched AI decision picks
+BOT_GOAL_HOLD_TURNS = 36               # each bot's destination, kept this long (no AI: rules only)
 
 # ── World growth (systems/world_growth.py) ─────────────────────────────────────
 WORLD_YIELD_COOLDOWN_TURNS = 10        # turns before repeating an action yields again

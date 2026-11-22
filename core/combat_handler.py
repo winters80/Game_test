@@ -55,6 +55,45 @@ def _print_triggers(fired) -> None:
 
 class CombatHandlerMixin:
 
+    # ── Boss tactics (ai/decision) ────────────────────────────────────────────
+
+    def _plan_tactics(self, enemies: list, player, player_statuses: dict):
+        """Ask, in the background, which move each ability-using enemy makes
+        this round. Returns a pending job or None (rules decide)."""
+        from config import BOSS_TACTICS, DECISION_PROVIDER
+        from systems import combat_effects as fx
+        if not BOSS_TACTICS or DECISION_PROVIDER == "off" or not self._ai_online():
+            return None
+        asks, questions = [], []
+        for e in enemies:
+            if not e.is_alive or fx.heavy_due(e):
+                continue
+            opts = fx.tactic_options(e, enemies)
+            if opts:
+                q, labels = fx.tactic_question(e, player, player_statuses, opts)
+                asks.append((e, opts))
+                questions.append((q, labels))
+        if not questions:
+            return None
+        future = self.ai_service.submit_decide_many_async(questions)
+        return (future, asks) if future is not None else None
+
+    def _tactic_for(self, job, enemy):
+        """The chosen move for ``enemy``, if its answer came back in time."""
+        from config import BOSS_TACTIC_WAIT
+        if job is None:
+            return None
+        future, asks = job
+        if not hasattr(future, "_sb_answers"):
+            try:
+                future._sb_answers = future.result(timeout=BOSS_TACTIC_WAIT)
+            except Exception:
+                future._sb_answers = []
+        for (e, opts), d in zip(asks, future._sb_answers or []):
+            if e is enemy and d is not None and 0 <= d.index < len(opts):
+                return opts[d.index]
+        return None
+
     def _run_combat(self, encounter_id: str, surprise: bool = False, enemies: list | None = None) -> str:
         """Fight ``encounter_id`` (or the given pre-spawned ``enemies``, e.g. a
         scaled lair boss). Returns "victory", "fled", "defeat" or "none".
@@ -134,6 +173,9 @@ class CombatHandlerMixin:
             if player_statuses:
                 renderer.console.print(f"  [system_warning]You: {fx.status_label(player_statuses)}[/system_warning]")
             renderer.console.print()
+
+            # Bosses think while the player does (one batched decision).
+            tactics = self._plan_tactics(alive_enemies, player, player_statuses)
 
             # ── Choose action ─────────────────────────────────────────────────
             # Only include ACTIVE skills. PASSIVE skills contribute via
@@ -290,7 +332,8 @@ class CombatHandlerMixin:
                                                      style="system_warning")
                     continue
                 if enemy.is_alive and player.current_hp > 0:
-                    res = fx.enemy_turn(enemy, player, player_statuses, self.skill_registry, enemies)
+                    res = fx.enemy_turn(enemy, player, player_statuses, self.skill_registry, enemies,
+                                        chosen=self._tactic_for(tactics, enemy))
                     for text, style in res.lines:
                         renderer.console.print(f"  [{style}]{text}[/{style}]")
                     _print_triggers(res.fired)
