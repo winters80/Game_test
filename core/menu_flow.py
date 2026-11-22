@@ -15,8 +15,7 @@ import re
 import time
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from config import SAVES_DIR
 from entities.player import Player
 from persistence.save_manager import list_saves, load_game, new_game_state
@@ -34,7 +33,7 @@ def main_menu(engine: "GameEngine") -> None:
         choices.append("Load Game")
     choices.append("Quit")
 
-    choice = questionary.select("", choices=choices).ask()
+    choice = uip.select("", choices=choices).ask()
 
     if choice == "New Game":
         new_game(engine)
@@ -46,7 +45,7 @@ def main_menu(engine: "GameEngine") -> None:
 
 def load_game_menu(engine: "GameEngine", saves: list[str]) -> None:
     """Pick a save slot and start the game loop. Falls back to main menu on error."""
-    choice = questionary.select("Select save:", choices=saves + ["← Back"]).ask()
+    choice = uip.select("Select save:", choices=saves + ["← Back"]).ask()
     if choice == "← Back":
         main_menu(engine)
         return
@@ -75,7 +74,7 @@ def new_game(engine: "GameEngine") -> None:
     renderer.clear()
     renderer.print_system_message("WHAT IS YOUR NAME, ADVENTURER?")
 
-    name = questionary.text("Name:").ask()
+    name = uip.text("Name:").ask()
     if not name or not name.strip():
         name = "Wanderer"
 
@@ -100,6 +99,11 @@ def _attach_engine_handles(engine: "GameEngine") -> None:
     engine.state.skill_registry = engine.skill_registry
     engine.state.class_registry = engine.class_registry
     engine.state.scene_registry = engine.scene_registry
+    engine.state.item_registry = engine.item_registry
+    # Starting gear used to sit in the bag unequipped; equip the best item
+    # for any empty slot (fixes older saves too).
+    from systems.inventory_system import equip_best_for_empty_slots
+    equip_best_for_empty_slots(engine.state.player, engine.item_registry)
     engine.state.ai_service = engine.ai_service
     # Per-save world growth: drop any other save's generated content, then
     # re-register this save's bundles (items, recipes, traders, skills).

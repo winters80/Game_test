@@ -255,44 +255,137 @@ def bot_label(engine: "GameEngine", bot) -> str:
 
 
 def talk_to_bot(engine: "GameEngine", bot_id: str) -> None:
-    """Conversation with a bot: an AI (or fallback) line, news, and trading."""
-    import questionary
-    from systems.bot_system import bot_profile, fallback_line
+    """Chat with a bot like you would with another player: catch up, swap
+    tips, ask about their build or guild, team up for a Gate, or trade.
+    Lines come from the fast model when it's online (grounded in a summary of
+    what the bot really did), else from systems/bot_chat."""
+    from ui import prompt as uip
+    from systems import bot_chat
+    from systems.bot_system import bot_profile
 
     bot = engine._bot_manager.get(bot_id) if engine._bot_manager else None
     if bot is None or bot.current_zone_id != engine.state.current_scene_id:
         renderer.print_system_message("They've moved on.", style="dim_text")
         return
 
-    line = None
-    if engine._ai_online():
-        with renderer.show_ai_thinking_spinner(f"{bot.name} considers you..."):
-            line = engine.ai_service.generate_bot_line(bot_profile(bot), engine.state.player.name)
-    line = line or fallback_line(bot)
+    ctx = _chat_context(engine, bot)
+    said: list[str] = []
 
-    subtitle = (f"Level {bot.level} {_class_name(engine, bot.class_id)} · {bot.archetype} · "
+    def say(topic: str) -> str:
+        line = None
+        if engine._ai_online():
+            with renderer.show_ai_thinking_spinner(f"{bot.name} thinks about it..."):
+                line = engine.ai_service.generate_bot_reply(
+                    bot_profile(bot), engine.state.player.name, topic, _facts(ctx, topic), said)
+            if line and bot_chat.looks_robotic(line, bot.memory):
+                line = None
+        line = line or bot_chat.reply(bot, topic, ctx)
+        said.append(line)
+        return line
+
+    subtitle = (f"Level {bot.level} {ctx.bot_class} · {bot.archetype} · "
                 f"{bot.activity} · {bot.hp}/{bot.max_hp} HP")
     renderer.clear()
     renderer.print_title()
-    renderer.print_npc_dialogue(bot.name, subtitle, line)
+    renderer.print_npc_dialogue(bot.name, subtitle, say("greeting"))
 
     while True:
-        choice = questionary.select("Say:", choices=[
-            "What have you been up to?", "« Buy from them »", "« Sell to them »", "Farewell.",
-        ]).ask()
+        options = [("catch_up", "What have you been up to?"),
+                   ("tips", "Got any tips?"),
+                   ("build", "What's your build?")]
+        if ctx.guild_name or bot.level >= 3:
+            options.append(("guild", "In a guild?"))
+        if bot.waiting_until <= engine.state.player.turn_count:
+            options.append(("team_up", "Want to team up for a Gate?"))
+        plain = [label for _, label in options] + ["« Buy from them »", "« Sell to them »", "Farewell."]
+        choice = uip.select("Say:", choices=plain).ask()
         if choice in (None, "Farewell."):
+            renderer.print_npc_response(bot.name, _farewell(bot, ctx))
             return
-        if choice.startswith("What have"):
-            news = [m.split(" (turn")[0] for m in bot.memory[-4:]] or ["Not much worth telling."]
-            renderer.print_npc_response(bot.name, " ".join(n.rstrip(".") + "." for n in news))
-        elif choice.startswith("« Buy"):
+        if choice.startswith("« Buy"):
             _buy_from_bot_menu(engine, bot)
-        else:
+            continue
+        if choice.startswith("« Sell"):
             _sell_to_bot_menu(engine, bot)
+            continue
+        topic = next(key for key, label in options if label == choice)
+        ctx.seed += 1                        # a different line if you ask again
+        renderer.print_npc_response(bot.name, say(topic))
+        if topic == "team_up" and ctx.can_party:
+            bot.waiting_until = engine.state.player.turn_count + TEAM_UP_WAIT_TURNS
+            bot.activity = f"waiting to run a Gate with {engine.state.player.name}"
+            bot.remember(f"Agreed to run a Gate with {engine.state.player.name} (turn {engine.state.player.turn_count})")
+            _save_bot(engine, bot)
+
+
+TEAM_UP_WAIT_TURNS = 30          # five in-game hours of waiting around for you
+
+
+def _farewell(bot, ctx) -> str:
+    import random
+    rng = random.Random(f"{bot.bot_id}:bye:{ctx.seed}")
+    return rng.choice(["See you around.", "Don't die out there.", "Good hunting.",
+                       "Later.", "Watch your back down there."])
+
+
+def _chat_context(engine: "GameEngine", bot):
+    """Facts for the conversation: the player, Gates that suit them, lairs."""
+    from systems.bot_chat import ChatContext, party_refusal
+    p = engine.state.player
+    player_class = ""
+    if p.active_class or p.base_class:
+        player_class = _class_name(engine, p.active_class or p.base_class)
+    guild_name = ""
+    if bot.guild_id:
+        joined = [m for m in bot.memory if m.startswith("Joined ")]
+        guild_name = (joined[-1][7:].split(" (turn")[0] if joined
+                      else bot.guild_id.replace("_", " ").title())
+    picks: list[str] = []
+    reg = getattr(engine, "gate_registry", None)
+    if reg is not None:
+        fits = sorted((g for g in reg.all() if p.level - 2 <= g.min_level <= p.level + 1),
+                      key=lambda g: abs(g.min_level - p.level))
+        picks = [f"{g.name} (Lv {g.min_level})" for g in fits[:2]]
+    lair_note = ""
+    try:
+        from core.lair_flow import get_state
+        lreg = getattr(engine, "lair_registry", None)
+        for lair in (lreg.all() if lreg else []):
+            if lair.zone_id.startswith("gate:"):
+                continue
+            st = get_state(engine, lair.lair_id)
+            occ = lair.occupant(st.occupant_id) if st else None
+            if occ is not None and st.status == "occupied" and st.occupant_id != lair.first_occupant:
+                title = occ.title.replace("{name}", st.lineage_name or "").strip()
+                lair_note = f"{title} holds {lair.name} now, not what was there before"
+                break
+    except Exception:
+        lair_note = ""
+    refusal = party_refusal(bot, None, p.level)
+    return ChatContext(player_name=p.name, player_level=p.level, player_class=player_class,
+                       bot_class=_class_name(engine, bot.class_id), guild_name=guild_name,
+                       gate_picks=picks, lair_note=lair_note, can_party=not refusal,
+                       party_reason=refusal, seed=engine.state.turn_number)
+
+
+def _facts(ctx, topic: str) -> str:
+    bits = [f"you are a {ctx.bot_class}"]
+    if ctx.player_class:
+        bits.append(f"the other player is a level {ctx.player_level} {ctx.player_class}")
+    if topic == "tips" and ctx.gate_picks:
+        bits.append("Gates that suit their level: " + ", ".join(ctx.gate_picks))
+    if topic == "tips" and ctx.lair_note:
+        bits.append(ctx.lair_note)
+    if topic == "guild":
+        bits.append(f"your guild: {ctx.guild_name}" if ctx.guild_name else "you are not in a guild")
+    if topic == "team_up":
+        bits.append("you agree: tell them to pick you when they enter a Gate from here"
+                    if ctx.can_party else f"you decline because: {ctx.party_reason}")
+    return "; ".join(bits)
 
 
 def _buy_from_bot_menu(engine: "GameEngine", bot) -> None:
-    import questionary
+    from ui import prompt as uip
     from config import format_currency as _fc
     from systems import bot_trade
 
@@ -303,7 +396,7 @@ def _buy_from_bot_menu(engine: "GameEngine", bot) -> None:
             return
         renderer.console.print(f"\n  [gold]Your gold: {_fc(engine.state.player.gold)}[/gold]")
         labels = [f"{o.item.name} ×{o.quantity} — {_fc(o.price)} each" for o in offers] + ["← Done"]
-        answer = questionary.select(f"{bot.name}'s spare goods:", choices=labels).ask()
+        answer = uip.select(f"{bot.name}'s spare goods:", choices=labels).ask()
         if answer in (None, "← Done"):
             return
         offer = offers[labels.index(answer)]
@@ -313,7 +406,7 @@ def _buy_from_bot_menu(engine: "GameEngine", bot) -> None:
 
 
 def _sell_to_bot_menu(engine: "GameEngine", bot) -> None:
-    import questionary
+    from ui import prompt as uip
     from config import format_currency as _fc
     from systems import bot_trade
 
@@ -324,13 +417,13 @@ def _sell_to_bot_menu(engine: "GameEngine", bot) -> None:
                 bot.name, "Nothing I need, or nothing I can afford." if bot.gold else "I'm skint.")
             return
         labels = [f"{g.item.name} ×{g.quantity} — {_fc(g.price)} each" for g in goods] + ["← Done"]
-        answer = questionary.select(f"Sell to {bot.name} (they have {_fc(bot.gold)}):", choices=labels).ask()
+        answer = uip.select(f"Sell to {bot.name} (they have {_fc(bot.gold)}):", choices=labels).ask()
         if answer in (None, "← Done"):
             return
         chosen = goods[labels.index(answer)]
         qty = 1
         if chosen.quantity > 1:
-            raw = questionary.text(f"How many? (1-{chosen.quantity})", default=str(chosen.quantity)).ask()
+            raw = uip.text(f"How many? (1-{chosen.quantity})", default=str(chosen.quantity)).ask()
             try:
                 qty = int(raw or 1)
             except ValueError:

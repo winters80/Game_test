@@ -14,8 +14,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from scenes.option_logic import _known_skills_ctx
 
 from config import DATA_DIR, SAVES_DIR, feature
@@ -105,7 +104,7 @@ class GameMenusMixin:
             renderer.clear()
             renderer.print_title()
             renderer.console.print("\n  [system_msg][ SKILLS ][/system_msg]\n")
-            chosen = questionary.select("Select skill to inspect:", choices=skill_choices).ask()
+            chosen = uip.select("Select skill to inspect:", choices=skill_choices).ask()
             if chosen is None or chosen == "← Back" or chosen.startswith("──"):
                 break
 
@@ -165,7 +164,7 @@ class GameMenusMixin:
             # detail exposed (numbers, scaling, cooldown breakdown). Doesn't
             # change the skill's effects, only refreshes the description.
             if inspect_available:
-                action = questionary.select(
+                action = uip.select(
                     "Action:",
                     choices=[
                         "← Back",
@@ -265,7 +264,7 @@ class GameMenusMixin:
                 f"END {s.END}  (+3 max HP, +damage reduction)",
                 "← Done",
             ]
-            choice = questionary.select(
+            choice = uip.select(
                 f"Spend 1 point ({player.stat_points} remaining):",
                 choices=choices,
             ).ask()
@@ -313,7 +312,7 @@ class GameMenusMixin:
             "  [dim_text]Name or describe the ability you've witnessed / heard whispers of.\n"
             "  The System will reveal what it actually is.[/dim_text]\n"
         )
-        hint = questionary.text(
+        hint = uip.text(
             "What skill are you inspecting?",
             instruction="(e.g. 'Echoing Hammer Strike' or 'a stealth move that bends shadow')",
         ).ask()
@@ -428,7 +427,7 @@ class GameMenusMixin:
                 return all(item_quantity(player, i["item_id"]) >= i["qty"] for i in r.get("ingredients", []))
             ordered = sorted(recipes, key=lambda r: (not _can(r), r["name"]))
             labels = [("✓ " if _can(r) else "  ") + r["name"] for r in ordered]
-            selected = questionary.select("Select recipe (✓ = you have everything):",
+            selected = uip.select("Select recipe (✓ = you have everything):",
                                           choices=labels + ["← Back"]).ask()
             if selected is None or selected == "← Back":
                 break
@@ -444,7 +443,7 @@ class GameMenusMixin:
                 has = "✓" if self.state.player.has_item(ing["item_id"]) else "✗"
                 renderer.console.print(f"    [{has}] {name} x{ing['qty']}")
             renderer.console.print()
-            confirm = questionary.select("Craft?", choices=["Yes — craft it", "← Back"]).ask()
+            confirm = uip.select("Craft?", choices=["Yes — craft it", "← Back"]).ask()
             if confirm == "Yes — craft it":
                 ok, msg = craft_item(self.state.player, recipe["recipe_id"], self.item_registry, recipes)
                 renderer.print_system_message(msg, style="success" if ok else "system_warning")
@@ -486,7 +485,7 @@ class GameMenusMixin:
 
             item_choices.append("← Close")
 
-            answer = questionary.select("Select item:", choices=item_choices).ask()
+            answer = uip.select("Select item:", choices=item_choices).ask()
             if answer is None or answer == "← Close":
                 break
 
@@ -516,7 +515,7 @@ class GameMenusMixin:
                 sub_choices.append("Inspect")
             sub_choices.extend(["Drop", "← Back"])
 
-            sub_answer = questionary.select(f"{item.name}:", choices=sub_choices).ask()
+            sub_answer = uip.select(f"{item.name}:", choices=sub_choices).ask()
             if sub_answer is None or sub_answer == "← Back":
                 continue
 
@@ -563,7 +562,7 @@ class GameMenusMixin:
                 renderer.prompt_any_key()
 
             elif sub_answer == "Drop":
-                confirm = questionary.confirm(f"Drop {item.name}?", default=False).ask()
+                confirm = uip.confirm(f"Drop {item.name}?", default=False).ask()
                 if confirm:
                     player.remove_item(item_id, 1)
                     renderer.print_system_message(f"Dropped {item.name}.", style="dim_text")
@@ -652,7 +651,7 @@ class GameMenusMixin:
                 renderer.console.print(f"  [dim_text]Quest chains finished: {done_chains}/{len(chains)}[/dim_text]\n")
 
             choices.append("← Close")
-            answer = questionary.select("Inspect quest:", choices=choices).ask()
+            answer = uip.select("Inspect quest:", choices=choices).ask()
             if answer is None or answer == "← Close":
                 break
 
@@ -745,7 +744,7 @@ class GameMenusMixin:
                 )
             bot_choices.append("← Back")
 
-            chosen = questionary.select("Select bot to inspect:", choices=bot_choices).ask()
+            chosen = uip.select("Select bot to inspect:", choices=bot_choices).ask()
             if chosen is None or chosen == "← Back":
                 break
 
@@ -806,20 +805,20 @@ class GameMenusMixin:
                     renderer.console.print(f"    [dim_text]• {mem}[/dim_text]")
             renderer.console.print()
 
-            sub = questionary.select(
+            sub = uip.select(
                 f"{bot.name}:",
                 choices=["Set Goal", "Move Zone", "← Back"]
             ).ask()
 
             if sub == "Set Goal":
-                new_goal = questionary.text("New goal:").ask()
+                new_goal = uip.text("New goal:").ask()
                 if new_goal:
                     bot.current_goal = new_goal.strip()
                     renderer.print_success(f"{bot.name}'s goal set to: {bot.current_goal}")
                     renderer.prompt_any_key()
 
             elif sub == "Move Zone":
-                new_zone = questionary.text("Zone ID:").ask()
+                new_zone = uip.text("Zone ID:").ask()
                 if new_zone:
                     bot.current_zone_id = new_zone.strip()
                     renderer.print_success(f"{bot.name} moved to: {bot.current_zone_id}")
@@ -835,6 +834,7 @@ class GameMenusMixin:
 
     def _admin_panel(self) -> None:
         """Admin panel — feature flags, AI stats, debug tools."""
+        from utils import session_log
         while True:
             renderer.clear()
             renderer.print_title()
@@ -849,6 +849,8 @@ class GameMenusMixin:
             choices = [
                 f"AI Token Usage  (AI: {ai_status})",
                 "World Growth log",
+                f"Diagnostics log: {'ON' if session_log.is_enabled() else 'OFF'}",
+                "Export diagnostics (zip for bug reports)",
                 f"Toggle Feature Flags",
                 f"Background Generator: {bg_status}",
                 f"Active Bots / Players  ({bot_count} bots · 1 player)",
@@ -857,7 +859,7 @@ class GameMenusMixin:
                 "Player Stats Dump",
                 "← Back",
             ]
-            action = questionary.select("Admin:", choices=choices).ask()
+            action = uip.select("Admin:", choices=choices).ask()
             if action is None or action == "← Back":
                 break
 
@@ -867,7 +869,7 @@ class GameMenusMixin:
                     reason = getattr(self, "ai_offline_reason", "")
                     if reason:
                         renderer.console.print(f"  [dim_text]{reason}[/dim_text]")
-                    if questionary.confirm("Retry the AI connection now?", default=True).ask():
+                    if uip.confirm("Retry the AI connection now?", default=True).ask():
                         from core.bootstrap import setup_ai
                         setup_ai(self)
                 else:
@@ -916,6 +918,27 @@ class GameMenusMixin:
                 renderer.console.print()
                 renderer.prompt_any_key()
 
+            elif action.startswith("Diagnostics log"):
+                if session_log.is_enabled():
+                    session_log.set_enabled(False)
+                    renderer.print_system_message("Diagnostics log OFF (remembered for next time).",
+                                                  style="dim_text")
+                else:
+                    path = session_log.set_enabled(True)
+                    renderer.print_success(f"Diagnostics log ON → {path}" if path
+                                           else "Could not open the log file.")
+                renderer.prompt_any_key()
+
+            elif action.startswith("Export diagnostics"):
+                out = session_log.export_bundle(self)
+                if out:
+                    renderer.print_success(f"Diagnostics saved: {out}")
+                    renderer.console.print("  [dim_text]Attach this zip to a bug report. It holds the logs,"
+                                           " your setup and your character's state, nothing else.[/dim_text]")
+                else:
+                    renderer.print_system_message("Export failed (see logs/error.log).", style="dim_text")
+                renderer.prompt_any_key()
+
             elif action == "Toggle Feature Flags":
                 self._admin_toggle_features()
 
@@ -944,7 +967,7 @@ class GameMenusMixin:
                 all_items = [item.item_id for item in self.item_registry.all()]
                 all_items.sort()
                 all_items.append("← Cancel")
-                selected = questionary.select("Select item to grant:", choices=all_items).ask()
+                selected = uip.select("Select item to grant:", choices=all_items).ask()
                 if selected and selected != "← Cancel":
                     self.state.player.add_item(selected, 1)
                     renderer.print_success(f"Granted: {selected}")
@@ -981,7 +1004,7 @@ class GameMenusMixin:
                 flag_choices.append(f"  [{status}]  {flag}")
             flag_choices.append("← Back")
 
-            selected = questionary.select("Toggle flag:", choices=flag_choices).ask()
+            selected = uip.select("Toggle flag:", choices=flag_choices).ask()
             if selected is None or selected == "← Back":
                 break
 
@@ -1054,7 +1077,7 @@ class GameMenusMixin:
     # ── Save prompt ───────────────────────────────────────────────────────────
 
     def _save_prompt(self) -> None:
-        slot = questionary.text(
+        slot = uip.text(
             "Save slot name:",
             default=self.state.player.name.lower().replace(" ", "_"),
         ).ask()

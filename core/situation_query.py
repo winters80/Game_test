@@ -18,8 +18,7 @@ import logging
 import re
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from scenes.scene_base import SceneOption
 from ui import renderer
 
@@ -41,7 +40,7 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
         return
 
     renderer.console.print()
-    question = questionary.text(
+    question = uip.text(
         "What do you want to know or try?",
         instruction=(
             "(e.g. 'Can I aim for the head?' or 'Is there a way to sneak past?'. "

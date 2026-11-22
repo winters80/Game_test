@@ -332,7 +332,9 @@ class ContentGenerator:
         prompt = (
             f'Scene: {scene_title}. {scene_text}\n'
             f'Player action: "{action_label}"\n'
-            'Describe the outcome in one vivid sentence (max 25 words). '
+            'Say what the player finds, sees or causes as a result, in one vivid sentence '
+            '(max 25 words). Describe the result, not the attempt: never start with '
+            '"You attempt", "You try" or by repeating the action. '
             'Return ONLY a JSON object: {"narrative": "..."}'
         )
         try:
@@ -520,6 +522,44 @@ class ContentGenerator:
             )
         except Exception as e:
             logger.info(f"Bot line generation failed: {e}")
+            return None
+        text = (raw or "").strip().strip('"').strip()
+        return text or None
+
+    def generate_bot_reply(self, profile: dict, player_name: str, topic: str,
+                           facts: str, said_so_far: list[str]) -> str | None:
+        """A bot adventurer's reply on ``topic``, written like another player
+        talking, not a log readout. Fast client. ``profile["recent"]`` is the
+        already-summarised memory (systems/bot_chat.summarize_memory)."""
+        recent = "; ".join(profile.get("recent") or []) or "nothing much yet"
+        asked = {
+            "greeting": f"{player_name} walks up to you. Greet them.",
+            "catch_up": f"{player_name} asks what you've been up to.",
+            "tips": f"{player_name} asks if you have any tips for them.",
+            "build": f"{player_name} asks about your build (class, stats, how you fight).",
+            "team_up": f"{player_name} asks you to team up for a Gate run.",
+            "guild": f"{player_name} asks about your guild.",
+        }.get(topic, f"{player_name} says hello.")
+        earlier = (" You already said: " + " / ".join(said_so_far[-3:]) + ". Don't repeat it.") if said_so_far else ""
+        prompt = (
+            f"You are {profile['name']}, a level {profile['level']} {profile['class']} ({profile['archetype']}). "
+            f"Personality: {profile['personality']}. Right now: {profile['doing']}. "
+            f"What you've done lately: {recent}. Facts you can use: {facts or 'none'}. "
+            f"{asked}{earlier} Reply as yourself in 1-3 short sentences."
+        )
+        try:
+            raw = self.fast_client.generate_text(
+                prompt=prompt,
+                system_prompt=(
+                    "You are another player character in Aethoria, a world where the System gives people classes "
+                    "and Gates open into dungeons. Talk like a real person chatting with a fellow adventurer: "
+                    "first person, casual, contractions, an opinion or a joke now and then. Sum up what you did "
+                    "in your own words; never list events like a log, never mention turn numbers. "
+                    "Only claim things from the facts given. No quotation marks, no stage directions."),
+                temperature=0.9, max_tokens=110,
+            )
+        except Exception as e:
+            logger.info(f"Bot reply generation failed: {e}")
             return None
         text = (raw or "").strip().strip('"').strip()
         return text or None

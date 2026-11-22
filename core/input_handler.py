@@ -16,8 +16,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from config import feature
 from scenes.scene_base import SceneOption
 from ui import renderer
@@ -165,7 +164,7 @@ def prompt_choice(engine: "GameEngine", options: list[SceneOption]) -> SceneOpti
 
     extras = _build_extras(engine)
     choice_labels = [f"{i}. {opt.label}" for i, opt in available] + extras
-    answer = questionary.select("Choose:", choices=choice_labels).ask()
+    answer = uip.select("Choose:", choices=choice_labels).ask()
 
     if answer is None:
         engine._running = False

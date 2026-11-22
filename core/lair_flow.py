@@ -129,8 +129,7 @@ def _grant_clear_flags(engine: "GameEngine", lair: "LairDefinition") -> None:
 def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     """Run the boss room. Returns "victory", "fled", "defeat", "vacant",
     "retreat" or "none"."""
-    import questionary
-
+    from ui import prompt as uip
     lair = engine.lair_registry.get(lair_id) if engine.lair_registry else None
     state = get_state(engine, lair_id)
     if lair is None or state is None:
@@ -181,9 +180,9 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
             if stat_val >= occ.study.min:
                 choices.append(study_label)
             else:
-                choices.append(questionary.Choice(f"🔒 {study_label}", disabled="not sharp enough yet"))
+                choices.append(uip.Choice(f"🔒 {study_label}", disabled="not sharp enough yet"))
         choices.append("Retreat.")
-        answer = questionary.select("What do you do?", choices=choices).ask()
+        answer = uip.select("What do you do?", choices=choices).ask()
         if answer in (None, "Retreat."):
             return "retreat"
         if answer == study_label:
@@ -204,7 +203,7 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     aftermath = occ.default_aftermath
     if occ.aftermath:
         labels = [lair_system.fmt(a.label, name) for a in occ.aftermath]
-        pick = questionary.select("The fight is over. What now?", choices=labels).ask()
+        pick = uip.select("The fight is over. What now?", choices=labels).ask()
         chosen = occ.aftermath[labels.index(pick)] if pick in labels else occ.aftermath[0]
         aftermath = chosen.id
         if chosen.text:

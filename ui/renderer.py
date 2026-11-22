@@ -24,7 +24,17 @@ if TYPE_CHECKING:
 console = Console(theme=GAME_THEME, width=100)
 
 
+def _ui_hook(name: str):
+    """The active front end's override for ``name`` (ui/prompt backend), if any."""
+    from ui.prompt import get_backend
+    return getattr(get_backend(), name, None)
+
+
 def clear() -> None:
+    hook = _ui_hook("clear")
+    if hook:
+        hook()
+        return
     console.clear()
 
 
@@ -54,9 +64,24 @@ def print_scene_text(lines: list[str], pause_between: float = 0.0) -> None:
     console.print()
 
 
-def print_options(options: list["SceneOption"]) -> None:
+def print_options(options: list["SceneOption"], locked_only: bool = True) -> None:
+    """Print the choices. By default only the *locked* ones (with why), since
+    the arrow-key selector right below lists every available choice; printing
+    those too showed every option twice."""
     from rich.markup import escape
     console.print()
+    if locked_only:
+        locked = [(i, o) for i, o in enumerate(options, 1) if o.locked]
+        if locked:
+            console.print("  [dim_text]Not available yet:[/dim_text]")
+        for i, opt in locked:
+            reason = f" ({escape(opt.lock_reason)})" if opt.lock_reason else ""
+            console.print(f"  [option_locked]  {escape(opt.label)}[/option_locked][dim_text]{reason}[/dim_text]")
+            if opt.hint_text:
+                console.print(f"     [italic dim_text]~ {escape(opt.hint_text)}[/italic dim_text]")
+        if locked:
+            console.print()
+        return
     for i, opt in enumerate(options, 1):
         safe_label = escape(opt.label)  # prevent [AI], [tag], etc. from corrupting Rich markup
         if opt.locked:
@@ -76,6 +101,10 @@ def print_options(options: list["SceneOption"]) -> None:
 
 def print_status_bar(player: "Player", item_registry: Any = None) -> None:
     from ui.panels import build_status_panel, build_stats_panel, build_compact_inventory_panel, build_equipment_panel
+    hook = _ui_hook("status")
+    if hook:                      # the Textual app keeps these in its sidebar
+        hook(player, item_registry)
+        return
     panels: list = [build_status_panel(player), build_stats_panel(player)]
     if item_registry is not None:
         panels.append(build_compact_inventory_panel(player, item_registry))
@@ -107,6 +136,9 @@ def print_class_reveal(class_def: "ClassDefinition") -> None:
 
 def show_ai_thinking_spinner(message: str = "THE SYSTEM IS CONTEMPLATING...") -> "Live":
     """Return a Rich Live context displaying a spinner. Caller must use as context manager."""
+    hook = _ui_hook("spinner")
+    if hook:
+        return hook(message)
     spinner = Spinner("dots", text=f"[system_anomaly]{message}[/system_anomaly]")
     return Live(Align.center(spinner), console=console, refresh_per_second=10)
 
@@ -230,5 +262,9 @@ def print_quest_log(quests: list[dict]) -> None:
 
 
 def prompt_any_key() -> None:
+    hook = _ui_hook("any_key_hook")
+    if hook:
+        hook()
+        return
     console.print("\n  [dim_text]Press Enter to continue...[/dim_text]")
     input()

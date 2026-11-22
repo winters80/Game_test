@@ -4,8 +4,7 @@ import logging
 import uuid as _uuid
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from config import AI_QUEST_DISPOSITION_MIN, DATA_DIR, feature
 from core.event_bus import bus, Event
 from ui import renderer
@@ -106,7 +105,7 @@ class DialogueHandlerMixin:
                 break
 
             choice_labels = [f"{i}. {opt.label}" for i, opt in available]
-            answer = questionary.select("Say:", choices=choice_labels).ask()
+            answer = uip.select("Say:", choices=choice_labels).ask()
             if answer is None:
                 break
 
@@ -264,7 +263,7 @@ class DialogueHandlerMixin:
             offers = trade_system.wares(npc, self.item_registry)
             renderer.console.print(f"\n  [gold]Your gold: {_fc(self.state.player.gold)}[/gold]")
             labels = [f"{w.item.name} — {_fc(w.price)}" for w in offers] + ["← Done"]
-            answer = questionary.select(f"{npc.name}'s wares:", choices=labels).ask()
+            answer = uip.select(f"{npc.name}'s wares:", choices=labels).ask()
             if answer is None or answer == "← Done":
                 return
             offer = offers[labels.index(answer)]
@@ -284,13 +283,13 @@ class DialogueHandlerMixin:
                 renderer.prompt_any_key()
                 return
             labels = [f"{g.item.name} ×{g.quantity} — {_fc(g.unit_price)} each" for g in goods] + ["← Done"]
-            answer = questionary.select(f"Sell to {npc.name}:", choices=labels).ask()
+            answer = uip.select(f"Sell to {npc.name}:", choices=labels).ask()
             if answer is None or answer == "← Done":
                 return
             chosen = goods[labels.index(answer)]
             qty = 1
             if chosen.quantity > 1:
-                raw = questionary.text(
+                raw = uip.text(
                     f"How many? (1-{chosen.quantity})", default=str(chosen.quantity),
                 ).ask()
                 try:
@@ -430,19 +429,19 @@ class DialogueHandlerMixin:
         renderer.clear()
         renderer.print_system_message("FOUND A GUILD", style="system_msg")
 
-        name = questionary.text("Guild name:").ask()
+        name = uip.text("Guild name:").ask()
         if not name or not name.strip():
             return
         name = name.strip()
 
-        archetype = questionary.select(
+        archetype = uip.select(
             "Guild archetype:",
             choices=["combat", "stealth", "arcane", "merchant"],
         ).ask()
         if not archetype:
             return
 
-        reason = questionary.text("Founding reason (optional, press Enter to skip):").ask() or ""
+        reason = uip.text("Founding reason (optional, press Enter to skip):").ask() or ""
 
         intent = FoundGuildIntent(
             name=name,

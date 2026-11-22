@@ -17,8 +17,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from core.event_bus import bus
 from ui import renderer
 
@@ -44,7 +43,7 @@ def show_auction_house(engine: "GameEngine") -> None:
         _render_listings(listings)
         _render_status(engine, auction_system)
 
-        action = questionary.select(
+        action = uip.select(
             "Auction house:",
             choices=["Buy life token (direct)", "Bid on listing", "Leave auction house"],
         ).ask()
@@ -96,14 +95,14 @@ def _bid_on_listing(engine: "GameEngine", auction_system, listings: list[dict]) 
         for l in listings
     ]
     listing_ids.append("← Back")
-    selected = questionary.select("Select listing:", choices=listing_ids).ask()
+    selected = uip.select("Select listing:", choices=listing_ids).ask()
     if not selected or selected == "← Back":
         return
 
     idx = listing_ids.index(selected)
     chosen = listings[idx]
     min_bid = chosen["current_bid"] + 1
-    bid_str = questionary.text(f"Enter bid amount (min {min_bid:,}):").ask()
+    bid_str = uip.text(f"Enter bid amount (min {min_bid:,}):").ask()
     try:
         bid_amount = int(bid_str or "0")
     except ValueError:

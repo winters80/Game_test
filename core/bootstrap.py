@@ -221,8 +221,8 @@ def _confirm_download(missing: list[str]) -> bool:
     import sys
     if not sys.stdin.isatty():
         return False
-    import questionary
-    answer = questionary.confirm(
+    from ui import prompt as uip
+    answer = uip.confirm(
         f"Download {' and '.join(missing)} now? (one-time; the game waits until it's done)",
         default=True,
     ).ask()
