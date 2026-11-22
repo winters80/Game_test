@@ -11,6 +11,10 @@ Findings (none of them crash the game; they are wasted or broken content):
 - **orphan items**: defined but never mentioned anywhere else (no drop, shop,
   recipe, quest, Gate, scene or starting kit)
 - **dead-end materials**: materials nothing uses (no recipe, quest or trader buys them)
+- **repeatable gold**: an option that pays gold with nothing given up and no
+  ``flags_absent`` on a flag it sets, so it can be farmed
+- **price mismatches**: the text says "5g" but the trigger moves a different
+  number of copper (gold is stored in copper, 1g = 100)
 
 The checks read the content files directly, so they also see what the
 engine only builds at runtime (Gate loot, trophies, bot kits).
@@ -36,12 +40,14 @@ class HealthReport:
     unoffered_quests: list[str] = field(default_factory=list)
     orphan_items: list[str] = field(default_factory=list)
     dead_end_materials: list[str] = field(default_factory=list)
+    repeatable_gold: list[str] = field(default_factory=list)
+    price_mismatches: list[str] = field(default_factory=list)
     counts: dict[str, int] = field(default_factory=dict)
 
     def problems(self) -> int:
         return sum(len(getattr(self, k)) for k in (
             "unreachable_scenes", "unreachable_nodes", "dead_links",
-            "unoffered_quests", "orphan_items", "dead_end_materials"))
+            "unoffered_quests", "orphan_items", "dead_end_materials", "repeatable_gold", "price_mismatches"))
 
     def lines(self, limit: int = 12) -> list[str]:
         out = [f"{k.replace('_', ' ')}: {v}" for k, v in self.counts.items()]
@@ -50,7 +56,9 @@ class HealthReport:
                            ("unreachable_nodes", "Scene nodes nothing leads to"),
                            ("unoffered_quests", "Quests nobody offers"),
                            ("orphan_items", "Items that never appear"),
-                           ("dead_end_materials", "Materials nothing uses")):
+                           ("dead_end_materials", "Materials nothing uses"),
+                           ("repeatable_gold", "Gold you can farm (paid again and again)"),
+                           ("price_mismatches", "Text says Ng, trigger moves a different amount")):
             items = getattr(self, key)
             out.append(f"{title}: {len(items)}")
             out += [f"   - {x}" for x in items[:limit]]
@@ -151,6 +159,50 @@ def check(engine) -> HealthReport:
             if not re.search(rf'"{re.escape(iid)}"\s*:\s*\d|"has_item"\s*:\s*"{re.escape(iid)}"|"buys"[^\]]*"{re.escape(iid)}"|take_item:{re.escape(iid)}',
                              blob) and '"type:MATERIAL"' not in blob:
                 rep.dead_end_materials.append(iid)
+
+    # ── Economy: options that pay gold again and again ──
+    # Paying is fine when something is given up (take_item / spend_gold) or the
+    # option hides once done (flags_absent on a flag its own triggers set).
+    def _farmable(opt: dict) -> bool:
+        trig = opt.get("triggers") or []
+        if not any(t.startswith("give_gold:") and not t.startswith("give_gold:-") for t in trig):
+            return False
+        if any(t.startswith(("take_item:", "spend_gold:")) for t in trig):
+            return False
+        sets = {t[5:] for t in trig if t.startswith("flag:")}
+        hidden_by = set((opt.get("requires") or {}).get("flags_absent") or [])
+        return not (sets & hidden_by)
+    def _mismatch(opt: dict) -> str:
+        """'(5g)' in the text but give/spend_gold in copper that isn't 500 (gold
+        is stored in copper: 1g = 100)."""
+        text = " ".join(str(opt.get(k, "")) for k in ("label", "npc_response"))
+        golds = [int(x) for x in re.findall(r"(\d+)\s*g\b", text)]
+        for t in opt.get("triggers") or []:
+            m = re.match(r"(give_gold|spend_gold|rest_inn):(-?\d+)", t)
+            if m and golds and all(abs(int(m.group(2))) != g * 100 for g in golds):
+                return f"{t} vs text {golds}g"
+        return ""
+
+    for scene_id, scene in raw_scenes.items():
+        for node_id, node in (scene.get("nodes") or {}).items():
+            for opt in node.get("options", []):
+                if _farmable(opt):
+                    rep.repeatable_gold.append(f"scene {scene_id}.{node_id}.{opt.get('option_id')}")
+                if _mismatch(opt):
+                    rep.price_mismatches.append(f"scene {scene_id}.{node_id}.{opt.get('option_id')}: {_mismatch(opt)}")
+    for f in (data_dir / "npcs").glob("*.json"):
+        try:
+            npcs = json.loads(f.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        for npc in npcs if isinstance(npcs, list) else []:
+            for node_id, node in (npc.get("dialogue_tree") or npc.get("dialogue_nodes") or {}).items():
+                for opt in node.get("options", []) if isinstance(node, dict) else []:
+                    if _farmable(opt):
+                        rep.repeatable_gold.append(f"npc {npc.get('npc_id')}.{node_id}.{opt.get('option_id')}")
+                    if _mismatch(opt):
+                        rep.price_mismatches.append(
+                            f"npc {npc.get('npc_id')}.{node_id}.{opt.get('option_id')}: {_mismatch(opt)}")
 
     rep.counts = {"scenes": len(raw_scenes), "scene nodes reached": len(seen_nodes),
                   "quests": len(quests), "items": len(engine.item_registry.all()),

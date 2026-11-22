@@ -295,12 +295,17 @@
             "requires": {
               "items": [
                 "torven_hammer"
+              ],
+              "flags_absent": [
+                "torven_paid_reward"
               ]
             },
             "npc_response": "'40g. And my work rate for you is half-price, permanent. That's not a deal — that's a fact.' He meets your eyes directly for the first time. 'You have my thanks. Actually have it, not the polite kind.'",
             "triggers": [
+              "take_item:torven_hammer",
               "flag:torven_hammer_returned",
-              "give_gold:40"
+              "flag:torven_paid_reward",
+              "give_gold:4000"
             ],
             "disposition_change": 25.0,
             "leads_to_node": "__exit__",
@@ -316,9 +321,14 @@
           {
             "option_id": "accept_reward",
             "label": "Forty gold is fair. Thank you.",
-            "requires": {},
+            "requires": {
+              "flags_absent": [
+                "torven_paid_reward"
+              ]
+            },
             "npc_response": "'Smart. Come back when something needs fixing.'",
             "triggers": [
+              "take_item:torven_hammer",
               "give_gold:4000",
               "flag:torven_paid_reward"
             ],
@@ -448,11 +458,14 @@
           {
             "option_id": "rent_room",
             "label": "I'll take a room for the night. (5g)",
-            "requires": {},
+            "requires": {
+              "min_gold": 500,
+              "lock_reason": "Mira doesn't do credit."
+            },
             "npc_response": "'Room three, top of the stairs. Breakfast at dawn if you're up.'",
             "triggers": [
               "give_item:room_key",
-              "give_gold:-5"
+              "spend_gold:500"
             ],
             "disposition_change": 3.0,
             "leads_to_node": "room_rented",

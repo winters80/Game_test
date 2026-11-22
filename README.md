@@ -25,7 +25,7 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 - **A clickable sidebar** in the panel and browser versions: click something in your bag to use or equip it, or a skill to read it.
 - **Save slots with details**: name, level, class, where you are, play time and when you saved.
 - **Torven sells gear** (nine pieces from a rusty dagger to mage robes), Wren sells resistance potions, and Mira at the inn serves a meal to take with you. The guard captain's checkpoint can be reached from the city gate.
-- **Fixed:** opening a quest's details in the journal crashed the game.
+- **Fixed** (found by the new autoplay and content checks): opening a quest's details in the journal crashed the game; Vael paid 500g instead of 50g for a void crystal, never took it and could be asked again and again; Torven paid 4 silver instead of 40g for his hammer and let you keep it; a room at the inn cost 5 copper instead of 5g; the Floor 2 cache could be looted forever.
 
 Also in this version: the panel interface (`--tui`) and browser play (`--web`), bots that talk like players and team up, `[?]` that takes an on-screen choice you type in your own words, AI models you can review and switch in Admin, the diagnostics log, and safer saves with backups and recovery.
 

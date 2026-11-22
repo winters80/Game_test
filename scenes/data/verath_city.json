@@ -389,7 +389,7 @@
           "expected": true,
           "leads_to": "verath_city",
           "leads_to_node": "market_district",
-          "triggers": ["give_gold:20"]
+          "triggers": ["flag:browsed_verath_market"]
         },
         {
           "option_id": "visit_auction_house",
