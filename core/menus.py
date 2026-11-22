@@ -35,7 +35,7 @@ class GameMenusMixin:
 
     # ── Skills menu ───────────────────────────────────────────────────────────
 
-    def _skills_menu(self) -> None:
+    def _skills_menu(self, focus_skill: str | None = None) -> None:
         """Show all learned skills grouped by type with full detail view.
 
         Players with the Inspect utility passive AND a running AIService also
@@ -92,19 +92,27 @@ class GameMenusMixin:
             skills = groups[group_name]
             if not skills:
                 continue
-            skill_choices.append(f"── {group_name} ──")
+            skill_choices.append(uip.Choice(f"── {group_name} ──", disabled=True))
             for skill in skills:
                 ai_tag = " ✦" if skill.is_ai_generated else ""
                 label = f"  {skill.name}{ai_tag}  [{skill.rarity.value}]"
                 skill_choices.append(label)
                 skill_map[label] = skill
         skill_choices.append("← Back")
+        # Clicked in the sidebar: show that skill once, then return.
+        focus_label = next((lbl for lbl, sk in skill_map.items() if sk.skill_id == focus_skill), None)
+        focus_done = False
 
         while True:
             renderer.clear()
             renderer.print_title()
             renderer.console.print("\n  [system_msg][ SKILLS ][/system_msg]\n")
-            chosen = uip.select("Select skill to inspect:", choices=skill_choices).ask()
+            if focus_label is not None:
+                if focus_done:
+                    break
+                chosen, focus_done = focus_label, True
+            else:
+                chosen = uip.select("Select skill to inspect:", choices=skill_choices).ask()
             if chosen is None or chosen == "← Back" or chosen.startswith("──"):
                 break
 
@@ -451,7 +459,7 @@ class GameMenusMixin:
 
     # ── Inventory menu ────────────────────────────────────────────────────────
 
-    def _inventory_menu(self) -> None:
+    def _inventory_menu(self, focus_item: str | None = None) -> None:
         """Interactive inventory and equipment management menu."""
         from systems.inventory_system import (
             equip_item, unequip_item, use_item,
@@ -485,11 +493,16 @@ class GameMenusMixin:
 
             item_choices.append("← Close")
 
-            answer = uip.select("Select item:", choices=item_choices).ask()
-            if answer is None or answer == "← Close":
-                break
-
-            item_id = item_map.get(answer)
+            # Clicked in the sidebar: that item's actions once, then return.
+            if focus_item is not None:
+                if focus_item == "__done__":
+                    break
+                item_id, focus_item = focus_item, "__done__"
+            else:
+                answer = uip.select("Select item:", choices=item_choices).ask()
+                if answer is None or answer == "← Close":
+                    break
+                item_id = item_map.get(answer)
             if not item_id:
                 break
 

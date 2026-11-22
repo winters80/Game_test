@@ -45,8 +45,22 @@ def main_menu(engine: "GameEngine") -> None:
 
 def load_game_menu(engine: "GameEngine", saves: list[str]) -> None:
     """Pick a save slot and start the game loop. Falls back to main menu on error."""
-    choice = uip.select("Select save:", choices=saves + ["← Back"]).ask()
-    if choice == "← Back":
+    from persistence.save_manager import save_summary
+    entries = []
+    for slot in saves:
+        s = save_summary(slot, SAVES_DIR)
+        if s.get("error"):
+            entries.append(uip.Choice(f"{slot}  (unreadable)", slot))
+            continue
+        scene = engine.scene_registry.get(s["scene"]) if s.get("scene") else None
+        where = scene.title if scene else s.get("scene", "").replace("_", " ")
+        cls = engine.class_registry.get(s["class"]) if s.get("class") else None
+        cls_name = cls.name if cls else (s.get("class") or "unclassed")
+        entries.append(uip.Choice(
+            f"{s['name']} · Lv {s['level']} {cls_name} · {where} · {s['hours']}h played · saved {s['saved']}",
+            slot))
+    choice = uip.select("Select save:", choices=entries + [uip.Choice("← Back", "← Back")]).ask()
+    if choice in (None, "← Back"):
         main_menu(engine)
         return
 

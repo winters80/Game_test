@@ -154,6 +154,25 @@ def new_game_state(player: Player, saves_dir: Path, slot_name: str) -> GameState
     return state
 
 
+def save_summary(slot_name: str, saves_dir: Path) -> dict[str, Any]:
+    """What the load screen shows for a slot, read from the JSON only (fast,
+    no world DB): name, level, class, scene, turn, play time, last saved."""
+    path = saves_dir / f"{slot_name}.json"
+    try:
+        raw = json.loads(path.read_text(encoding="utf-8"))
+        p = raw.get("player", {})
+        return {
+            "slot": slot_name, "name": p.get("name", slot_name), "level": p.get("level", 1),
+            "class": p.get("active_class") or p.get("base_class") or "",
+            "scene": raw.get("current_scene_id", ""), "turn": raw.get("turn_number", 0),
+            "hours": round((p.get("play_time_seconds", 0) or 0) / 3600, 1),
+            "lives": p.get("lives_remaining"),
+            "saved": time.strftime("%Y-%m-%d %H:%M", time.localtime(path.stat().st_mtime)),
+        }
+    except Exception:
+        return {"slot": slot_name, "name": slot_name, "error": True}
+
+
 def list_saves(saves_dir: Path) -> list[str]:
     if not saves_dir.exists():
         return []
