@@ -34,6 +34,13 @@ BACK = ("← back", "← close", "← done", "← cancel", "leave", "farewell", 
 PEEK = ("[j]", "[i]", "[w]", "[l]", "[k]", "[c]")
 
 
+def _is_back(title: str) -> bool:
+    """A way out of a menu: '← Back', 'Farewell.', 'Leave the inn.' (not 'Backstab')."""
+    import re
+    t = re.sub(r"^\d+\.\s*", "", title.strip().lower())
+    return t.startswith("←") or t.split(" ")[0].rstrip(".") in ("back", "leave", "farewell", "return", "done", "close")
+
+
 class _Stop(Exception):
     pass
 
@@ -63,7 +70,7 @@ class AutoBackend:
         key = (message, tuple(titles))
         self.seen[key] += 1
         safe = [c for c, t in zip(live, titles) if not any(a in t for a in AVOID)]
-        backs = [c for c, t in zip(live, titles) if any(t.startswith(b) or b in t for b in BACK)]
+        backs = [c for c, t in zip(live, titles) if _is_back(t)]
 
         if message.startswith("Your action"):                    # combat: fight
             fight = [c for c, t in zip(live, titles) if "flee" not in t and "item" not in t]
@@ -137,6 +144,9 @@ def play(seed: int, steps: int) -> dict:
         uip.set_backend(None)
 
     out = {"seed": seed, "prompts": backend.prompts, "crash": crash}
+    if backend.seen:
+        (msg, titles), n = backend.seen.most_common(1)[0]
+        out["stuck"] = (n, msg, list(titles)[:6])
     state = getattr(engine, "state", None) if engine else None
     if state is not None and state.player is not None:
         p = state.player
@@ -188,6 +198,9 @@ def main() -> int:
               f"turn {r.get('turn')} · at {r.get('scene')} · lives {r.get('lives')} · "
               f"gold {r.get('gold', 0) // 100}g · {r.get('items')} items · {r.get('skills')} skills · "
               f"quests {r.get('quests')} active / {r.get('done')} done · gates cleared {r.get('gates')}")
+        if r.get("stuck") and r["stuck"][0] > max(25, r["prompts"] // 10):
+            n, msg, titles = r["stuck"]
+            print(f"   most repeated prompt ({n}×): {msg!r} {titles}")
     session_log.stop()
     try:
         import scripts.playtest_report as pr
