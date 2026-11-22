@@ -18,20 +18,20 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 
 ## What's new
 
-- **Dungeons that remember.** Kill a boss and something else moves in, decided by how it died and what you did with the body. A wizard rises as a lich; the priests sent to cleanse its den are corrupted.
-- **32 Gates** (rift dungeons, levels 2–18) with branching boss chains, trophies, First Clear and Swift Clear bonuses, and **9 group Gates** that need a party of bot companions.
-- **The world grows by itself.** New rifts open every couple of in-game days (AI-made, or Deep Echoes of old Gates when offline), quest lines chart new ones, and the AI can invent new bosses.
-- **213 quests in 53 chains**, including 10 that teach a skill and 10 that end with a forged item, plus faction quest lines for the Crown and the System Breakers.
-- **24 bot adventurers** who level, run Gates, form parties, kill bosses, join guilds and sell at auction while you're away.
-- **Deeper combat:** status effects, bosses that telegraph their big moves and enrage, working shields and evasion.
-- **A world clock:** resting, travelling and dungeon runs take time, and the world moves on meanwhile.
-- **Class Awakening:** refuse the System and it will eventually write a class just for you.
-- **New default AI models:** `gemma4:12b` and `qwen3.5:4b`.
+- **A real interface, in the terminal or the browser.** `python main.py --tui` opens the game in panels: your status, stats, gear and bag in a sidebar, the story in a scrollable log, and choices you click (or pick with the arrow keys, Enter or the number keys). `python main.py --web` serves the same thing to your browser. The classic terminal version still runs with plain `python main.py`.
+- **Locked choices explain themselves.** They stay in the list, greyed out, with the reason ("The gate guards only pass ranked adventurers…"), instead of being listed twice.
+- **Bots talk like players.** Ask what they've been up to and you get "Been grinding Floor 1: four fights, mostly crystal spiders. Then got flattened by the Crystal Golem", not their log. Ask for tips, their build or their guild, or **team up**: they'll wait in town for your next Gate run and be first in the party list.
+- **Type an action, skip the wait.** In `[?]`, if what you type is one of the choices on screen ("go to the inn"), the game just does it with one quick decision call instead of writing a whole answer.
+- **Better AI models without touching code.** Admin → **AI models** shows which model does what, checks a catalog for better ones for your machine's memory, benchmarks a model on game-shaped tasks, downloads and switches it on the spot.
+- **Diagnostics log.** Every session can be recorded (screen, choices, errors, background AI) and exported as a zip for bug reports. Switch it in the Admin panel.
+- **Safer saves.** Saves are written atomically, keep three rotating backups, and a damaged world database is restored from the newest good backup on load. The background guild simulation, which silently failed when the AI was on, now works.
+- **Starting gear is equipped**, and AI option outcomes describe what happens instead of repeating what you chose.
 
 Built with:
 - Python 3.11 + Pydantic v2 (all data models)
-- [Rich](https://github.com/Textualize/rich) for terminal UI
-- [questionary](https://github.com/tmbo/questionary) for arrow-key menus
+- [Rich](https://github.com/Textualize/rich) for terminal rendering
+- [Textual](https://github.com/Textualize/textual) for the panel interface (and [textual-serve](https://github.com/Textualize/textual-serve) to play it in a browser)
+- [questionary](https://github.com/tmbo/questionary) for arrow-key menus in the classic terminal version
 - [Ollama](https://ollama.ai) — **two models** working together (see below) for AI content generation
 - SQLite for world state (NPC memory, quests, factions)
 
@@ -72,7 +72,17 @@ It will:
 3. **download the two models** from `config.py` if they aren't there yet (a one-time download of about 11 GB)
 4. launch the game, which then **preloads both models into memory** in the background, so your first `[?]` question doesn't time out on a cold model
 
-Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game.
+Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game. Anything else you add is passed to the game, so `./scripts/start.sh --tui` starts the panel interface.
+
+#### Three ways to play
+
+| Command | What you get |
+|---|---|
+| `python main.py` | The classic terminal: scrolling text and arrow-key menus |
+| `python main.py --tui` | **Panels** in the terminal: sidebar with status, gear and bag; scrollable story; clickable choices; hotkey bar |
+| `python main.py --web` | The panel version **in your browser** at http://localhost:8000 |
+
+All three run the same game and the same saves.
 
 On the title screen you should see **`AI system online. Ollama connected.`** The admin panel (`[A]`) shows **`AI: online`**.
 
@@ -99,7 +109,14 @@ If a model is missing when the game starts, it names it and offers to **download
 
 #### Using a different model
 
-Both models can be swapped without editing code, via environment variables the launchers and the game both read:
+The easiest way is in the game: **Admin (`[A]`) → AI models**. It shows the model for each role (primary, fast, fallback), and can:
+
+- **Check for better models**: compares yours with a catalog (`data/ai/model_catalog.json`, refreshed from this repository, so recommendations improve without a game update) for your machine's memory
+- **Benchmark a model**: a one-minute test of what the game needs (valid JSON, picking the sensible option, speed), scored out of 100
+- **Choose a model for a role**: any installed model, a catalog model (downloaded for you), or any name you type
+- switch **immediately**, no restart. Your choices live in `saves/settings/ai_models.json`
+
+Environment variables still work and take priority:
 
 ```powershell
 # PowerShell (this window only)
@@ -166,19 +183,20 @@ Your saves upgrade automatically when you load them: the world database migrates
 Game_Test/
 ├── main.py                 # Entry point
 ├── start.bat               # Windows: double-click to play (runs scripts/start.ps1)
-├── scripts/                # start.ps1 / start.sh launchers, git hook installers, balance_sim.py
+├── scripts/                # launchers, git hook installers, balance_sim.py, playtest_report.py
 ├── config.py               # All constants and feature flags — change here only
 ├── CLAUDE.md               # Developer reference (architecture, triggers, schemas)
 │
 ├── core/                   # Game engine, event bus, state
 ├── entities/               # Pydantic models (Player, Item, Skill, Class, NPC, Quest)
 ├── systems/                # Pure game logic (class resolution, combat, quests, levels)
-├── ai/                     # Ollama integration (client, prompts, validators)
+├── ai/                     # Ollama integration, model registry + catalog review, decisions
 ├── scenes/data/            # All narrative content as JSON (scene scripts)
 ├── data/                   # All static content (classes, skills, items, NPCs, quests, dungeons/Gates, recipes)
-├── ui/                     # All Rich terminal rendering
+├── ui/                     # Rendering (Rich), the prompt layer, and the Textual app (tui_app.py)
 ├── persistence/            # Save/load (JSON player data + SQLite world state)
-└── saves/                  # Runtime save files (gitignored)
+├── utils/                  # Logging setup and the diagnostics log
+└── saves/                  # Runtime save files, backups/ and settings/ (gitignored)
 ```
 
 ---
@@ -187,11 +205,12 @@ Game_Test/
 
 ### Controls
 
-- **Arrow keys** to navigate menus, **Enter** to confirm
+- **Arrow keys** to navigate menus, **Enter** to confirm. In the panel and browser versions you can also **click** a choice, press its **number** (1–9) or a **hotkey letter**, and **Ctrl+Q** quits
 - **`[?]`** Ask about this situation: type a question or an action in your own words
 - **`[K]`** Skills · **`[I]`** Items & equipment · **`[J]`** Quest journal · **`[L]`** World log · **`[W]`** Who's around
 - **`[C]`** Craft · **`[G]`** Found a guild
-- **`[S]`** Save · **`[A]`** Admin panel (AI token usage, feature flags, **World Growth log**) · **`[Q]`** Quit to menu
+- **`[S]`** Save · **`[A]`** Admin panel (AI token usage, **AI models**, diagnostics log, database health, playtest report, feature flags, World Growth log) · **`[Q]`** Quit to menu
+- Locked choices stay in the list, greyed out, with what it takes to unlock them
 
 ### The world
 
@@ -257,7 +276,7 @@ Everything new is saved with your world and comes back when you load.
 You're not alone. **24 other adventurers** (bots, like playerbots in an MMO) live in every save:
 - **What they do:** they fight on the dungeon floors (pushing deeper as they level), run Gates from town, form **parties** for group Gates, kill bosses, loot, sell their haul to traders, brew potions and craft, and wander between the outer market, the camp and Verath.
 - **When they're near you:** you'll see the occasional line, like *"Ryn took down a goblin patrol."*, *"Kael and Dova came back from the Hydra Fen together."* or *"✦ Dova and Kael are about."* Each bot in your zone gets a "Talk to …" option.
-- **Talking to them:** they tell you what they've really been doing, and you can **buy their spare loot** or **sell them** materials and consumables.
+- **Talking to them:** they chat like other players. Ask what they've been up to (they sum it up in their own voice), for tips (real ones, plus Gates that suit your level), about their build or their guild, or to **team up**: fighters, explorers and gatherers who can keep up will wait in town for your next Gate run and appear first in the companion list. Traders and crafters will tell you they'd rather not. You can also **buy their spare loot** or **sell them** materials and consumables.
 - **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
 - **Guilds and the auction house:** bots join guilds that suit them (and your own guild, if you've founded one), rise through the ranks as they level, and consign their best loot to the Verath auction. Their listings show who consigned them, and they're paid when they sell.
 - **They change the world without you:** come back from Verath and Ryn may have killed the Golem. The World Log (`[L]`) shows who holds every lair. Bots leave each lair's first boss alone for 250 turns, so you get the first shot.
@@ -365,7 +384,15 @@ Save files live in `saves/`. Each slot creates two files:
 - `<slot>.json` — player data (Pydantic model)
 - `<slot>.db` — world state (SQLite: NPC memory, quest instances, etc.)
 
-Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 8), both upgraded on load.
+Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 9), both upgraded on load.
+
+**Your saves are protected:**
+- the JSON is written to a temporary file and swapped in, so a crash mid-save can't corrupt it
+- every save (at most every 5 minutes) keeps a backup in `saves/backups/` (the three newest, JSON + database)
+- on load, the database gets an integrity check; if it's damaged, the newest good backup is restored and the damaged file is kept aside as `<slot>.damaged-<time>.db`
+- logs that only grow (the turn log, old world events) are trimmed on save
+
+Admin → **Database health** shows the row counts, runs the integrity check, trims old logs and makes a backup on demand.
 
 Each save has its **own grown world**. Items, recipes, traders, skills, new Gates and new bosses created for one save are stored in that save's `.db`, restored when you load it, and never appear in another save. So are who rules each lair, the history of every boss kill, and the bots.
 
@@ -416,6 +443,18 @@ AI_MAX_ALIGNMENT_SHIFT = 5.0
 AI_GIVEABLE_ITEM_TYPES = frozenset({"CONSUMABLE", "MATERIAL"})
 ```
 
+```python
+# Decisions: pick one of N declared options instead of writing text (ai/decision.py)
+DECISION_PROVIDER = "ollama"        # "ollama" (the fast model) | "openai_compatible" | "off"
+DECISION_ENDPOINT = ""              # for openai_compatible, e.g. https://openrouter.ai/api/v1
+DECISION_MODEL = ""                 # the remote model id; the key goes in the DECISION_API_KEY env var
+DECISION_MATCH_CONFIDENCE = 0.7     # [?] text this surely matching a choice just takes it
+
+MODEL_CATALOG_URL = "https://raw.githubusercontent.com/winters80/Game_test/main/data/ai/model_catalog.json"
+```
+
+**Decisions** are short, schema-constrained calls that pick one of a fixed list of options, which is much faster than generating a reply. The game uses one when you type into `[?]`: if your words mean a choice already on screen, it just takes it. Dedicated decision models (such as Microsoft's Decision-1, which returns a probability per option and runs on Azure AI Foundry or OpenRouter) can be plugged in through `openai_compatible` if their endpoint speaks the OpenAI chat API; this is off by default because it sends scene text to that service. Offline, the local fast model does the job.
+
 If Ollama is offline or `AI_ENABLED = False`, every AI call silently falls back to the nearest pre-written class from `data/classes/combo_classes.json`. NPC dialogue uses its `dialogue_hooks["default"]`. The dynamic quest path simply skips its option. World growth records your actions as `no_ai` and retries them the next time you load with Ollama available. Rift surges open Deep Echoes instead of AI-made Gates, and bosses follow their authored chains.
 
 ### Verifying the AI is wired up
@@ -436,14 +475,16 @@ Prints `True` if Ollama is reachable and the model is pulled.
 # Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 192 checks across 34 sections
+# Every push runs ALL 9 test files via the pre-push hook
+python -X utf8 test_characters.py                  # 193 checks across 35 sections
 python -X utf8 test_quests.py                      # 771 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
-python -X utf8 tests/test_db_migrations.py         #  15 checks (SQLite schema, v8)
+python -X utf8 tests/test_db_migrations.py         #  24 checks (SQLite schema v9, threads, backups, recovery)
 python -X utf8 tests/test_background_tick.py       #   9 checks (BG worker)
 python -X utf8 tests/test_guild_betrayal.py        #  22 checks
 python -X utf8 tests/test_guild_founding.py        #  10 checks
+python -X utf8 tests/test_ui.py                    #  25 checks (prompt layer, diagnostics log, the Textual app driven headlessly)
+python -X utf8 tests/test_models.py                #  27 checks (model roles, catalog review, benchmark scoring, decisions)
 
 # Balance: can each build clear every Gate at its rated level? (real combat rules)
 python -X utf8 scripts/balance_sim.py 20 --class mage
@@ -455,11 +496,20 @@ python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstra
 # quest rewards / skill generation / save round-trip end-to-end. Requires Ollama.
 python -X utf8 playthrough_smoke.py                #  23 checks
 
+# What happened across every save: deaths, boss kills, Gate clears, world growth, AI failures
+python -X utf8 scripts/playtest_report.py --print   # writes logs/playtest_report.md
+
 # Start a feature branch
 git checkout -b feature/my-feature
 ```
 
-**1,093 checks across 7 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
+**1,155 checks across 9 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
+
+### Logs and diagnostics
+
+- `logs/game.log`, `error.log`, `ai.log`, `player_errors.log`: rotating logs, always on
+- `logs/sessions/session_<time>.log`: the **diagnostics log**, one per session (the last 20 are kept): what was on screen, every choice and typed answer, scene moves and fights, warnings and errors from every thread (including the background AI), and crashes with tracebacks. On by default; switch it under Admin → Diagnostics log
+- Admin → **Export diagnostics** zips the logs, the last three sessions and a summary of your setup (Python, models, feature flags, your character) into `logs/exports/`, ready to attach to a bug report
 
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, the `AIService` boundary contract, and the directory map.
 
@@ -471,8 +521,9 @@ What's next:
 
 | Item | Why |
 |------|-----|
-| Tune AI prompts on live Ollama | World growth, AI Gates, AI bosses and the Class Awakening are tested with fake model output; real `gemma4:12b` / `qwen3.5:4b` output needs a playthrough |
+| Tune AI prompts on live Ollama | World growth, AI Gates, AI bosses, bot chat and decisions are tested with fake model output; real `gemma4:12b` / `qwen3.5:4b` output needs a playthrough (the diagnostics log and playtest report now capture it) |
+| Batch decisions for bots | Bots are rules-based; a batched decision call every few hours of game time could pick their goals with the whole world in view |
 | Class identity | Warriors are the tankiest class (63% HP left on an average Gate run, vs 40–49% for mages and rogues in `scripts/balance_sim.py`); worth a design pass on class skill kits |
 | Bots bid at auction | Bots consign loot and get paid; bidding on the player's listings would complete the market |
+| Richer panels | Clickable inventory and equipment in the sidebar, a mini-map of the zones |
 | `GameEngine` mixin → composition refactor | Low priority, budget-guarded |
-| `world_db.py` further split | `auction_system` still reads the database connection directly in two places |
