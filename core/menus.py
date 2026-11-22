@@ -852,6 +852,8 @@ class GameMenusMixin:
                 "World Growth log",
                 f"Diagnostics log: {'ON' if session_log.is_enabled() else 'OFF'}",
                 "Export diagnostics (zip for bug reports)",
+                "Database health (rows, integrity, backup now)",
+                "Playtest report (all saves)",
                 f"Toggle Feature Flags",
                 f"Background Generator: {bg_status}",
                 f"Active Bots / Players  ({bot_count} bots · 1 player)",
@@ -942,6 +944,39 @@ class GameMenusMixin:
                                            " your setup and your character's state, nothing else.[/dim_text]")
                 else:
                     renderer.print_system_message("Export failed (see logs/error.log).", style="dim_text")
+                renderer.prompt_any_key()
+
+            elif action.startswith("Database health"):
+                db = self.state.world_db if self.state else None
+                if db is None:
+                    renderer.print_system_message("No world database open.", style="dim_text")
+                else:
+                    ok = db.integrity_ok()
+                    renderer.console.print(f"\n  Integrity : {'[success]ok[/success]' if ok else '[error]DAMAGED[/error]'}")
+                    renderer.console.print(f"  File      : {db.db_path}")
+                    for table, n in db.stats().items():
+                        if n:
+                            renderer.console.print(f"  [dim_text]{table:<24}[/dim_text] {n:,}")
+                    removed = db.prune()
+                    from persistence.save_manager import backup_dir
+                    dest = backup_dir(db.db_path.parent) / f"{db.db_path.stem}.manual.db"
+                    renderer.console.print(f"\n  Pruned {removed} old log rows. Backup: "
+                                           f"{dest if db.backup_to(dest) else 'failed'}")
+                renderer.prompt_any_key()
+
+            elif action.startswith("Playtest report"):
+                from pathlib import Path as _P
+                script = _P(__file__).resolve().parent.parent / "scripts" / "playtest_report.py"
+                from importlib import util as _u
+                spec = _u.spec_from_file_location("playtest_report", script)
+                mod = _u.module_from_spec(spec); spec.loader.exec_module(mod)
+                from config import SAVES_DIR
+                text = mod.build_report(SAVES_DIR, script.parent.parent / "logs")
+                out = script.parent.parent / "logs" / "playtest_report.md"
+                out.write_text(text, encoding="utf-8")
+                renderer.console.print(f"\n  [success]Report written to {out}[/success]\n")
+                for line in text.splitlines()[:40]:
+                    renderer.console.print("  " + line, markup=False)
                 renderer.prompt_any_key()
 
             elif action == "Toggle Feature Flags":

@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import shutil
+import time
 from pathlib import Path
 from typing import Any
 
@@ -26,14 +29,84 @@ def save_game(state: GameState, slot_name: str, saves_dir: Path) -> Path:
         "generated_content_cache": state.generated_content_cache,
     }
     json_path = saves_dir / f"{slot_name}.json"
-    json_path.write_text(json.dumps(save_data, indent=2, default=str), encoding="utf-8")
+    # Atomic: write a temp file, then swap it in, so a crash mid-save can't
+    # leave a half-written (unloadable) save behind.
+    tmp = json_path.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(save_data, indent=2, default=str), encoding="utf-8")
+    os.replace(tmp, json_path)
 
     # ── World DB is already open and auto-persists (WAL mode) ─────────────────
     # The .db file lives at saves/{slot_name}.db and is written to live.
-    # Nothing extra needed here — SQLite commits happen per-operation.
-
+    # On save: trim logs that only grow, and keep rotating backups.
+    if state.world_db is not None:
+        try:
+            state.world_db.prune()
+        except Exception:
+            logger.info("World DB prune failed", exc_info=True)
+        _rotate_backups(state, slot_name, saves_dir, json_path)
     state.clear_dirty()
     return json_path
+
+
+BACKUPS_KEPT = 3
+BACKUP_EVERY_SECONDS = 300      # at most one backup per slot every 5 minutes
+
+
+def backup_dir(saves_dir: Path) -> Path:
+    return saves_dir / "backups"
+
+
+def _rotate_backups(state: GameState, slot_name: str, saves_dir: Path, json_path: Path) -> None:
+    """saves/backups/<slot>.1 is the newest; .3 the oldest (json + db)."""
+    bdir = backup_dir(saves_dir)
+    newest = bdir / f"{slot_name}.1.json"
+    if newest.exists() and time.time() - newest.stat().st_mtime < BACKUP_EVERY_SECONDS:
+        return
+    try:
+        bdir.mkdir(parents=True, exist_ok=True)
+        for n in range(BACKUPS_KEPT, 1, -1):
+            for ext in ("json", "db"):
+                older, newer = bdir / f"{slot_name}.{n}.{ext}", bdir / f"{slot_name}.{n - 1}.{ext}"
+                if newer.exists():
+                    os.replace(newer, older)
+        shutil.copy2(json_path, newest)
+        state.world_db.backup_to(bdir / f"{slot_name}.1.db")
+    except Exception:
+        logger.warning("Save backup failed", exc_info=True)
+
+
+def _open_world_db(db_path: Path, slot_name: str, saves_dir: Path) -> WorldDatabase:
+    """Open the slot's world DB; if the file is damaged, restore the newest
+    backup that passes the integrity check (the damaged file is kept aside)."""
+    world_db = WorldDatabase(db_path)
+    try:
+        world_db.open()
+        if world_db.integrity_ok():
+            return world_db
+        world_db.close()
+    except Exception:
+        logger.warning("World DB %s failed to open", db_path, exc_info=True)
+        world_db.close()
+    for n in range(1, BACKUPS_KEPT + 1):
+        candidate = backup_dir(saves_dir) / f"{slot_name}.{n}.db"
+        if not candidate.exists():
+            continue
+        damaged = db_path.with_suffix(f".damaged-{int(time.time())}.db")
+        if db_path.exists():
+            os.replace(db_path, damaged)
+        for side in ("-wal", "-shm"):
+            Path(str(db_path) + side).unlink(missing_ok=True)
+        shutil.copy2(candidate, db_path)
+        restored = WorldDatabase(db_path)
+        restored.open()
+        if restored.integrity_ok():
+            logger.warning("World DB %s was damaged; restored backup %s (old file kept as %s)",
+                           db_path.name, candidate.name, damaged.name)
+            return restored
+        restored.close()
+    world_db = WorldDatabase(db_path)
+    world_db.open()                    # nothing better: carry on with what we have
+    return world_db
 
 
 def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
@@ -58,8 +131,7 @@ def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
 
     # ── Open paired world DB ──────────────────────────────────────────────────
     db_path = saves_dir / f"{slot_name}.db"
-    world_db = WorldDatabase(db_path)
-    world_db.open()
+    world_db = _open_world_db(db_path, slot_name, saves_dir)
 
     state = GameState(player, world_db=world_db)
     # Stash AI-generated skill definitions for GameEngine to re-register
