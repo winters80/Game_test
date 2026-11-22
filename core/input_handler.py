@@ -179,6 +179,15 @@ def prompt_choice(engine: "GameEngine", options: list[SceneOption]) -> SceneOpti
         engine._running = False
         return None
 
+    # Clicked in the Textual sidebar: act on that item / skill directly.
+    if isinstance(answer, str) and answer.startswith(("__item__:", "__skill__:")):
+        kind, _, ref = answer.partition(":")
+        if kind == "__item__":
+            engine._inventory_menu(focus_item=ref)
+        else:
+            engine._skills_menu(focus_skill=ref)
+        return None
+
     # ── Hotkey dispatch ─────────────────────────────────────────────────
     for key, method, _label in _HOTKEYS:
         if not answer.startswith(key):

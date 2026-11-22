@@ -121,9 +121,26 @@ class TuiBackend:
         from ui.renderer import console
         panels = [build_status_panel(player), build_stats_panel(player)]
         if item_registry is not None:
-            panels += [build_equipment_panel(player, item_registry),
-                       build_compact_inventory_panel(player, item_registry)]
-        self.app.call_from_thread(self.app.set_sidebar, Group(*panels))
+            panels.append(build_equipment_panel(player, item_registry))
+        # Clickable lists below the panels: the bag and the skills.
+        bag = []
+        if item_registry is not None:
+            eq = player.equipped
+            worn = {i for i in (eq.weapon, eq.armor, eq.accessory) if i}
+            for slot in player.inventory:
+                item = item_registry.get(slot.item_id)
+                if item is None:
+                    continue
+                mark = " ◆" if slot.item_id in worn else ""
+                qty = f" ×{slot.quantity}" if slot.quantity > 1 else ""
+                bag.append((slot.item_id, f"{item.name}{qty}{mark}"))
+        skills = []
+        reg = getattr(getattr(self.app, "engine", None), "skill_registry", None)
+        for sid in player.skills:
+            sk = reg.get(sid) if reg is not None else None
+            if sk is not None:
+                skills.append((sid, f"{sk.name} · {sk.skill_type.value.lower()}"))
+        self.app.call_from_thread(self.app.set_sidebar, Group(*panels), bag, skills)
 
     def set_busy_text(self, message):
         self.app.call_from_thread(self.app.set_busy, message)
@@ -146,6 +163,8 @@ class GameApp(App):
     CSS = """
     Screen { layout: horizontal; background: #0b0d12; }
     #sidebar { width: 42; border-right: tall #2a3142; padding: 0 1; }
+    .side-title { color: #7fb2ff; text-style: bold; margin: 1 0 0 1; }
+    .side-list { height: auto; max-height: 14; border: none; background: transparent; }
     #main { width: 1fr; }
     #story { height: 1fr; border: round #2a3142; padding: 0 1; scrollbar-size: 1 1; }
     #busy { height: auto; color: #c58cff; text-style: bold; padding: 0 2; display: none; }
@@ -179,6 +198,10 @@ class GameApp(App):
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="sidebar"):
             yield Static("", id="panels")
+            yield Label("BAG · click to use / equip", id="bag-title", classes="side-title")
+            yield OptionList(id="bag", classes="side-list")
+            yield Label("SKILLS · click to inspect", id="skills-title", classes="side-title")
+            yield OptionList(id="skills", classes="side-list")
         with Vertical(id="main"):
             yield RichLog(id="story", wrap=True, markup=False, highlight=False, auto_scroll=True)
             yield Label("", id="busy")
@@ -203,7 +226,8 @@ class GameApp(App):
     def _run_engine(self) -> None:
         try:
             from core.game_engine import GameEngine
-            GameEngine().run()
+            self.engine = GameEngine()
+            self.engine.run()
         except SystemExit:
             pass
         except Exception:
@@ -237,9 +261,26 @@ class GameApp(App):
             self.call_from_thread(lambda: self.query_one("#story", RichLog).write(renderable))
 
     # ── UI-thread side ──
-    def set_sidebar(self, renderable) -> None:
+    def set_sidebar(self, renderable, bag: list | None = None, skills: list | None = None) -> None:
         self.sidebar_renderable = renderable
         self.query_one("#panels", Static).update(renderable)
+        for wid, rows in (("#bag", bag), ("#skills", skills)):
+            if rows is None:
+                continue
+            ol = self.query_one(wid, OptionList)
+            ol.clear_options()
+            ol.add_options([Option(label, id=f"{wid[1:]}:{ref}") for ref, label in rows])
+        self.sidebar_rows = {"bag": bag or [], "skills": skills or []}
+
+    @on(OptionList.OptionSelected, ".side-list")
+    def _side_pick(self, event: OptionList.OptionSelected) -> None:
+        """Bag / skill clicked: answer the scene prompt with it (only from
+        the main scene choices, where the hotkeys are)."""
+        kind, _, ref = (event.option.id or "").partition(":")
+        if self._kind != "select" or not self._hotkeys:
+            self.notify("Finish the current choice first.", severity="warning", timeout=2)
+            return
+        self._answer(("__item__:" if kind == "bag" else "__skill__:") + ref)
 
     def set_busy(self, message: str) -> None:
         busy = self.query_one("#busy", Label)
@@ -282,8 +323,8 @@ class GameApp(App):
             n += 1
             label = Text.from_markup(c.title) if "[" in c.title else Text(c.title)
             if c.disabled:
-                reason = c.disabled if isinstance(c.disabled, str) else "locked"
-                label.append(f"  ({reason})", style="dim")
+                if isinstance(c.disabled, str) and c.disabled:
+                    label.append(f"  ({c.disabled})", style="dim")
             options.append(Option(label, id=f"o{len(self._values)}", disabled=bool(c.disabled)))
             self._values.append(c.value)
         choices.add_options(options)

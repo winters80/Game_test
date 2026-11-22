@@ -181,9 +181,42 @@ async def _tui_flow() -> None:
         check({"k", "i", "j"} <= set(app._hotkeys), f"hotkeys become buttons ({sorted(app._hotkeys)})")
         locked = [o for o in options() if "(" in o and "Verath" in o]
         check(bool(locked), "locked choices are listed with their reason")
+        bag = getattr(app, "sidebar_rows", {}).get("bag", [])
+        check(any(ref == "rusty_sword" for ref, _ in bag), f"the sidebar lists the bag ({bag[:3]})")
+        ol = app.query_one("#bag", OptionList)
+        ol.focus()
+        ol.highlighted = [ref for ref, _ in bag].index("rusty_sword")
+        await pilot.press("enter")
+        check(await wait(pilot) and any("equip" in o.lower() for o in options()),
+              f"clicking an item in the sidebar opens its actions ({options()})")
+        await pilot.press("escape")
+        app._answer("← Back")
+        await wait(pilot)
+        for _ in range(5):                                          # back to the scene
+            if any("Check the Adventurers' Board" in o for o in options()):
+                break
+            await pilot.press("enter")
+            await wait(pilot)
         await pilot.press("k")                                      # Skills hotkey
         check(await wait(pilot) and "Back" in " ".join(options()), "a hotkey letter opens its menu")
         await pilot.press("ctrl+q")
+
+
+def test_save_summary() -> None:
+    from entities.player import Player
+    from persistence import save_manager as sm
+    with tempfile.TemporaryDirectory() as tmp:
+        tmp = Path(tmp)
+        st = sm.new_game_state(Player(name="Sum"), tmp, "sum")
+        st.player.level = 7
+        st.current_scene_id = "verath_city"
+        sm.save_game(st, "sum", tmp)
+        sm.close_game(st)
+        s = sm.save_summary("sum", tmp)
+        check(s["name"] == "Sum" and s["level"] == 7 and s["scene"] == "verath_city" and s["saved"],
+              "the load screen gets a summary of each save")
+        (tmp / "bad.json").write_text("{nope")
+        check(sm.save_summary("bad", tmp).get("error"), "an unreadable save is flagged, not a crash")
 
 
 def test_tui() -> None:
@@ -202,6 +235,8 @@ if __name__ == "__main__":
     test_prompt_layer()
     print("\n  utils/session_log")
     test_session_log()
+    print("\n  save summaries")
+    test_save_summary()
     print("\n  ui/tui_app")
     test_tui()
     for f in list(ROOT.glob("saves/pilot*")) + list(ROOT.glob("saves/Pilot*")):
