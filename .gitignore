@@ -52,3 +52,4 @@ htmlcov/
 config_local.py
 .claude/worktrees/
 .claude/settings.local.json
+saves/settings/

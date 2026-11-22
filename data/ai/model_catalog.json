@@ -1,0 +1,28 @@
+{
+  "catalog_version": 1,
+  "updated": "2026-11-22",
+  "about": "Models the game knows how to use, with the role each suits. The game reads this file locally and, if it can, the newest copy from the repository's main branch, so recommendations can change without a code update. Quality is a rough relative score for this game's tasks (JSON content, short dialogue, picking options); run the in-game benchmark for numbers on your machine.",
+  "roles": {
+    "primary": "Structured content: classes, quests, Gates, world growth. Wants the best JSON quality you can fit in memory.",
+    "fast": "Interactive lines: [?] questions, bot chat, follow-up options. Wants speed; quality second.",
+    "fallback": "Used if the primary fails to load. Something smaller than the primary."
+  },
+  "tiers": [
+    {"min_ram_gb": 32, "primary": "gemma4:12b", "fast": "qwen3.5:9b", "fallback": "qwen3.5:9b"},
+    {"min_ram_gb": 16, "primary": "gemma4:12b", "fast": "qwen3.5:4b", "fallback": "qwen3.5:9b"},
+    {"min_ram_gb": 12, "primary": "qwen3.5:9b", "fast": "qwen3.5:4b", "fallback": "gemma3:4b"},
+    {"min_ram_gb": 8,  "primary": "qwen3.5:4b", "fast": "qwen3.5:4b", "fallback": "llama3.2:3b"},
+    {"min_ram_gb": 0,  "primary": "llama3.2:3b", "fast": "llama3.2:3b", "fallback": "llama3.2:3b"}
+  ],
+  "models": [
+    {"name": "gemma4:12b",  "family": "gemma4",  "params_b": 12, "size_gb": 8.0,  "min_ram_gb": 16, "roles": ["primary"],                     "quality": 86, "speed": 55, "released": "2026", "notes": "Current default primary: strong JSON, long context."},
+    {"name": "qwen3.5:9b",  "family": "qwen3.5", "params_b": 9,  "size_gb": 6.6,  "min_ram_gb": 12, "roles": ["primary", "fallback", "fast"], "quality": 82, "speed": 62, "released": "2026", "notes": "Default fallback; a good primary on 12 GB machines."},
+    {"name": "qwen3.5:4b",  "family": "qwen3.5", "params_b": 4,  "size_gb": 3.4,  "min_ram_gb": 8,  "roles": ["fast", "fallback"],            "quality": 72, "speed": 85, "released": "2026", "notes": "Default fast model."},
+    {"name": "qwen3:14b",   "family": "qwen3",   "params_b": 14, "size_gb": 9.3,  "min_ram_gb": 16, "roles": ["primary"],                     "quality": 80, "speed": 48, "released": "2025", "notes": "Older generation; fine if already installed."},
+    {"name": "qwen3:8b",    "family": "qwen3",   "params_b": 8,  "size_gb": 5.2,  "min_ram_gb": 12, "roles": ["primary", "fallback", "fast"], "quality": 75, "speed": 64, "released": "2025", "notes": "Older generation."},
+    {"name": "qwen3:4b",    "family": "qwen3",   "params_b": 4,  "size_gb": 2.6,  "min_ram_gb": 8,  "roles": ["fast", "fallback"],            "quality": 66, "speed": 84, "released": "2025", "notes": "Older generation."},
+    {"name": "gemma3:12b",  "family": "gemma3",  "params_b": 12, "size_gb": 8.1,  "min_ram_gb": 16, "roles": ["primary"],                     "quality": 76, "speed": 52, "released": "2025", "notes": "Previous default primary."},
+    {"name": "gemma3:4b",   "family": "gemma3",  "params_b": 4,  "size_gb": 3.3,  "min_ram_gb": 8,  "roles": ["fast", "fallback"],            "quality": 63, "speed": 80, "released": "2025", "notes": "Previous generation small model."},
+    {"name": "llama3.2:3b", "family": "llama3.2","params_b": 3,  "size_gb": 2.0,  "min_ram_gb": 6,  "roles": ["fast", "fallback", "primary"], "quality": 55, "speed": 90, "released": "2024", "notes": "For low-memory machines. JSON quality is weak."}
+  ]
+}

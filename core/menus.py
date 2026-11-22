@@ -848,6 +848,7 @@ class GameMenusMixin:
             bot_count = self._bot_manager.active_count() if self._bot_manager else 0
             choices = [
                 f"AI Token Usage  (AI: {ai_status})",
+                "AI models (review, benchmark, switch)",
                 "World Growth log",
                 f"Diagnostics log: {'ON' if session_log.is_enabled() else 'OFF'}",
                 "Export diagnostics (zip for bug reports)",
@@ -909,6 +910,10 @@ class GameMenusMixin:
                     renderer.console.print(f"  BG tasks queued    : [dim_text]{bg_q}[/dim_text]")
                     renderer.console.print()
                 renderer.prompt_any_key()
+
+            elif action.startswith("AI models"):
+                from core.model_admin import models_menu
+                models_menu(self)
 
             elif action == "World Growth log":
                 from core.world_growth_flow import world_growth_report

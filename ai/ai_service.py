@@ -396,6 +396,17 @@ class AIService:
             logger.info("AI bot line generation failed", exc_info=True)
             return None
 
+    def decide(self, question: str, options: list[str], context: str = ""):
+        """One of ``options`` as an ``ai.decision.Decision`` (index, confidence),
+        or None (offline, decisions off, or the call failed: use your rules)."""
+        if self._gen is None or not options:
+            return None
+        try:
+            return self._gen.decide(question, options, context)
+        except Exception:
+            logger.info("AI decision failed", exc_info=True)
+            return None
+
     def generate_bot_reply(self, profile: dict, player_name: str, topic: str,
                            facts: str = "", said_so_far: list[str] | None = None) -> str | None:
         """A bot's conversational reply (cosmetic: failures log at INFO)."""
