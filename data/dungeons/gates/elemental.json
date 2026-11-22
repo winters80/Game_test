@@ -1,0 +1,1955 @@
+{
+ "_doc": "Elemental Gates. Built from compact specs; see CLAUDE.md > Gates.",
+ "enemy_templates": {
+  "rootdeep_caverns_rockling": {
+   "name": "Rockling",
+   "max_hp": 35,
+   "attack": 7,
+   "defense": 2,
+   "xp_reward": 37,
+   "gold_reward": 195,
+   "rank": "E",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "rootdeep_caverns_root_crawler": {
+   "name": "Root Crawler",
+   "max_hp": 35,
+   "attack": 7,
+   "defense": 2,
+   "xp_reward": 37,
+   "gold_reward": 195,
+   "rank": "E",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.15
+   ]
+  },
+  "rootdeep_caverns_earth_elemental_boss": {
+   "name": "the Heartstone Elemental",
+   "max_hp": 93,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 150,
+   "gold_reward": 1150,
+   "rank": "D",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     1.0
+    ],
+    [
+     "heartstone_chip",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "rootdeep_caverns_mole_king_boss": {
+   "name": "King {name} the Burrower",
+   "max_hp": 93,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 150,
+   "gold_reward": 1150,
+   "rank": "D",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     1.0
+    ],
+    [
+     "heartstone_chip",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "rootdeep_caverns_crystal_heart_boss": {
+   "name": "the Awakened Geode",
+   "max_hp": 106,
+   "attack": 14,
+   "defense": 4,
+   "xp_reward": 172,
+   "gold_reward": 1322,
+   "rank": "D",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     1.0
+    ],
+    [
+     "heartstone_chip",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "rootdeep_caverns_world_root_boss": {
+   "name": "the Old Oak's Root",
+   "max_hp": 106,
+   "attack": 14,
+   "defense": 4,
+   "xp_reward": 172,
+   "gold_reward": 1322,
+   "rank": "D",
+   "loot_table": [
+    [
+     "heartstone_chip",
+     1.0
+    ],
+    [
+     "heartstone_chip",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "cinder_forge_salamander": {
+   "name": "Fire Salamander",
+   "max_hp": 42,
+   "attack": 9,
+   "defense": 2,
+   "xp_reward": 46,
+   "gold_reward": 240,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.25
+   ]
+  },
+  "cinder_forge_slag": {
+   "name": "Slag Elemental",
+   "max_hp": 42,
+   "attack": 9,
+   "defense": 2,
+   "xp_reward": 46,
+   "gold_reward": 240,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "cinder_forge_fire_elemental_boss": {
+   "name": "Pyrrhos the Forge-Heart",
+   "max_hp": 109,
+   "attack": 14,
+   "defense": 5,
+   "xp_reward": 180,
+   "gold_reward": 1400,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     1.0
+    ],
+    [
+     "ember_ore",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.3
+   ]
+  },
+  "cinder_forge_forged_one_boss": {
+   "name": "the Forged Champion",
+   "max_hp": 125,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 206,
+   "gold_reward": 1609,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     1.0
+    ],
+    [
+     "ember_ore",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.25
+   ]
+  },
+  "cinder_forge_smith_dwarves_boss": {
+   "name": "Forgemaster {name}",
+   "max_hp": 114,
+   "attack": 15,
+   "defense": 5,
+   "xp_reward": 189,
+   "gold_reward": 1470,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     1.0
+    ],
+    [
+     "ember_ore",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.2
+   ]
+  },
+  "cinder_forge_magma_wyrm_boss": {
+   "name": "the Magma Wyrm",
+   "max_hp": 130,
+   "attack": 17,
+   "defense": 5,
+   "xp_reward": 216,
+   "gold_reward": 1680,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ember_ore",
+     1.0
+    ],
+    [
+     "ember_ore",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.35
+   ]
+  },
+  "tidecall_grotto_crab": {
+   "name": "Reef Crab",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "tide_pearl",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "tidecall_grotto_nixie": {
+   "name": "Nixie",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "tide_pearl",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.2
+   ]
+  },
+  "tidecall_grotto_water_elemental_boss": {
+   "name": "the Moon-Pool Undine",
+   "max_hp": 125,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 210,
+   "gold_reward": 1650,
+   "rank": "C",
+   "loot_table": [
+    [
+     "tide_pearl",
+     1.0
+    ],
+    [
+     "tide_pearl",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "tidecall_grotto_sea_hag_boss": {
+   "name": "the Sea Hag",
+   "max_hp": 131,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 220,
+   "gold_reward": 1732,
+   "rank": "C",
+   "loot_table": [
+    [
+     "tide_pearl",
+     1.0
+    ],
+    [
+     "tide_pearl",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "tidecall_grotto_maelstrom_boss": {
+   "name": "the Living Maelstrom",
+   "max_hp": 143,
+   "attack": 18,
+   "defense": 5,
+   "xp_reward": 241,
+   "gold_reward": 1897,
+   "rank": "C",
+   "loot_table": [
+    [
+     "tide_pearl",
+     1.0
+    ],
+    [
+     "tide_pearl",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "tidecall_grotto_crab_king_boss": {
+   "name": "the Crab King",
+   "max_hp": 143,
+   "attack": 18,
+   "defense": 5,
+   "xp_reward": 241,
+   "gold_reward": 1897,
+   "rank": "C",
+   "loot_table": [
+    [
+     "tide_pearl",
+     1.0
+    ],
+    [
+     "tide_pearl",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ]
+  },
+  "rime_tomb_ice_wight": {
+   "name": "Ice Wight",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "everfrost",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.2
+   ]
+  },
+  "rime_tomb_frost_wolf": {
+   "name": "Frost Wolf",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "everfrost",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.15
+   ]
+  },
+  "rime_tomb_frost_king_boss": {
+   "name": "King {name} the Frozen",
+   "max_hp": 141,
+   "attack": 17,
+   "defense": 6,
+   "xp_reward": 240,
+   "gold_reward": 1900,
+   "rank": "C",
+   "loot_table": [
+    [
+     "everfrost",
+     1.0
+    ],
+    [
+     "everfrost",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.3
+   ]
+  },
+  "rime_tomb_frost_queen_boss": {
+   "name": "Queen {name} of Winter",
+   "max_hp": 162,
+   "attack": 20,
+   "defense": 6,
+   "xp_reward": 276,
+   "gold_reward": 2185,
+   "rank": "C",
+   "loot_table": [
+    [
+     "everfrost",
+     1.0
+    ],
+    [
+     "everfrost",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.35
+   ]
+  },
+  "rime_tomb_thaw_dead_boss": {
+   "name": "the Thawed King",
+   "max_hp": 148,
+   "attack": 18,
+   "defense": 6,
+   "xp_reward": 252,
+   "gold_reward": 1995,
+   "rank": "C",
+   "loot_table": [
+    [
+     "everfrost",
+     1.0
+    ],
+    [
+     "everfrost",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "rime_tomb_frost_giant_boss": {
+   "name": "Jotun the Frost Giant",
+   "max_hp": 169,
+   "attack": 21,
+   "defense": 6,
+   "xp_reward": 288,
+   "gold_reward": 2280,
+   "rank": "C",
+   "loot_table": [
+    [
+     "everfrost",
+     1.0
+    ],
+    [
+     "everfrost",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.3
+   ]
+  },
+  "stormcrown_eyrie_harpy": {
+   "name": "Storm Harpy",
+   "max_hp": 70,
+   "attack": 14,
+   "defense": 3,
+   "xp_reward": 82,
+   "gold_reward": 420,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "stormcrown_eyrie_air_spirit": {
+   "name": "Gale Sprite",
+   "max_hp": 70,
+   "attack": 14,
+   "defense": 3,
+   "xp_reward": 82,
+   "gold_reward": 420,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.15
+   ]
+  },
+  "stormcrown_eyrie_thunderbird_boss": {
+   "name": "the Thunderbird",
+   "max_hp": 173,
+   "attack": 20,
+   "defense": 7,
+   "xp_reward": 300,
+   "gold_reward": 2400,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     1.0
+    ],
+    [
+     "thunder_feather",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "stormcrown_eyrie_harpy_queen_boss": {
+   "name": "Queen {name} of the Harpies",
+   "max_hp": 181,
+   "attack": 21,
+   "defense": 7,
+   "xp_reward": 315,
+   "gold_reward": 2520,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     1.0
+    ],
+    [
+     "thunder_feather",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "stormcrown_eyrie_storm_lord_boss": {
+   "name": "the Storm Lord",
+   "max_hp": 207,
+   "attack": 24,
+   "defense": 7,
+   "xp_reward": 360,
+   "gold_reward": 2880,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     1.0
+    ],
+    [
+     "thunder_feather",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.35
+   ]
+  },
+  "stormcrown_eyrie_fledgling_boss": {
+   "name": "the Thunderbird Fledgling",
+   "max_hp": 198,
+   "attack": 23,
+   "defense": 7,
+   "xp_reward": 345,
+   "gold_reward": 2760,
+   "rank": "C",
+   "loot_table": [
+    [
+     "thunder_feather",
+     1.0
+    ],
+    [
+     "thunder_feather",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "hollow_of_unmaking_void_wisp": {
+   "name": "Void Wisp",
+   "max_hp": 126,
+   "attack": 24,
+   "defense": 6,
+   "xp_reward": 154,
+   "gold_reward": 780,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "hollow_of_unmaking_unmade": {
+   "name": "Unmade Thing",
+   "max_hp": 126,
+   "attack": 24,
+   "defense": 6,
+   "xp_reward": 154,
+   "gold_reward": 780,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "hollow_of_unmaking_void_lord_boss": {
+   "name": "the Unmaker",
+   "max_hp": 301,
+   "attack": 33,
+   "defense": 11,
+   "xp_reward": 540,
+   "gold_reward": 4400,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     1.0
+    ],
+    [
+     "void_essence",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.35
+   ]
+  },
+  "hollow_of_unmaking_void_spawn_boss": {
+   "name": "the Void Spawn",
+   "max_hp": 361,
+   "attack": 40,
+   "defense": 11,
+   "xp_reward": 648,
+   "gold_reward": 5280,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     1.0
+    ],
+    [
+     "void_essence",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.3
+   ]
+  },
+  "hollow_of_unmaking_remade_boss": {
+   "name": "the Remade",
+   "max_hp": 331,
+   "attack": 36,
+   "defense": 11,
+   "xp_reward": 594,
+   "gold_reward": 4840,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     1.0
+    ],
+    [
+     "void_essence",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "hollow_of_unmaking_nothing_boss": {
+   "name": "Nothing",
+   "max_hp": 376,
+   "attack": 42,
+   "defense": 11,
+   "xp_reward": 675,
+   "gold_reward": 5500,
+   "rank": "A",
+   "loot_table": [
+    [
+     "void_essence",
+     1.0
+    ],
+    [
+     "void_essence",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.35
+   ]
+  }
+ },
+ "gates": [
+  {
+   "gate_id": "rootdeep_caverns",
+   "name": "the Rootdeep Caverns",
+   "theme": "elemental",
+   "min_level": 3,
+   "region": "village_start",
+   "description": "A rift under an old oak near the village leads into caves where the roots of the world run like veins through living stone.",
+   "entry_text": "The tunnel walls are made of root and rock grown together. They creak when you touch them, like an old man stretching.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Small stone creatures roll out of the walls like boulders.",
+     "enemies": [
+      "rootdeep_caverns_rockling",
+      "rootdeep_caverns_rockling"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A cave where the roots shift and grab.",
+     "loot": [
+      [
+       "heartstone_chip",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "STR",
+      "min": 10,
+      "success": "You tear free of the roots and pry loose a chip of heartstone.",
+      "fail": "The roots tighten around your leg and squeeze.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Crawlers made of roots scuttle across the ceiling.",
+     "enemies": [
+      "rootdeep_caverns_root_crawler",
+      "rootdeep_caverns_root_crawler",
+      "rootdeep_caverns_rockling"
+     ]
+    }
+   ],
+   "material": "heartstone_chip",
+   "lair": {
+    "name": "the Heartstone Grotto",
+    "respawn_turns": 28,
+    "first_occupant": "rootdeep_caverns_earth_elemental",
+    "fallback": [
+     "rootdeep_caverns_earth_elemental"
+    ],
+    "occupants": {
+     "rootdeep_caverns_earth_elemental": {
+      "title": "the Heartstone Elemental",
+      "enemies": [
+       "rootdeep_caverns_earth_elemental_boss"
+      ],
+      "intro": "A figure of stone and root rises from a pool of mud, a glowing green stone at its chest. The caves shake when it steps.",
+      "victory": "The Elemental crumbles into a heap of earth, and its heartstone dims.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "Its heartstone is exposed when it raises its arms."
+      },
+      "successors": [
+       {
+        "to": "rootdeep_caverns_mole_king",
+        "weight": 2
+       },
+       {
+        "to": "rootdeep_caverns_crystal_heart",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "rootdeep_caverns_mole_king": {
+      "title": "the Mole King",
+      "enemies": [
+       "rootdeep_caverns_mole_king_boss",
+       "rootdeep_caverns_rockling"
+      ],
+      "intro": "With the elemental gone, the moles moved in. King {name} is the size of a bear and wears a crown of gemstones.",
+      "victory": "King {name} burrows away, defeated, leaving his crown behind.",
+      "arrival_omen": "New tunnels riddle the grotto walls. Something is digging.",
+      "arrival_rumour": "A giant mole has claimed the Rootdeep Caverns. He's digging under the village.",
+      "name_pool": [
+       "Digby",
+       "Moldwarp",
+       "Tunnelo"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "He's nearly blind. Stay still and quiet."
+      },
+      "successors": [
+       {
+        "to": "rootdeep_caverns_world_root"
+       }
+      ]
+     },
+     "rootdeep_caverns_crystal_heart": {
+      "title": "the Awakened Geode",
+      "enemies": [
+       "rootdeep_caverns_crystal_heart_boss"
+      ],
+      "intro": "Your magic woke the crystals in the deep stone. A great geode has split open, and what came out is all sharp edges.",
+      "victory": "The Awakened Geode shatters along its planes.",
+      "arrival_omen": "Crystals are pushing out through the grotto walls, glowing.",
+      "arrival_rumour": "The Rootdeep Caverns are growing crystals. Something sharp lives in the deep stone now.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Crystals have planes. Strike along one and it shatters."
+      },
+      "successors": [
+       {
+        "to": "rootdeep_caverns_world_root"
+       }
+      ]
+     },
+     "rootdeep_caverns_world_root": {
+      "title": "the Root of the Old Oak",
+      "enemies": [
+       "rootdeep_caverns_world_root_boss"
+      ],
+      "intro": "The oak above the caves has sent its taproot down to reclaim its home. It moves through the stone like a snake through grass.",
+      "victory": "The great root withers and goes still.",
+      "arrival_omen": "The oak's roots have broken through the grotto ceiling, and they are moving.",
+      "arrival_rumour": "The old oak by the village is moving its roots. The Rootdeep Caverns have a new master: the tree itself.",
+      "study": {
+       "stat": "STR",
+       "min": 12,
+       "text": "It's still attached to the tree. Sever it, and it withers."
+      },
+      "successors": [
+       {
+        "to": "rootdeep_caverns_earth_elemental"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "cinder_forge",
+   "name": "the Cinder Forge",
+   "theme": "elemental",
+   "min_level": 4,
+   "region": "village_start",
+   "description": "A rift that opened on the slopes above the village glows red at night. The System calls it a FORGE-CLASS GATE.",
+   "entry_text": "The heat hits you like a wall. Rivers of lava run in channels cut by someone, or something, with a purpose.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Salamanders bask on the rocks by the lava, then turn to look at you.",
+     "enemies": [
+      "cinder_forge_salamander",
+      "cinder_forge_salamander"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A bridge of cooling lava crosses a river of the hot stuff.",
+     "loot": [
+      [
+       "ember_ore",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 11,
+      "success": "You cross quickly, and chip a lump of ember ore from the bridge.",
+      "fail": "The bridge cracks under your boot, and the heat sears your leg.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Molten slag heaves itself up and shambles toward you.",
+     "enemies": [
+      "cinder_forge_slag",
+      "cinder_forge_salamander"
+     ]
+    }
+   ],
+   "material": "ember_ore",
+   "lair": {
+    "name": "the Crucible",
+    "respawn_turns": 29,
+    "first_occupant": "cinder_forge_fire_elemental",
+    "fallback": [
+     "cinder_forge_fire_elemental"
+    ],
+    "occupants": {
+     "cinder_forge_fire_elemental": {
+      "title": "Pyrrhos the Forge-Heart",
+      "enemies": [
+       "cinder_forge_fire_elemental_boss"
+      ],
+      "intro": "A figure of living flame works a great anvil at the center of the crucible. Pyrrhos turns. 'Metal,' it says, looking at your gear. 'Good metal.'",
+      "victory": "Pyrrhos sputters out, and the anvil cools.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "It draws heat from the lava. Fight it away from the channels."
+      },
+      "aftermath": [
+       {
+        "id": "left_forge",
+        "label": "Leave the forge burning.",
+        "text": "The lava still flows. The forge will make something new.",
+        "triggers": []
+       },
+       {
+        "id": "quenched",
+        "label": "Quench the forge with the cooling pools.",
+        "text": "Steam explodes upward. The lava hardens. The crucible goes dark.",
+        "triggers": []
+       }
+      ],
+      "successors": [
+       {
+        "to": "cinder_forge_forged_one",
+        "when": {
+         "aftermath": "left_forge"
+        }
+       },
+       {
+        "to": "cinder_forge_smith_dwarves",
+        "when": {
+         "aftermath": "quenched"
+        }
+       }
+      ]
+     },
+     "cinder_forge_forged_one": {
+      "title": "the Forged Champion",
+      "enemies": [
+       "cinder_forge_forged_one_boss"
+      ],
+      "intro": "The forge made something new. The Forged Champion is a knight of glowing steel, and its armour is still hot from the anvil.",
+      "victory": "The Champion falls and its armour cracks as it cools.",
+      "arrival_omen": "The anvil rings by itself. Something is being forged in the crucible.",
+      "arrival_rumour": "The Cinder Forge has made itself a champion. Its armour glows red.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Freshly forged metal is brittle. Hit it hard while it cools."
+      },
+      "successors": [
+       {
+        "to": "cinder_forge_magma_wyrm"
+       }
+      ]
+     },
+     "cinder_forge_smith_dwarves": {
+      "title": "Clan {name}",
+      "enemies": [
+       "cinder_forge_smith_dwarves_boss",
+       "cinder_forge_slag"
+      ],
+      "intro": "With the forge cooled, a clan of dwarves have moved in to work its ore. Forgemaster {name} doesn't want competition.",
+      "victory": "Forgemaster {name} yields, grumbling, and the clan agrees to share the mountain.",
+      "arrival_omen": "Dwarven runes have been carved over the crucible door. Hammers ring in the dark.",
+      "arrival_rumour": "Dwarves have claimed the Cinder Forge. They sell good steel and don't like visitors.",
+      "name_pool": [
+       "Stonebeard",
+       "Coalhand",
+       "Hammerfell"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "The clan respects strength. Strike the Forgemaster first."
+      },
+      "successors": [
+       {
+        "to": "cinder_forge_magma_wyrm"
+       }
+      ]
+     },
+     "cinder_forge_magma_wyrm": {
+      "title": "the Magma Wyrm",
+      "enemies": [
+       "cinder_forge_magma_wyrm_boss"
+      ],
+      "intro": "Something came up through the lava channels: a great serpent of rock and fire. It coils around the anvil.",
+      "victory": "The Magma Wyrm sinks back into the lava and does not rise.",
+      "arrival_omen": "The lava channels are bubbling and rising. Something large is moving under them.",
+      "arrival_rumour": "A wyrm has come up through the Cinder Forge. The slopes above the village are hot to the touch.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "It must surface to breathe. Strike when it surfaces."
+      },
+      "successors": [
+       {
+        "to": "cinder_forge_fire_elemental"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "tidecall_grotto",
+   "name": "the Tidecall Grotto",
+   "theme": "elemental",
+   "min_level": 5,
+   "region": "village_start",
+   "description": "A rift on the lakeshore by the camp opens onto a sea cave, though there is no sea for a hundred miles. The tide comes in twice a day.",
+   "entry_text": "Salt spray hits your face. Phosphorescent algae light the cave in shades of blue and green.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Crabs the size of shields scuttle out of the tide pools.",
+     "enemies": [
+      "tidecall_grotto_crab",
+      "tidecall_grotto_crab"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "The tide is coming in fast through a narrow channel.",
+     "loot": [
+      [
+       "tide_pearl",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "END",
+      "min": 11,
+      "success": "You brace against the current and grab a pearl from the channel floor.",
+      "fail": "The tide knocks you off your feet and smashes you against the rocks.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Nixies laugh in the shallows, then drag at your ankles.",
+     "enemies": [
+      "tidecall_grotto_nixie",
+      "tidecall_grotto_nixie",
+      "tidecall_grotto_crab"
+     ]
+    }
+   ],
+   "material": "tide_pearl",
+   "lair": {
+    "name": "the Moon Pool",
+    "respawn_turns": 30,
+    "first_occupant": "tidecall_grotto_water_elemental",
+    "fallback": [
+     "tidecall_grotto_water_elemental"
+    ],
+    "occupants": {
+     "tidecall_grotto_water_elemental": {
+      "title": "Undine of the Moon Pool",
+      "enemies": [
+       "tidecall_grotto_water_elemental_boss"
+      ],
+      "intro": "A woman made of seawater rises from the moon pool. She is beautiful, and the water around her is rising.",
+      "victory": "The Undine splashes down into the pool as plain water.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "WIS",
+       "min": 12,
+       "text": "The tide is her strength. Fight her when the tide is out."
+      },
+      "successors": [
+       {
+        "to": "tidecall_grotto_sea_hag",
+        "weight": 2
+       },
+       {
+        "to": "tidecall_grotto_maelstrom",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "tidecall_grotto_sea_hag": {
+      "title": "the Sea Hag",
+      "enemies": [
+       "tidecall_grotto_sea_hag_boss",
+       "tidecall_grotto_nixie"
+      ],
+      "intro": "With the Undine gone, a sea hag has crept up from the deep water. She stinks of rotting fish and she wants your voice.",
+      "victory": "The Sea Hag falls back into the pool with a shriek.",
+      "arrival_omen": "Dead fish float in the moon pool. Seaweed has been woven into the shape of a chair.",
+      "arrival_rumour": "A sea hag lives in the Tidecall Grotto now. She buys voices, and pays in pearls.",
+      "study": {
+       "stat": "WIS",
+       "min": 12,
+       "text": "Never make a bargain with her, whatever she offers."
+      },
+      "successors": [
+       {
+        "to": "tidecall_grotto_crab_king"
+       }
+      ]
+     },
+     "tidecall_grotto_maelstrom": {
+      "title": "the Maelstrom",
+      "enemies": [
+       "tidecall_grotto_maelstrom_boss"
+      ],
+      "intro": "Your magic set the water spinning. The moon pool has become a whirlpool with a mind, and it is trying to drag the cave down into itself.",
+      "victory": "The Maelstrom slows, and stops, and is only water.",
+      "arrival_omen": "The moon pool is turning slowly, like water going down a drain.",
+      "arrival_rumour": "There's a whirlpool in the Tidecall Grotto now. It pulls at boats on the lake.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "It spins clockwise. Throw something heavy the other way."
+      },
+      "successors": [
+       {
+        "to": "tidecall_grotto_crab_king"
+       }
+      ]
+     },
+     "tidecall_grotto_crab_king": {
+      "title": "the Crab King",
+      "enemies": [
+       "tidecall_grotto_crab_king_boss",
+       "tidecall_grotto_crab",
+       "tidecall_grotto_crab"
+      ],
+      "intro": "A crab the size of a house has come up with the tide and claimed the moon pool. It wears an old shipwreck as a shell.",
+      "victory": "The Crab King's shell caves in, and it scuttles back into the deep.",
+      "arrival_omen": "Huge claw marks have scored the stone around the moon pool.",
+      "arrival_rumour": "The Tidecall Grotto has a Crab King, wearing a shipwreck for a shell.",
+      "study": {
+       "stat": "STR",
+       "min": 13,
+       "text": "The shipwreck is rotten in places. Break through it."
+      },
+      "successors": [
+       {
+        "to": "tidecall_grotto_water_elemental"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "rime_tomb",
+   "name": "the Rime Tomb",
+   "theme": "elemental",
+   "min_level": 6,
+   "region": "village_start",
+   "description": "A rift in the northern hills opens into a tomb of blue ice. The kings buried in it are frozen in mid-step, and their eyes follow you.",
+   "entry_text": "Your breath freezes into clouds that fall to the floor as snow. The cold reaches into your bones.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Wights in frozen armour step out of the ice walls.",
+     "enemies": [
+      "rime_tomb_ice_wight",
+      "rime_tomb_ice_wight"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "An ice slide over a crevasse, slick and steep.",
+     "loot": [
+      [
+       "everfrost",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 12,
+      "success": "You slide down on your heels and catch a shard of everfrost at the bottom.",
+      "fail": "You slide too fast and slam into the ice at the bottom.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Wolves with fur of frost lope out of the dark.",
+     "enemies": [
+      "rime_tomb_frost_wolf",
+      "rime_tomb_frost_wolf",
+      "rime_tomb_ice_wight"
+     ]
+    }
+   ],
+   "material": "everfrost",
+   "lair": {
+    "name": "the Frozen Throne",
+    "respawn_turns": 31,
+    "first_occupant": "rime_tomb_frost_king",
+    "fallback": [
+     "rime_tomb_frost_king"
+    ],
+    "occupants": {
+     "rime_tomb_frost_king": {
+      "title": "King {name} the Frozen",
+      "enemies": [
+       "rime_tomb_frost_king_boss",
+       "rime_tomb_ice_wight"
+      ],
+      "intro": "On a throne of blue ice sits a king in a crown of icicles. King {name} has been dead for a thousand years, and has been waiting for someone to warm him.",
+      "victory": "King {name} shatters on his throne like a dropped glass.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Hrodmar",
+       "Isolf",
+       "Vintra"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "His crown holds the cold. Knock it off."
+      },
+      "aftermath": [
+       {
+        "id": "left_throne",
+        "label": "Leave the throne as it is.",
+        "text": "The cold remains. The tomb will crown another.",
+        "triggers": []
+       },
+       {
+        "id": "thawed",
+        "label": "Light a fire on the throne and thaw the tomb.",
+        "text": "The ice weeps. Water runs down the walls, and the kings in the ice begin, slowly, to rot.",
+        "triggers": []
+       }
+      ],
+      "successors": [
+       {
+        "to": "rime_tomb_frost_queen",
+        "when": {
+         "aftermath": "left_throne"
+        }
+       },
+       {
+        "to": "rime_tomb_thaw_dead",
+        "when": {
+         "aftermath": "thawed"
+        }
+       }
+      ]
+     },
+     "rime_tomb_frost_queen": {
+      "title": "Queen {name} of Winter",
+      "enemies": [
+       "rime_tomb_frost_queen_boss"
+      ],
+      "intro": "A new ruler has taken the frozen throne. Queen {name} is colder than the king ever was, and she remembers being alive.",
+      "victory": "Queen {name} sighs, a long cold breath, and is still.",
+      "arrival_omen": "Frost flowers are blooming on the throne, in the shape of a woman's handprint.",
+      "arrival_rumour": "The Rime Tomb has a queen now. The northern hills are snowed in, even in summer.",
+      "name_pool": [
+       "Skadi",
+       "Hela",
+       "Rime"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "She is lonely. Speak to her, and she hesitates."
+      },
+      "successors": [
+       {
+        "to": "rime_tomb_frost_giant"
+       }
+      ]
+     },
+     "rime_tomb_thaw_dead": {
+      "title": "the Thawed Dead",
+      "enemies": [
+       "rime_tomb_thaw_dead_boss",
+       "rime_tomb_ice_wight"
+      ],
+      "intro": "The tomb has thawed, and the kings in the ice have woken up, wet and rotten and furious at being disturbed.",
+      "victory": "The Thawed King falls in a wet heap, and the others sink back into the slush.",
+      "arrival_omen": "Water drips everywhere in the tomb. In the slush, something is moving.",
+      "arrival_rumour": "Someone thawed the Rime Tomb, and the dead kings are walking.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "They were frozen a thousand years. Their joints are stiff."
+      },
+      "successors": [
+       {
+        "to": "rime_tomb_frost_giant"
+       }
+      ]
+     },
+     "rime_tomb_frost_giant": {
+      "title": "the Frost Giant",
+      "enemies": [
+       "rime_tomb_frost_giant_boss"
+      ],
+      "intro": "A giant made of ice and snow has squeezed into the tomb to claim the throne. Jotun can barely fit, and he is not happy about it.",
+      "victory": "Jotun topples and smashes into a pile of snow.",
+      "arrival_omen": "Enormous footprints in the ice lead to the throne. The ceiling is cracked.",
+      "arrival_rumour": "A Frost Giant has squeezed into the Rime Tomb. You can hear him complaining from the hills.",
+      "study": {
+       "stat": "STR",
+       "min": 13,
+       "text": "He's too big for the tomb. Bring the ceiling down on him."
+      },
+      "successors": [
+       {
+        "to": "rime_tomb_frost_king"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "stormcrown_eyrie",
+   "name": "the Stormcrown Eyrie",
+   "theme": "elemental",
+   "min_level": 8,
+   "region": "verath_city",
+   "description": "A rift has lifted a mountaintop into the sky above the eastern road. Lightning strikes it a hundred times a day.",
+   "entry_text": "Wind tears at your clothes. Below you, the clouds. Above you, the storm.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Harpies dive out of the clouds, screeching.",
+     "enemies": [
+      "stormcrown_eyrie_harpy",
+      "stormcrown_eyrie_harpy"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A narrow ledge, swept by gusts of wind.",
+     "loot": [
+      [
+       "thunder_feather",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 13,
+      "success": "You hug the cliff face and pluck a feather from a nest on the way.",
+      "fail": "A gust tears you off the ledge, and you grab the edge just in time.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Sprites of living wind whip around you.",
+     "enemies": [
+      "stormcrown_eyrie_air_spirit",
+      "stormcrown_eyrie_air_spirit",
+      "stormcrown_eyrie_harpy"
+     ]
+    }
+   ],
+   "material": "thunder_feather",
+   "lair": {
+    "name": "the Thunder Nest",
+    "respawn_turns": 33,
+    "first_occupant": "stormcrown_eyrie_thunderbird",
+    "fallback": [
+     "stormcrown_eyrie_thunderbird"
+    ],
+    "occupants": {
+     "stormcrown_eyrie_thunderbird": {
+      "title": "the Thunderbird",
+      "enemies": [
+       "stormcrown_eyrie_thunderbird_boss"
+      ],
+      "intro": "A great bird of storm cloud and lightning sits on a nest of shattered rock. When it opens its beak, thunder rolls out.",
+      "victory": "The Thunderbird falls and its storm breaks into a gentle rain.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 14,
+       "text": "It must land to strike with lightning. Strike when it lands."
+      },
+      "successors": [
+       {
+        "to": "stormcrown_eyrie_harpy_queen",
+        "weight": 2
+       },
+       {
+        "to": "stormcrown_eyrie_storm_lord",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "stormcrown_eyrie_harpy_queen": {
+      "title": "the Harpy Queen",
+      "enemies": [
+       "stormcrown_eyrie_harpy_queen_boss",
+       "stormcrown_eyrie_harpy"
+      ],
+      "intro": "The harpies have claimed the nest. Queen {name} sits on the Thunderbird's eggs and has no intention of letting them hatch.",
+      "victory": "Queen {name} shrieks and flees into the clouds.",
+      "arrival_omen": "Harpy feathers litter the nest. The eggs have been rolled to one side.",
+      "arrival_rumour": "Harpies have taken the Stormcrown Eyrie. They raid the eastern road.",
+      "name_pool": [
+       "Aello",
+       "Ocypete",
+       "Celaeno"
+      ],
+      "study": {
+       "stat": "AGI",
+       "min": 14,
+       "text": "Harpies are vain. Damage her wings and she flees."
+      },
+      "successors": [
+       {
+        "to": "stormcrown_eyrie_fledgling"
+       }
+      ]
+     },
+     "stormcrown_eyrie_storm_lord": {
+      "title": "the Storm Lord",
+      "enemies": [
+       "stormcrown_eyrie_storm_lord_boss"
+      ],
+      "intro": "Your magic and the Thunderbird's storm have merged into something new. A lord of the storm floats above the nest, a crown of lightning on its head.",
+      "victory": "The Storm Lord dissolves into the wind.",
+      "arrival_omen": "The storm over the Eyrie has stopped moving. It hangs in place, waiting.",
+      "arrival_rumour": "Something lives in the storm over the Stormcrown Eyrie, and it is not a bird.",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "It is pure storm. Ground it, and it fades."
+      },
+      "successors": [
+       {
+        "to": "stormcrown_eyrie_fledgling"
+       }
+      ]
+     },
+     "stormcrown_eyrie_fledgling": {
+      "title": "the Thunderbird Fledgling",
+      "enemies": [
+       "stormcrown_eyrie_fledgling_boss"
+      ],
+      "intro": "One of the Thunderbird's eggs hatched. The fledgling is barely grown, all wings and sparks, and furious at the world.",
+      "victory": "The Fledgling flaps away, wobbling, into the clouds.",
+      "arrival_omen": "Eggshell litters the nest, and static crackles from a small, angry shape in the corner.",
+      "arrival_rumour": "A Thunderbird egg has hatched on the Stormcrown Eyrie. The lightning there is wild and young.",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "It can't fly well yet. Fight it on the ground."
+      },
+      "successors": [
+       {
+        "to": "stormcrown_eyrie_thunderbird"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "hollow_of_unmaking",
+   "name": "the Hollow of Unmaking",
+   "theme": "elemental",
+   "min_level": 16,
+   "region": "verath_city",
+   "description": "A rift full of void, the same stuff as the Fracture's wound. The System marks it with a red border and a single word: DON'T.",
+   "entry_text": "The ground is a suggestion. Colours drain out of you as you walk, and come back slowly when you look at them.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Wisps of darkness drift towards you, drinking the light from your torch.",
+     "enemies": [
+      "hollow_of_unmaking_void_wisp",
+      "hollow_of_unmaking_void_wisp"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A stretch where the floor isn't. You must walk on faith.",
+     "loot": [
+      [
+       "void_essence",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 17,
+      "success": "You walk on, refusing to look down, and find a drop of void on the far side.",
+      "fail": "You look down. You fall a long way before the floor remembers to exist.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Something unmade, half a creature and half a hole, lurches toward you.",
+     "enemies": [
+      "hollow_of_unmaking_unmade",
+      "hollow_of_unmaking_void_wisp",
+      "hollow_of_unmaking_unmade"
+     ]
+    }
+   ],
+   "material": "void_essence",
+   "lair": {
+    "name": "the Unmade Center",
+    "respawn_turns": 41,
+    "first_occupant": "hollow_of_unmaking_void_lord",
+    "fallback": [
+     "hollow_of_unmaking_void_lord"
+    ],
+    "occupants": {
+     "hollow_of_unmaking_void_lord": {
+      "title": "the Unmaker",
+      "enemies": [
+       "hollow_of_unmaking_void_lord_boss"
+      ],
+      "intro": "At the center, something shaped like a man made of the gaps between stars. 'Everything ends,' it says, without a mouth. 'I simply hurry it along.'",
+      "victory": "The Unmaker folds in on itself and is gone, leaving a hole in the shape of a man.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "WIS",
+       "min": 18,
+       "text": "It unmakes things by looking. Don't be where it's looking."
+      },
+      "aftermath": [
+       {
+        "id": "left_hole",
+        "label": "Leave the hole it left behind.",
+        "text": "The hole stays. Something on the other side is curious.",
+        "triggers": []
+       },
+       {
+        "id": "sealed_hole",
+        "label": "Seal the hole with your own light.",
+        "text": "It takes something from you, but the hole closes, and the Hollow is a little less empty.",
+        "triggers": [
+         "alignment:+5"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "hollow_of_unmaking_void_spawn",
+        "when": {
+         "aftermath": "left_hole"
+        }
+       },
+       {
+        "to": "hollow_of_unmaking_remade",
+        "when": {
+         "aftermath": "sealed_hole"
+        }
+       }
+      ]
+     },
+     "hollow_of_unmaking_void_spawn": {
+      "title": "the Void Spawn",
+      "enemies": [
+       "hollow_of_unmaking_void_spawn_boss"
+      ],
+      "intro": "Something came through the hole. It is made of hunger, and it has never seen light before. It loves yours.",
+      "victory": "The Void Spawn scatters into darkness.",
+      "arrival_omen": "The man-shaped hole is wider now. Something is pressing through it.",
+      "arrival_rumour": "Something came out of the Hollow of Unmaking. The System has upgraded it to S-class.",
+      "study": {
+       "stat": "WIS",
+       "min": 18,
+       "text": "It has never seen light. Blind it with yours."
+      },
+      "successors": [
+       {
+        "to": "hollow_of_unmaking_nothing"
+       }
+      ]
+     },
+     "hollow_of_unmaking_remade": {
+      "title": "the Remade",
+      "enemies": [
+       "hollow_of_unmaking_remade_boss",
+       "hollow_of_unmaking_void_wisp"
+      ],
+      "intro": "Your light sealed the hole, and something grew in it: a being of light and void together, made from your own sacrifice. It doesn't know if it's grateful.",
+      "victory": "The Remade fades, and leaves behind a little light.",
+      "arrival_omen": "A soft light glows at the center of the Hollow, flickering on and off like a breath.",
+      "arrival_rumour": "The Hollow of Unmaking has a light in it now. Something is living in the light.",
+      "study": {
+       "stat": "WIS",
+       "min": 18,
+       "text": "It is made of you. It knows your mind. Change your mind."
+      },
+      "successors": [
+       {
+        "to": "hollow_of_unmaking_nothing"
+       }
+      ]
+     },
+     "hollow_of_unmaking_nothing": {
+      "title": "Nothing",
+      "enemies": [
+       "hollow_of_unmaking_nothing_boss"
+      ],
+      "intro": "There is nothing at the center of the Hollow. Nothing is very large. Nothing has noticed you.",
+      "victory": "Nothing withdraws. That's all. For now.",
+      "arrival_omen": "The center of the Hollow is completely empty. That's the problem.",
+      "arrival_rumour": "The Hollow of Unmaking is empty. The System says that's worse.",
+      "study": {
+       "stat": "WIS",
+       "min": 19,
+       "text": "Nothing can't be fought. But you can refuse to be afraid of it."
+      },
+      "successors": [
+       {
+        "to": "hollow_of_unmaking_void_lord"
+       }
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

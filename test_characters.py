@@ -94,7 +94,7 @@ VALID_TRIGGER_PREFIXES = {
     "flag:", "give_item:", "give_skill:", "give_gold:", "spend_gold:", "set_base_class:",
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
-    "rest_camp:", "give_food:", "boss_lair:",
+    "rest_camp:", "give_food:", "boss_lair:", "gate_registry", "enter_gate:", "take_item:",
 }
 
 def validate_triggers(scene_reg: SceneRegistry, item_reg: ItemRegistry,
@@ -751,7 +751,7 @@ def main() -> None:
         from core.event_bus import bus, Event
 
         quest_reg = QuestRegistry()
-        quest_reg.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
+        quest_reg.load_from_dir(DATA_DIR / "quests")
         ok(f"Quest templates loaded: {len(quest_reg._quests)}")
 
         # Sanity: blacksmith_hammer is the canonical wired quest
@@ -2836,6 +2836,7 @@ def main() -> None:
                 except OSError: pass
 
     _test_boss_succession(item_reg)
+    _test_gates_and_quest_chains(item_reg)
     _report()
 
 
@@ -3068,6 +3069,211 @@ def _report() -> None:
     else:
         print("\n  All checks passed!")
     print()
+
+
+def _test_gates_and_quest_chains(item_reg) -> None:
+    section("32. Gates (30+ instanced dungeons) and quest chains (200+ quests)")
+    _g_slot = "_gate_test_"
+    _gstate = None
+    try:
+        import random as _rnd32
+        from collections import Counter as _C32
+        from unittest import mock as _m32
+        import questionary as _q32
+        from core import gate_flow as _gf, lair_flow as _lf32
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from entities.quest import CONDITION_KEYS
+        from systems import bot_brain as _bb32, npc_system as _ns32, quest_system as _qs32
+        from systems.bot_system import BotAgent, bot_max_hp
+        from systems.combat_system import ENEMY_TEMPLATES
+        from ui import renderer as _r32
+
+        _eng = GameEngine()
+        with _m32.patch.object(_r32.console, "print", lambda *a, **k: None):
+            _eng.bootstrap()
+        gates = _eng.gate_registry.all()
+
+        # 32a. Gate content: 30+ gates across themes, every enemy / drop real,
+        # every chain reachable with no dead ends, materials drop somewhere.
+        assert len(gates) >= 30, len(gates)
+        _themes = _C32(g.theme for g in gates)
+        assert {"mythical", "technology", "paranormal", "elemental"} <= set(_themes), _themes
+        _occ_ids = set()
+        for g in gates:
+            lair = g.lair
+            assert _eng.lair_registry.get(g.gate_id) is lair and lair.zone_id == f"gate:{g.gate_id}"
+            assert item_reg.get(g.material), g.material
+            _seen, _todo = set(), [lair.first_occupant]
+            while _todo:
+                o = _todo.pop()
+                if o not in _seen:
+                    _seen.add(o)
+                    _todo += [x.to for x in lair.occupants[o].successors]
+            assert _seen == set(lair.occupants), f"{g.gate_id}: unreachable {set(lair.occupants) - _seen}"
+            for occ in lair.occupants.values():
+                assert occ.successors and occ.occupant_id not in _occ_ids, occ.occupant_id
+                _occ_ids.add(occ.occupant_id)
+                assert occ.arrival_omen and occ.arrival_rumour or occ.occupant_id == lair.first_occupant
+            branches = lair.occupants[lair.first_occupant].successors
+            assert len({x.to for x in branches}) == 2, f"{g.gate_id}: first master should branch"
+            _enemies = [e for r in g.rooms for e in r.enemies] + [e for o in lair.occupants.values() for e in o.enemies]
+            for eid in _enemies:
+                assert eid in ENEMY_TEMPLATES, eid
+                for item, _ in ENEMY_TEMPLATES[eid].get("loot_table", []):
+                    assert item_reg.get(item), f"{eid} drops unknown {item}"
+        ok(f"{len(gates)} gates ({dict(_themes)}), each a branching 4-master succession chain with real enemies and drops")
+
+        # 32b. Quest content: 200+ quests, 50+ chains (10+ skill, 10+ item), every
+        # objective achievable, every chain step unlocked by the one before.
+        quests = _eng.quest_registry.all()
+        chains: dict[str, list] = {}
+        for q in quests:
+            if q.chain_id:
+                chains.setdefault(q.chain_id, []).append(q)
+        _kinds = _C32(qs[0].chain_kind for qs in chains.values())
+        assert len(quests) >= 200 and len(chains) >= 50, (len(quests), len(chains))
+        assert _kinds["skill"] >= 10 and _kinds["item"] >= 10, _kinds
+        _seed_of = {s.quest_template_id: (n, s) for n in _eng.npc_registry.all() for s in n.quest_seeds}
+        _drops = {i for t in ENEMY_TEMPLATES.values() for i, _ in t.get("loot_table", [])}
+        _drops |= {i for g in gates for r in g.rooms for i, _ in r.loot}
+
+        def _flags_ok(c):
+            for k, v in c.items():
+                assert k in CONDITION_KEYS, k
+                if k in ("all", "any"):
+                    for sub in v:
+                        _flags_ok(sub)
+                elif k == "has_flag" and v.startswith("cleared_"):
+                    assert _eng.gate_registry.get(v[8:]), v
+                elif k == "has_flag" and v.startswith("slew_"):
+                    assert any(l.occupant(v[5:]) for l in _eng.lair_registry.all()), v
+                elif k == "has_items":
+                    for i in v:
+                        assert item_reg.get(i) and i in _drops, f"{i} is never dropped"
+                elif k == "turn_in":
+                    assert _eng.npc_registry.get(v), v
+
+        for q in quests:
+            if not q.chain_id and not q.template_id.startswith(("order_", "bounty_")):
+                continue
+            for st in q.stages:
+                _flags_ok(st.completion_condition)
+            assert q.template_id in _seed_of, f"{q.template_id} has no giver seed"
+        for cid, qs in chains.items():
+            qs.sort(key=lambda q: q.chain_step)
+            assert [q.chain_step for q in qs] == list(range(1, len(qs) + 1)), cid
+            for prev, nxt in zip(qs, qs[1:]):
+                assert _seed_of[nxt.template_id][1].trigger_flag == f"done_{prev.template_id}", nxt.template_id
+            last = qs[-1]
+            if last.chain_kind == "skill":
+                assert last.reward_skills and all(_eng.skill_registry.get(s) for s in last.reward_skills), cid
+            if last.chain_kind == "item":
+                assert last.reward_items and all(item_reg.get(i) for i in last.reward_items), cid
+        ok(f"{len(quests)} quests, {len(chains)} chains ({dict(_kinds)}); every objective achievable, every step unlocks the next")
+
+        # 32c. Engine: a gate run clears rooms and the lair; the registry lists it.
+        _p = Player(name="GateTester", base_class="warrior")
+        _gstate = new_game_state(_p, SAVES_DIR, _g_slot)
+        _eng.state = _gstate
+        _attach_engine_handles(_eng)
+        assert len(_eng._lair_states) == len(_eng.lair_registry.all())
+
+        def _sel(_msg, choices=None, **_k):
+            labels = [c if isinstance(c, str) else c.title for c in choices]
+            hit = next((l for l in labels if l.startswith(("Fight", "Press on", "Enter", "Leave"))), labels[0])
+            return _m32.Mock(ask=lambda: hit)
+        _fought = []
+        def _win(enc, surprise=False, enemies=None):
+            _fought.append(enc)
+            return "victory"
+        _quiet = [_m32.patch.object(_r32.console, "print", lambda *a, **k: None),
+                  _m32.patch.object(_r32, "prompt_any_key", lambda: None),
+                  _m32.patch.object(_eng, "_run_combat", _win),
+                  _m32.patch.object(_q32, "select", _sel)]
+        for _pp in _quiet:
+            _pp.start()
+        try:
+            assert _gf.run_gate(_eng, "bronze_labyrinth", rng=_rnd32.Random(1)) == "cleared"
+            assert _p.has_flag("cleared_bronze_labyrinth") and _p.flags["gate_clears_bronze_labyrinth"] == 1
+            assert _p.has_flag("slew_bronze_labyrinth_minotaur")
+            assert any(f.startswith("gate:bronze_labyrinth:") for f in _fought) and "lair:bronze_labyrinth" in _fought
+            assert not _lf32.get_state(_eng, "bronze_labyrinth").occupied
+            assert _gf.run_gate(_eng, "bronze_labyrinth", rng=_rnd32.Random(2)) == "cleared", "Empty lair: pass through"
+            assert _p.flags["gate_clears_bronze_labyrinth"] == 2
+            _lines = _gf.gate_lines(_eng)
+            assert len(_lines) == len(gates) and _lines[0][2] and not _lines[-1][2], "High gates locked at level 1"
+
+            # 32d. A skill chain end to end: seed → objective → report → next seed → skill.
+            from scenes.option_logic import process_triggers as _pt
+            _brannoc = _eng.npc_registry.get("brannoc_hunter")
+            _p.level = 5
+            def _offered(npc):
+                return {s.quest_template_id for s in _ns32.get_available_quest_seeds(npc, _gstate)}
+            assert "bull_rush_1" in _offered(_brannoc) and "bull_rush_2" not in _offered(_brannoc)
+            _qid = _qs32.start_quest("bull_rush_1", "brannoc_hunter", _gstate, _eng.quest_registry)
+            _p.set_flag("given_bull_rush_1")
+            _qs32.tick_quests(_gstate, _eng.quest_registry)       # already cleared → straight to "report"
+            _ready = _qs32.reportable_quests("brannoc_hunter", _gstate, _eng.quest_registry)
+            assert [r[0] for r in _ready] == [_qid]
+            assert not _qs32.reportable_quests("tinker_odo", _gstate, _eng.quest_registry)
+            assert _qs32.report_quest(_qid, _gstate, _eng.quest_registry)
+            assert _p.has_flag("done_bull_rush_1") and "bull_rush_2" in _offered(_brannoc)
+            _qid2 = _qs32.start_quest("bull_rush_2", "brannoc_hunter", _gstate, _eng.quest_registry)
+            _p.add_item("labyrinth_bronze", 2)
+            assert not _qs32.reportable_quests("brannoc_hunter", _gstate, _eng.quest_registry), "Needs 3"
+            _p.add_item("labyrinth_bronze", 2)
+            assert _qs32.report_quest(_qid2, _gstate, _eng.quest_registry)
+            assert _qs32.item_quantity(_p, "labyrinth_bronze") == 1, "Hand-in takes exactly 3"
+            _qid3 = _qs32.start_quest("bull_rush_3", "brannoc_hunter", _gstate, _eng.quest_registry)
+            _qs32.tick_quests(_gstate, _eng.quest_registry)
+            assert _qs32.report_quest(_qid3, _gstate, _eng.quest_registry)
+            assert "bull_rush" in _p.skills, "Final step of a skill chain grants its skill"
+            # Item chain reward + seed level gate.
+            _halv = _eng.npc_registry.get("forgemaster_halvard")
+            _p.level = 1
+            assert "wyrmscale_bulwark_1" not in _offered(_halv), "Seeds wait for the quest's level"
+            _pt(["take_item:labyrinth_bronze:5"], _gstate)
+            assert _qs32.item_quantity(_p, "labyrinth_bronze") == 0, "take_item never goes below zero"
+        finally:
+            for _pp in _quiet:
+                _pp.stop()
+        ok("Gate run → rooms → lair → cleared; skill chain: seed → report → next seed → skill; hand-ins take items")
+
+        # 32e. Bots run gates from town and can kill their masters.
+        _w = __import__("core.bot_flow", fromlist=["bot_world"]).bot_world(_eng)
+        assert len(_w.gates) == len(gates)
+        _bot = BotAgent(bot_id="gb", name="Ryn", archetype="fighter", current_zone_id="verath_city")
+        _bot.level = 9
+        _bot.max_hp = _bot.hp = bot_max_hp(_bot) * 5
+        _evs = []
+        with _m32.patch("config.LAIR_BOT_CHALLENGE_CHANCE", 1.0):
+            for _i in range(30):
+                _bot.hp = _bot.max_hp
+                _evs += _bb32._gate_run(_bot, _w, _rnd32.Random(_i))
+        assert any(e.kind == "fight" and "rift" in e.text for e in _evs), _evs[:3]
+        assert _bot.current_zone_id == "verath_city", "Gate runs happen from town"
+        _gstate.player.turn_count = 300
+        _w2 = __import__("core.bot_flow", fromlist=["bot_world"]).bot_world(_eng)
+        _kills = []
+        with _m32.patch("config.LAIR_BOT_CHALLENGE_CHANCE", 1.0):
+            for _i in range(40):
+                _bot.hp = _bot.max_hp
+                _kills += [e for e in _bb32._gate_run(_bot, _w2, _rnd32.Random(100 + _i)) if e.kind == "boss_kill"]
+        assert _kills and all(_eng.gate_registry.get(k.lair_id) for k in _kills), _kills
+        assert len({k.lair_id for k in _kills}) == len(_kills), "A cleared gate master can't die twice in one tick"
+        ok(f"Bots run gates from town ({len(_evs)} events in 30 runs) and slay gate masters after the grace period")
+    except Exception as e:
+        fail("Gates / quest chains broken", e)
+        traceback.print_exc()
+    finally:
+        if _gstate is not None:
+            close_game(_gstate)
+        for _ext in (".json", ".db", ".db-wal", ".db-shm"):
+            _pp2 = SAVES_DIR / f"{_g_slot}{_ext}"
+            if _pp2.exists():
+                try: _pp2.unlink()
+                except OSError: pass
 
 
 if __name__ == "__main__":

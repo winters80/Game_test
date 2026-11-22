@@ -48,6 +48,7 @@ class NPCQuestSeed(BaseModel):
     trigger_flag: str = ""          # player must have this flag (or empty = always available)
     trigger_disposition_min: float = 0.0   # NPC must be at least this disposed toward player
     already_given_flag: str = ""    # flag set after quest offered; prevents re-offering
+    min_level: int = 0              # hidden until the player reaches this level
 
 
 class NPCScheduleEntry(BaseModel):

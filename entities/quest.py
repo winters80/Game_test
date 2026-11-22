@@ -29,12 +29,22 @@ class QuestStage(BaseModel):
     objective_text: str         # player-facing objective line
     # Completion condition dict — one of:
     #   {"has_item":   "item_id"}
+    #   {"has_items":  {"item_id": qty, ...}}     every item, at least qty
     #   {"has_flag":   "flag_name"}
     #   {"world_flag": "flag_name"}
+    #   {"min_level":  N}
+    #   {"turn_in":    "npc_id"}                  report to that NPC (a
+    #                                             « Report: … » dialogue option)
+    #   {"all": [cond, ...]} / {"any": [cond, ...]}
+    # With turn_in inside "all", the report option only appears once the
+    # other parts are met.
     completion_condition: dict[str, Any] = Field(default_factory=dict)
     # Triggers fired when this stage completes and advances (same syntax as scene triggers)
     on_advance_triggers: list[str] = Field(default_factory=list)
     next_stage_id: str | None = None    # None = this is the terminal stage
+
+
+CONDITION_KEYS = {"has_item", "has_items", "has_flag", "world_flag", "min_level", "turn_in", "all", "any"}
 
 
 class QuestTemplate(BaseModel):
@@ -66,6 +76,12 @@ class QuestTemplate(BaseModel):
     # quests typically use reward_items + reward_flags; AI-generated quests
     # can populate this when the LLM thinks a skill would feel appropriate.
     reward_skill_hints: list[str] = Field(default_factory=list)
+    # Real skill ids from data/skills granted on completion (skill quest chains).
+    reward_skills: list[str] = Field(default_factory=list)
+    # Authoring metadata: which chain this quest belongs to and its step (1-based).
+    chain_id: str = ""
+    chain_step: int = 0
+    chain_kind: str = ""          # "", "skill", "item", "story", "dungeon"
     reward_xp: int = 0
     alignment_reward: float = 0.0
     faction_rewards: dict[str, float] = Field(default_factory=dict)   # {faction_id: delta}
@@ -110,6 +126,11 @@ class QuestTemplate(BaseModel):
 class QuestRegistry:
     def __init__(self) -> None:
         self._quests: dict[str, QuestTemplate] = {}
+
+    def load_from_dir(self, directory: Path) -> None:
+        """Load every quest file (quest_templates.json plus any others)."""
+        for path in sorted(directory.glob("*.json")):
+            self.load_from_file(path)
 
     def load_from_file(self, path: Path) -> None:
         data = json.loads(path.read_text(encoding="utf-8"))

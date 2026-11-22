@@ -91,6 +91,8 @@ LAIR_SCALING_PER_RETURN = 0.10         # +10% HP/ATK/rewards each time an occupa
 LAIR_MAX_SCALING = 0.40                # cap on that bonus
 LAIR_BOT_CHALLENGE_CHANCE = 0.3       # chance a fighter bot on a lair's floor tries the boss
 LAIR_BOT_SAFETY = 0.85                 # bots only try if expected damage < this share of their HP
+GATE_LEVEL_GRACE = 1                   # a gate can be entered from (rated level - this)
+BOT_GATE_CHANCE = 0.12                 # chance a fighter/explorer in town runs a gate this act
 LAIR_BOT_GRACE_TURNS = 250             # bots leave each lair's first boss alone this long,
                                        # so the player gets the first shot at it
 

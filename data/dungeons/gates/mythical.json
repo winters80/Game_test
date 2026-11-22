@@ -1,0 +1,2298 @@
+{
+ "_doc": "Mythical Gates. Built from compact specs; see CLAUDE.md > Gates.",
+ "enemy_templates": {
+  "bronze_labyrinth_cultist": {
+   "name": "Horned Cultist",
+   "max_hp": 35,
+   "attack": 7,
+   "defense": 2,
+   "xp_reward": 37,
+   "gold_reward": 195,
+   "rank": "E",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.15
+   ]
+  },
+  "bronze_labyrinth_hound": {
+   "name": "Bronze Hound",
+   "max_hp": 35,
+   "attack": 7,
+   "defense": 2,
+   "xp_reward": 37,
+   "gold_reward": 195,
+   "rank": "E",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "bronze_labyrinth_minotaur_boss": {
+   "name": "Asterion the Penned",
+   "max_hp": 93,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 150,
+   "gold_reward": 1150,
+   "rank": "D",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     1.0
+    ],
+    [
+     "labyrinth_bronze",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "bronze_labyrinth_ghost_warden_boss": {
+   "name": "the Penned Ghost",
+   "max_hp": 97,
+   "attack": 13,
+   "defense": 4,
+   "xp_reward": 157,
+   "gold_reward": 1207,
+   "rank": "D",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     1.0
+    ],
+    [
+     "labyrinth_bronze",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.2
+   ]
+  },
+  "bronze_labyrinth_maze_cult_boss": {
+   "name": "High Priestess {name}",
+   "max_hp": 93,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 150,
+   "gold_reward": 1150,
+   "rank": "D",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     1.0
+    ],
+    [
+     "labyrinth_bronze",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "bronze_labyrinth_bronze_bull_boss": {
+   "name": "the Bronze Bull",
+   "max_hp": 106,
+   "attack": 14,
+   "defense": 4,
+   "xp_reward": 172,
+   "gold_reward": 1322,
+   "rank": "D",
+   "loot_table": [
+    [
+     "labyrinth_bronze",
+     1.0
+    ],
+    [
+     "labyrinth_bronze",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ]
+  },
+  "fae_hollow_pixie": {
+   "name": "Thorn Pixie",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.2
+   ]
+  },
+  "fae_hollow_knight": {
+   "name": "Briar Knight",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "fae_hollow_queen_boss": {
+   "name": "Queen {name}",
+   "max_hp": 125,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 210,
+   "gold_reward": 1650,
+   "rank": "C",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     1.0
+    ],
+    [
+     "fae_dewglass",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "fae_hollow_jester_boss": {
+   "name": "the Thornwood Jester",
+   "max_hp": 131,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 220,
+   "gold_reward": 1732,
+   "rank": "C",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     1.0
+    ],
+    [
+     "fae_dewglass",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "fae_hollow_wild_hunt_boss": {
+   "name": "the Antlered Huntsman",
+   "max_hp": 137,
+   "attack": 17,
+   "defense": 5,
+   "xp_reward": 231,
+   "gold_reward": 1815,
+   "rank": "C",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     1.0
+    ],
+    [
+     "fae_dewglass",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "fae_hollow_changeling_boss": {
+   "name": "the Changeling Prince",
+   "max_hp": 143,
+   "attack": 18,
+   "defense": 5,
+   "xp_reward": 241,
+   "gold_reward": 1897,
+   "rank": "C",
+   "loot_table": [
+    [
+     "fae_dewglass",
+     1.0
+    ],
+    [
+     "fae_dewglass",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "hydra_fen_lizardfolk": {
+   "name": "Fen Lizardman",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "hydra_scale",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.2
+   ]
+  },
+  "hydra_fen_leech": {
+   "name": "Bloat Leech",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "hydra_scale",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "hydra_fen_hydra_boss": {
+   "name": "the Fen Hydra",
+   "max_hp": 141,
+   "attack": 17,
+   "defense": 6,
+   "xp_reward": 240,
+   "gold_reward": 1900,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hydra_scale",
+     1.0
+    ],
+    [
+     "hydra_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.3
+   ]
+  },
+  "hydra_fen_brood_boss": {
+   "name": "the Brood Mother",
+   "max_hp": 141,
+   "attack": 17,
+   "defense": 6,
+   "xp_reward": 240,
+   "gold_reward": 1900,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hydra_scale",
+     1.0
+    ],
+    [
+     "hydra_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "hydra_fen_cauterized_boss": {
+   "name": "the Cauterized Hydra",
+   "max_hp": 162,
+   "attack": 20,
+   "defense": 6,
+   "xp_reward": 276,
+   "gold_reward": 2185,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hydra_scale",
+     1.0
+    ],
+    [
+     "hydra_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.3
+   ]
+  },
+  "hydra_fen_fen_witch_boss": {
+   "name": "{name} the Fen Witch",
+   "max_hp": 155,
+   "attack": 19,
+   "defense": 6,
+   "xp_reward": 264,
+   "gold_reward": 2090,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hydra_scale",
+     1.0
+    ],
+    [
+     "hydra_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.3
+   ]
+  },
+  "gorgon_garden_snake": {
+   "name": "Stone Asp",
+   "max_hp": 70,
+   "attack": 14,
+   "defense": 3,
+   "xp_reward": 82,
+   "gold_reward": 420,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "gorgon_garden_statue": {
+   "name": "Animated Mourner",
+   "max_hp": 70,
+   "attack": 14,
+   "defense": 3,
+   "xp_reward": 82,
+   "gold_reward": 420,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "gorgon_garden_gorgon_boss": {
+   "name": "Euryale the Gorgon",
+   "max_hp": 173,
+   "attack": 20,
+   "defense": 7,
+   "xp_reward": 300,
+   "gold_reward": 2400,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     1.0
+    ],
+    [
+     "gorgon_tear",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "gorgon_garden_headless_boss": {
+   "name": "Stheno, the Headless Sister",
+   "max_hp": 190,
+   "attack": 22,
+   "defense": 7,
+   "xp_reward": 330,
+   "gold_reward": 2640,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     1.0
+    ],
+    [
+     "gorgon_tear",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.3
+   ]
+  },
+  "gorgon_garden_mourners_boss": {
+   "name": "the First Mourner",
+   "max_hp": 181,
+   "attack": 21,
+   "defense": 7,
+   "xp_reward": 315,
+   "gold_reward": 2520,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     1.0
+    ],
+    [
+     "gorgon_tear",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "gorgon_garden_basilisk_boss": {
+   "name": "the Garden Basilisk",
+   "max_hp": 207,
+   "attack": 24,
+   "defense": 7,
+   "xp_reward": 360,
+   "gold_reward": 2880,
+   "rank": "C",
+   "loot_table": [
+    [
+     "gorgon_tear",
+     1.0
+    ],
+    [
+     "gorgon_tear",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "drowned_bell_deep_one": {
+   "name": "Temple Deep One",
+   "max_hp": 84,
+   "attack": 17,
+   "defense": 4,
+   "xp_reward": 100,
+   "gold_reward": 510,
+   "rank": "C",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "drowned_bell_eel": {
+   "name": "Lantern Eel",
+   "max_hp": 84,
+   "attack": 17,
+   "defense": 4,
+   "xp_reward": 100,
+   "gold_reward": 510,
+   "rank": "C",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.15
+   ]
+  },
+  "drowned_bell_kraken_boss": {
+   "name": "the Bell-Ringer Kraken",
+   "max_hp": 205,
+   "attack": 24,
+   "defense": 8,
+   "xp_reward": 360,
+   "gold_reward": 2900,
+   "rank": "B",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     1.0
+    ],
+    [
+     "abyssal_pearl",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "drowned_bell_high_priest_boss": {
+   "name": "Tide-Priest {name}",
+   "max_hp": 215,
+   "attack": 25,
+   "defense": 8,
+   "xp_reward": 378,
+   "gold_reward": 3045,
+   "rank": "B",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     1.0
+    ],
+    [
+     "abyssal_pearl",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "drowned_bell_bell_spirit_boss": {
+   "name": "the Bell's Voice",
+   "max_hp": 235,
+   "attack": 27,
+   "defense": 8,
+   "xp_reward": 413,
+   "gold_reward": 3334,
+   "rank": "B",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     1.0
+    ],
+    [
+     "abyssal_pearl",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "drowned_bell_leviathan_spawn_boss": {
+   "name": "the Leviathan Spawn",
+   "max_hp": 246,
+   "attack": 28,
+   "defense": 8,
+   "xp_reward": 432,
+   "gold_reward": 3480,
+   "rank": "B",
+   "loot_table": [
+    [
+     "abyssal_pearl",
+     1.0
+    ],
+    [
+     "abyssal_pearl",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.3
+   ]
+  },
+  "phoenix_ashery_cinder_bird": {
+   "name": "Cinder Roc Chick",
+   "max_hp": 98,
+   "attack": 19,
+   "defense": 5,
+   "xp_reward": 118,
+   "gold_reward": 600,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.25
+   ]
+  },
+  "phoenix_ashery_ash_wight": {
+   "name": "Ash Wight",
+   "max_hp": 98,
+   "attack": 19,
+   "defense": 5,
+   "xp_reward": 118,
+   "gold_reward": 600,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "phoenix_ashery_phoenix_boss": {
+   "name": "Ignis the Phoenix",
+   "max_hp": 237,
+   "attack": 27,
+   "defense": 9,
+   "xp_reward": 420,
+   "gold_reward": 3400,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     1.0
+    ],
+    [
+     "phoenix_cinder",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.35
+   ]
+  },
+  "phoenix_ashery_reborn_boss": {
+   "name": "Ignis Reborn",
+   "max_hp": 272,
+   "attack": 31,
+   "defense": 9,
+   "xp_reward": 482,
+   "gold_reward": 3909,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     1.0
+    ],
+    [
+     "phoenix_cinder",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.4
+   ]
+  },
+  "phoenix_ashery_cold_lord_boss": {
+   "name": "the Cold Ash Lord",
+   "max_hp": 260,
+   "attack": 29,
+   "defense": 9,
+   "xp_reward": 462,
+   "gold_reward": 3740,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     1.0
+    ],
+    [
+     "phoenix_cinder",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.3
+   ]
+  },
+  "phoenix_ashery_egg_thieves_boss": {
+   "name": "Captain {name} of the Egg-Thieves",
+   "max_hp": 248,
+   "attack": 28,
+   "defense": 9,
+   "xp_reward": 441,
+   "gold_reward": 3570,
+   "rank": "B",
+   "loot_table": [
+    [
+     "phoenix_cinder",
+     1.0
+    ],
+    [
+     "phoenix_cinder",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "wyrm_hoard_kobold": {
+   "name": "Hoard Kobold",
+   "max_hp": 112,
+   "attack": 22,
+   "defense": 5,
+   "xp_reward": 136,
+   "gold_reward": 690,
+   "rank": "B",
+   "loot_table": [
+    [
+     "dragon_scale",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.15
+   ]
+  },
+  "wyrm_hoard_drake": {
+   "name": "Ash Drake",
+   "max_hp": 112,
+   "attack": 22,
+   "defense": 5,
+   "xp_reward": 136,
+   "gold_reward": 690,
+   "rank": "B",
+   "loot_table": [
+    [
+     "dragon_scale",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.25
+   ]
+  },
+  "wyrm_hoard_dragon_boss": {
+   "name": "Vael-Ashar the Old",
+   "max_hp": 269,
+   "attack": 30,
+   "defense": 10,
+   "xp_reward": 480,
+   "gold_reward": 3900,
+   "rank": "A",
+   "loot_table": [
+    [
+     "dragon_scale",
+     1.0
+    ],
+    [
+     "dragon_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.35
+   ]
+  },
+  "wyrm_hoard_kobold_king_boss": {
+   "name": "King {name}",
+   "max_hp": 269,
+   "attack": 30,
+   "defense": 10,
+   "xp_reward": 480,
+   "gold_reward": 3900,
+   "rank": "A",
+   "loot_table": [
+    [
+     "dragon_scale",
+     1.0
+    ],
+    [
+     "dragon_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.2
+   ]
+  },
+  "wyrm_hoard_dracolich_boss": {
+   "name": "Vael-Ashar the Dracolich",
+   "max_hp": 322,
+   "attack": 36,
+   "defense": 10,
+   "xp_reward": 576,
+   "gold_reward": 4680,
+   "rank": "A",
+   "loot_table": [
+    [
+     "dragon_scale",
+     1.0
+    ],
+    [
+     "dragon_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.35
+   ]
+  },
+  "wyrm_hoard_heir_boss": {
+   "name": "{name} the Young Dragon",
+   "max_hp": 309,
+   "attack": 34,
+   "defense": 10,
+   "xp_reward": 552,
+   "gold_reward": 4485,
+   "rank": "A",
+   "loot_table": [
+    [
+     "dragon_scale",
+     1.0
+    ],
+    [
+     "dragon_scale",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.35
+   ]
+  }
+ },
+ "gates": [
+  {
+   "gate_id": "bronze_labyrinth",
+   "name": "the Bronze Labyrinth",
+   "theme": "mythical",
+   "min_level": 3,
+   "region": "village_start",
+   "description": "A rift in a sheep field outside the village opens onto corridors of green bronze that rearrange themselves when no one is looking.",
+   "entry_text": "The walls are warm, like the flank of a sleeping animal. Somewhere ahead, hooves strike metal in a slow, patient rhythm.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Two cultists in bull masks chant at a junction. They stop chanting when they see you.",
+     "enemies": [
+      "bronze_labyrinth_cultist",
+      "bronze_labyrinth_cultist"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "The floor here is a grid of bronze plates. Some of them click.",
+     "loot": [
+      [
+       "labyrinth_bronze",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 10,
+      "success": "You step only on the quiet plates and find a loose panel of bronze at the far side.",
+      "fail": "A plate drops and a bronze spike punches up through your boot.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "A bronze hound noses out of the wall itself, and a cultist follows it on a chain.",
+     "enemies": [
+      "bronze_labyrinth_hound",
+      "bronze_labyrinth_cultist"
+     ]
+    }
+   ],
+   "material": "labyrinth_bronze",
+   "lair": {
+    "name": "the Labyrinth's Heart",
+    "respawn_turns": 28,
+    "first_occupant": "bronze_labyrinth_minotaur",
+    "fallback": [
+     "bronze_labyrinth_minotaur"
+    ],
+    "occupants": {
+     "bronze_labyrinth_minotaur": {
+      "title": "Asterion the Penned",
+      "enemies": [
+       "bronze_labyrinth_minotaur_boss"
+      ],
+      "intro": "At the center, a bull-headed giant paces a ring worn deep into the bronze. He was a man once; the System's label says PRISONER, and under it, WARDEN.",
+      "victory": "Asterion kneels, and the walls of the labyrinth go still for the first time.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "He always turns left. Every circuit, every charge. Wait on his right."
+      },
+      "aftermath": [
+       {
+        "id": "left_ring",
+        "label": "Leave him where he fell, inside his ring.",
+        "text": "The ring holds him. The labyrinth has a prisoner again, of a sort.",
+        "triggers": []
+       },
+       {
+        "id": "broke_ring",
+        "label": "Break the ring open so nothing is penned here again.",
+        "text": "The bronze shrieks as it parts. Every corridor in the maze unlocks at once.",
+        "triggers": [
+         "alignment:+3"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "bronze_labyrinth_ghost_warden",
+        "when": {
+         "aftermath": "left_ring"
+        }
+       },
+       {
+        "to": "bronze_labyrinth_maze_cult",
+        "when": {
+         "aftermath": "broke_ring"
+        }
+       }
+      ]
+     },
+     "bronze_labyrinth_ghost_warden": {
+      "title": "the Penned Ghost",
+      "enemies": [
+       "bronze_labyrinth_ghost_warden_boss"
+      ],
+      "intro": "Asterion's ghost paces the same ring, horns trailing mist. He still cannot leave, and he has stopped wanting to.",
+      "victory": "The ghost breaks apart like breath on a cold morning.",
+      "arrival_omen": "Hoofprints of frost circle the ring at the labyrinth's heart, though nothing walks there.",
+      "arrival_rumour": "Shepherds near the Bronze Labyrinth say a ghost bull still walks its ring at night.",
+      "study": {
+       "stat": "WIS",
+       "min": 11,
+       "text": "The ghost is bound to the ring. Fight it from outside the line."
+      },
+      "successors": [
+       {
+        "to": "bronze_labyrinth_bronze_bull"
+       }
+      ]
+     },
+     "bronze_labyrinth_maze_cult": {
+      "title": "High Priestess {name} of the Horn",
+      "enemies": [
+       "bronze_labyrinth_maze_cult_boss",
+       "bronze_labyrinth_cultist"
+      ],
+      "intro": "With the ring broken, the cultists have claimed the center. High Priestess {name} wears Asterion's horns as a crown.",
+      "victory": "The horn crown rolls across the bronze, and the cultists flee into corridors that no longer move.",
+      "arrival_omen": "Bull-mask cultists have painted the broken ring with fresh red horns.",
+      "arrival_rumour": "A horned cult has taken the heart of the Bronze Labyrinth and crowned a priestess there.",
+      "name_pool": [
+       "Pasiphe",
+       "Ariadna",
+       "Thera"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "Her chant keeps the walls moving. Interrupt her and the cultists lose their way."
+      },
+      "successors": [
+       {
+        "to": "bronze_labyrinth_bronze_bull"
+       }
+      ]
+     },
+     "bronze_labyrinth_bronze_bull": {
+      "title": "the Bronze Bull",
+      "enemies": [
+       "bronze_labyrinth_bronze_bull_boss"
+      ],
+      "intro": "The labyrinth has built itself a new guardian: a bull of solid bronze, steam venting from its nostrils, eyes like furnace doors.",
+      "victory": "The Bronze Bull topples, ringing like a struck bell, and its furnace eyes go dark.",
+      "arrival_omen": "The walls have gone hot. Something is being cast in the heart of the maze.",
+      "arrival_rumour": "The Bronze Labyrinth has made itself a guardian of solid metal. Hunters hear it bellow through the walls.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Its joints are new and stiff. Make it turn, again and again."
+      },
+      "successors": [
+       {
+        "to": "bronze_labyrinth_minotaur"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "fae_hollow",
+   "name": "the Hollow Under the Hill",
+   "theme": "mythical",
+   "min_level": 5,
+   "region": "village_start",
+   "description": "A ring of white mushrooms by the roadside camp has become a door. People who step in come out a day later, sure only an hour has passed.",
+   "entry_text": "The light is the gold of late afternoon, always. Music plays from no direction, and the trees lean in to listen to you.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "A swarm of thorn pixies giggles in a hawthorn, then dives at your eyes.",
+     "enemies": [
+      "fae_hollow_pixie",
+      "fae_hollow_pixie",
+      "fae_hollow_pixie"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "A banquet table is laid for one. The food smells wonderful.",
+     "loot": [
+      [
+       "fae_dewglass",
+       0.9
+      ],
+      [
+       "health_potion",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 11,
+      "success": "You eat nothing and take only the dewglass goblet. Wise.",
+      "fail": "You take one bite. You lose an hour and a little of yourself.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "A knight made of briars bows, formally, and draws a sword of thorns.",
+     "enemies": [
+      "fae_hollow_knight",
+      "fae_hollow_pixie"
+     ]
+    }
+   ],
+   "material": "fae_dewglass",
+   "lair": {
+    "name": "the Thornwood Court",
+    "respawn_turns": 30,
+    "first_occupant": "fae_hollow_queen",
+    "fallback": [
+     "fae_hollow_queen"
+    ],
+    "occupants": {
+     "fae_hollow_queen": {
+      "title": "Queen {name} of the Hollow",
+      "enemies": [
+       "fae_hollow_queen_boss",
+       "fae_hollow_pixie"
+      ],
+      "intro": "Queen {name} sits on a throne of living thorn and smiles with too many teeth. 'A guest! Guests must play.'",
+      "victory": "The Queen dissolves into a spray of petals, laughing as if she won.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Titanne",
+       "Maebh",
+       "Oriel"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 12,
+       "text": "Fae cannot lie. Ask her a question she must answer, and she will hesitate."
+      },
+      "successors": [
+       {
+        "to": "fae_hollow_jester",
+        "weight": 2
+       },
+       {
+        "to": "fae_hollow_wild_hunt",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "fae_hollow_jester": {
+      "title": "the Thornwood Jester",
+      "enemies": [
+       "fae_hollow_jester_boss"
+      ],
+      "intro": "Without a queen, the court has crowned its fool. The Jester juggles knives made from the queen's thorns.",
+      "victory": "The Jester takes a last bow and falls over, still grinning.",
+      "arrival_omen": "Bells jingle somewhere in the Thornwood. The empty throne wears a crooked paper crown.",
+      "arrival_rumour": "The fae court under the hill has crowned its fool. Travellers lose their purses and their sense of direction.",
+      "study": {
+       "stat": "AGI",
+       "min": 12,
+       "text": "Every trick has a rhythm. Strike on the catch, not the throw."
+      },
+      "successors": [
+       {
+        "to": "fae_hollow_changeling"
+       }
+      ]
+     },
+     "fae_hollow_wild_hunt": {
+      "title": "the Huntsman of the Wild Hunt",
+      "enemies": [
+       "fae_hollow_wild_hunt_boss",
+       "fae_hollow_knight"
+      ],
+      "intro": "Your arcane arts tore the glamour from the hollow. What is underneath is older: an antlered huntsman and his briar hounds.",
+      "victory": "The Huntsman's horn cracks, and the Hunt's baying fades into the hills.",
+      "arrival_omen": "A horn sounds far off in the Thornwood. The mushrooms have all turned to face the gate.",
+      "arrival_rumour": "The Wild Hunt rides out of the hollow under the hill. Lock your doors on the nights the horn sounds.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "The Hunt rides only while the horn sounds. Break the horn's note."
+      },
+      "successors": [
+       {
+        "to": "fae_hollow_changeling"
+       }
+      ]
+     },
+     "fae_hollow_changeling": {
+      "title": "the Changeling Prince",
+      "enemies": [
+       "fae_hollow_changeling_boss"
+      ],
+      "intro": "A beautiful boy sits on the thorn throne. He looks exactly like someone you lost, and he knows it.",
+      "victory": "The Changeling's borrowed face slides off like water, and under it there is only bark.",
+      "arrival_omen": "A cradle has appeared beside the empty throne, rocking gently by itself.",
+      "arrival_rumour": "A changeling prince rules the hollow under the hill now. He wears whatever face you miss the most.",
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "It wears a face you love. Close your eyes and listen for the rustle of leaves."
+      },
+      "successors": [
+       {
+        "to": "fae_hollow_queen"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "hydra_fen",
+   "name": "the Hydra Fen",
+   "theme": "mythical",
+   "min_level": 6,
+   "region": "village_start",
+   "description": "South of the village a rift has drowned an orchard. The water is warm, and something under it breathes in nine places at once.",
+   "entry_text": "The fen steams. Every ripple seems to start at the center and come straight for you.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Lizardmen rise from the reeds, spears dripping with something green.",
+     "enemies": [
+      "hydra_fen_lizardfolk",
+      "hydra_fen_lizardfolk"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "The safe path is a line of half-sunk stones, slick with algae.",
+     "loot": [
+      [
+       "hydra_scale",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 12,
+      "success": "You cross without a splash and find a scale caught in the reeds.",
+      "fail": "You slip into the water and something with teeth finds your leg.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Leeches the size of dogs drift towards the warmth of you.",
+     "enemies": [
+      "hydra_fen_leech",
+      "hydra_fen_leech",
+      "hydra_fen_lizardfolk"
+     ]
+    }
+   ],
+   "material": "hydra_scale",
+   "lair": {
+    "name": "the Nine-Necked Pool",
+    "respawn_turns": 31,
+    "first_occupant": "hydra_fen_hydra",
+    "fallback": [
+     "hydra_fen_hydra"
+    ],
+    "occupants": {
+     "hydra_fen_hydra": {
+      "title": "the Fen Hydra",
+      "enemies": [
+       "hydra_fen_hydra_boss"
+      ],
+      "intro": "Nine heads rise from the pool, each one turning to watch you with a different expression of hunger.",
+      "victory": "The last head sinks with a long, tired hiss.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Each head cut off grows back unless the stump is sealed. Fire, or something like it."
+      },
+      "successors": [
+       {
+        "to": "hydra_fen_brood",
+        "weight": 2
+       },
+       {
+        "to": "hydra_fen_cauterized",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "hydra_fen_brood": {
+      "title": "the Hydra's Brood",
+      "enemies": [
+       "hydra_fen_brood_boss",
+       "hydra_fen_leech"
+      ],
+      "intro": "The hydra's eggs have hatched. A brood of hydra young, three heads each, squabble over the corpse of their mother.",
+      "victory": "The brood scatters into the reeds, and the biggest of them stays down.",
+      "arrival_omen": "Leathery eggs float at the edge of the pool, and something inside them is scratching.",
+      "arrival_rumour": "The Fen Hydra left eggs. The fen south of the village is full of small heads now, and they are growing.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "The young fight each other first. Let them."
+      },
+      "successors": [
+       {
+        "to": "hydra_fen_fen_witch"
+       }
+      ]
+     },
+     "hydra_fen_cauterized": {
+      "title": "the Cauterized Hydra",
+      "enemies": [
+       "hydra_fen_cauterized_boss"
+      ],
+      "intro": "Magic sealed the wounds, and the hydra grew back wrong: fewer heads, but each one breathes a gout of boiling steam.",
+      "victory": "The Cauterized Hydra goes down in a cloud of its own steam.",
+      "arrival_omen": "The pool is boiling. Something under it is growing back with scar tissue instead of heads.",
+      "arrival_rumour": "Someone burned the Fen Hydra's stumps. It came back anyway, and now it breathes steam.",
+      "study": {
+       "stat": "WIS",
+       "min": 12,
+       "text": "It must breathe in before it breathes out. Count the breaths."
+      },
+      "successors": [
+       {
+        "to": "hydra_fen_fen_witch"
+       }
+      ]
+     },
+     "hydra_fen_fen_witch": {
+      "title": "{name}, Witch of the Fen",
+      "enemies": [
+       "hydra_fen_fen_witch_boss",
+       "hydra_fen_lizardfolk"
+      ],
+      "intro": "With the hydra line ended, the lizardfolk serve a witch. {name} stirs the pool like a cauldron and croons to the eggs at the bottom.",
+      "victory": "{name} sinks into her own pool. Somewhere under it, an egg cracks.",
+      "arrival_omen": "Bundles of bones and feathers hang from every reed. Lizardfolk kneel on the bank.",
+      "arrival_rumour": "A witch rules the Hydra Fen now, and she is raising something in the pool.",
+      "name_pool": [
+       "Gwyndra",
+       "Morrow",
+       "Hesk"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "Her charms hang on the reeds. Cut the reeds and the lizardfolk forget her."
+      },
+      "successors": [
+       {
+        "to": "hydra_fen_hydra"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "gorgon_garden",
+   "name": "the Gorgon's Garden",
+   "theme": "mythical",
+   "min_level": 8,
+   "region": "verath_city",
+   "description": "A walled garden of statues, every one of them an adventurer, every one of them wearing the same last expression.",
+   "entry_text": "The roses are stone. The birds in the trees are stone. You catch a flicker of movement in a fountain and look away just in time.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Asps with stone-grey scales slither out of the hedges.",
+     "enemies": [
+      "gorgon_garden_snake",
+      "gorgon_garden_snake",
+      "gorgon_garden_snake"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A hall of mirrors, angled so that every one shows the garden's center.",
+     "loot": [
+      [
+       "gorgon_tear",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 13,
+      "success": "You walk it with your eyes closed, counting steps, and find a tear of stone on the floor.",
+      "fail": "You glimpse a reflection, and your left arm goes stiff and grey for a terrible moment.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "A statue of a weeping knight steps off its plinth.",
+     "enemies": [
+      "gorgon_garden_statue",
+      "gorgon_garden_snake"
+     ]
+    }
+   ],
+   "material": "gorgon_tear",
+   "lair": {
+    "name": "the Garden of Stone Mourners",
+    "respawn_turns": 33,
+    "first_occupant": "gorgon_garden_gorgon",
+    "fallback": [
+     "gorgon_garden_gorgon"
+    ],
+    "occupants": {
+     "gorgon_garden_gorgon": {
+      "title": "Euryale the Gorgon",
+      "enemies": [
+       "gorgon_garden_gorgon_boss"
+      ],
+      "intro": "She sits by a fountain with her back to you, her snakes asleep. 'Don't look,' she says. 'Nobody ever listens.'",
+      "victory": "Euryale's snakes go limp, and she sighs, almost relieved.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "Watch her in the water of the fountain, never in the flesh."
+      },
+      "aftermath": [
+       {
+        "id": "kept_head",
+        "label": "Take her head. It might be useful.",
+        "text": "Wrapped in cloth, it is heavy, and it whispers.",
+        "triggers": [
+         "alignment:-3"
+        ]
+       },
+       {
+        "id": "buried_her",
+        "label": "Bury her among the statues she made.",
+        "text": "You dig until your hands bleed. The statues seem to bow their heads.",
+        "triggers": [
+         "alignment:+3"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "gorgon_garden_headless",
+        "when": {
+         "aftermath": "kept_head"
+        }
+       },
+       {
+        "to": "gorgon_garden_mourners",
+        "when": {
+         "aftermath": "buried_her"
+        }
+       }
+      ]
+     },
+     "gorgon_garden_headless": {
+      "title": "the Headless Sister",
+      "enemies": [
+       "gorgon_garden_headless_boss"
+      ],
+      "intro": "Her sister has come for her. Stheno moves on her own snakes, blind with grief and furious with it.",
+      "victory": "Stheno falls beside the empty plinth where her sister sat.",
+      "arrival_omen": "A second set of snake tracks circles the fountain, around and around, searching.",
+      "arrival_rumour": "Someone took the gorgon's head. Now her sister walks the garden, and she is blind with rage.",
+      "study": {
+       "stat": "AGI",
+       "min": 13,
+       "text": "She hunts by sound. Move only when she screams."
+      },
+      "successors": [
+       {
+        "to": "gorgon_garden_basilisk"
+       }
+      ]
+     },
+     "gorgon_garden_mourners": {
+      "title": "the Mourners' Vigil",
+      "enemies": [
+       "gorgon_garden_mourners_boss",
+       "gorgon_garden_statue",
+       "gorgon_garden_statue"
+      ],
+      "intro": "With their killer buried among them, the stone mourners have woken to grieve. They do not want visitors.",
+      "victory": "The First Mourner cracks down the middle, and the others settle back onto their plinths.",
+      "arrival_omen": "The statues have turned on their plinths to face the new grave.",
+      "arrival_rumour": "The statues in the Gorgon's Garden are moving. They gather at a grave at night.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "They are bound to their plinths. Lure them off and they crumble."
+      },
+      "successors": [
+       {
+        "to": "gorgon_garden_basilisk"
+       }
+      ]
+     },
+     "gorgon_garden_basilisk": {
+      "title": "the Garden Basilisk",
+      "enemies": [
+       "gorgon_garden_basilisk_boss"
+      ],
+      "intro": "A serpent king, crowned with a crest of bone, has hatched from a cockerel's egg in the rose bed. Its gaze does the gorgon's work, but faster.",
+      "victory": "The Basilisk catches its reflection in your blade and goes still as the garden.",
+      "arrival_omen": "Every rose in the garden is turning to stone, one by one, from the center outward.",
+      "arrival_rumour": "A basilisk has hatched in the Gorgon's Garden. Not even the hunters who just look are coming back.",
+      "study": {
+       "stat": "WIS",
+       "min": 14,
+       "text": "It can't stand its own reflection. A polished shield would do."
+      },
+      "successors": [
+       {
+        "to": "gorgon_garden_gorgon"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "drowned_bell",
+   "name": "the Temple of the Drowned Bell",
+   "theme": "mythical",
+   "min_level": 10,
+   "region": "verath_city",
+   "description": "A rift in the river near Verath opens on a sea temple, its pillars hung with weed. A bell tolls under the water at every high tide.",
+   "entry_text": "The air is wet enough to drink. Fish swim past at head height, in water that isn't there.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Fish-eyed temple guards rise from a flooded pool, tridents in hand.",
+     "enemies": [
+      "drowned_bell_deep_one",
+      "drowned_bell_deep_one"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "An offering bowl, heaped with black pearls, rests under the gaze of a coral idol.",
+     "loot": [
+      [
+       "abyssal_pearl",
+       0.9
+      ],
+      [
+       "health_potion_major",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "LCK",
+      "min": 14,
+      "success": "You take only a pearl, and the idol's eyes stay closed.",
+      "fail": "You take a pearl and the idol's eyes open. The water rises to your chest before it recedes.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Eels with glowing lures drift through the air of the nave.",
+     "enemies": [
+      "drowned_bell_eel",
+      "drowned_bell_eel",
+      "drowned_bell_deep_one"
+     ]
+    }
+   ],
+   "material": "abyssal_pearl",
+   "lair": {
+    "name": "the Bell Chamber",
+    "respawn_turns": 35,
+    "first_occupant": "drowned_bell_kraken",
+    "fallback": [
+     "drowned_bell_kraken"
+    ],
+    "occupants": {
+     "drowned_bell_kraken": {
+      "title": "the Bell-Ringer Kraken",
+      "enemies": [
+       "drowned_bell_kraken_boss"
+      ],
+      "intro": "Tentacles wrap the great bronze bell, and with each slow swing of it the Kraken calls the tide.",
+      "victory": "The Kraken lets go of the bell, and it rings once more, by itself, and falls silent.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "Between tolls, it must let go of the bell. That is the moment."
+      },
+      "successors": [
+       {
+        "to": "drowned_bell_high_priest",
+        "weight": 2
+       },
+       {
+        "to": "drowned_bell_bell_spirit",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "drowned_bell_high_priest": {
+      "title": "Tide-Priest {name}",
+      "enemies": [
+       "drowned_bell_high_priest_boss",
+       "drowned_bell_deep_one",
+       "drowned_bell_deep_one"
+      ],
+      "intro": "The Kraken's worshippers have chosen a new voice. Tide-Priest {name} rings the bell by hand now, and every toll pulls at your blood.",
+      "victory": "The Tide-Priest falls against the bell. It booms, and the deep ones scatter.",
+      "arrival_omen": "Pilgrims' candles float in the flooded nave, and a hand-rope has been tied to the bell.",
+      "arrival_rumour": "The deep ones of the Drowned Bell have a new priest. The river tides near Verath are wrong now.",
+      "name_pool": [
+       "Dagon",
+       "Ulmo",
+       "Pelagia"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 15,
+       "text": "Every toll is a prayer. Make him miss a beat."
+      },
+      "successors": [
+       {
+        "to": "drowned_bell_leviathan_spawn"
+       }
+      ]
+     },
+     "drowned_bell_bell_spirit": {
+      "title": "the Bell's Voice",
+      "enemies": [
+       "drowned_bell_bell_spirit_boss"
+      ],
+      "intro": "Your arcane arts woke the bell itself. It rings without a ringer, and the sound has a shape, and the shape has teeth.",
+      "victory": "The bell cracks from lip to crown, and the Voice dies in the middle of a note.",
+      "arrival_omen": "The bell is humming, very low, with nobody near it.",
+      "arrival_rumour": "The Drowned Bell rings by itself now. Fishermen on the river hear it in their bones.",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "Sound needs air. The Voice is weakest between notes."
+      },
+      "successors": [
+       {
+        "to": "drowned_bell_leviathan_spawn"
+       }
+      ]
+     },
+     "drowned_bell_leviathan_spawn": {
+      "title": "the Leviathan Spawn",
+      "enemies": [
+       "drowned_bell_leviathan_spawn_boss"
+      ],
+      "intro": "Something came up from the deepest part of the rift to see what killed the bell's keepers. It is young, for its kind. It fills the chamber.",
+      "victory": "The Leviathan Spawn slides back down into the dark water and does not rise.",
+      "arrival_omen": "The water in the Bell Chamber has dropped a full fathom, as if something enormous drank it.",
+      "arrival_rumour": "Something huge has come up from the deep under the Drowned Bell. The river is running backwards some nights.",
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "It has never fought on land. Draw it up the temple stairs."
+      },
+      "successors": [
+       {
+        "to": "drowned_bell_kraken"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "phoenix_ashery",
+   "name": "the Phoenix Ashery",
+   "theme": "mythical",
+   "min_level": 12,
+   "region": "verath_city",
+   "description": "A hill north of Verath burns without fuel. The System registers it as a Gate, and as a nest.",
+   "entry_text": "The ash is ankle deep and warm, and in it you see footprints of birds the size of horses.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Burning chicks the size of wolves hop out of the ash, hungry.",
+     "enemies": [
+      "phoenix_ashery_cinder_bird",
+      "phoenix_ashery_cinder_bird"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A slope of loose ash over burning coals.",
+     "loot": [
+      [
+       "phoenix_cinder",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 15,
+      "success": "You run it lightly and pluck a cinder from the edge of the fire.",
+      "fail": "The ash gives way and your legs sink into the coals.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Figures made of ash rise from old pyres: people who tried to steal an egg.",
+     "enemies": [
+      "phoenix_ashery_ash_wight",
+      "phoenix_ashery_ash_wight",
+      "phoenix_ashery_cinder_bird"
+     ]
+    }
+   ],
+   "material": "phoenix_cinder",
+   "lair": {
+    "name": "the Pyre Nest",
+    "respawn_turns": 37,
+    "first_occupant": "phoenix_ashery_phoenix",
+    "fallback": [
+     "phoenix_ashery_phoenix"
+    ],
+    "occupants": {
+     "phoenix_ashery_phoenix": {
+      "title": "Ignis the Phoenix",
+      "enemies": [
+       "phoenix_ashery_phoenix_boss"
+      ],
+      "intro": "On a pyre at the summit, a bird of white fire spreads wings wider than a house. Ignis does not attack at once. It is curious about you.",
+      "victory": "Ignis folds its wings and collapses into a heap of ash. Something in the ash still glows.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "WIS",
+       "min": 16,
+       "text": "It burns hottest when it is afraid. Don't corner it."
+      },
+      "aftermath": [
+       {
+        "id": "left_ash",
+        "label": "Leave the ash undisturbed.",
+        "text": "The glow pulses, slowly, like a heartbeat.",
+        "triggers": []
+       },
+       {
+        "id": "scattered_ash",
+        "label": "Scatter the ash to the winds so it can't rise again.",
+        "text": "The wind takes it. The hill goes cold for the first time since the Fracture.",
+        "triggers": [
+         "alignment:-2"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "phoenix_ashery_reborn",
+        "when": {
+         "aftermath": "left_ash"
+        }
+       },
+       {
+        "to": "phoenix_ashery_cold_lord",
+        "when": {
+         "aftermath": "scattered_ash"
+        }
+       }
+      ]
+     },
+     "phoenix_ashery_reborn": {
+      "title": "Ignis Reborn",
+      "enemies": [
+       "phoenix_ashery_reborn_boss"
+      ],
+      "intro": "The phoenix rose again, as phoenixes do. It remembers you. It is no longer curious.",
+      "victory": "Ignis falls again, and this time the ash is quieter.",
+      "arrival_omen": "The ash heap on the summit is pulsing, brighter every day.",
+      "arrival_rumour": "The Phoenix of the Ashery has risen again, and it remembers who killed it.",
+      "study": {
+       "stat": "WIS",
+       "min": 16,
+       "text": "Reborn things are new. Its left wing has not finished growing."
+      },
+      "successors": [
+       {
+        "to": "phoenix_ashery_egg_thieves"
+       }
+      ]
+     },
+     "phoenix_ashery_cold_lord": {
+      "title": "the Cold Ash Lord",
+      "enemies": [
+       "phoenix_ashery_cold_lord_boss",
+       "phoenix_ashery_ash_wight"
+      ],
+      "intro": "With the fire scattered, the hill froze. Something that hated the phoenix has crept into the cold: a lord of grey ash and frost.",
+      "victory": "The Cold Ash Lord crumbles. Under it, a single coal still glows.",
+      "arrival_omen": "Frost has formed on the ash of the summit, and grey figures stand very still in it.",
+      "arrival_rumour": "The burning hill north of Verath has gone cold, and something grey walks on it.",
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "It is made of the phoenix's leavings. A spark would undo it."
+      },
+      "successors": [
+       {
+        "to": "phoenix_ashery_egg_thieves"
+       }
+      ]
+     },
+     "phoenix_ashery_egg_thieves": {
+      "title": "the Egg-Thief Company",
+      "enemies": [
+       "phoenix_ashery_egg_thieves_boss",
+       "phoenix_ashery_ash_wight"
+      ],
+      "intro": "A mercenary company has dug into the nest to steal what grows there. Captain {name} wears fireproof leathers and a very tired expression.",
+      "victory": "The Captain yields, and the company flees down the hill. The egg they were guarding is warm, and cracking.",
+      "arrival_omen": "Tents and digging tools have appeared around the pyre. Someone is guarding something.",
+      "arrival_rumour": "Mercenaries are digging for a phoenix egg on the Ashery hill. They will pay well for help, and worse for interference.",
+      "name_pool": [
+       "Cael",
+       "Varro",
+       "Isna"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "They are carrying a very fragile egg. They will not fight near it."
+      },
+      "successors": [
+       {
+        "to": "phoenix_ashery_phoenix"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "wyrm_hoard",
+   "name": "the Hoard of Vael-Ashar",
+   "theme": "mythical",
+   "min_level": 14,
+   "region": "verath_city",
+   "description": "A mountain rift east of Verath, rated A-class. Its first master was a dragon who has slept on his gold since before the Fracture.",
+   "entry_text": "Gold coins have spilled down the tunnel like scree. Your torch catches eyes in the dark that are only the gems in old crowns.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Kobolds swarm out of holes in a wall of coin, screaming about thieves.",
+     "enemies": [
+      "wyrm_hoard_kobold",
+      "wyrm_hoard_kobold",
+      "wyrm_hoard_kobold"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "A side cave piled with treasure. A scale glints among the coins.",
+     "loot": [
+      [
+       "dragon_scale",
+       0.9
+      ],
+      [
+       "health_potion_major",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "LCK",
+      "min": 16,
+      "success": "You take the scale and a fistful of nothing else. The gold does not stir.",
+      "fail": "The coins shift and slide. You are buried to the waist before you dig out.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "A young drake has been sleeping in the tunnel. It wakes up cross.",
+     "enemies": [
+      "wyrm_hoard_drake",
+      "wyrm_hoard_kobold"
+     ]
+    }
+   ],
+   "material": "dragon_scale",
+   "lair": {
+    "name": "the Hoard Hall",
+    "respawn_turns": 39,
+    "first_occupant": "wyrm_hoard_dragon",
+    "fallback": [
+     "wyrm_hoard_dragon"
+    ],
+    "occupants": {
+     "wyrm_hoard_dragon": {
+      "title": "Vael-Ashar the Old",
+      "enemies": [
+       "wyrm_hoard_dragon_boss"
+      ],
+      "intro": "A dragon lies coiled on a sea of gold, each scale the size of a door. One eye opens, a lamp of molten amber. 'Another one,' he says. 'Take a coin, little thief. Take it and die.'",
+      "victory": "Vael-Ashar's great head sinks onto his gold, and his last breath is only smoke.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 17,
+       "text": "He is old, and his left wing never healed from some forgotten war. Stay on his left."
+      },
+      "successors": [
+       {
+        "to": "wyrm_hoard_kobold_king",
+        "weight": 2
+       },
+       {
+        "to": "wyrm_hoard_dracolich",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "wyrm_hoard_kobold_king": {
+      "title": "King {name} of the Hoard",
+      "enemies": [
+       "wyrm_hoard_kobold_king_boss",
+       "wyrm_hoard_kobold",
+       "wyrm_hoard_kobold",
+       "wyrm_hoard_drake"
+      ],
+      "intro": "The dragon's kobolds have crowned one of their own. King {name} sits on the dragon's skull and holds a sword far too big for him.",
+      "victory": "King {name} falls off the skull. The kobolds immediately begin to fight over the crown.",
+      "arrival_omen": "Tiny footprints all over the gold. Someone has hung a kobold-sized crown on the dragon's skull.",
+      "arrival_rumour": "The kobolds of Vael-Ashar's hoard have crowned a king. He is very small, and very angry.",
+      "name_pool": [
+       "Snikkit",
+       "Gribble",
+       "Taz"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 17,
+       "text": "The kobolds follow the crown, not the king. Knock it off his head."
+      },
+      "successors": [
+       {
+        "to": "wyrm_hoard_heir"
+       }
+      ]
+     },
+     "wyrm_hoard_dracolich": {
+      "title": "Vael-Ashar, Unburied",
+      "enemies": [
+       "wyrm_hoard_dracolich_boss"
+      ],
+      "intro": "Your magic did not let him rest. The dragon has risen as a dracolich, bones lacquered in gold, a cold green fire where his heart was.",
+      "victory": "The green fire gutters out, and Vael-Ashar's bones collapse into his gold for the last time.",
+      "arrival_omen": "The dragon's bones are gone from the hoard. Something has been dragged across the gold, toward the deeper caves.",
+      "arrival_rumour": "Vael-Ashar has risen as a dracolich. The miners east of Verath have abandoned their tunnels.",
+      "study": {
+       "stat": "INT",
+       "min": 18,
+       "text": "The green fire is his phylactery. Strike it and nothing else."
+      },
+      "successors": [
+       {
+        "to": "wyrm_hoard_heir"
+       }
+      ]
+     },
+     "wyrm_hoard_heir": {
+      "title": "{name}, Heir of the Hoard",
+      "enemies": [
+       "wyrm_hoard_heir_boss"
+      ],
+      "intro": "A young dragon, scales still bright, has come to claim the hoard. {name} is smaller than the old dragon, faster, and much less patient.",
+      "victory": "{name} limps away into the deep caves, leaving the hoard behind.",
+      "arrival_omen": "Fresh claw marks on the hoard hall walls, and a scorched patch where something young has been practising its fire.",
+      "arrival_rumour": "A young dragon has claimed Vael-Ashar's hoard. Its fire is still learning.",
+      "name_pool": [
+       "Sythra",
+       "Ombrex",
+       "Kaelith"
+      ],
+      "study": {
+       "stat": "AGI",
+       "min": 17,
+       "text": "Young dragons love to show off their fire. Make it breathe, then close in."
+      },
+      "successors": [
+       {
+        "to": "wyrm_hoard_dragon"
+       }
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

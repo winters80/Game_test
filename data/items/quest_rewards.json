@@ -1,0 +1,146 @@
+[
+  {
+    "item_id": "asterion_horn_axe",
+    "name": "Asterion's Horn Axe",
+    "rarity": "EPIC",
+    "item_type": "WEAPON",
+    "description": "A great axe forged from labyrinth bronze and set with the Minotaur's horn. Halvard's finest work this year.",
+    "flavor_text": "It always swings a little to the left.",
+    "stats_bonus": {
+      "STR": 5,
+      "END": 2
+    },
+    "value_gold": 900,
+    "weight": 4.0
+  },
+  {
+    "item_id": "dewglass_circlet",
+    "name": "Dewglass Circlet",
+    "rarity": "RARE",
+    "item_type": "ACCESSORY",
+    "description": "A circlet of fae dewglass and tide pearls. It sings very quietly when you think clearly.",
+    "flavor_text": "The fae never lie. Neither does this.",
+    "stats_bonus": {
+      "WIS": 3,
+      "INT": 2
+    },
+    "value_gold": 600,
+    "weight": 0.2
+  },
+  {
+    "item_id": "hydrascale_mail",
+    "name": "Hydrascale Mail",
+    "rarity": "EPIC",
+    "item_type": "ARMOR",
+    "description": "Mail of overlapping hydra scales on a heartstone frame. Scratches in it close by morning.",
+    "flavor_text": "Cut it once, it grows back twice.",
+    "stats_bonus": {
+      "VIT": 3,
+      "END": 4
+    },
+    "value_gold": 1100,
+    "weight": 6.0
+  },
+  {
+    "item_id": "mirrorsteel_blade",
+    "name": "Mirrorsteel Blade",
+    "rarity": "EPIC",
+    "item_type": "WEAPON",
+    "description": "A sword of star metal polished with haunted mirror glass. Your reflection in it is always a beat ahead.",
+    "flavor_text": "It shows you where the blow will land.",
+    "stats_bonus": {
+      "AGI": 4,
+      "LCK": 3,
+      "STR": 1
+    },
+    "value_gold": 1300,
+    "weight": 2.0
+  },
+  {
+    "item_id": "stormcaller_staff",
+    "name": "Stormcaller Staff",
+    "rarity": "EPIC",
+    "item_type": "WEAPON",
+    "description": "A staff of thunderbird feathers bound around a storm capacitor. Your hair stands on end when you hold it.",
+    "flavor_text": "Point it at the sky only if you mean it.",
+    "stats_bonus": {
+      "INT": 6,
+      "WIS": 2
+    },
+    "value_gold": 1500,
+    "weight": 1.5
+  },
+  {
+    "item_id": "rimeward_cloak",
+    "name": "Rimeward Cloak",
+    "rarity": "RARE",
+    "item_type": "ARMOR",
+    "description": "A cloak lined with everfrost and stitched with ectoplasm thread. Cold never reaches you, and neither do ghosts.",
+    "flavor_text": "Warm inside. Somehow.",
+    "stats_bonus": {
+      "END": 3,
+      "WIS": 2
+    },
+    "value_gold": 700,
+    "weight": 1.0
+  },
+  {
+    "item_id": "clockwork_gauntlets",
+    "name": "Clockwork Gauntlets",
+    "rarity": "RARE",
+    "item_type": "ACCESSORY",
+    "description": "Brass gauntlets with a golem core in each palm. Your grip ticks.",
+    "flavor_text": "Odo says they're perfectly safe. Odo has nine fingers.",
+    "stats_bonus": {
+      "STR": 2,
+      "AGI": 3
+    },
+    "value_gold": 650,
+    "weight": 1.0
+  },
+  {
+    "item_id": "seraph_mantle",
+    "name": "Seraph-Feather Mantle",
+    "rarity": "LEGENDARY",
+    "item_type": "ARMOR",
+    "description": "A mantle of seraph feathers sewn to bell-bronze links, blessed by Brother Cassian. Light pools around you.",
+    "flavor_text": "You feel watched. Kindly.",
+    "stats_bonus": {
+      "WIS": 5,
+      "VIT": 4,
+      "END": 2
+    },
+    "value_gold": 2600,
+    "weight": 2.0
+  },
+  {
+    "item_id": "wyrmscale_bulwark",
+    "name": "Wyrmscale Bulwark",
+    "rarity": "LEGENDARY",
+    "item_type": "ARMOR",
+    "description": "Armour of black dragon scale, quenched in phoenix fire. Halvard says it's the best thing he has ever made, and he is a dwarf.",
+    "flavor_text": "Dragons envy it.",
+    "stats_bonus": {
+      "END": 6,
+      "VIT": 4,
+      "STR": 2
+    },
+    "value_gold": 3000,
+    "weight": 8.0
+  },
+  {
+    "item_id": "dreamthread_ring",
+    "name": "Dreamthread Ring",
+    "rarity": "LEGENDARY",
+    "item_type": "ACCESSORY",
+    "description": "A ring spun from dream ichor, set with a chronoshard and a bead of void. Wear it to sleep and you will remember tomorrow.",
+    "flavor_text": "Lady Vos wanted it for her cabinet. She let you keep it. Mostly.",
+    "stats_bonus": {
+      "INT": 4,
+      "WIS": 4,
+      "LCK": 3
+    },
+    "value_gold": 3200,
+    "weight": 0.1
+  }
+]

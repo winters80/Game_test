@@ -255,6 +255,18 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             else:
                 bus.publish(Event("WARNING", {"message": "Not enough gold to pay for the room."}))
 
+        elif trigger.startswith("take_item:"):
+            # take_item:ITEM[:QTY] — remove up to QTY (default 1); never below zero.
+            parts = trigger[len("take_item:"):].split(":")
+            item_id = parts[0]
+            try:
+                qty = max(1, int(parts[1])) if len(parts) > 1 else 1
+            except ValueError:
+                qty = 1
+            for _ in range(qty):
+                if not state.player.remove_item(item_id, 1):
+                    break
+
         elif trigger.startswith("give_food:"):
             item_id = trigger[10:]
             state.player.add_item(item_id, 1)
@@ -273,6 +285,8 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass  # engine-delegated: core/bot_flow.talk_to_bot
         elif trigger.startswith("boss_lair:"):
             pass  # engine-delegated: core/lair_flow.enter_lair
+        elif trigger == "gate_registry" or trigger.startswith("enter_gate:"):
+            pass  # engine-delegated: core/gate_flow
 
     state.mark_dirty()
 

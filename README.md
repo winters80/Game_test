@@ -204,6 +204,16 @@ Boss rooms don't stay the same. When a boss dies, the dungeon finds a replacemen
 
 After a kill the lair stays empty for a while (30 to 35 turns), with signs of what's moving in. Then a rumour spreads in town. A boss that takes its lair back is 10% stronger each time (up to +40%). With enough INT or WIS you can **study** a boss first and get the first strike.
 
+### Gates
+
+There's more to Aethoria than the three dungeon floors. **32 Gates** (rifts the System registers, rated from level 2 to 18) open across the world: a Minotaur's bronze labyrinth, a fae court under a hill, a dragon's hoard, a clockwork foundry, a derelict skyship, a haunted manor, a plague asylum, a hall of ten thousand mirrors, forges and tombs of the elements, a fallen star, a clocktower stuck at the moment of the Fracture, and a rift you can only reach in your dreams.
+
+Each Gate has three rooms (fights, traps and treasure, some with stat checks) and then a boss, and every Gate boss follows the succession rules above. Find them at the **Gate Hall** in the village and in Verath: the Registry there shows every Gate's level and who rules it this week.
+
+### Quests
+
+The Gate Halls (and the wardens' fire at the camp) are full of people with work: **205 quests** from 13 new patrons, including **51 quest chains**. Ten chains teach you a new skill (Bull Rush, Stormcall, Ember Rebirth, Void Step and more), and ten end with a forged item (Asterion's Horn Axe, the Stormcaller Staff, the Wyrmscale Bulwark…). Finish a step, go back and choose **« Report: … »**, and the next step opens. There are also Gate bounties and material orders.
+
 The other adventurers fight bosses too. Come back from Verath and Ryn may have killed the Golem while you were away. The World Log (`[L]`) shows who holds each lair now. Bots leave each lair's first boss alone for the first 250 turns, so you get the first shot. New chains are pure JSON in `data/dungeons/` (see CLAUDE.md).
 
 ### Trading

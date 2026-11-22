@@ -7,6 +7,98 @@
     "Everyone is measured here. Everyone is watched."
   ],
   "nodes": {
+    "gate_hall": {
+      "text": "Verath's Gate Hall is a marble rotunda that used to be a bank. The Registry's great board fills the dome, rifts flickering across it like stars. Scholars, smiths, nobles and soldiers keep offices along the gallery, and all of them want something from inside a Gate.",
+      "options": [
+        {
+          "option_id": "open_gate_registry",
+          "label": "Read the Gate Registry (rifts and their masters).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "gate_registry"
+          ]
+        },
+        {
+          "option_id": "talk_magister_aldane",
+          "label": "Talk to Magister Aldane (scholar).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:magister_aldane"
+          ]
+        },
+        {
+          "option_id": "talk_captain_venn",
+          "label": "Talk to Captain Dara Venn (guard captain).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:captain_venn"
+          ]
+        },
+        {
+          "option_id": "talk_archivist_tolven",
+          "label": "Talk to Archivist Tolven (scholar).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:archivist_tolven"
+          ]
+        },
+        {
+          "option_id": "talk_forgemaster_halvard",
+          "label": "Talk to Forgemaster Halvard (blacksmith).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:forgemaster_halvard"
+          ]
+        },
+        {
+          "option_id": "talk_lady_vos",
+          "label": "Talk to Lady Seraphine Vos (noble).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:lady_vos"
+          ]
+        },
+        {
+          "option_id": "talk_brother_cassian",
+          "label": "Talk to Brother Cassian (exorcist).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:brother_cassian"
+          ]
+        },
+        {
+          "option_id": "talk_sergeant_mabb",
+          "label": "Talk to Sergeant Mabb (trainer).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:sergeant_mabb"
+          ]
+        },
+        {
+          "option_id": "leave_gate_hall",
+          "label": "Back.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
     "root": {
       "text": "The main thoroughfare of Verath hums with measured purpose. Citizens with System tags floating above their heads move between districts, each one catalogued and ranked. To the north, guild banners hang above a row of large buildings — Guild Row. To the east, the noise and smell of the Market District. To the west, the Mages' Spire rises above the rooftops. North-west, the Palace District's ornate gates are visible. And if you know where to look, there's a way down to the Undermarket.",
       "options": [
@@ -57,6 +149,13 @@
           "requires": {
             "flags": ["street_knowledge"]
           }
+        },
+        {
+          "option_id": "gate_registry_office",
+          "label": "Visit the Gate Hall (the Registry office and its patrons).",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "gate_hall"
         },
         {
           "option_id": "leave_city",

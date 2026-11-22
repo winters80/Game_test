@@ -343,6 +343,8 @@ def get_available_quest_seeds(
         # Trigger flag (if set, player must have it)
         if seed.trigger_flag and not player.has_flag(seed.trigger_flag):
             continue
+        if seed.min_level and player.level < seed.min_level:
+            continue
         available.append(seed)
 
     return available

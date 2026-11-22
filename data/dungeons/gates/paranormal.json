@@ -1,0 +1,1977 @@
+{
+ "_doc": "Paranormal Gates. Built from compact specs; see CLAUDE.md > Gates.",
+ "enemy_templates": {
+  "ashgrove_manor_poltergeist": {
+   "name": "Poltergeist",
+   "max_hp": 28,
+   "attack": 6,
+   "defense": 1,
+   "xp_reward": 28,
+   "gold_reward": 150,
+   "rank": "E",
+   "loot_table": [
+    [
+     "ectoplasm",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "ashgrove_manor_servant": {
+   "name": "Phantom Servant",
+   "max_hp": 28,
+   "attack": 6,
+   "defense": 1,
+   "xp_reward": 28,
+   "gold_reward": 150,
+   "rank": "E",
+   "loot_table": [
+    [
+     "ectoplasm",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.15
+   ]
+  },
+  "ashgrove_manor_lady_boss": {
+   "name": "Lady {name} Ashgrove",
+   "max_hp": 77,
+   "attack": 11,
+   "defense": 4,
+   "xp_reward": 120,
+   "gold_reward": 900,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ectoplasm",
+     1.0
+    ],
+    [
+     "ectoplasm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.2
+   ]
+  },
+  "ashgrove_manor_reflection_boss": {
+   "name": "the Lady in the Glass",
+   "max_hp": 84,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 132,
+   "gold_reward": 990,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ectoplasm",
+     1.0
+    ],
+    [
+     "ectoplasm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "ashgrove_manor_children_boss": {
+   "name": "Little Master Edmund",
+   "max_hp": 77,
+   "attack": 11,
+   "defense": 4,
+   "xp_reward": 120,
+   "gold_reward": 900,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ectoplasm",
+     1.0
+    ],
+    [
+     "ectoplasm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "ashgrove_manor_butler_boss": {
+   "name": "Hollis, Who Still Serves",
+   "max_hp": 88,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 138,
+   "gold_reward": 1035,
+   "rank": "D",
+   "loot_table": [
+    [
+     "ectoplasm",
+     1.0
+    ],
+    [
+     "ectoplasm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "witchs_bog_crow": {
+   "name": "Witch Crow",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "hag_charm",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.15
+   ]
+  },
+  "witchs_bog_scarecrow": {
+   "name": "Bog Scarecrow",
+   "max_hp": 49,
+   "attack": 10,
+   "defense": 2,
+   "xp_reward": 55,
+   "gold_reward": 285,
+   "rank": "D",
+   "loot_table": [
+    [
+     "hag_charm",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "witchs_bog_rook_boss": {
+   "name": "Grandmother {name}",
+   "max_hp": 125,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 210,
+   "gold_reward": 1650,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hag_charm",
+     1.0
+    ],
+    [
+     "hag_charm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "witchs_bog_coven_boss": {
+   "name": "Sister Moll of the Coven",
+   "max_hp": 131,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 220,
+   "gold_reward": 1732,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hag_charm",
+     1.0
+    ],
+    [
+     "hag_charm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "witchs_bog_cauldron_boss": {
+   "name": "the Cauldron Thing",
+   "max_hp": 143,
+   "attack": 18,
+   "defense": 5,
+   "xp_reward": 241,
+   "gold_reward": 1897,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hag_charm",
+     1.0
+    ],
+    [
+     "hag_charm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.35
+   ]
+  },
+  "witchs_bog_bog_wife_boss": {
+   "name": "the Bog Wife",
+   "max_hp": 143,
+   "attack": 18,
+   "defense": 5,
+   "xp_reward": 241,
+   "gold_reward": 1897,
+   "rank": "C",
+   "loot_table": [
+    [
+     "hag_charm",
+     1.0
+    ],
+    [
+     "hag_charm",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "dollmaker_workshop_doll": {
+   "name": "Porcelain Doll",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "dollmaker_workshop_marionette": {
+   "name": "Marionette",
+   "max_hp": 56,
+   "attack": 11,
+   "defense": 3,
+   "xp_reward": 64,
+   "gold_reward": 330,
+   "rank": "D",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.15
+   ]
+  },
+  "dollmaker_workshop_dollmaker_boss": {
+   "name": "Master {name}",
+   "max_hp": 141,
+   "attack": 17,
+   "defense": 6,
+   "xp_reward": 240,
+   "gold_reward": 1900,
+   "rank": "C",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     1.0
+    ],
+    [
+     "porcelain_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "dollmaker_workshop_your_doll_boss": {
+   "name": "the Doll With Your Face",
+   "max_hp": 162,
+   "attack": 20,
+   "defense": 6,
+   "xp_reward": 276,
+   "gold_reward": 2185,
+   "rank": "C",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     1.0
+    ],
+    [
+     "porcelain_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "dollmaker_workshop_ash_puppets_boss": {
+   "name": "the Burnt Ringmaster",
+   "max_hp": 148,
+   "attack": 18,
+   "defense": 6,
+   "xp_reward": 252,
+   "gold_reward": 1995,
+   "rank": "C",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     1.0
+    ],
+    [
+     "porcelain_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.25
+   ]
+  },
+  "dollmaker_workshop_doll_queen_boss": {
+   "name": "the Doll Queen",
+   "max_hp": 169,
+   "attack": 21,
+   "defense": 6,
+   "xp_reward": 288,
+   "gold_reward": 2280,
+   "rank": "C",
+   "loot_table": [
+    [
+     "porcelain_shard",
+     1.0
+    ],
+    [
+     "porcelain_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "veras_asylum_patient": {
+   "name": "Hollow Patient",
+   "max_hp": 63,
+   "attack": 13,
+   "defense": 3,
+   "xp_reward": 73,
+   "gold_reward": 375,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "veras_asylum_orderly": {
+   "name": "Grim Orderly",
+   "max_hp": 63,
+   "attack": 13,
+   "defense": 3,
+   "xp_reward": 73,
+   "gold_reward": 375,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.15
+   ]
+  },
+  "veras_asylum_doctor_boss": {
+   "name": "the Plague Doctor",
+   "max_hp": 157,
+   "attack": 19,
+   "defense": 6,
+   "xp_reward": 270,
+   "gold_reward": 2150,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     1.0
+    ],
+    [
+     "plague_ash",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.3
+   ]
+  },
+  "veras_asylum_matron_boss": {
+   "name": "Matron {name}",
+   "max_hp": 164,
+   "attack": 20,
+   "defense": 6,
+   "xp_reward": 283,
+   "gold_reward": 2257,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     1.0
+    ],
+    [
+     "plague_ash",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "veras_asylum_saint_vera_boss": {
+   "name": "Saint Vera, Who Could Not Save Them",
+   "max_hp": 188,
+   "attack": 23,
+   "defense": 6,
+   "xp_reward": 324,
+   "gold_reward": 2580,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     1.0
+    ],
+    [
+     "plague_ash",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "veras_asylum_plague_boss": {
+   "name": "the Grey Plague",
+   "max_hp": 188,
+   "attack": 23,
+   "defense": 6,
+   "xp_reward": 324,
+   "gold_reward": 2580,
+   "rank": "C",
+   "loot_table": [
+    [
+     "plague_ash",
+     1.0
+    ],
+    [
+     "plague_ash",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.4
+   ]
+  },
+  "hall_of_mirrors_reflection": {
+   "name": "Hostile Reflection",
+   "max_hp": 77,
+   "attack": 15,
+   "defense": 4,
+   "xp_reward": 91,
+   "gold_reward": 465,
+   "rank": "C",
+   "loot_table": [
+    [
+     "mirror_shard",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "hall_of_mirrors_clown": {
+   "name": "Carnival Mime",
+   "max_hp": 77,
+   "attack": 15,
+   "defense": 4,
+   "xp_reward": 91,
+   "gold_reward": 465,
+   "rank": "C",
+   "loot_table": [
+    [
+     "mirror_shard",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "hall_of_mirrors_ringmaster_boss": {
+   "name": "the Mirror Ringmaster",
+   "max_hp": 189,
+   "attack": 22,
+   "defense": 7,
+   "xp_reward": 330,
+   "gold_reward": 2650,
+   "rank": "B",
+   "loot_table": [
+    [
+     "mirror_shard",
+     1.0
+    ],
+    [
+     "mirror_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "hall_of_mirrors_true_self_boss": {
+   "name": "Your True Reflection",
+   "max_hp": 217,
+   "attack": 25,
+   "defense": 7,
+   "xp_reward": 379,
+   "gold_reward": 3047,
+   "rank": "B",
+   "loot_table": [
+    [
+     "mirror_shard",
+     1.0
+    ],
+    [
+     "mirror_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "hall_of_mirrors_shard_swarm_boss": {
+   "name": "the Shard Legion",
+   "max_hp": 207,
+   "attack": 24,
+   "defense": 7,
+   "xp_reward": 363,
+   "gold_reward": 2915,
+   "rank": "B",
+   "loot_table": [
+    [
+     "mirror_shard",
+     1.0
+    ],
+    [
+     "mirror_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.3
+   ]
+  },
+  "hall_of_mirrors_empty_one_boss": {
+   "name": "the Man Without a Reflection",
+   "max_hp": 226,
+   "attack": 26,
+   "defense": 7,
+   "xp_reward": 396,
+   "gold_reward": 3180,
+   "rank": "B",
+   "loot_table": [
+    [
+     "mirror_shard",
+     1.0
+    ],
+    [
+     "mirror_shard",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.3
+   ]
+  },
+  "bellfall_cathedral_choir": {
+   "name": "Hollow Chorister",
+   "max_hp": 105,
+   "attack": 20,
+   "defense": 5,
+   "xp_reward": 127,
+   "gold_reward": 645,
+   "rank": "B",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "bellfall_cathedral_gargoyle": {
+   "name": "Belfry Gargoyle",
+   "max_hp": 105,
+   "attack": 20,
+   "defense": 5,
+   "xp_reward": 127,
+   "gold_reward": 645,
+   "rank": "B",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "bellfall_cathedral_bishop_boss": {
+   "name": "Bishop {name}",
+   "max_hp": 253,
+   "attack": 28,
+   "defense": 10,
+   "xp_reward": 450,
+   "gold_reward": 3650,
+   "rank": "A",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     1.0
+    ],
+    [
+     "hallowed_bronze",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "bellfall_cathedral_bell_ringer_boss": {
+   "name": "the Hunchbacked Bell-Ringer",
+   "max_hp": 278,
+   "attack": 31,
+   "defense": 10,
+   "xp_reward": 495,
+   "gold_reward": 4015,
+   "rank": "A",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     1.0
+    ],
+    [
+     "hallowed_bronze",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "bellfall_cathedral_congregation_boss": {
+   "name": "the Risen Congregation",
+   "max_hp": 303,
+   "attack": 34,
+   "defense": 10,
+   "xp_reward": 540,
+   "gold_reward": 4380,
+   "rank": "A",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     1.0
+    ],
+    [
+     "hallowed_bronze",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "bellfall_cathedral_angel_of_bells_boss": {
+   "name": "the Angel of the Bells",
+   "max_hp": 303,
+   "attack": 34,
+   "defense": 10,
+   "xp_reward": 540,
+   "gold_reward": 4380,
+   "rank": "A",
+   "loot_table": [
+    [
+     "hallowed_bronze",
+     1.0
+    ],
+    [
+     "hallowed_bronze",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  }
+ },
+ "gates": [
+  {
+   "gate_id": "ashgrove_manor",
+   "name": "Ashgrove Manor",
+   "theme": "paranormal",
+   "min_level": 2,
+   "region": "village_start",
+   "description": "A manor house that burned down a century ago stands whole again inside a rift by the village well. Its windows are lit every night.",
+   "entry_text": "The front door opens before you knock. Portraits follow you with their eyes, and the dust on the floor shows footprints that end mid-step.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Plates fly off the dining table at your head. Something invisible is laughing.",
+     "enemies": [
+      "ashgrove_manor_poltergeist",
+      "ashgrove_manor_poltergeist"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "A child's music box sits open on the stairs, playing.",
+     "loot": [
+      [
+       "ectoplasm",
+       0.9
+      ],
+      [
+       "health_potion",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 9,
+      "success": "You let the tune finish before you touch anything. A glob of ectoplasm lies where the music was.",
+      "fail": "You close the lid mid-tune, and the whole house screams at you.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "The servants are still laying the table for a dinner party that never came.",
+     "enemies": [
+      "ashgrove_manor_servant",
+      "ashgrove_manor_servant"
+     ]
+    }
+   ],
+   "material": "ectoplasm",
+   "lair": {
+    "name": "the Master Bedroom",
+    "respawn_turns": 27,
+    "first_occupant": "ashgrove_manor_lady",
+    "fallback": [
+     "ashgrove_manor_lady"
+    ],
+    "occupants": {
+     "ashgrove_manor_lady": {
+      "title": "Lady {name} Ashgrove",
+      "enemies": [
+       "ashgrove_manor_lady_boss"
+      ],
+      "intro": "A woman in a smouldering ball gown sits at her mirror, brushing hair that is still on fire. 'You're late,' says Lady {name}. 'The guests have been waiting a hundred years.'",
+      "victory": "Lady {name}'s flames go out, and she looks at her hands, surprised.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Eleanor",
+       "Margery",
+       "Constance"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 10,
+       "text": "She is bound to the mirror. Turn it to the wall."
+      },
+      "aftermath": [
+       {
+        "id": "left_mirror",
+        "label": "Leave her mirror on the wall.",
+        "text": "Her reflection is still in it, brushing her hair.",
+        "triggers": []
+       },
+       {
+        "id": "smashed_mirror",
+        "label": "Smash the mirror.",
+        "text": "The glass shatters. Every window in the manor goes dark at once.",
+        "triggers": [
+         "alignment:+2"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "ashgrove_manor_reflection",
+        "when": {
+         "aftermath": "left_mirror"
+        }
+       },
+       {
+        "to": "ashgrove_manor_children",
+        "when": {
+         "aftermath": "smashed_mirror"
+        }
+       }
+      ]
+     },
+     "ashgrove_manor_reflection": {
+      "title": "the Lady in the Glass",
+      "enemies": [
+       "ashgrove_manor_reflection_boss"
+      ],
+      "intro": "Her reflection has climbed out of the mirror. It is cold where the lady was burning, and it is very, very angry.",
+      "victory": "The Lady in the Glass shatters into a thousand cold pieces.",
+      "arrival_omen": "The mirror in the master bedroom is fogged from the inside. A handprint is pressed against the glass.",
+      "arrival_rumour": "Ashgrove Manor's lady is gone, but her reflection walks the halls now.",
+      "study": {
+       "stat": "WIS",
+       "min": 10,
+       "text": "Everything it does is backwards. Move left to go right."
+      },
+      "successors": [
+       {
+        "to": "ashgrove_manor_butler"
+       }
+      ]
+     },
+     "ashgrove_manor_children": {
+      "title": "the Ashgrove Children",
+      "enemies": [
+       "ashgrove_manor_children_boss",
+       "ashgrove_manor_poltergeist"
+      ],
+      "intro": "With their mother gone, the manor's ghost children have the run of it. They want to play. Their games hurt.",
+      "victory": "Little Master Edmund sits down on the floor and cries, and fades.",
+      "arrival_omen": "Toys are scattered all down the dark hall. A skipping rope turns by itself.",
+      "arrival_rumour": "The ghost children of Ashgrove Manor want visitors. They play hide and seek, and they always find you.",
+      "study": {
+       "stat": "WIS",
+       "min": 10,
+       "text": "Children's games have rules. Ask the rules and they must tell you."
+      },
+      "successors": [
+       {
+        "to": "ashgrove_manor_butler"
+       }
+      ]
+     },
+     "ashgrove_manor_butler": {
+      "title": "Hollis the Butler",
+      "enemies": [
+       "ashgrove_manor_butler_boss",
+       "ashgrove_manor_servant"
+      ],
+      "intro": "The household is gone, but the butler is not. Hollis has polished the silver for a hundred years, and he does not care for guests who break things.",
+      "victory": "Hollis bows as he fades. 'The house is yours, then.'",
+      "arrival_omen": "The manor is spotless again. Someone has set the table for one.",
+      "arrival_rumour": "Ashgrove Manor has a butler again. He keeps the house perfect and the guests out.",
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "He will always stop to straighten something crooked."
+      },
+      "successors": [
+       {
+        "to": "ashgrove_manor_lady"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "witchs_bog",
+   "name": "Grandmother Rook's Bog",
+   "theme": "paranormal",
+   "min_level": 5,
+   "region": "village_start",
+   "description": "A rift in the wetlands near the camp, full of crooked trees hung with charms. Livestock in the area have started to vanish.",
+   "entry_text": "The path is made of bones laid like cobbles. Crows watch you from every branch and do not caw.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "A flock of crows descends all at once, silent.",
+     "enemies": [
+      "witchs_bog_crow",
+      "witchs_bog_crow",
+      "witchs_bog_crow"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "Charms hang over the path. Touch one and something will know.",
+     "loot": [
+      [
+       "hag_charm",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 11,
+      "success": "You duck under every charm and cut one down cleanly for yourself.",
+      "fail": "You brush a charm, and something in the bog wakes and bites.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Scarecrows stand in a field of dead turnips. They turn their heads.",
+     "enemies": [
+      "witchs_bog_scarecrow",
+      "witchs_bog_scarecrow"
+     ]
+    }
+   ],
+   "material": "hag_charm",
+   "lair": {
+    "name": "the Crooked Cottage",
+    "respawn_turns": 30,
+    "first_occupant": "witchs_bog_rook",
+    "fallback": [
+     "witchs_bog_rook"
+    ],
+    "occupants": {
+     "witchs_bog_rook": {
+      "title": "Grandmother {name}",
+      "enemies": [
+       "witchs_bog_rook_boss",
+       "witchs_bog_crow"
+      ],
+      "intro": "An old woman stirs a cauldron outside a crooked cottage. 'Come in, come in, dearie,' says Grandmother {name}. 'You'll fit in the pot quite nicely.'",
+      "victory": "Grandmother {name} falls into her own cauldron. The crows all fly away at once.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Rook",
+       "Hagatha",
+       "Nettle"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Her power is in the cauldron. Tip it over."
+      },
+      "successors": [
+       {
+        "to": "witchs_bog_coven",
+        "weight": 2
+       },
+       {
+        "to": "witchs_bog_cauldron",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "witchs_bog_coven": {
+      "title": "the Bog Coven",
+      "enemies": [
+       "witchs_bog_coven_boss",
+       "witchs_bog_crow",
+       "witchs_bog_scarecrow"
+      ],
+      "intro": "Grandmother's apprentices have come to claim her cottage. Three of them, which is the proper number, and they argue constantly.",
+      "victory": "Sister Moll falls, and the coven breaks. The others flee into the bog.",
+      "arrival_omen": "Three brooms lean against the cottage door. Three cups of tea are steaming inside.",
+      "arrival_rumour": "A coven has taken Grandmother Rook's cottage in the bog. The crows are back.",
+      "study": {
+       "stat": "WIS",
+       "min": 12,
+       "text": "Three is the proper number. Take one out and the others lose their spell."
+      },
+      "successors": [
+       {
+        "to": "witchs_bog_bog_wife"
+       }
+      ]
+     },
+     "witchs_bog_cauldron": {
+      "title": "the Cauldron Thing",
+      "enemies": [
+       "witchs_bog_cauldron_boss"
+      ],
+      "intro": "Your magic spilled into the witch's cauldron, and the brew got up and walked. It is mostly frog, partly witch, and entirely hungry.",
+      "victory": "The Cauldron Thing collapses into a puddle of cooling stew.",
+      "arrival_omen": "The cauldron is bubbling with no fire under it. Something inside it is singing to itself.",
+      "arrival_rumour": "The witch's cauldron in the bog has come to life. It's eating the sheep.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "It is still boiling. Water would cool it."
+      },
+      "successors": [
+       {
+        "to": "witchs_bog_bog_wife"
+       }
+      ]
+     },
+     "witchs_bog_bog_wife": {
+      "title": "the Bog Wife",
+      "enemies": [
+       "witchs_bog_bog_wife_boss"
+      ],
+      "intro": "Something older than any witch has risen from the mud: a woman of peat and weed, wearing a crown of drowned flowers. The bog belonged to her first.",
+      "victory": "The Bog Wife sinks back into the mud, and the bog is quiet.",
+      "arrival_omen": "The bog is rising. The cottage is half-sunk, and drowned flowers bloom on the water.",
+      "arrival_rumour": "The bog by the camp has woken up. Something in it takes people who walk alone.",
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "Ask her name. Old things must answer."
+      },
+      "successors": [
+       {
+        "to": "witchs_bog_rook"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "dollmaker_workshop",
+   "name": "the Dollmaker's Workshop",
+   "theme": "paranormal",
+   "min_level": 6,
+   "region": "village_start",
+   "description": "A toyshop on a Verath side street was swallowed by a rift. Through the window, the dolls on the shelves have been rearranged every morning.",
+   "entry_text": "Hundreds of porcelain faces watch you from the shelves. A music box plays somewhere, slightly too slow.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "The dolls on the bottom shelf climb down, very slowly, all together.",
+     "enemies": [
+      "dollmaker_workshop_doll",
+      "dollmaker_workshop_doll",
+      "dollmaker_workshop_doll"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "Strings criss-cross the workshop like a web, attached to every doll.",
+     "loot": [
+      [
+       "porcelain_shard",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 12,
+      "success": "You weave through without touching a single string, and pick up a broken face on the far side.",
+      "fail": "You brush a string, and every doll in the room turns its head toward you.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Marionettes dance down from the rafters, though no one is holding their strings.",
+     "enemies": [
+      "dollmaker_workshop_marionette",
+      "dollmaker_workshop_marionette"
+     ]
+    }
+   ],
+   "material": "porcelain_shard",
+   "lair": {
+    "name": "the Display Room",
+    "respawn_turns": 31,
+    "first_occupant": "dollmaker_workshop_dollmaker",
+    "fallback": [
+     "dollmaker_workshop_dollmaker"
+    ],
+    "occupants": {
+     "dollmaker_workshop_dollmaker": {
+      "title": "Master Dollmaker {name}",
+      "enemies": [
+       "dollmaker_workshop_dollmaker_boss",
+       "dollmaker_workshop_doll"
+      ],
+      "intro": "An old man works at a bench, painting a doll's face that looks exactly like yours. 'Almost finished,' says Master {name}. 'Hold still.'",
+      "victory": "The Master falls across his bench. The half-finished doll of you rolls to the floor.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Geppetto",
+       "Coppel",
+       "Lenz"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "He controls them with the rings on his fingers. Break the rings."
+      },
+      "aftermath": [
+       {
+        "id": "left_doll",
+        "label": "Leave the doll that looks like you.",
+        "text": "You don't like how it watches you go.",
+        "triggers": []
+       },
+       {
+        "id": "burned_dolls",
+        "label": "Burn the workshop's dolls.",
+        "text": "They scream as they burn. Porcelain doesn't scream, you think, but they do.",
+        "triggers": [
+         "alignment:+2"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "dollmaker_workshop_your_doll",
+        "when": {
+         "aftermath": "left_doll"
+        }
+       },
+       {
+        "to": "dollmaker_workshop_ash_puppets",
+        "when": {
+         "aftermath": "burned_dolls"
+        }
+       }
+      ]
+     },
+     "dollmaker_workshop_your_doll": {
+      "title": "the Doll Who Wears Your Face",
+      "enemies": [
+       "dollmaker_workshop_your_doll_boss"
+      ],
+      "intro": "The doll he was making of you has finished itself. It wears your face, your clothes, and your best moves.",
+      "victory": "Your doll breaks, and its face cracks across your own smile.",
+      "arrival_omen": "Your own footprints, small and porcelain-light, circle the workbench.",
+      "arrival_rumour": "The Dollmaker's Workshop has a new doll in the window. People say it looks like an adventurer they know.",
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "It copies everything you do. Do nothing, then strike."
+      },
+      "successors": [
+       {
+        "to": "dollmaker_workshop_doll_queen"
+       }
+      ]
+     },
+     "dollmaker_workshop_ash_puppets": {
+      "title": "the Ash Puppet Theatre",
+      "enemies": [
+       "dollmaker_workshop_ash_puppets_boss",
+       "dollmaker_workshop_marionette"
+      ],
+      "intro": "The burnt dolls did not stay dead. The charred ones have put on a show in the ashes, led by a ringmaster with a melted smile.",
+      "victory": "The Burnt Ringmaster takes his final bow, and the curtain of ash falls.",
+      "arrival_omen": "A tiny theatre has been built from the ashes of the workshop. Charred tickets lie on the floor.",
+      "arrival_rumour": "The burnt dolls of the Dollmaker's Workshop put on a show every night. Nobody who attends leaves.",
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "Every show needs an audience. Look away and they lose their strength."
+      },
+      "successors": [
+       {
+        "to": "dollmaker_workshop_doll_queen"
+       }
+      ]
+     },
+     "dollmaker_workshop_doll_queen": {
+      "title": "the Doll Queen",
+      "enemies": [
+       "dollmaker_workshop_doll_queen_boss",
+       "dollmaker_workshop_doll",
+       "dollmaker_workshop_doll"
+      ],
+      "intro": "The dolls have made themselves a ruler, a doll of a hundred broken pieces stitched together, and she has decided she would like a real heart.",
+      "victory": "The Doll Queen comes apart at every seam, and the other dolls go still.",
+      "arrival_omen": "The dolls have been arranged in a court, bowing to an empty throne made of a doll's house.",
+      "arrival_rumour": "The dolls in the workshop have a queen now. People hear her calling for a heart.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "She is stitched together. Find a seam."
+      },
+      "successors": [
+       {
+        "to": "dollmaker_workshop_dollmaker"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "veras_asylum",
+   "name": "Saint Vera's Asylum",
+   "theme": "paranormal",
+   "min_level": 7,
+   "region": "verath_city",
+   "description": "An asylum for the sick, abandoned after a plague long ago, has surfaced in a rift outside Verath's walls. Its bell rings for meals no one eats.",
+   "entry_text": "The halls smell of carbolic and rot. Gurneys sit where they were left, some still with their straps buckled.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Patients in grey gowns shuffle out of their cells, coughing.",
+     "enemies": [
+      "veras_asylum_patient",
+      "veras_asylum_patient",
+      "veras_asylum_patient"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "The dispensary. Rows of unlabelled bottles, and the air is thick with spores.",
+     "loot": [
+      [
+       "plague_ash",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "VIT",
+      "min": 12,
+      "success": "You hold your breath and grab a jar of ash before the spores reach you.",
+      "fail": "The spores get into your lungs. You cough until you see stars.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Orderlies in leather masks come looking for an escaped patient: you.",
+     "enemies": [
+      "veras_asylum_orderly",
+      "veras_asylum_orderly"
+     ]
+    }
+   ],
+   "material": "plague_ash",
+   "lair": {
+    "name": "the Operating Theatre",
+    "respawn_turns": 32,
+    "first_occupant": "veras_asylum_doctor",
+    "fallback": [
+     "veras_asylum_doctor"
+    ],
+    "occupants": {
+     "veras_asylum_doctor": {
+      "title": "the Plague Doctor",
+      "enemies": [
+       "veras_asylum_doctor_boss",
+       "veras_asylum_orderly"
+      ],
+      "intro": "A figure in a beaked mask bends over the operating table. 'You look unwell,' says the Plague Doctor. 'Lie down. This won't hurt.' It will.",
+      "victory": "The Plague Doctor's mask falls away. There is nothing under it but dried herbs.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "The beak is full of herbs that keep him alive. Rip it off."
+      },
+      "successors": [
+       {
+        "to": "veras_asylum_matron",
+        "weight": 2
+       },
+       {
+        "to": "veras_asylum_saint_vera",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "veras_asylum_matron": {
+      "title": "Matron {name}",
+      "enemies": [
+       "veras_asylum_matron_boss",
+       "veras_asylum_patient",
+       "veras_asylum_orderly"
+      ],
+      "intro": "The ward's matron has taken charge. Matron {name} keeps the patients in their beds, the orderlies in their places, and visitors in restraints.",
+      "victory": "Matron {name} falls, still clutching her keys. All the cell doors swing open.",
+      "arrival_omen": "The beds have all been made. A schedule is pinned to the theatre door in neat handwriting.",
+      "arrival_rumour": "Saint Vera's Asylum has a new Matron. She is very strict about visiting hours.",
+      "name_pool": [
+       "Agatha",
+       "Hester",
+       "Prudence"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 13,
+       "text": "She keeps a schedule. When the bell rings, she must go to it."
+      },
+      "successors": [
+       {
+        "to": "veras_asylum_plague"
+       }
+      ]
+     },
+     "veras_asylum_saint_vera": {
+      "title": "Saint Vera",
+      "enemies": [
+       "veras_asylum_saint_vera_boss"
+      ],
+      "intro": "Your magic woke the asylum's patron. Saint Vera died here trying to cure the plague, and her ghost is still trying, on everyone who walks in.",
+      "victory": "Saint Vera bows her head. 'I tried,' she says, and is gone.",
+      "arrival_omen": "A soft light glows in the theatre. Someone has laid fresh flowers on every bed.",
+      "arrival_rumour": "The ghost of Saint Vera walks her asylum again. She heals anyone she touches, whether they want it or not.",
+      "study": {
+       "stat": "WIS",
+       "min": 14,
+       "text": "She wants to be told she did enough. Tell her."
+      },
+      "successors": [
+       {
+        "to": "veras_asylum_plague"
+       }
+      ]
+     },
+     "veras_asylum_plague": {
+      "title": "the Plague Itself",
+      "enemies": [
+       "veras_asylum_plague_boss"
+      ],
+      "intro": "The plague that emptied the asylum has gathered into a shape: a grey, coughing mist in the shape of a crowd.",
+      "victory": "The Grey Plague scatters like smoke on a fresh wind.",
+      "arrival_omen": "The grey dust in the asylum has begun to drift, all in one direction, toward the theatre.",
+      "arrival_rumour": "Something in Saint Vera's Asylum is spreading. The guards on Verath's west gate are wearing masks.",
+      "study": {
+       "stat": "VIT",
+       "min": 14,
+       "text": "It is only a sickness. Endure it, and it weakens."
+      },
+      "successors": [
+       {
+        "to": "veras_asylum_doctor"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "hall_of_mirrors",
+   "name": "the Hall of Ten Thousand Mirrors",
+   "theme": "paranormal",
+   "min_level": 9,
+   "region": "verath_city",
+   "description": "A carnival tent pitched in a rift in Verath's market district. Everyone who enters comes out swearing they saw themselves die.",
+   "entry_text": "Your reflection is in every mirror, and in each one it is doing something slightly different. One of them waves.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Two of your reflections step out of the glass. They both think they're the real one.",
+     "enemies": [
+      "hall_of_mirrors_reflection",
+      "hall_of_mirrors_reflection"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A maze of mirrors. Only one path is real.",
+     "loot": [
+      [
+       "mirror_shard",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 14,
+      "success": "You follow the reflection that doesn't move and pick a shard from the floor.",
+      "fail": "You walk face-first into a mirror, and your reflection laughs at you.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Mimes press against the glass, then step through it.",
+     "enemies": [
+      "hall_of_mirrors_clown",
+      "hall_of_mirrors_clown",
+      "hall_of_mirrors_reflection"
+     ]
+    }
+   ],
+   "material": "mirror_shard",
+   "lair": {
+    "name": "the Last Mirror",
+    "respawn_turns": 34,
+    "first_occupant": "hall_of_mirrors_ringmaster",
+    "fallback": [
+     "hall_of_mirrors_ringmaster"
+    ],
+    "occupants": {
+     "hall_of_mirrors_ringmaster": {
+      "title": "the Mirror Ringmaster",
+      "enemies": [
+       "hall_of_mirrors_ringmaster_boss",
+       "hall_of_mirrors_clown"
+      ],
+      "intro": "A ringmaster in a silver coat stands before the last mirror. 'Step right up!' he cries. 'See yourself as you truly are! Only costs your soul!'",
+      "victory": "The Ringmaster's hat rolls across the floor, and the carnival music stops.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "WIS",
+       "min": 15,
+       "text": "He has no reflection. Look for the one man in the room with none."
+      },
+      "aftermath": [
+       {
+        "id": "left_last",
+        "label": "Leave the last mirror standing.",
+        "text": "It shows the empty room behind you, and something moving in it.",
+        "triggers": []
+       },
+       {
+        "id": "broke_last",
+        "label": "Break the last mirror.",
+        "text": "It breaks into ten thousand pieces, and every piece shows you, screaming.",
+        "triggers": [
+         "alignment:-2"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "hall_of_mirrors_true_self",
+        "when": {
+         "aftermath": "left_last"
+        }
+       },
+       {
+        "to": "hall_of_mirrors_shard_swarm",
+        "when": {
+         "aftermath": "broke_last"
+        }
+       }
+      ]
+     },
+     "hall_of_mirrors_true_self": {
+      "title": "Your True Reflection",
+      "enemies": [
+       "hall_of_mirrors_true_self_boss"
+      ],
+      "intro": "The last mirror has given you up. Your reflection steps out of it, dressed like you, armed like you, and much less kind.",
+      "victory": "Your reflection kneels and becomes glass again, then nothing.",
+      "arrival_omen": "The last mirror shows the room, but you aren't in it.",
+      "arrival_rumour": "The Hall of Mirrors in the market sends your own reflection to fight you. Only the strange come out.",
+      "study": {
+       "stat": "WIS",
+       "min": 15,
+       "text": "It knows everything you know. Do something you would never do."
+      },
+      "successors": [
+       {
+        "to": "hall_of_mirrors_empty_one"
+       }
+      ]
+     },
+     "hall_of_mirrors_shard_swarm": {
+      "title": "the Shard Legion",
+      "enemies": [
+       "hall_of_mirrors_shard_swarm_boss"
+      ],
+      "intro": "Every shard of the broken mirror holds a reflection, and they have all come out to fight. Ten thousand of you, each one the size of a fingernail.",
+      "victory": "The Shard Legion falls like glittering rain.",
+      "arrival_omen": "Ten thousand glass shards hang in the air of the last room, turning slowly.",
+      "arrival_rumour": "Someone broke the last mirror in the carnival tent. Now the shards fly out at night.",
+      "study": {
+       "stat": "AGI",
+       "min": 15,
+       "text": "They fly in a flock. Break the flock's leader."
+      },
+      "successors": [
+       {
+        "to": "hall_of_mirrors_empty_one"
+       }
+      ]
+     },
+     "hall_of_mirrors_empty_one": {
+      "title": "the Man Without a Reflection",
+      "enemies": [
+       "hall_of_mirrors_empty_one_boss"
+      ],
+      "intro": "A thin man stands among the mirrors and none of them show him. He has collected all the reflections he can. He wants yours.",
+      "victory": "The Man Without a Reflection falls, and every mirror in the hall shows him at last.",
+      "arrival_omen": "Every mirror in the hall now reflects only an empty room.",
+      "arrival_rumour": "Visitors to the Hall of Mirrors are coming out with no reflection. Something in there is collecting them.",
+      "study": {
+       "stat": "WIS",
+       "min": 16,
+       "text": "He cannot see himself either. Lead him into the glass."
+      },
+      "successors": [
+       {
+        "to": "hall_of_mirrors_ringmaster"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "bellfall_cathedral",
+   "name": "the Cathedral of Bellfall",
+   "theme": "paranormal",
+   "min_level": 13,
+   "region": "verath_city",
+   "description": "A cathedral that sank into the ground during the Fracture, congregation and all. Its spire still pokes from a rift east of Verath, and its bells ring at midnight.",
+   "entry_text": "You enter through the belfry window and climb down into the nave. The pews are full. Nobody turns around.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "The choir rises from its stalls and opens its mouths to sing. What comes out is not music.",
+     "enemies": [
+      "bellfall_cathedral_choir",
+      "bellfall_cathedral_choir"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "The reliquary. A cracked bell rests on velvet.",
+     "loot": [
+      [
+       "hallowed_bronze",
+       0.9
+      ],
+      [
+       "health_potion_major",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "WIS",
+      "min": 16,
+      "success": "You pray before you take it, and the bell does not ring.",
+      "fail": "The bell rings as you lift it, and every head in the nave turns to look.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Gargoyles crawl down the walls from the spire.",
+     "enemies": [
+      "bellfall_cathedral_gargoyle",
+      "bellfall_cathedral_gargoyle",
+      "bellfall_cathedral_choir"
+     ]
+    }
+   ],
+   "material": "hallowed_bronze",
+   "lair": {
+    "name": "the Belfry",
+    "respawn_turns": 38,
+    "first_occupant": "bellfall_cathedral_bishop",
+    "fallback": [
+     "bellfall_cathedral_bishop"
+    ],
+    "occupants": {
+     "bellfall_cathedral_bishop": {
+      "title": "Bishop {name}",
+      "enemies": [
+       "bellfall_cathedral_bishop_boss",
+       "bellfall_cathedral_choir"
+      ],
+      "intro": "At the altar, the Bishop is still giving his sermon from the day the cathedral sank. Bishop {name} looks up. 'Sit,' he says, and your knees buckle.",
+      "victory": "Bishop {name} finishes his sermon at last, and the congregation slumps in their pews.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Ambrose",
+       "Lucien",
+       "Ottilie"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 17,
+       "text": "His sermon has a last line. Say it for him."
+      },
+      "successors": [
+       {
+        "to": "bellfall_cathedral_bell_ringer",
+        "weight": 2
+       },
+       {
+        "to": "bellfall_cathedral_congregation",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "bellfall_cathedral_bell_ringer": {
+      "title": "the Bell-Ringer",
+      "enemies": [
+       "bellfall_cathedral_bell_ringer_boss",
+       "bellfall_cathedral_gargoyle"
+      ],
+      "intro": "The Bishop's bell-ringer has come down from the belfry for the first time in a century. His ears bled out long ago. He rings anyway.",
+      "victory": "The Bell-Ringer falls with his hand still on the rope, and the bell gives a last, cracked toll.",
+      "arrival_omen": "The ropes in the belfry sway with no wind. Someone is climbing down.",
+      "arrival_rumour": "The bells of Bellfall Cathedral ring every hour now, not just at midnight. People in Verath can't sleep.",
+      "study": {
+       "stat": "AGI",
+       "min": 17,
+       "text": "He's deaf. Come at him from behind."
+      },
+      "successors": [
+       {
+        "to": "bellfall_cathedral_angel_of_bells"
+       }
+      ]
+     },
+     "bellfall_cathedral_congregation": {
+      "title": "the Risen Congregation",
+      "enemies": [
+       "bellfall_cathedral_congregation_boss"
+      ],
+      "intro": "Your arcane arts woke the whole congregation at once. They stand from the pews as one, singing, and there are hundreds of them.",
+      "victory": "The congregation sits down, all together, and is still.",
+      "arrival_omen": "Every pew is empty. Hundreds of footprints lead up the aisle to the altar.",
+      "arrival_rumour": "The congregation of Bellfall Cathedral has stood up. They're walking the aisle, singing.",
+      "study": {
+       "stat": "WIS",
+       "min": 18,
+       "text": "They follow the hymn. Break the hymn."
+      },
+      "successors": [
+       {
+        "to": "bellfall_cathedral_angel_of_bells"
+       }
+      ]
+     },
+     "bellfall_cathedral_angel_of_bells": {
+      "title": "the Angel of the Bells",
+      "enemies": [
+       "bellfall_cathedral_angel_of_bells_boss"
+      ],
+      "intro": "A figure of bronze and light hangs from the belfry like a bell itself, its wings made of bell-shaped feathers. It was carved for the cathedral. Now it has come to life to guard it.",
+      "victory": "The Angel of the Bells rings out one last pure note and goes silent.",
+      "arrival_omen": "The statue that used to stand in the belfry is gone. A bronze feather lies on the altar.",
+      "arrival_rumour": "An angel guards the belfry of Bellfall Cathedral now. It rings when it strikes.",
+      "study": {
+       "stat": "INT",
+       "min": 18,
+       "text": "It is hollow. Strike it hard enough and it rings, and ringing stuns it."
+      },
+      "successors": [
+       {
+        "to": "bellfall_cathedral_bishop"
+       }
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

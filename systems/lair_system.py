@@ -215,13 +215,21 @@ def tick(lair: "LairDefinition", state: LairState, turn: int) -> bool:
 
 
 def omen_text(lair: "LairDefinition", state: LairState) -> str:
-    """What an empty lair looks like: the dead occupant's omen of what's coming."""
+    """What an empty lair looks like: the newcomer's arrival omen, else the
+    dead occupant's omen of what's coming."""
+    nxt = lair.occupant(state.next_occupant_id)
+    if nxt and nxt.arrival_omen:
+        return fmt(nxt.arrival_omen, state.next_lineage_name)
     occ = lair.occupant(state.occupant_id)
     return fmt(occ.omen, state.lineage_name) if occ and occ.omen else (
         f"{lair.name[0].upper()}{lair.name[1:]} stands empty. It won't stay that way.")
 
 
-def rumour_text(lair: "LairDefinition", previous_occupant_id: str, previous_name: str) -> str:
+def rumour_text(lair: "LairDefinition", previous_occupant_id: str, previous_name: str,
+                arrived_id: str = "", arrived_name: str = "") -> str:
+    new = lair.occupant(arrived_id)
+    if new and new.arrival_rumour:
+        return fmt(new.arrival_rumour, arrived_name)
     occ = lair.occupant(previous_occupant_id)
     return fmt(occ.rumour, previous_name) if occ and occ.rumour else ""
 

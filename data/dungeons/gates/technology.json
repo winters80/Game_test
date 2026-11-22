@@ -1,0 +1,1959 @@
+{
+ "_doc": "Technology Gates. Built from compact specs; see CLAUDE.md > Gates.",
+ "enemy_templates": {
+  "clockwork_foundry_spider": {
+   "name": "Clockwork Spider",
+   "max_hp": 28,
+   "attack": 6,
+   "defense": 1,
+   "xp_reward": 28,
+   "gold_reward": 150,
+   "rank": "E",
+   "loot_table": [
+    [
+     "brass_cog",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "clockwork_foundry_drone": {
+   "name": "Rivet Drone",
+   "max_hp": 28,
+   "attack": 6,
+   "defense": 1,
+   "xp_reward": 28,
+   "gold_reward": 150,
+   "rank": "E",
+   "loot_table": [
+    [
+     "brass_cog",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.1
+   ]
+  },
+  "clockwork_foundry_automaton_boss": {
+   "name": "the Foreman Automaton",
+   "max_hp": 77,
+   "attack": 11,
+   "defense": 4,
+   "xp_reward": 120,
+   "gold_reward": 900,
+   "rank": "D",
+   "loot_table": [
+    [
+     "brass_cog",
+     1.0
+    ],
+    [
+     "brass_cog",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ]
+  },
+  "clockwork_foundry_tinker_gnome_boss": {
+   "name": "Tinker {name}",
+   "max_hp": 77,
+   "attack": 11,
+   "defense": 4,
+   "xp_reward": 120,
+   "gold_reward": 900,
+   "rank": "D",
+   "loot_table": [
+    [
+     "brass_cog",
+     1.0
+    ],
+    [
+     "brass_cog",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.15
+   ]
+  },
+  "clockwork_foundry_spark_ghost_boss": {
+   "name": "the Spark in the Machine",
+   "max_hp": 84,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 132,
+   "gold_reward": 990,
+   "rank": "D",
+   "loot_table": [
+    [
+     "brass_cog",
+     1.0
+    ],
+    [
+     "brass_cog",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "clockwork_foundry_mainspring_boss": {
+   "name": "the Mainspring Colossus",
+   "max_hp": 88,
+   "attack": 12,
+   "defense": 4,
+   "xp_reward": 138,
+   "gold_reward": 1035,
+   "rank": "D",
+   "loot_table": [
+    [
+     "brass_cog",
+     1.0
+    ],
+    [
+     "brass_cog",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ]
+  },
+  "golem_assembly_worker": {
+   "name": "Assembly Golem",
+   "max_hp": 42,
+   "attack": 9,
+   "defense": 2,
+   "xp_reward": 46,
+   "gold_reward": 240,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ]
+  },
+  "golem_assembly_inspector": {
+   "name": "Inspector Drone",
+   "max_hp": 42,
+   "attack": 9,
+   "defense": 2,
+   "xp_reward": 46,
+   "gold_reward": 240,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     0.35
+    ],
+    [
+     "health_potion",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.15
+   ]
+  },
+  "golem_assembly_overseer_boss": {
+   "name": "the Overseer Golem",
+   "max_hp": 109,
+   "attack": 14,
+   "defense": 5,
+   "xp_reward": 180,
+   "gold_reward": 1400,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     1.0
+    ],
+    [
+     "golem_core",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "golem_assembly_prototype_boss": {
+   "name": "Prototype Omega",
+   "max_hp": 125,
+   "attack": 16,
+   "defense": 5,
+   "xp_reward": 206,
+   "gold_reward": 1609,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     1.0
+    ],
+    [
+     "golem_core",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ]
+  },
+  "golem_assembly_scrappers_boss": {
+   "name": "Boss {name} of the Scrappers",
+   "max_hp": 109,
+   "attack": 14,
+   "defense": 5,
+   "xp_reward": 180,
+   "gold_reward": 1400,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     1.0
+    ],
+    [
+     "golem_core",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "golem_assembly_core_mind_boss": {
+   "name": "the Core Mind",
+   "max_hp": 130,
+   "attack": 17,
+   "defense": 5,
+   "xp_reward": 216,
+   "gold_reward": 1680,
+   "rank": "D",
+   "loot_table": [
+    [
+     "golem_core",
+     1.0
+    ],
+    [
+     "golem_core",
+     0.6
+    ],
+    [
+     "health_potion",
+     0.4
+    ],
+    [
+     "mana_potion",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "derelict_skyship_sky_pirate": {
+   "name": "Sky Pirate",
+   "max_hp": 63,
+   "attack": 13,
+   "defense": 3,
+   "xp_reward": 73,
+   "gold_reward": 375,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "derelict_skyship_deck_turret": {
+   "name": "Deck Turret",
+   "max_hp": 63,
+   "attack": 13,
+   "defense": 3,
+   "xp_reward": 73,
+   "gold_reward": 375,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "derelict_skyship_captain_boss": {
+   "name": "Captain {name}",
+   "max_hp": 157,
+   "attack": 19,
+   "defense": 6,
+   "xp_reward": 270,
+   "gold_reward": 2150,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     1.0
+    ],
+    [
+     "aether_coil",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "derelict_skyship_first_mate_boss": {
+   "name": "First Mate Grell",
+   "max_hp": 164,
+   "attack": 20,
+   "defense": 6,
+   "xp_reward": 283,
+   "gold_reward": 2257,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     1.0
+    ],
+    [
+     "aether_coil",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "derelict_skyship_ship_mind_boss": {
+   "name": "MERIDIAN, Ship Intelligence",
+   "max_hp": 180,
+   "attack": 22,
+   "defense": 6,
+   "xp_reward": 310,
+   "gold_reward": 2472,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     1.0
+    ],
+    [
+     "aether_coil",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "derelict_skyship_storm_wraith_boss": {
+   "name": "the Drowned Navigator",
+   "max_hp": 180,
+   "attack": 22,
+   "defense": 6,
+   "xp_reward": 310,
+   "gold_reward": 2472,
+   "rank": "C",
+   "loot_table": [
+    [
+     "aether_coil",
+     1.0
+    ],
+    [
+     "aether_coil",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "frozen",
+    0.25
+   ]
+  },
+  "archive_vault_warden": {
+   "name": "Archive Warden",
+   "max_hp": 77,
+   "attack": 15,
+   "defense": 4,
+   "xp_reward": 91,
+   "gold_reward": 465,
+   "rank": "C",
+   "loot_table": [
+    [
+     "data_crystal",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "archive_vault_construct": {
+   "name": "Index Construct",
+   "max_hp": 77,
+   "attack": 15,
+   "defense": 4,
+   "xp_reward": 91,
+   "gold_reward": 465,
+   "rank": "C",
+   "loot_table": [
+    [
+     "data_crystal",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "archive_vault_curator_boss": {
+   "name": "the Curator",
+   "max_hp": 189,
+   "attack": 22,
+   "defense": 7,
+   "xp_reward": 330,
+   "gold_reward": 2650,
+   "rank": "B",
+   "loot_table": [
+    [
+     "data_crystal",
+     1.0
+    ],
+    [
+     "data_crystal",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "archive_vault_restored_boss": {
+   "name": "the Restored Curator",
+   "max_hp": 217,
+   "attack": 25,
+   "defense": 7,
+   "xp_reward": 379,
+   "gold_reward": 3047,
+   "rank": "B",
+   "loot_table": [
+    [
+     "data_crystal",
+     1.0
+    ],
+    [
+     "data_crystal",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "archive_vault_corrupted_boss": {
+   "name": "the Corrupted Index",
+   "max_hp": 207,
+   "attack": 24,
+   "defense": 7,
+   "xp_reward": 363,
+   "gold_reward": 2915,
+   "rank": "B",
+   "loot_table": [
+    [
+     "data_crystal",
+     1.0
+    ],
+    [
+     "data_crystal",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.25
+   ]
+  },
+  "archive_vault_system_auditor_boss": {
+   "name": "System Auditor #{name}",
+   "max_hp": 226,
+   "attack": 26,
+   "defense": 7,
+   "xp_reward": 396,
+   "gold_reward": 3180,
+   "rank": "B",
+   "loot_table": [
+    [
+     "data_crystal",
+     1.0
+    ],
+    [
+     "data_crystal",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.3
+   ]
+  },
+  "storm_engine_arc_drone": {
+   "name": "Arc Drone",
+   "max_hp": 91,
+   "attack": 18,
+   "defense": 4,
+   "xp_reward": 109,
+   "gold_reward": 555,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.2
+   ]
+  },
+  "storm_engine_tesla_hound": {
+   "name": "Tesla Hound",
+   "max_hp": 91,
+   "attack": 18,
+   "defense": 4,
+   "xp_reward": 109,
+   "gold_reward": 555,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.15
+   ]
+  },
+  "storm_engine_engineer_boss": {
+   "name": "Chief Engineer {name}",
+   "max_hp": 221,
+   "attack": 25,
+   "defense": 9,
+   "xp_reward": 390,
+   "gold_reward": 3150,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     1.0
+    ],
+    [
+     "storm_capacitor",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "storm_engine_apprentices_boss": {
+   "name": "Senior Apprentice Kel",
+   "max_hp": 221,
+   "attack": 25,
+   "defense": 9,
+   "xp_reward": 390,
+   "gold_reward": 3150,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     1.0
+    ],
+    [
+     "storm_capacitor",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.2
+   ]
+  },
+  "storm_engine_living_storm_boss": {
+   "name": "the Living Storm",
+   "max_hp": 265,
+   "attack": 30,
+   "defense": 9,
+   "xp_reward": 468,
+   "gold_reward": 3780,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     1.0
+    ],
+    [
+     "storm_capacitor",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.35
+   ]
+  },
+  "storm_engine_copper_titan_boss": {
+   "name": "the Copper Titan",
+   "max_hp": 265,
+   "attack": 30,
+   "defense": 9,
+   "xp_reward": 468,
+   "gold_reward": 3780,
+   "rank": "B",
+   "loot_table": [
+    [
+     "storm_capacitor",
+     1.0
+    ],
+    [
+     "storm_capacitor",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "stun",
+    0.25
+   ]
+  },
+  "thaumic_reactor_mutant": {
+   "name": "Glowing Mutant",
+   "max_hp": 119,
+   "attack": 23,
+   "defense": 6,
+   "xp_reward": 145,
+   "gold_reward": 735,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.25
+   ]
+  },
+  "thaumic_reactor_hazmat": {
+   "name": "Hazmat Sentinel",
+   "max_hp": 119,
+   "attack": 23,
+   "defense": 6,
+   "xp_reward": 145,
+   "gold_reward": 735,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     0.35
+    ],
+    [
+     "health_potion_major",
+     0.12
+    ]
+   ]
+  },
+  "thaumic_reactor_director_boss": {
+   "name": "Director {name}",
+   "max_hp": 285,
+   "attack": 32,
+   "defense": 11,
+   "xp_reward": 510,
+   "gold_reward": 4150,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     1.0
+    ],
+    [
+     "reactor_slag",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.3
+   ]
+  },
+  "thaumic_reactor_meltdown_boss": {
+   "name": "the Meltdown Elemental",
+   "max_hp": 342,
+   "attack": 38,
+   "defense": 11,
+   "xp_reward": 612,
+   "gold_reward": 4980,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     1.0
+    ],
+    [
+     "reactor_slag",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "burn",
+    0.35
+   ]
+  },
+  "thaumic_reactor_survivors_boss": {
+   "name": "Overseer {name}",
+   "max_hp": 299,
+   "attack": 33,
+   "defense": 11,
+   "xp_reward": 535,
+   "gold_reward": 4357,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     1.0
+    ],
+    [
+     "reactor_slag",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "bleed",
+    0.2
+   ]
+  },
+  "thaumic_reactor_fuel_god_boss": {
+   "name": "the Fuel-God",
+   "max_hp": 356,
+   "attack": 40,
+   "defense": 11,
+   "xp_reward": 637,
+   "gold_reward": 5187,
+   "rank": "A",
+   "loot_table": [
+    [
+     "reactor_slag",
+     1.0
+    ],
+    [
+     "reactor_slag",
+     0.6
+    ],
+    [
+     "health_potion_major",
+     0.4
+    ],
+    [
+     "mana_potion_major",
+     0.25
+    ]
+   ],
+   "status_on_hit": [
+    "poison",
+    0.35
+   ]
+  }
+ },
+ "gates": [
+  {
+   "gate_id": "clockwork_foundry",
+   "name": "the Clockwork Foundry",
+   "theme": "technology",
+   "min_level": 2,
+   "region": "village_start",
+   "description": "A pre-Fracture workshop, dug out of a hillside near the village, ticks like a giant pocket watch.",
+   "entry_text": "Brass gears turn in the walls. Every machine in here is still running, and none of them remember why.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Brass spiders drop from the gears overhead, clicking.",
+     "enemies": [
+      "clockwork_foundry_spider",
+      "clockwork_foundry_spider"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A corridor of swinging hammers, timed to the ticking.",
+     "loot": [
+      [
+       "brass_cog",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 9,
+      "success": "You count the ticks and slip through, and pick a cog from the floor on the far side.",
+      "fail": "You mistime it, and a hammer clips your shoulder.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Rivet drones buzz out of a vent, spitting hot nails.",
+     "enemies": [
+      "clockwork_foundry_drone",
+      "clockwork_foundry_drone",
+      "clockwork_foundry_spider"
+     ]
+    }
+   ],
+   "material": "brass_cog",
+   "lair": {
+    "name": "the Mainspring Hall",
+    "respawn_turns": 27,
+    "first_occupant": "clockwork_foundry_automaton",
+    "fallback": [
+     "clockwork_foundry_automaton"
+    ],
+    "occupants": {
+     "clockwork_foundry_automaton": {
+      "title": "the Foreman Automaton",
+      "enemies": [
+       "clockwork_foundry_automaton_boss"
+      ],
+      "intro": "A brass giant stands at a workbench, endlessly assembling and disassembling the same toy bird. It turns its lantern head toward you. 'SHIFT NOT OVER,' it says.",
+      "victory": "The Foreman winds down mid-sentence: 'SHIFT... NOT...'",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 10,
+       "text": "Its key is in its back. Get behind it and it can't reach."
+      },
+      "successors": [
+       {
+        "to": "clockwork_foundry_tinker_gnome",
+        "weight": 2
+       },
+       {
+        "to": "clockwork_foundry_spark_ghost",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "clockwork_foundry_tinker_gnome": {
+      "title": "Tinker {name}",
+      "enemies": [
+       "clockwork_foundry_tinker_gnome_boss",
+       "clockwork_foundry_drone"
+      ],
+      "intro": "A gnome in welding goggles has moved into the foundry and declared herself its owner. Tinker {name} has rebuilt the drones. She has improved them.",
+      "victory": "Tinker {name} drops her remote and runs for the vents, shouting about patents.",
+      "arrival_omen": "Someone has left a sign on the Mainspring Hall door: UNDER NEW MANAGEMENT. KNOCK.",
+      "arrival_rumour": "A gnome has taken over the Clockwork Foundry. She is selling drones to anyone who asks, and some who don't.",
+      "name_pool": [
+       "Bramble",
+       "Fizzwick",
+       "Nell"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 10,
+       "text": "Her remote control is in her apron. Grab it."
+      },
+      "successors": [
+       {
+        "to": "clockwork_foundry_mainspring"
+       }
+      ]
+     },
+     "clockwork_foundry_spark_ghost": {
+      "title": "the Spark in the Machine",
+      "enemies": [
+       "clockwork_foundry_spark_ghost_boss"
+      ],
+      "intro": "Your magic leaked into the foundry's gears, and something woke up in the current. It moves from machine to machine, wearing them like coats.",
+      "victory": "The Spark fizzles out in a shower of blue light, and the machines stop, all at once.",
+      "arrival_omen": "Blue light crawls along the gears of the Mainspring Hall. The machines move when no one is watching.",
+      "arrival_rumour": "Something is alive in the wires of the Clockwork Foundry. It switches the machines on at night.",
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "It can only live in one machine at a time. Wreck its host before it jumps."
+      },
+      "successors": [
+       {
+        "to": "clockwork_foundry_mainspring"
+       }
+      ]
+     },
+     "clockwork_foundry_mainspring": {
+      "title": "the Mainspring Colossus",
+      "enemies": [
+       "clockwork_foundry_mainspring_boss"
+      ],
+      "intro": "The foundry has built itself a new foreman: bigger, uglier, made of every broken part on the floor.",
+      "victory": "The Colossus collapses into its parts, and a single gear rolls to your feet.",
+      "arrival_omen": "The foundry is running full shifts with no one in it. Something big is on the assembly line.",
+      "arrival_rumour": "The Clockwork Foundry has built something huge from scrap, and it has started to walk.",
+      "study": {
+       "stat": "INT",
+       "min": 11,
+       "text": "It is built from scrap. Its welds are weak."
+      },
+      "successors": [
+       {
+        "to": "clockwork_foundry_automaton"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "golem_assembly",
+   "name": "the Golem Assembly Line",
+   "theme": "technology",
+   "min_level": 4,
+   "region": "village_start",
+   "description": "A rift into a factory that made war golems for a kingdom that no longer exists. The line still runs.",
+   "entry_text": "Conveyor belts carry stone limbs past you in an endless procession. A loudspeaker announces quotas in a dead language.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Half-built golems climb off the belt, one arm each, to see what you are.",
+     "enemies": [
+      "golem_assembly_worker",
+      "golem_assembly_worker"
+     ]
+    },
+    {
+     "kind": "treasure",
+     "text": "A bin of rejected cores. One still glows.",
+     "loot": [
+      [
+       "golem_core",
+       0.9
+      ],
+      [
+       "health_potion",
+       0.5
+      ]
+     ],
+     "check": {
+      "stat": "INT",
+      "min": 11,
+      "success": "You pick out the one good core without touching the faulty ones.",
+      "fail": "A faulty core discharges into your hand.",
+      "damage_pct": 0.0
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "An inspector drone flags you as a defective product.",
+     "enemies": [
+      "golem_assembly_inspector",
+      "golem_assembly_worker"
+     ]
+    }
+   ],
+   "material": "golem_core",
+   "lair": {
+    "name": "the Inspection Bay",
+    "respawn_turns": 29,
+    "first_occupant": "golem_assembly_overseer",
+    "fallback": [
+     "golem_assembly_overseer"
+    ],
+    "occupants": {
+     "golem_assembly_overseer": {
+      "title": "the Overseer",
+      "enemies": [
+       "golem_assembly_overseer_boss"
+      ],
+      "intro": "A golem with four arms and a clipboard grafted to one of them stands above the line. 'QUALITY CONTROL,' it says, and grinds toward you.",
+      "victory": "The Overseer's clipboard clatters to the floor. The line stops.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Its orders come from a speaker above. Smash the speaker and it hesitates."
+      },
+      "aftermath": [
+       {
+        "id": "left_line",
+        "label": "Leave the line running.",
+        "text": "The belts start up again behind you. The factory will build what it needs.",
+        "triggers": []
+       },
+       {
+        "id": "sabotaged",
+        "label": "Jam the line with the Overseer's body.",
+        "text": "Gears grind and smoke. The factory falls quiet, and the golems on the belt stop moving.",
+        "triggers": [
+         "alignment:+2"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "golem_assembly_prototype",
+        "when": {
+         "aftermath": "left_line"
+        }
+       },
+       {
+        "to": "golem_assembly_scrappers",
+        "when": {
+         "aftermath": "sabotaged"
+        }
+       }
+      ]
+     },
+     "golem_assembly_prototype": {
+      "title": "Prototype Omega",
+      "enemies": [
+       "golem_assembly_prototype_boss"
+      ],
+      "intro": "The line made a new overseer, and this time it built it to fight. Prototype Omega has cannons where its hands should be.",
+      "victory": "Prototype Omega's cannons melt, and it topples off the line.",
+      "arrival_omen": "The belts are running faster. Something new is coming down the line, much bigger than the others.",
+      "arrival_rumour": "The Golem Assembly Line built a war machine. Its cannons can be heard from the village.",
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "Its cannons overheat. Make it fire, then move."
+      },
+      "successors": [
+       {
+        "to": "golem_assembly_core_mind"
+       }
+      ]
+     },
+     "golem_assembly_scrappers": {
+      "title": "the Scrapper Gang",
+      "enemies": [
+       "golem_assembly_scrappers_boss",
+       "golem_assembly_worker"
+      ],
+      "intro": "With the line dead, scavengers moved in. Boss {name} leads a gang who strip golems for parts and have reprogrammed a few to guard them.",
+      "victory": "Boss {name} drops the whistle, and the golems wander off to resume work no one gave them.",
+      "arrival_omen": "Cut-open golems lie all along the silent belt. Someone has been stripping them for parts.",
+      "arrival_rumour": "Scrappers have moved into the dead Golem Assembly Line, and they've reprogrammed the golems.",
+      "name_pool": [
+       "Rust",
+       "Gearjaw",
+       "Mags"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 12,
+       "text": "The reprogrammed golems obey a whistle. Get the whistle."
+      },
+      "successors": [
+       {
+        "to": "golem_assembly_core_mind"
+       }
+      ]
+     },
+     "golem_assembly_core_mind": {
+      "title": "the Core Mind",
+      "enemies": [
+       "golem_assembly_core_mind_boss"
+      ],
+      "intro": "All the factory's golem cores have fused into one glowing mind at the center of the bay. Every golem in the building moves when it thinks.",
+      "victory": "The Core Mind shatters, and every golem in the factory sits down where it stands.",
+      "arrival_omen": "The golem cores in the bay are glowing in sync, pulsing like a single heart.",
+      "arrival_rumour": "The golems in the Assembly Line all move together now, like one mind. Nobody knows who's thinking.",
+      "study": {
+       "stat": "INT",
+       "min": 13,
+       "text": "It thinks with every core at once. Break the cooling pipes and it slows."
+      },
+      "successors": [
+       {
+        "to": "golem_assembly_overseer"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "derelict_skyship",
+   "name": "the Derelict Skyship Meridian",
+   "theme": "technology",
+   "min_level": 7,
+   "region": "verath_city",
+   "description": "A flying ship from before the Fracture hangs in a rift above the forest, motionless, its running lights still blinking.",
+   "entry_text": "Rope ladders lead up through a hatch. Inside, the decks tilt slightly, and the engines hum a note that sets your teeth on edge.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Sky pirates are looting the cargo hold. They are not happy to share.",
+     "enemies": [
+      "derelict_skyship_sky_pirate",
+      "derelict_skyship_sky_pirate"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "The engine room. A gangway runs over a drop to the forest far below, and the wind is strong.",
+     "loot": [
+      [
+       "aether_coil",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "AGI",
+      "min": 13,
+      "success": "You cross the gangway and pry a coil from the engine.",
+      "fail": "A gust slams you into the rail. You hang on, barely.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Automated turrets on the gun deck swivel to track you.",
+     "enemies": [
+      "derelict_skyship_deck_turret",
+      "derelict_skyship_deck_turret",
+      "derelict_skyship_sky_pirate"
+     ]
+    }
+   ],
+   "material": "aether_coil",
+   "lair": {
+    "name": "the Bridge",
+    "respawn_turns": 32,
+    "first_occupant": "derelict_skyship_captain",
+    "fallback": [
+     "derelict_skyship_captain"
+    ],
+    "occupants": {
+     "derelict_skyship_captain": {
+      "title": "Captain {name} of the Meridian",
+      "enemies": [
+       "derelict_skyship_captain_boss",
+       "derelict_skyship_sky_pirate"
+      ],
+      "intro": "Captain {name} took the derelict ship for her own. She stands at the wheel of a vessel that hasn't moved in three years and orders you to surrender.",
+      "victory": "Captain {name} goes over the rail on a rope and is gone into the clouds.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Halloran",
+       "Vesper",
+       "Joss"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 14,
+       "text": "The ship's wheel controls the deck tilt. Get to it first."
+      },
+      "successors": [
+       {
+        "to": "derelict_skyship_first_mate",
+        "weight": 2
+       },
+       {
+        "to": "derelict_skyship_ship_mind",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "derelict_skyship_first_mate": {
+      "title": "First Mate Grell",
+      "enemies": [
+       "derelict_skyship_first_mate_boss",
+       "derelict_skyship_sky_pirate",
+       "derelict_skyship_sky_pirate"
+      ],
+      "intro": "The Captain's first mate has taken the wheel, and the crew. Grell is a half-orc with a chain hook and no patience.",
+      "victory": "Grell's hook clangs to the deck. The crew loses heart.",
+      "arrival_omen": "The pirate flag is still flying, but a new name has been painted over the Captain's on the bridge door.",
+      "arrival_rumour": "The pirates of the Meridian have a new captain. He is meaner than the last.",
+      "study": {
+       "stat": "AGI",
+       "min": 14,
+       "text": "His hook is on a chain. Get inside its reach."
+      },
+      "successors": [
+       {
+        "to": "derelict_skyship_storm_wraith"
+       }
+      ]
+     },
+     "derelict_skyship_ship_mind": {
+      "title": "MERIDIAN",
+      "enemies": [
+       "derelict_skyship_ship_mind_boss"
+      ],
+      "intro": "Your magic jolted the ship's mind awake. MERIDIAN speaks from every speaker on the bridge: 'INTRUDER. PREPARE FOR VENTING.'",
+      "victory": "MERIDIAN's voice slows to a crawl. 'Thank... you...' it says, and falls silent.",
+      "arrival_omen": "The ship's lights have all turned red. A voice on the intercom counts down from a number it never reaches.",
+      "arrival_rumour": "The skyship over the forest has woken up. Its guns track anything that flies.",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "It cannot see the bridge itself; its cameras look outward. Fight under the console."
+      },
+      "successors": [
+       {
+        "to": "derelict_skyship_storm_wraith"
+       }
+      ]
+     },
+     "derelict_skyship_storm_wraith": {
+      "title": "the Storm-Wrecked Crew",
+      "enemies": [
+       "derelict_skyship_storm_wraith_boss",
+       "derelict_skyship_deck_turret"
+      ],
+      "intro": "The ship's original crew have come back, as the dead sometimes do: blue-lipped, soaked with rain that fell three years ago, led by their navigator.",
+      "victory": "The Navigator looks at the forest below and understands, finally. The crew fades.",
+      "arrival_omen": "Wet footprints on every deck, though no rain falls. Someone has been checking the charts.",
+      "arrival_rumour": "The ghosts of the skyship's first crew have taken it back. They are still trying to land.",
+      "study": {
+       "stat": "WIS",
+       "min": 15,
+       "text": "They still think they're flying. Tell them they've landed."
+      },
+      "successors": [
+       {
+        "to": "derelict_skyship_captain"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "archive_vault",
+   "name": "the Silent Archive",
+   "theme": "technology",
+   "min_level": 9,
+   "region": "verath_city",
+   "description": "A rift beneath Verath opens into a vault full of humming crystal pillars. The System's own records call it an ARCHIVE NODE, and then refuse to say more.",
+   "entry_text": "Each pillar holds a flicker of light that looks like a memory: a wedding, a battle, a child laughing. The air smells like ozone and old paper.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Wardens of silver light step out of the pillars and ask for your access code.",
+     "enemies": [
+      "archive_vault_warden",
+      "archive_vault_warden"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A security grid of blue light crosses the corridor in slow patterns.",
+     "loot": [
+      [
+       "data_crystal",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "INT",
+      "min": 14,
+      "success": "You read the pattern like a sum and step through the gaps. A shard lies on the far side.",
+      "fail": "The grid touches you. It burns, and the alarm sounds.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "An index construct, a cabinet on legs, tries to file you away.",
+     "enemies": [
+      "archive_vault_construct",
+      "archive_vault_warden"
+     ]
+    }
+   ],
+   "material": "data_crystal",
+   "lair": {
+    "name": "the Core Stacks",
+    "respawn_turns": 34,
+    "first_occupant": "archive_vault_curator",
+    "fallback": [
+     "archive_vault_curator"
+    ],
+    "occupants": {
+     "archive_vault_curator": {
+      "title": "the Curator",
+      "enemies": [
+       "archive_vault_curator_boss"
+      ],
+      "intro": "At the center of the stacks, an intelligence of white light shaped like a librarian looks up from an endless ledger. 'Your file is incomplete,' it says. 'Hold still.'",
+      "victory": "The Curator's light stutters and freezes on a single word: ERROR.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "study": {
+       "stat": "INT",
+       "min": 15,
+       "text": "It is processing you. Do something it cannot predict."
+      },
+      "aftermath": [
+       {
+        "id": "left_archive",
+        "label": "Leave the Archive running.",
+        "text": "The pillars dim, then brighten. The Archive will restore its own keeper.",
+        "triggers": []
+       },
+       {
+        "id": "read_archive",
+        "label": "Pull the core crystal and read what the System hides.",
+        "text": "You see the Fracture from the inside for a single second. It is too much. You drop the crystal, and the Archive screams.",
+        "triggers": [
+         "alignment:-3",
+         "flag:read_the_archive"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "archive_vault_restored",
+        "when": {
+         "aftermath": "left_archive"
+        }
+       },
+       {
+        "to": "archive_vault_corrupted",
+        "when": {
+         "aftermath": "read_archive"
+        }
+       }
+      ]
+     },
+     "archive_vault_restored": {
+      "title": "the Curator, Restored",
+      "enemies": [
+       "archive_vault_restored_boss"
+      ],
+      "intro": "The Archive restored its keeper from backup, and the backup remembers how you killed it. It has prepared.",
+      "victory": "The Restored Curator crashes. Somewhere, a backup of the backup begins to load.",
+      "arrival_omen": "Lights flicker through the stacks in patterns, like a mind booting up.",
+      "arrival_rumour": "The Silent Archive under Verath has restored its Curator. It remembers everyone who visited.",
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "The backup is older than the original. It doesn't know about your newest tricks."
+      },
+      "successors": [
+       {
+        "to": "archive_vault_system_auditor"
+       }
+      ]
+     },
+     "archive_vault_corrupted": {
+      "title": "the Corrupted Index",
+      "enemies": [
+       "archive_vault_corrupted_boss",
+       "archive_vault_construct"
+      ],
+      "intro": "You broke the Archive's core. What is left is a mad thing of broken memories, wearing the faces of everyone stored inside it.",
+      "victory": "The Corrupted Index falls silent, and a thousand stolen memories drift out of it like sparks.",
+      "arrival_omen": "The pillars flicker with broken memories, the same moments over and over: a door, a scream, a door.",
+      "arrival_rumour": "Something broke in the Silent Archive under Verath. Now it shows people memories that aren't theirs.",
+      "study": {
+       "stat": "WIS",
+       "min": 16,
+       "text": "It doesn't know which memories are its own. Remind it of one."
+      },
+      "successors": [
+       {
+        "to": "archive_vault_system_auditor"
+       }
+      ]
+     },
+     "archive_vault_system_auditor": {
+      "title": "a System Auditor",
+      "enemies": [
+       "archive_vault_system_auditor_boss"
+      ],
+      "intro": "The System itself has noticed the trouble. An Auditor stands in the stacks: a figure with no face, only a blinking cursor where a face should be.",
+      "victory": "The Auditor's cursor blinks once, slowly, and it closes like a window.",
+      "arrival_omen": "A notification sits in the empty Core Stacks: AUDIT SCHEDULED.",
+      "arrival_rumour": "The System has sent an Auditor into the Silent Archive. Nobody has ever seen one before.",
+      "name_pool": [
+       "7",
+       "19",
+       "41"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 17,
+       "text": "It runs on rules. Give it a contradiction."
+      },
+      "successors": [
+       {
+        "to": "archive_vault_curator"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "storm_engine",
+   "name": "the Lightning Engine",
+   "theme": "technology",
+   "min_level": 11,
+   "region": "verath_city",
+   "description": "A copper spire stands in a rift west of Verath, wrapped in coils and crowned with a crackling sphere. Birds that fly near it never land again.",
+   "entry_text": "Every hair on your body stands up. Blue sparks jump from your fingertips to the copper walls.",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Arc drones float between the coils, shooting lightning at anything that moves.",
+     "enemies": [
+      "storm_engine_arc_drone",
+      "storm_engine_arc_drone"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A floor of copper plates, some of them live.",
+     "loot": [
+      [
+       "storm_capacitor",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "LCK",
+      "min": 15,
+      "success": "You pick the dead plates by instinct and find a charged capacitor at the end.",
+      "fail": "You step on a live plate and the jolt throws you across the room.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Hounds of crackling copper bound out of a charging bay.",
+     "enemies": [
+      "storm_engine_tesla_hound",
+      "storm_engine_tesla_hound",
+      "storm_engine_arc_drone"
+     ]
+    }
+   ],
+   "material": "storm_capacitor",
+   "lair": {
+    "name": "the Coil Chamber",
+    "respawn_turns": 36,
+    "first_occupant": "storm_engine_engineer",
+    "fallback": [
+     "storm_engine_engineer"
+    ],
+    "occupants": {
+     "storm_engine_engineer": {
+      "title": "Chief Engineer {name}",
+      "enemies": [
+       "storm_engine_engineer_boss",
+       "storm_engine_arc_drone"
+      ],
+      "intro": "A woman in a rubber coat with lightning dancing on her gauntlets stands at the master switch. 'I'm so close,' says Chief Engineer {name}. 'One more surge and I'll own the sky.'",
+      "victory": "Chief Engineer {name} throws the switch as she falls, and the spire goes dark.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Voltaire",
+       "Ampera",
+       "Sten"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "Her gauntlets draw from the spire. Break the cable on her back."
+      },
+      "successors": [
+       {
+        "to": "storm_engine_apprentices",
+        "weight": 2
+       },
+       {
+        "to": "storm_engine_living_storm",
+        "weight": 3,
+        "when": {
+         "killed_by": "magic"
+        }
+       }
+      ]
+     },
+     "storm_engine_apprentices": {
+      "title": "the Engine Apprentices",
+      "enemies": [
+       "storm_engine_apprentices_boss",
+       "storm_engine_tesla_hound",
+       "storm_engine_arc_drone"
+      ],
+      "intro": "The Engineer's apprentices have restarted the spire to finish her work. They don't really know how it works, which makes them dangerous.",
+      "victory": "Senior Apprentice Kel drops the notes. The spire sputters.",
+      "arrival_omen": "The spire's lights flicker on again, unevenly, like someone is reading the manual.",
+      "arrival_rumour": "Someone has restarted the Lightning Engine. Badly. The spire west of Verath sparks all night.",
+      "study": {
+       "stat": "INT",
+       "min": 16,
+       "text": "They are reading from her notes. Steal the notes."
+      },
+      "successors": [
+       {
+        "to": "storm_engine_copper_titan"
+       }
+      ]
+     },
+     "storm_engine_living_storm": {
+      "title": "the Living Storm",
+      "enemies": [
+       "storm_engine_living_storm_boss"
+      ],
+      "intro": "Your magic and the spire's lightning made something new: a storm that thinks. It fills the Coil Chamber with eyes of ball lightning.",
+      "victory": "The Living Storm discharges into the copper floor all at once, and the chamber goes quiet.",
+      "arrival_omen": "The sky over the spire is a permanent thunderhead now, and it moves against the wind.",
+      "arrival_rumour": "A storm with a mind lives in the Lightning Engine. It follows travellers along the west road.",
+      "study": {
+       "stat": "INT",
+       "min": 17,
+       "text": "It has to ground itself to strike. Stand on the rubber mats."
+      },
+      "successors": [
+       {
+        "to": "storm_engine_copper_titan"
+       }
+      ]
+     },
+     "storm_engine_copper_titan": {
+      "title": "the Copper Titan",
+      "enemies": [
+       "storm_engine_copper_titan_boss"
+      ],
+      "intro": "The spire has built itself a body. The Copper Titan is made of coils and wire, and when it moves the lights of Verath dim.",
+      "victory": "The Copper Titan sags like a puppet with its strings cut.",
+      "arrival_omen": "The coils have unwound from the spire and lie coiled on the floor of the chamber, moving slightly.",
+      "arrival_rumour": "The Lightning Engine has made itself a body of copper. The lights in Verath flicker when it walks.",
+      "study": {
+       "stat": "INT",
+       "min": 17,
+       "text": "It draws power from the crowning sphere. Get under it and cut the feed line."
+      },
+      "successors": [
+       {
+        "to": "storm_engine_engineer"
+       }
+      ]
+     }
+    }
+   }
+  },
+  {
+   "gate_id": "thaumic_reactor",
+   "name": "the Thaumic Reactor",
+   "theme": "technology",
+   "min_level": 15,
+   "region": "verath_city",
+   "description": "A sealed facility from before the Fracture, where someone tried to make the arcane arts into fuel. The rift around it glows a faint, sick green.",
+   "entry_text": "Warning signs in an old language line the walls. Your skin tingles, then itches. The System adds a status: THAUMIC EXPOSURE (MILD).",
+   "rooms": [
+    {
+     "kind": "fight",
+     "text": "Workers in torn uniforms shamble towards you, their skin glowing green.",
+     "enemies": [
+      "thaumic_reactor_mutant",
+      "thaumic_reactor_mutant"
+     ]
+    },
+    {
+     "kind": "trap",
+     "text": "A corridor flooded with green mist from a cracked pipe.",
+     "loot": [
+      [
+       "reactor_slag",
+       0.6
+      ]
+     ],
+     "check": {
+      "stat": "VIT",
+      "min": 16,
+      "success": "You hold your breath and push through, and pick up a lump of slag on the way.",
+      "fail": "You breathe in the mist, and it burns all the way down.",
+      "damage_pct": 0.18
+     }
+    },
+    {
+     "kind": "fight",
+     "text": "Sentinels in sealed suits guard the containment doors, still following their last orders.",
+     "enemies": [
+      "thaumic_reactor_hazmat",
+      "thaumic_reactor_hazmat",
+      "thaumic_reactor_mutant"
+     ]
+    }
+   ],
+   "material": "reactor_slag",
+   "lair": {
+    "name": "the Containment Core",
+    "respawn_turns": 40,
+    "first_occupant": "thaumic_reactor_director",
+    "fallback": [
+     "thaumic_reactor_director"
+    ],
+    "occupants": {
+     "thaumic_reactor_director": {
+      "title": "Director {name}",
+      "enemies": [
+       "thaumic_reactor_director_boss"
+      ],
+      "intro": "In the control room, a man in a lab coat that glows as brightly as he does looks up from the console. 'You can't shut it down,' says Director {name}. 'We're so close to a breakthrough.'",
+      "victory": "The Director slumps over the console. The reactor whines, rising.",
+      "arrival_omen": "",
+      "arrival_rumour": "",
+      "name_pool": [
+       "Halvorsen",
+       "Ines",
+       "Moreau"
+      ],
+      "study": {
+       "stat": "INT",
+       "min": 18,
+       "text": "He is part of the reactor now. Every surge hurts him too."
+      },
+      "aftermath": [
+       {
+        "id": "let_it_run",
+        "label": "Leave the reactor running.",
+        "text": "The whine settles into a steady hum. The breakthrough continues without him.",
+        "triggers": []
+       },
+       {
+        "id": "scrammed",
+        "label": "Pull the emergency rods and shut the reactor down.",
+        "text": "Alarms. Steam. Then silence, and the green light dies.",
+        "triggers": [
+         "alignment:+4"
+        ]
+       }
+      ],
+      "successors": [
+       {
+        "to": "thaumic_reactor_meltdown",
+        "when": {
+         "aftermath": "let_it_run"
+        }
+       },
+       {
+        "to": "thaumic_reactor_survivors",
+        "when": {
+         "aftermath": "scrammed"
+        }
+       }
+      ]
+     },
+     "thaumic_reactor_meltdown": {
+      "title": "the Meltdown Elemental",
+      "enemies": [
+       "thaumic_reactor_meltdown_boss"
+      ],
+      "intro": "Nobody shut it down. The reactor's core has burst its casing and taken a shape: a figure of molten green light that leaves glass footprints.",
+      "victory": "The Meltdown Elemental cools in an instant into a statue of green glass, and cracks.",
+      "arrival_omen": "The containment doors are bulging outward, glowing hot. The floor has started to melt.",
+      "arrival_rumour": "The Thaumic Reactor is melting down. The grass for a mile around it has turned to glass.",
+      "study": {
+       "stat": "INT",
+       "min": 18,
+       "text": "It's unstable. Make it exert itself and it starts to come apart."
+      },
+      "successors": [
+       {
+        "to": "thaumic_reactor_fuel_god"
+       }
+      ]
+     },
+     "thaumic_reactor_survivors": {
+      "title": "the Survivors' Commune",
+      "enemies": [
+       "thaumic_reactor_survivors_boss",
+       "thaumic_reactor_mutant"
+      ],
+      "intro": "With the reactor cold, the mutants who survived it have made it a home. Overseer {name} leads them, and they do not want you to take their power away again.",
+      "victory": "Overseer {name} lowers their weapon. 'Fine,' they say. 'Fine. But we'll be back.'",
+      "arrival_omen": "Mutants are clearing the debris from the dead core. Someone has painted HOME on the containment door.",
+      "arrival_rumour": "The mutants of the Thaumic Reactor have made a commune there. They don't like visitors.",
+      "name_pool": [
+       "Ruthe",
+       "Calder",
+       "Pim"
+      ],
+      "study": {
+       "stat": "WIS",
+       "min": 17,
+       "text": "They are afraid, not cruel. Show them you are leaving."
+      },
+      "successors": [
+       {
+        "to": "thaumic_reactor_fuel_god"
+       }
+      ]
+     },
+     "thaumic_reactor_fuel_god": {
+      "title": "the Fuel-God",
+      "enemies": [
+       "thaumic_reactor_fuel_god_boss"
+      ],
+      "intro": "Something answered the reactor's call. The System labels it ENTITY - UNKNOWN. It is very large, very green, and it is drinking the core.",
+      "victory": "The Fuel-God withdraws into the core like a tide going out. The rift dims.",
+      "arrival_omen": "The reactor core is pulsing again, though nobody restarted it. Something on the other side of it is drinking.",
+      "arrival_rumour": "Something came through the Thaumic Reactor's core. The System won't name it.",
+      "study": {
+       "stat": "INT",
+       "min": 19,
+       "text": "It is feeding. Interrupt the feeding."
+      },
+      "successors": [
+       {
+        "to": "thaumic_reactor_director"
+       }
+      ]
+     }
+    }
+   }
+  }
+ ]
+}

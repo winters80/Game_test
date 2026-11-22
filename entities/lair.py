@@ -80,6 +80,10 @@ class LairOccupant(BaseModel):
     aftermath: list[LairAftermath] = Field(default_factory=list)
     omen: str = ""          # shown in the empty lair while this occupant's successor moves in
     rumour: str = ""        # told when this occupant's successor arrives
+    # The same, written from the newcomer's side; win over the dead one's
+    # omen / rumour, so a branching chain always hints at what really comes.
+    arrival_omen: str = ""
+    arrival_rumour: str = ""
     successors: list[LairSuccessor] = Field(default_factory=list)
 
     @property

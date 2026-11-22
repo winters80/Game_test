@@ -61,9 +61,11 @@ def bot_world(engine: "GameEngine"):
             b = row["bundle"]
             if b.get("yield_item_id") and engine.item_registry.get(b["yield_item_id"]):
                 yields.setdefault(b.get("zone_id") or "", []).append(b["yield_item_id"])
+    from core.gate_flow import bot_gate_view
     from core.lair_flow import bot_lair_view
+    lairs = bot_lair_view(engine)
     return BotWorld(engine.item_registry, traders_at, engine.recipes, yields, turn,
-                    lairs=bot_lair_view(engine))
+                    lairs=lairs, gates=bot_gate_view(engine, lairs))
 
 
 def tick_bots(engine: "GameEngine") -> list["BotEvent"]:

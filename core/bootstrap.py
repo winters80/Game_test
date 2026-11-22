@@ -77,9 +77,7 @@ def load_registries(engine: "GameEngine") -> None:
     if feature("quest_system"):
         from entities.quest import QuestRegistry
         engine.quest_registry = QuestRegistry()
-        engine.quest_registry.load_from_file(
-            DATA_DIR / "quests" / "quest_templates.json"
-        )
+        engine.quest_registry.load_from_dir(DATA_DIR / "quests")
 
     if feature("guild_system"):
         from systems.guilds.guild_loader import load_guild_registry
@@ -97,6 +95,9 @@ def load_registries(engine: "GameEngine") -> None:
         from systems.lair_system import register_enemy_templates
         engine.lair_registry = LairRegistry()
         engine.lair_registry.load_from_dir(DATA_DIR / "dungeons")
+        from entities.gate import GateRegistry
+        engine.gate_registry = GateRegistry()
+        engine.gate_registry.load_from_dir(DATA_DIR / "dungeons" / "gates", engine.lair_registry)
         register_enemy_templates(engine.lair_registry)
 
     if feature("bot_system"):

@@ -87,7 +87,7 @@ def load_all_registries():
     npc_reg = NPCRegistry()
     npc_reg.load_from_dir(DATA_DIR / "npcs")
     quest_reg = QuestRegistry()
-    quest_reg.load_from_file(DATA_DIR / "quests" / "quest_templates.json")
+    quest_reg.load_from_dir(DATA_DIR / "quests")
     return item_reg, npc_reg, quest_reg
 
 
@@ -128,7 +128,7 @@ def main() -> None:
             stage_ids = {s.stage_id for s in tmpl.stages}
 
             # Each stage must have a valid completion_condition shape
-            valid_keys = {"has_item", "has_flag", "world_flag"}
+            from entities.quest import CONDITION_KEYS as valid_keys
             for stage in tmpl.stages:
                 assert stage.stage_id, f"Stage in '{tmpl.template_id}' missing stage_id"
                 cond = stage.completion_condition or {}

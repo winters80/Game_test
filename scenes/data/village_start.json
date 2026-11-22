@@ -8,6 +8,68 @@
     "Outer Verath goes about its business around you, as if the world didn't just permanently change. Above the rooftops, the capital's walls glow System-blue."
   ],
   "nodes": {
+    "gate_hall": {
+      "text": "The old tithe barn by the well has become the village's Gate Hall. A System notice board glows on one wall, listing every registered rift and its master. Adventurers trade rumours over bad ale, and the people with work to give sit at the long table.",
+      "options": [
+        {
+          "option_id": "open_gate_registry",
+          "label": "Read the Gate Registry (rifts and their masters).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "gate_registry"
+          ]
+        },
+        {
+          "option_id": "talk_registrar_ostra",
+          "label": "Talk to Registrar Ostra (official).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:registrar_ostra"
+          ]
+        },
+        {
+          "option_id": "talk_sister_ilse",
+          "label": "Talk to Sister Ilse (healer).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:sister_ilse"
+          ]
+        },
+        {
+          "option_id": "talk_brannoc_hunter",
+          "label": "Talk to Old Brannoc (hunter).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:brannoc_hunter"
+          ]
+        },
+        {
+          "option_id": "talk_tinker_odo",
+          "label": "Talk to Tinker Odo (artisan).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:tinker_odo"
+          ]
+        },
+        {
+          "option_id": "leave_gate_hall",
+          "label": "Back.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
     "root": {
       "text": "You stand in the outer market, in the shadow of Verath's walls. The morning air smells of bread and smoke. Around you: the Adventurers' Board with posted contracts, the blacksmith's workshop, the Adventurers' Guild entrance, the Iron Compass Inn, the road leading to the old forest dungeon, and the guarded gate into the city proper.",
       "options": [
@@ -56,6 +118,13 @@
               }
             ]
           }
+        },
+        {
+          "option_id": "gate_registry_board",
+          "label": "Go to the Gate Hall (the Registry and its patrons).",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "gate_hall"
         },
         {
           "option_id": "head_to_dungeon",

@@ -94,16 +94,42 @@ def check_stage_completion(
     if not stage:
         return False
 
-    return _evaluate_condition(stage.completion_condition, state)
+    return _evaluate_condition(stage.completion_condition, state,
+                               turnin_flag=turn_in_flag(template.template_id, stage.stage_id))
 
 
-def _evaluate_condition(condition: dict, state: "GameState") -> bool:
-    """Evaluate a single completion_condition dict against current player/world state."""
+def turn_in_flag(template_id: str, stage_id: str) -> str:
+    """Set by dialogue when the player reports a ``turn_in`` stage."""
+    return f"turnin_{template_id}_{stage_id}"
+
+
+def item_quantity(player, item_id: str) -> int:
+    return sum(s.quantity for s in player.inventory if s.item_id == item_id)
+
+
+def _evaluate_condition(condition: dict, state: "GameState", turnin_flag: str = "",
+                        skip_turn_in: bool = False) -> bool:
+    """Evaluate a completion_condition dict against current player/world state.
+    ``skip_turn_in`` treats turn_in parts as met (used to decide whether a
+    « Report » option should be offered)."""
     if not condition:
         return False
 
+    if "all" in condition:
+        parts = condition["all"] or []
+        return bool(parts) and all(_evaluate_condition(c, state, turnin_flag, skip_turn_in) for c in parts)
+
+    if "any" in condition:
+        return any(_evaluate_condition(c, state, turnin_flag, skip_turn_in) for c in condition["any"] or [])
+
+    if "turn_in" in condition:
+        return skip_turn_in or (bool(turnin_flag) and state.player.has_flag(turnin_flag))
+
     if "has_item" in condition:
         return state.player.has_item(condition["has_item"])
+
+    if "has_items" in condition:
+        return all(item_quantity(state.player, i) >= int(n) for i, n in condition["has_items"].items())
 
     if "has_flag" in condition:
         return state.player.has_flag(condition["has_flag"])
@@ -111,6 +137,58 @@ def _evaluate_condition(condition: dict, state: "GameState") -> bool:
     if "world_flag" in condition:
         return state.has_world_flag(condition["world_flag"])
 
+    if "min_level" in condition:
+        return state.player.level >= int(condition["min_level"])
+
+    return False
+
+
+def _turn_in_npcs(condition: dict) -> set[str]:
+    if not condition:
+        return set()
+    if "turn_in" in condition:
+        return {condition["turn_in"]}
+    out: set[str] = set()
+    for key in ("all", "any"):
+        for c in condition.get(key) or []:
+            out |= _turn_in_npcs(c)
+    return out
+
+
+def reportable_quests(npc_id: str, state: "GameState", quest_registry: "QuestRegistry") -> list[tuple]:
+    """Active quests whose current stage is ready to report to ``npc_id``:
+    (instance_id, template, stage) for each."""
+    out = []
+    if state.world_db is None:
+        return out
+    for qid in list(state.player.active_quest_ids):
+        row = state.world_db.get_quest(qid)
+        if not row or not row.get("is_active"):
+            continue
+        template = quest_registry.get(row["template_id"])
+        stage = template.get_stage(row["current_state"]) if template else None
+        if stage is None or npc_id not in _turn_in_npcs(stage.completion_condition):
+            continue
+        flag = turn_in_flag(template.template_id, stage.stage_id)
+        if state.player.has_flag(flag):
+            continue
+        if _evaluate_condition(stage.completion_condition, state, flag, skip_turn_in=True):
+            out.append((qid, template, stage))
+    return out
+
+
+def report_quest(instance_id: str, state: "GameState", quest_registry: "QuestRegistry") -> bool:
+    """The player reports in: mark the turn-in and advance if the stage is now
+    complete. Returns True if the quest advanced or completed."""
+    row = state.world_db.get_quest(instance_id) if state.world_db else None
+    template = quest_registry.get(row["template_id"]) if row else None
+    stage = template.get_stage(row["current_state"]) if template else None
+    if stage is None:
+        return False
+    state.player.set_flag(turn_in_flag(template.template_id, stage.stage_id))
+    if check_stage_completion(instance_id, state, quest_registry):
+        advance_quest(instance_id, state, quest_registry)
+        return True
     return False
 
 
@@ -233,6 +311,10 @@ def _apply_rewards(template: "QuestTemplate", state: "GameState") -> None:
     # default when AI is offline so the player isn't shorted on rewards.
     if template.reward_skill_hints:
         _grant_quest_skill_rewards(template, state)
+
+    if template.reward_skills:
+        from scenes.option_logic import process_triggers as _pt
+        _pt([f"give_skill:{sid}" for sid in template.reward_skills if sid not in player.skills], state)
 
     if template.alignment_reward:
         apply_alignment_shift(player, template.alignment_reward, reason=f"quest:{template.template_id}")

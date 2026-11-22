@@ -97,6 +97,12 @@ class ChoiceHandlerMixin:
                     any(kw in option.label.lower() for kw in ("ambush", "sneak", "surprise", "ledge", "stealth"))
                 )
                 self._run_combat(encounter_id, surprise=_surprise)
+            elif trigger == "gate_registry" and feature("boss_succession"):
+                from core.gate_flow import open_gate_registry
+                open_gate_registry(self)
+            elif trigger.startswith("enter_gate:") and feature("boss_succession"):
+                from core.gate_flow import run_gate
+                run_gate(self, trigger[len("enter_gate:"):])
             elif trigger.startswith("boss_lair:") and feature("boss_succession"):
                 from core.lair_flow import enter_lair
                 enter_lair(self, trigger[len("boss_lair:"):])

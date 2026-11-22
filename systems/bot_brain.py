@@ -86,6 +86,9 @@ class BotWorld:
     # zone → occupied boss lairs (core/lair_flow.bot_lair_view): lair_id,
     # lair_name, title, min_level, enemies. A lair a bot clears is removed.
     lairs: dict[str, list[dict]] = field(default_factory=dict)
+    # Gates bots can run from town (core/gate_flow.bot_gate_view): gate_id,
+    # name, min_level, region, rooms (enemy lists), lair (or None), material.
+    gates: list[dict] = field(default_factory=list)
 
 
 @dataclass
@@ -190,12 +193,50 @@ def _fight_boss(bot: "BotAgent", lair: dict, rng: random.Random, world: BotWorld
     bot.kills += len(enemies)
     for item_id in roll_loot(enemies):
         bot.add_item(item_id)
-    world.lairs[zone] = [l for l in world.lairs.get(zone, []) if l is not lair]
+    lzone = lair.get("zone_id", zone)
+    world.lairs[lzone] = [l for l in world.lairs.get(lzone, []) if l is not lair]
+    for gate in world.gates:
+        if gate.get("lair") is lair:
+            gate["lair"] = None
     bot.activity = f"celebrating a kill on {place(zone)}"
     bot.remember(f"Slew {lair['title']} in {lair['lair_name']} (turn {world.turn})")
     events = [BotEvent(bot.bot_id, zone, f"{bot.name} slew {lair['title']} in {lair['lair_name']}!",
                        "boss_kill", lair_id=lair["lair_id"], killed_by=bot_blow(bot))]
     events += _gain_xp(bot, sum(e.xp_reward for e in enemies))
+    return events
+
+
+def _gate_run(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    """Run a registered Gate from town: clear its rooms (if survivable),
+    loot them, and maybe take on its master. The bot stays where it is."""
+    from config import LAIR_BOT_CHALLENGE_CHANCE, LAIR_BOT_SAFETY
+    from systems.combat_system import roll_loot
+
+    fits = [g for g in world.gates if g["min_level"] <= bot.level <= g["min_level"] + 6 and g["rooms"]]
+    if not fits:
+        return []
+    gate = rng.choice(fits)
+    enemies = [e for room in gate["rooms"] for e in room]
+    taken = int(sum(expected_damage(bot, room) for room in gate["rooms"]) * rng.uniform(0.75, 1.3))
+    if taken >= bot.hp * 0.8:
+        return []
+    zone = bot.current_zone_id
+    bot.hp -= taken
+    bot.gold += sum(e.gold_reward for e in enemies)
+    bot.kills += len(enemies)
+    for item_id in roll_loot(enemies):
+        bot.add_item(item_id)
+    bot.activity = f"back from the {gate['name']} gate"
+    bot.remember(f"Ran the {gate['name']} gate (turn {world.turn})")
+    events = [BotEvent(bot.bot_id, zone, f"{bot.name} came back through the {gate['name']} rift.", "fight")]
+    events += _gain_xp(bot, sum(e.xp_reward for e in enemies))
+    lair = gate.get("lair")
+    if (lair and bot.level >= lair["min_level"] and rng.random() < LAIR_BOT_CHALLENGE_CHANCE
+            and expected_damage(bot, lair["enemies"]) < bot.hp * LAIR_BOT_SAFETY):
+        boss = _fight_boss(bot, lair, rng, world)
+        if boss and boss[0].kind == "defeat":
+            bot.current_zone_id = zone        # beaten inside a gate: home is where it is
+        events += boss
     return events
 
 
@@ -469,6 +510,12 @@ def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEv
         return events
     if zone in world.yields and bot.archetype == "gatherer" and rng.random() < 0.5:
         return _gather(bot, world, rng)
+    from config import BOT_GATE_CHANCE
+    if (bot.archetype in ("fighter", "explorer") and world.gates
+            and bot.hp >= bot.max_hp * 0.8 and rng.random() < BOT_GATE_CHANCE):
+        events = _gate_run(bot, world, rng)
+        if events:
+            return events
     if bot.archetype == "trader" and bot.item_count() < TRADER_STOCK and rng.random() < 0.5:
         events = _gather(bot, world, rng)      # traders build stock at the camp
         if events:

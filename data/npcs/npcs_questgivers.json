@@ -1,0 +1,1622 @@
+[
+ {
+  "template_id": "registrar_ostra",
+  "npc_id": "registrar_ostra",
+  "name": "Registrar Ostra",
+  "role": "official",
+  "zone_id": "village_start",
+  "description": "A brisk young woman with ink-stained fingers and a ledger the size of a door. The System appointed her Gate Registrar for the village district, and she has not slept properly since.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Another adventurer! Good. The rifts don't close themselves.' Ostra flips her ledger open. 'Bounties, rumours, or both?'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "order_bandit_insignia",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_bandit_insignia",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "bounty_ashgrove_manor",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_ashgrove_manor",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "bounty_clockwork_foundry",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_clockwork_foundry",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "bounty_bronze_labyrinth",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_bronze_labyrinth",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "bounty_redcap_fortress",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_redcap_fortress",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "bounty_rootdeep_caverns",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_rootdeep_caverns",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "bounty_mycelial_kingdom",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_mycelial_kingdom",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "bounty_golem_assembly",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_golem_assembly",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "bounty_cinder_forge",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_cinder_forge",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "bounty_witchs_bog",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_witchs_bog",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "bounty_fae_hollow",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_fae_hollow",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "bounty_tidecall_grotto",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_tidecall_grotto",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "bounty_dollmaker_workshop",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_dollmaker_workshop",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "bounty_hydra_fen",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_hydra_fen",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "bounty_rime_tomb",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_rime_tomb",
+    "min_level": 5
+   }
+  ]
+ },
+ {
+  "template_id": "sister_ilse",
+  "npc_id": "sister_ilse",
+  "name": "Sister Ilse",
+  "role": "healer",
+  "zone_id": "village_start",
+  "description": "A grey-robed healer with a herb satchel and the calm of someone who has seen every kind of wound.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Sit, if you're hurt. Stand, if you're here to help.' Sister Ilse smiles. 'I always need help.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "ember_rebirth_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_ember_rebirth_1",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "ember_rebirth_2",
+    "trigger_flag": "done_ember_rebirth_1",
+    "already_given_flag": "given_ember_rebirth_2",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "ember_rebirth_3",
+    "trigger_flag": "done_ember_rebirth_2",
+    "already_given_flag": "given_ember_rebirth_3",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "dewglass_circlet_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_dewglass_circlet_1",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "dewglass_circlet_2",
+    "trigger_flag": "done_dewglass_circlet_1",
+    "already_given_flag": "given_dewglass_circlet_2",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "dewglass_circlet_3",
+    "trigger_flag": "done_dewglass_circlet_2",
+    "already_given_flag": "given_dewglass_circlet_3",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "ashgrove_inheritance_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_ashgrove_inheritance_1",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "ashgrove_inheritance_2",
+    "trigger_flag": "done_ashgrove_inheritance_1",
+    "already_given_flag": "given_ashgrove_inheritance_2",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "ashgrove_inheritance_3",
+    "trigger_flag": "done_ashgrove_inheritance_2",
+    "already_given_flag": "given_ashgrove_inheritance_3",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "spore_dreams_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_spore_dreams_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "spore_dreams_2",
+    "trigger_flag": "done_spore_dreams_1",
+    "already_given_flag": "given_spore_dreams_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "hive_harvest_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_hive_harvest_1",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "hive_harvest_2",
+    "trigger_flag": "done_hive_harvest_1",
+    "already_given_flag": "given_hive_harvest_2",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "order_gorgon_tear",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_gorgon_tear",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "order_plague_ash",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_plague_ash",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "order_tide_pearl",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_tide_pearl",
+    "min_level": 4
+   }
+  ]
+ },
+ {
+  "template_id": "brannoc_hunter",
+  "npc_id": "brannoc_hunter",
+  "name": "Old Brannoc",
+  "role": "hunter",
+  "zone_id": "village_start",
+  "description": "A retired monster-hunter with one eye, a pipe, and a bow he still keeps oiled.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "Brannoc squints at you with his good eye. 'You've got the look. Hunting, is it? Sit down. I'll teach you something.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "bull_rush_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_bull_rush_1",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "bull_rush_2",
+    "trigger_flag": "done_bull_rush_1",
+    "already_given_flag": "given_bull_rush_2",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "bull_rush_3",
+    "trigger_flag": "done_bull_rush_2",
+    "already_given_flag": "given_bull_rush_3",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "brannocs_mark_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_brannocs_mark_1",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "brannocs_mark_2",
+    "trigger_flag": "done_brannocs_mark_1",
+    "already_given_flag": "given_brannocs_mark_2",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "brannocs_mark_3",
+    "trigger_flag": "done_brannocs_mark_2",
+    "already_given_flag": "given_brannocs_mark_3",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "order_hydra_scale",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_hydra_scale",
+    "min_level": 5
+   }
+  ]
+ },
+ {
+  "template_id": "tinker_odo",
+  "npc_id": "tinker_odo",
+  "name": "Tinker Odo",
+  "role": "artisan",
+  "zone_id": "village_start",
+  "description": "A halfling engineer in a leather apron full of tools, most of which he invented.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Careful, don't touch that, it's live.' Odo wipes his hands. 'Looking for work? I always need parts.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "clockwork_precision_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_clockwork_precision_1",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "clockwork_precision_2",
+    "trigger_flag": "done_clockwork_precision_1",
+    "already_given_flag": "given_clockwork_precision_2",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "clockwork_precision_3",
+    "trigger_flag": "done_clockwork_precision_2",
+    "already_given_flag": "given_clockwork_precision_3",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "clockwork_gauntlets_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_clockwork_gauntlets_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "clockwork_gauntlets_2",
+    "trigger_flag": "done_clockwork_gauntlets_1",
+    "already_given_flag": "given_clockwork_gauntlets_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "clockwork_gauntlets_3",
+    "trigger_flag": "done_clockwork_gauntlets_2",
+    "already_given_flag": "given_clockwork_gauntlets_3",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "foundry_strike_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_foundry_strike_1",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "foundry_strike_2",
+    "trigger_flag": "done_foundry_strike_1",
+    "already_given_flag": "given_foundry_strike_2",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "golem_union_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_golem_union_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "golem_union_2",
+    "trigger_flag": "done_golem_union_1",
+    "already_given_flag": "given_golem_union_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "reactor_meltdown_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_reactor_meltdown_1",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "reactor_meltdown_2",
+    "trigger_flag": "done_reactor_meltdown_1",
+    "already_given_flag": "given_reactor_meltdown_2",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "reactor_meltdown_3",
+    "trigger_flag": "done_reactor_meltdown_2",
+    "already_given_flag": "given_reactor_meltdown_3",
+    "min_level": 16
+   },
+   {
+    "quest_template_id": "order_brass_cog",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_brass_cog",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "order_storm_capacitor",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_storm_capacitor",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "order_ember_ore",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_ember_ore",
+    "min_level": 3
+   }
+  ]
+ },
+ {
+  "template_id": "warden_sorrel",
+  "npc_id": "warden_sorrel",
+  "name": "Warden Sorrel",
+  "role": "ranger",
+  "zone_id": "camp_rest",
+  "description": "A road-warden in a green cloak, bow across her back, who knows every path between the camp and the hills.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Roads are worse every week,' says Sorrel. 'Rifts everywhere. Want to do something about it?'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "rime_lance_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_rime_lance_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "rime_lance_2",
+    "trigger_flag": "done_rime_lance_1",
+    "already_given_flag": "given_rime_lance_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "rime_lance_3",
+    "trigger_flag": "done_rime_lance_2",
+    "already_given_flag": "given_rime_lance_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "rimeward_cloak_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_rimeward_cloak_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "rimeward_cloak_2",
+    "trigger_flag": "done_rimeward_cloak_1",
+    "already_given_flag": "given_rimeward_cloak_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "rimeward_cloak_3",
+    "trigger_flag": "done_rimeward_cloak_2",
+    "already_given_flag": "given_rimeward_cloak_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "fae_bargain_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_fae_bargain_1",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "fae_bargain_2",
+    "trigger_flag": "done_fae_bargain_1",
+    "already_given_flag": "given_fae_bargain_2",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "fae_bargain_3",
+    "trigger_flag": "done_fae_bargain_2",
+    "already_given_flag": "given_fae_bargain_3",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "eyrie_eggs_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_eyrie_eggs_1",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "eyrie_eggs_2",
+    "trigger_flag": "done_eyrie_eggs_1",
+    "already_given_flag": "given_eyrie_eggs_2",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "order_hag_charm",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_hag_charm",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "order_thunder_feather",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_thunder_feather",
+    "min_level": 7
+   }
+  ]
+ },
+ {
+  "template_id": "cartographer_mira",
+  "npc_id": "cartographer_mira",
+  "name": "Mira the Cartographer",
+  "role": "explorer",
+  "zone_id": "camp_rest",
+  "description": "An explorer with a dozen rolled maps under one arm and a compass that she taps constantly.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Half of my maps are wrong now,' Mira sighs. 'The rifts keep moving things. I need eyes inside them.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "rootdeep_survey_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_rootdeep_survey_1",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "rootdeep_survey_2",
+    "trigger_flag": "done_rootdeep_survey_1",
+    "already_given_flag": "given_rootdeep_survey_2",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "tidecall_lost_boat_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_tidecall_lost_boat_1",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "tidecall_lost_boat_2",
+    "trigger_flag": "done_tidecall_lost_boat_1",
+    "already_given_flag": "given_tidecall_lost_boat_2",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "skyship_salvage_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_skyship_salvage_1",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "skyship_salvage_2",
+    "trigger_flag": "done_skyship_salvage_1",
+    "already_given_flag": "given_skyship_salvage_2",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "skyship_salvage_3",
+    "trigger_flag": "done_skyship_salvage_2",
+    "already_given_flag": "given_skyship_salvage_3",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "order_aether_coil",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_aether_coil",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "order_heartstone_chip",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_heartstone_chip",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "order_glowcap_spore",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_glowcap_spore",
+    "min_level": 3
+   }
+  ]
+ },
+ {
+  "template_id": "magister_aldane",
+  "npc_id": "magister_aldane",
+  "name": "Magister Aldane",
+  "role": "scholar",
+  "zone_id": "verath_city",
+  "description": "A Spire scholar in robes covered in chalk formulae, who speaks very fast and listens very carefully.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Ah! A practitioner. Or a potential one.' Aldane peers at you. 'The rifts are the greatest arcane laboratory in history. Let me show you.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "stormcall_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_stormcall_1",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "stormcall_2",
+    "trigger_flag": "done_stormcall_1",
+    "already_given_flag": "given_stormcall_2",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "stormcall_3",
+    "trigger_flag": "done_stormcall_2",
+    "already_given_flag": "given_stormcall_3",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "gorgon_gaze_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_gorgon_gaze_1",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "gorgon_gaze_2",
+    "trigger_flag": "done_gorgon_gaze_1",
+    "already_given_flag": "given_gorgon_gaze_2",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "gorgon_gaze_3",
+    "trigger_flag": "done_gorgon_gaze_2",
+    "already_given_flag": "given_gorgon_gaze_3",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "stormcaller_staff_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_stormcaller_staff_1",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "stormcaller_staff_2",
+    "trigger_flag": "done_stormcaller_staff_1",
+    "already_given_flag": "given_stormcaller_staff_2",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "stormcaller_staff_3",
+    "trigger_flag": "done_stormcaller_staff_2",
+    "already_given_flag": "given_stormcaller_staff_3",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "dawnspire_vision_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_dawnspire_vision_1",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "dawnspire_vision_2",
+    "trigger_flag": "done_dawnspire_vision_1",
+    "already_given_flag": "given_dawnspire_vision_2",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "dawnspire_vision_3",
+    "trigger_flag": "done_dawnspire_vision_2",
+    "already_given_flag": "given_dawnspire_vision_3",
+    "min_level": 16
+   },
+   {
+    "quest_template_id": "dreamers_end_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_dreamers_end_1",
+    "min_level": 17
+   },
+   {
+    "quest_template_id": "dreamers_end_2",
+    "trigger_flag": "done_dreamers_end_1",
+    "already_given_flag": "given_dreamers_end_2",
+    "min_level": 18
+   },
+   {
+    "quest_template_id": "dreamers_end_3",
+    "trigger_flag": "done_dreamers_end_2",
+    "already_given_flag": "given_dreamers_end_3",
+    "min_level": 19
+   },
+   {
+    "quest_template_id": "order_fae_dewglass",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_fae_dewglass",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "order_golem_core",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_golem_core",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "order_reactor_slag",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_reactor_slag",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "order_mirror_shard",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_mirror_shard",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "order_chronoshard",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_chronoshard",
+    "min_level": 11
+   }
+  ]
+ },
+ {
+  "template_id": "captain_venn",
+  "npc_id": "captain_venn",
+  "name": "Captain Dara Venn",
+  "role": "guard_captain",
+  "zone_id": "verath_city",
+  "description": "The captain of Verath's watch, armour scuffed from use, not parade. She has a list of problems, and you are welcome to some of them.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'If you're here to complain, join the queue,' says Captain Venn. 'If you're here to fight, I have work.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "redcap_reckoning_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_redcap_reckoning_1",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "redcap_reckoning_2",
+    "trigger_flag": "done_redcap_reckoning_1",
+    "already_given_flag": "given_redcap_reckoning_2",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "redcap_reckoning_3",
+    "trigger_flag": "done_redcap_reckoning_2",
+    "already_given_flag": "given_redcap_reckoning_3",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "hydra_bounty_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_hydra_bounty_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "hydra_bounty_2",
+    "trigger_flag": "done_hydra_bounty_1",
+    "already_given_flag": "given_hydra_bounty_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "hydra_bounty_3",
+    "trigger_flag": "done_hydra_bounty_2",
+    "already_given_flag": "given_hydra_bounty_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "dollmaker_children_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_dollmaker_children_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "dollmaker_children_2",
+    "trigger_flag": "done_dollmaker_children_1",
+    "already_given_flag": "given_dollmaker_children_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "dollmaker_children_3",
+    "trigger_flag": "done_dollmaker_children_2",
+    "already_given_flag": "given_dollmaker_children_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "starfall_cult_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_starfall_cult_1",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "starfall_cult_2",
+    "trigger_flag": "done_starfall_cult_1",
+    "already_given_flag": "given_starfall_cult_2",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "starfall_cult_3",
+    "trigger_flag": "done_starfall_cult_2",
+    "already_given_flag": "given_starfall_cult_3",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "wyrm_tax_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_wyrm_tax_1",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "wyrm_tax_2",
+    "trigger_flag": "done_wyrm_tax_1",
+    "already_given_flag": "given_wyrm_tax_2",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "wyrm_tax_3",
+    "trigger_flag": "done_wyrm_tax_2",
+    "already_given_flag": "given_wyrm_tax_3",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "bounty_veras_asylum",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_veras_asylum",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "bounty_chitin_hive",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_chitin_hive",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "bounty_derelict_skyship",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_derelict_skyship",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "bounty_gorgon_garden",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_gorgon_garden",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "bounty_stormcrown_eyrie",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_stormcrown_eyrie",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "bounty_hall_of_mirrors",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_hall_of_mirrors",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "bounty_archive_vault",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_archive_vault",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "bounty_drowned_bell",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_drowned_bell",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "bounty_starfall_crater",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_starfall_crater",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "bounty_storm_engine",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_storm_engine",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "bounty_phoenix_ashery",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_phoenix_ashery",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "bounty_stopped_clocktower",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_stopped_clocktower",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "bounty_bellfall_cathedral",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_bellfall_cathedral",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "bounty_wyrm_hoard",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_wyrm_hoard",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "bounty_dawnspire_observatory",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_dawnspire_observatory",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "bounty_thaumic_reactor",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_thaumic_reactor",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "bounty_hollow_of_unmaking",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_hollow_of_unmaking",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "bounty_dreamers_abyss",
+    "trigger_flag": "",
+    "already_given_flag": "given_bounty_dreamers_abyss",
+    "min_level": 17
+   }
+  ]
+ },
+ {
+  "template_id": "archivist_tolven",
+  "npc_id": "archivist_tolven",
+  "name": "Archivist Tolven",
+  "role": "scholar",
+  "zone_id": "verath_city",
+  "description": "A stooped old archivist who keeps the city's records and, lately, the System's.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Records,' says Tolven, 'are the only thing the Fracture couldn't break. Mostly. Help me keep them.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "void_step_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_void_step_1",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "void_step_2",
+    "trigger_flag": "done_void_step_1",
+    "already_given_flag": "given_void_step_2",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "void_step_3",
+    "trigger_flag": "done_void_step_2",
+    "already_given_flag": "given_void_step_3",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "lich_cycle_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_lich_cycle_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "lich_cycle_2",
+    "trigger_flag": "done_lich_cycle_1",
+    "already_given_flag": "given_lich_cycle_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "lich_cycle_3",
+    "trigger_flag": "done_lich_cycle_2",
+    "already_given_flag": "given_lich_cycle_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "rime_kings_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_rime_kings_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "rime_kings_2",
+    "trigger_flag": "done_rime_kings_1",
+    "already_given_flag": "given_rime_kings_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "asylum_records_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_asylum_records_1",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "asylum_records_2",
+    "trigger_flag": "done_asylum_records_1",
+    "already_given_flag": "given_asylum_records_2",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "asylum_records_3",
+    "trigger_flag": "done_asylum_records_2",
+    "already_given_flag": "given_asylum_records_3",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "archive_forbidden_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_archive_forbidden_1",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "archive_forbidden_2",
+    "trigger_flag": "done_archive_forbidden_1",
+    "already_given_flag": "given_archive_forbidden_2",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "archive_forbidden_3",
+    "trigger_flag": "done_archive_forbidden_2",
+    "already_given_flag": "given_archive_forbidden_3",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "clocktower_hours_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_clocktower_hours_1",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "clocktower_hours_2",
+    "trigger_flag": "done_clocktower_hours_1",
+    "already_given_flag": "given_clocktower_hours_2",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "clocktower_hours_3",
+    "trigger_flag": "done_clocktower_hours_2",
+    "already_given_flag": "given_clocktower_hours_3",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "order_data_crystal",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_data_crystal",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "order_void_essence",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_void_essence",
+    "min_level": 15
+   }
+  ]
+ },
+ {
+  "template_id": "forgemaster_halvard",
+  "npc_id": "forgemaster_halvard",
+  "name": "Forgemaster Halvard",
+  "role": "blacksmith",
+  "zone_id": "verath_city",
+  "description": "A broad dwarf with arms like hams, who runs the finest forge in Verath and will not let you forget it.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'Bring me rift metal,' Halvard rumbles, 'and I'll make you something the System will have to invent a new rarity for.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "horn_axe_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_horn_axe_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "horn_axe_2",
+    "trigger_flag": "done_horn_axe_1",
+    "already_given_flag": "given_horn_axe_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "horn_axe_3",
+    "trigger_flag": "done_horn_axe_2",
+    "already_given_flag": "given_horn_axe_3",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "hydrascale_mail_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_hydrascale_mail_1",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "hydrascale_mail_2",
+    "trigger_flag": "done_hydrascale_mail_1",
+    "already_given_flag": "given_hydrascale_mail_2",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "hydrascale_mail_3",
+    "trigger_flag": "done_hydrascale_mail_2",
+    "already_given_flag": "given_hydrascale_mail_3",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "wyrmscale_bulwark_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_wyrmscale_bulwark_1",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "wyrmscale_bulwark_2",
+    "trigger_flag": "done_wyrmscale_bulwark_1",
+    "already_given_flag": "given_wyrmscale_bulwark_2",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "wyrmscale_bulwark_3",
+    "trigger_flag": "done_wyrmscale_bulwark_2",
+    "already_given_flag": "given_wyrmscale_bulwark_3",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "cinder_contract_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_cinder_contract_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "cinder_contract_2",
+    "trigger_flag": "done_cinder_contract_1",
+    "already_given_flag": "given_cinder_contract_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "order_labyrinth_bronze",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_labyrinth_bronze",
+    "min_level": 2
+   },
+   {
+    "quest_template_id": "order_phoenix_cinder",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_phoenix_cinder",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "order_hallowed_bronze",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_hallowed_bronze",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "order_star_metal",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_star_metal",
+    "min_level": 9
+   }
+  ]
+ },
+ {
+  "template_id": "lady_vos",
+  "npc_id": "lady_vos",
+  "name": "Lady Seraphine Vos",
+  "role": "noble",
+  "zone_id": "verath_city",
+  "description": "A noblewoman collector with a cabinet of curiosities, deep pockets, and a very particular taste in danger.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'You look capable,' says Lady Vos, 'and expendable. I mean that kindly. I collect things, and I pay well for them.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "mirrorsteel_blade_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_mirrorsteel_blade_1",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "mirrorsteel_blade_2",
+    "trigger_flag": "done_mirrorsteel_blade_1",
+    "already_given_flag": "given_mirrorsteel_blade_2",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "mirrorsteel_blade_3",
+    "trigger_flag": "done_mirrorsteel_blade_2",
+    "already_given_flag": "given_mirrorsteel_blade_3",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "dreamthread_ring_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_dreamthread_ring_1",
+    "min_level": 16
+   },
+   {
+    "quest_template_id": "dreamthread_ring_2",
+    "trigger_flag": "done_dreamthread_ring_1",
+    "already_given_flag": "given_dreamthread_ring_2",
+    "min_level": 17
+   },
+   {
+    "quest_template_id": "dreamthread_ring_3",
+    "trigger_flag": "done_dreamthread_ring_2",
+    "already_given_flag": "given_dreamthread_ring_3",
+    "min_level": 18
+   },
+   {
+    "quest_template_id": "gorgon_widows_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_gorgon_widows_1",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "gorgon_widows_2",
+    "trigger_flag": "done_gorgon_widows_1",
+    "already_given_flag": "given_gorgon_widows_2",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "mirror_vanity_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_mirror_vanity_1",
+    "min_level": 8
+   },
+   {
+    "quest_template_id": "mirror_vanity_2",
+    "trigger_flag": "done_mirror_vanity_1",
+    "already_given_flag": "given_mirror_vanity_2",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "phoenix_egg_war_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_phoenix_egg_war_1",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "phoenix_egg_war_2",
+    "trigger_flag": "done_phoenix_egg_war_1",
+    "already_given_flag": "given_phoenix_egg_war_2",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "phoenix_egg_war_3",
+    "trigger_flag": "done_phoenix_egg_war_2",
+    "already_given_flag": "given_phoenix_egg_war_3",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "order_abyssal_pearl",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_abyssal_pearl",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "order_dragon_scale",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_dragon_scale",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "order_dream_ichor",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_dream_ichor",
+    "min_level": 17
+   }
+  ]
+ },
+ {
+  "template_id": "brother_cassian",
+  "npc_id": "brother_cassian",
+  "name": "Brother Cassian",
+  "role": "exorcist",
+  "zone_id": "verath_city",
+  "description": "A tall exorcist in a mended black coat, a censer at his hip and holy water in a hip-flask.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'The dead have been restless since the Fracture,' says Cassian. 'They need someone to remind them how to rest.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "spectral_ward_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_spectral_ward_1",
+    "min_level": 3
+   },
+   {
+    "quest_template_id": "spectral_ward_2",
+    "trigger_flag": "done_spectral_ward_1",
+    "already_given_flag": "given_spectral_ward_2",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "spectral_ward_3",
+    "trigger_flag": "done_spectral_ward_2",
+    "already_given_flag": "given_spectral_ward_3",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "seraph_mantle_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_seraph_mantle_1",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "seraph_mantle_2",
+    "trigger_flag": "done_seraph_mantle_1",
+    "already_given_flag": "given_seraph_mantle_2",
+    "min_level": 15
+   },
+   {
+    "quest_template_id": "seraph_mantle_3",
+    "trigger_flag": "done_seraph_mantle_2",
+    "already_given_flag": "given_seraph_mantle_3",
+    "min_level": 16
+   },
+   {
+    "quest_template_id": "bog_witch_trial_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_bog_witch_trial_1",
+    "min_level": 4
+   },
+   {
+    "quest_template_id": "bog_witch_trial_2",
+    "trigger_flag": "done_bog_witch_trial_1",
+    "already_given_flag": "given_bog_witch_trial_2",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "bog_witch_trial_3",
+    "trigger_flag": "done_bog_witch_trial_2",
+    "already_given_flag": "given_bog_witch_trial_3",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "bell_pilgrims_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_bell_pilgrims_1",
+    "min_level": 9
+   },
+   {
+    "quest_template_id": "bell_pilgrims_2",
+    "trigger_flag": "done_bell_pilgrims_1",
+    "already_given_flag": "given_bell_pilgrims_2",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "bell_pilgrims_3",
+    "trigger_flag": "done_bell_pilgrims_2",
+    "already_given_flag": "given_bell_pilgrims_3",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "bellfall_requiem_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_bellfall_requiem_1",
+    "min_level": 12
+   },
+   {
+    "quest_template_id": "bellfall_requiem_2",
+    "trigger_flag": "done_bellfall_requiem_1",
+    "already_given_flag": "given_bellfall_requiem_2",
+    "min_level": 13
+   },
+   {
+    "quest_template_id": "bellfall_requiem_3",
+    "trigger_flag": "done_bellfall_requiem_2",
+    "already_given_flag": "given_bellfall_requiem_3",
+    "min_level": 14
+   },
+   {
+    "quest_template_id": "order_ectoplasm",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_ectoplasm",
+    "min_level": 1
+   },
+   {
+    "quest_template_id": "order_porcelain_shard",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_porcelain_shard",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "order_seraph_feather",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_seraph_feather",
+    "min_level": 14
+   }
+  ]
+ },
+ {
+  "template_id": "sergeant_mabb",
+  "npc_id": "sergeant_mabb",
+  "name": "Sergeant Mabb",
+  "role": "trainer",
+  "zone_id": "verath_city",
+  "description": "A grizzled weapon-master who trains the watch recruits and the occasional adventurer foolish enough to ask.",
+  "starting_disposition": 10.0,
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "'You want to fight better?' Mabb grins. 'Good. Then you're going to hurt more first.'",
+    "options": [
+     {
+      "option_id": "ask_gates",
+      "label": "What do you know about the Gates?",
+      "npc_response": "'They open, someone moves in, someone kills them, someone else moves in. Check the Registry: it lists who rules each one this week.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {
+    "quest_template_id": "venom_strike_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_venom_strike_1",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "venom_strike_2",
+    "trigger_flag": "done_venom_strike_1",
+    "already_given_flag": "given_venom_strike_2",
+    "min_level": 6
+   },
+   {
+    "quest_template_id": "venom_strike_3",
+    "trigger_flag": "done_venom_strike_2",
+    "already_given_flag": "given_venom_strike_3",
+    "min_level": 7
+   },
+   {
+    "quest_template_id": "lightning_heist_1",
+    "trigger_flag": "",
+    "already_given_flag": "given_lightning_heist_1",
+    "min_level": 10
+   },
+   {
+    "quest_template_id": "lightning_heist_2",
+    "trigger_flag": "done_lightning_heist_1",
+    "already_given_flag": "given_lightning_heist_2",
+    "min_level": 11
+   },
+   {
+    "quest_template_id": "order_everfrost",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_everfrost",
+    "min_level": 5
+   },
+   {
+    "quest_template_id": "order_royal_jelly",
+    "trigger_flag": "",
+    "already_given_flag": "given_order_royal_jelly",
+    "min_level": 6
+   }
+  ]
+ }
+]

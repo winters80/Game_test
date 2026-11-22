@@ -78,6 +78,7 @@ class DialogueHandlerMixin:
             ):
                 seed_pairs = self._build_quest_seed_options(npc, disposition)
                 options.extend(opt for opt, _ in seed_pairs)
+                options.extend(self._build_report_options(npc))
 
             # Trader NPCs: buy / sell menus, at the conversation root only.
             if npc.trades is not None and current_node == npc_system.get_disposition_hook(npc, disposition):
@@ -123,6 +124,12 @@ class DialogueHandlerMixin:
                 continue
             if chosen_opt_scene.option_id == "__trade_sell__":
                 self._trade_sell_menu(npc)
+                continue
+
+            # ── Synthetic quest report (turn-in) option ───────────────────────
+            if chosen_opt_scene.option_id.startswith("__report__"):
+                self._handle_report(npc, chosen_opt_scene.option_id[len("__report__"):])
+                bus.flush()
                 continue
 
             # ── Synthetic quest-seed option ───────────────────────────────────
@@ -296,6 +303,27 @@ class DialogueHandlerMixin:
             self.state.mark_dirty()
 
     # ── Quest-seed dialogue injection ─────────────────────────────────────────
+
+    def _build_report_options(self, npc) -> list:
+        """« Report: <quest> » for each active quest ready to hand in here."""
+        from scenes.scene_base import SceneOption
+        from systems import quest_system as qs
+        return [
+            SceneOption(option_id=f"__report__{qid}", label=f"« Report: {tmpl.title} »", leads_to="__stay__")
+            for qid, tmpl, _stage in qs.reportable_quests(npc.npc_id, self.state, self.quest_registry)
+        ]
+
+    def _handle_report(self, npc, instance_id: str) -> None:
+        from systems import quest_system as qs
+        row = self.state.world_db.get_quest(instance_id) if self.state.world_db else None
+        template = self.quest_registry.get(row["template_id"]) if row else None
+        stage = template.get_stage(row["current_state"]) if template else None
+        advanced = qs.report_quest(instance_id, self.state, self.quest_registry)
+        if advanced and stage is not None:
+            renderer.print_npc_response(npc.name, "Good work. That's exactly what I needed.")
+        else:
+            renderer.print_npc_response(npc.name, "Not quite yet. Come back when it's done.")
+        renderer.prompt_any_key()
 
     def _build_quest_seed_options(self, npc, disposition: float) -> list[tuple]:
         """Thin wrapper that hands NPC + state to the pure builder in npc_system."""

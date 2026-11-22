@@ -238,7 +238,7 @@ def tick_lairs(engine: "GameEngine") -> list[str]:
         if not lair_system.tick(lair, state, turn):
             continue
         _save(engine, state)
-        text = lair_system.rumour_text(lair, prev_id, prev_name) or (
+        text = lair_system.rumour_text(lair, prev_id, prev_name, state.occupant_id, state.lineage_name) or (
             f"Something new has moved into {lair.name}.")
         _log(engine, text, lair.zone_id, title="Rumour")
         rumours.append(text)
@@ -276,7 +276,7 @@ def bot_lair_view(engine: "GameEngine") -> dict[str, list[dict]]:
         if state.generation == 0 and _turn(engine) < LAIR_BOT_GRACE_TURNS:
             continue      # the player gets the first shot at the original boss
         view.setdefault(lair.zone_id, []).append({
-            "lair_id": lair.lair_id, "lair_name": lair.name,
+            "lair_id": lair.lair_id, "lair_name": lair.name, "zone_id": lair.zone_id,
             "title": lair_system.occupant_title(lair, state),
             "min_level": lair.min_level,
             "enemies": lair_system.spawn_occupant(lair, state),

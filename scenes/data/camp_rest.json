@@ -6,6 +6,38 @@
     "The fire crackles softly. Stars wheel overhead. For a moment the System is silent."
   ],
   "nodes": {
+    "gate_hall": {
+      "text": "A second fire burns at the edge of the camp, where the road-wardens and the map-makers sit. They know the rifts along the roads better than anyone.",
+      "options": [
+        {
+          "option_id": "talk_warden_sorrel",
+          "label": "Talk to Warden Sorrel (ranger).",
+          "expected": true,
+          "leads_to": "camp_rest",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:warden_sorrel"
+          ]
+        },
+        {
+          "option_id": "talk_cartographer_mira",
+          "label": "Talk to Mira the Cartographer (explorer).",
+          "expected": true,
+          "leads_to": "camp_rest",
+          "leads_to_node": "gate_hall",
+          "triggers": [
+            "talk_npc:cartographer_mira"
+          ]
+        },
+        {
+          "option_id": "leave_gate_hall",
+          "label": "Back.",
+          "expected": true,
+          "leads_to": "camp_rest",
+          "leads_to_node": "root"
+        }
+      ]
+    },
     "root": {
       "text": "The camp is quiet. You have time to rest, cook, or study.",
       "options": [
@@ -35,6 +67,13 @@
           "expected": true,
           "leads_to_node": "root",
           "triggers": ["flag:studied_at_camp"]
+        },
+        {
+          "option_id": "wardens_fire",
+          "label": "Join the wardens at their fire.",
+          "expected": true,
+          "leads_to": "camp_rest",
+          "leads_to_node": "gate_hall"
         },
         {
           "option_id": "break_camp",

@@ -57,7 +57,22 @@ Optional NPC fields for traders (`systems/trade_system.py`):
 Trade menus (« Browse wares » / « Sell items ») are injected at the dialogue root of any NPC with `trades`. The last copy of an equipped item is never sellable. `NPCRegistry.register()` and `alchemy_system.register_recipe()` add NPCs and recipes at runtime; recipes load once into `engine.recipes`.
 
 ### New quest template *(quest_system feature flag must be True)*
-Add to `data/quests/*.json`. Quest state machine states are defined in the JSON.
+Add to any `data/quests/*.json` (`QuestRegistry.load_from_dir` loads them all). Quest state machine states are defined in the JSON. Offer it by adding a seed to the giver NPC's `quest_seeds`.
+
+Stage `completion_condition` keys (`entities/quest.CONDITION_KEYS`):
+
+| Key | Met when |
+|-----|----------|
+| `has_item` / `has_items` | the player holds the item / every `{item: qty}` |
+| `has_flag` / `world_flag` | the player / world flag is set. Useful flags: `cleared_<gate_id>`, `slew_<occupant_id>`, `done_<template_id>` |
+| `min_level` | player level ≥ N |
+| `turn_in` | the player picks « Report: <title> » at that NPC. Inside `all`, the option only appears once the rest is met |
+| `all` / `any` | every / at least one sub-condition |
+
+**Chains:** give each quest `reward_flags: ["done_<id>"]` and the next quest's seed `trigger_flag: "done_<id>"`. Seeds also take `min_level` (hidden until then) and `already_given_flag`. `chain_id` / `chain_step` / `chain_kind` (`skill` / `item` / `story`) are metadata for tests and tools. `reward_skills` grants real skill ids; `reward_items` grants items. Hand-ins use `take_item:X:N` in `on_advance_triggers`.
+
+### New gate (instanced dungeon) *(boss_succession)*
+Add to `data/dungeons/gates/*.json` (see "Gates" below). No scene edit needed: the Gate Registry lists every gate.
 
 ### New species *(species_system feature flag must be True)*
 Add to `data/species/species_definitions.json`. Define `evolution_path` as an ordered list of stages.
@@ -94,6 +109,9 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `set_background:X` | Queue background X; applied after the choice resolves (alongside species) |
 | `combat:X` | Start encounter X (see the `encounters` table in `combat_system.spawn_encounter()`) |
 | `boss_lair:X` | *(boss_succession)* Enter boss lair X: meet / study / fight its current occupant, or cross it while empty (`core/lair_flow.enter_lair`) |
+| `gate_registry` | *(boss_succession)* Open the Gate Registry: every gate, its rated level and current master (`core/gate_flow.open_gate_registry`) |
+| `enter_gate:X` | *(boss_succession)* Run gate X directly: rooms, then its lair (`core/gate_flow.run_gate`) |
+| `take_item:X[:N]` | Remove up to N (default 1) of item X, never below zero. Quest hand-ins use it |
 | `alignment:+N` | Shift player alignment by +N (float) |
 | `alignment:-N` | Shift player alignment by -N (float) |
 | `rest_camp:full` / `rest_camp:short` | Restore all / half of HP + MP, then run the rest flow (`systems/rest_system.handle_rest`) |
@@ -392,6 +410,7 @@ Occupant fields:
 | Field | Effect |
 |-------|--------|
 | `title`, `intro`, `victory`, `omen`, `rumour` | Texts; `{name}` is the lineage name. `omen` shows in the empty lair while the successor moves in; `rumour` spreads when it arrives |
+| `arrival_omen`, `arrival_rumour` | The same, written by the newcomer. They win over the dead occupant's `omen` / `rumour`, so a branching chain always hints at what actually comes |
 | `name_pool` | A fresh name, drawn in order each time this occupant takes the lair. Empty → inherit the previous occupant's name (the lich keeps the wizard's) |
 | `enemies` | Enemy template ids (lair `enemy_templates` or `combat_system.ENEMY_TEMPLATES`) |
 | `study` | `{stat, min, text}`: with the stat, studying first gives a surprise round |
@@ -405,6 +424,33 @@ Rules:
 - A returning occupant gets `+LAIR_SCALING_PER_RETURN` (10%) HP / ATK / rewards per previous stay, capped at `LAIR_MAX_SCALING` (40%).
 - Bots challenge a lair with chance `LAIR_BOT_CHALLENGE_CHANCE` when its level allows and expected damage < `LAIR_BOT_SAFETY` × HP. They leave each lair's first occupant alone for `LAIR_BOT_GRACE_TURNS` (250), so the player gets the first shot. Bot kills advance the chain and go to the World Log.
 - `[L]` World Log shows who holds each lair now; kills and arrivals are logged as `lair` events.
+
+## Gates (instanced dungeons with succession)
+
+Since the Fracture, rifts ("Gates") open all over Aethoria. Each gate is a short run: 3 rooms, then a boss lair that follows the Boss Succession rules above. There are **32 gates** at levels 2–18 (mythical, technology, paranormal, elemental, and otherworldly: cosmic, insect, time, fungal, celestial, eldritch, outlaw).
+
+| Piece | Where |
+|-------|-------|
+| Content | `data/dungeons/gates/<group>.json`: `enemy_templates` + `gates`. Gate materials are in `data/items/gate_materials.json` |
+| Models | `entities/gate.py`: `GateDefinition` builds its `lair` as a `LairDefinition` (`lair_id` = gate id, `zone_id` = `gate:<id>`) and `GateRegistry` registers it into the `LairRegistry` |
+| Engine | `core/gate_flow.py`: registry menu, `run_gate`, `bot_gate_view` |
+| Where players find them | The **Gate Hall** node in `village_start` and `verath_city` (Registry + quest givers), and the wardens' fire at `camp_rest` |
+
+Gate fields: `gate_id`, `name`, `theme`, `min_level` (enterable from `min_level - GATE_LEVEL_GRACE`), `region`, `description`, `entry_text`, `material`, `rooms`, `lair`. Rooms:
+
+| `kind` | Fields | Effect |
+|--------|--------|--------|
+| `fight` | `enemies` | A real combat; fleeing or dying ends the run |
+| `trap` | `check {stat, min, success, fail, damage_pct}`, `loot` | Pass the check for the loot; fail and lose `damage_pct` of max HP (never below 1) |
+| `treasure` | `loot`, optional `check` | Loot; with a check, failing still gives one item |
+
+Every gate master's chain branches at the first master (on a magic kill, or on the first vs. second aftermath choice) and loops back, so a gate never runs out of bosses. Occupant ids are globally unique (`<gate>_<occupant>`) because quests check `slew_<occupant_id>`. Clearing a gate sets `cleared_<gate_id>` and counts `gate_clears_<gate_id>`.
+
+Bots: fighters and explorers in town run a gate with chance `BOT_GATE_CHANCE` when its level fits (`bot_brain._gate_run`): they clear the rooms if they can survive them and may fight the master (same rules as lairs, including the grace period).
+
+### Quest content
+
+`data/quests/gate_quests.json` has **205 quests**: 51 chains (10 skill chains whose last step grants a skill from `data/skills/quest_skills.json`, 10 item chains whose last step grants an item from `data/items/quest_rewards.json`, 31 story chains), 32 gate bounties and 32 material orders. Givers are the 13 NPCs in `data/npcs/npcs_questgivers.json`, reached from the Gate Halls. Rewards come from `economy.recommended_quest_reward` (the last step of a chain is `hard`). Every objective is a gate clear, a specific master kill, materials that gates drop, or a level, and every step ends with a report to the giver.
 
 ## Divergence System (How AI Classes Are Triggered)
 

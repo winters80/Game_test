@@ -1,0 +1,183 @@
+[
+  {
+    "skill_id": "bull_rush",
+    "name": "Bull Rush",
+    "rarity": "RARE",
+    "description": "A lowered-shoulder charge learned from the Labyrinth's warden. Deals heavy physical damage scaling with STR.",
+    "flavor_text": "Asterion always turned left. You never do.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 0,
+    "cooldown_turns": 3,
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "STR",
+        "base_value": 14.0,
+        "scaling_coefficient": 2.2
+      }
+    ]
+  },
+  {
+    "skill_id": "spectral_ward",
+    "name": "Spectral Ward",
+    "rarity": "RARE",
+    "description": "A permanent ward of cold light, like armor, that turns aside blows from the living and the dead.",
+    "flavor_text": "The ghosts of Ashgrove taught you how to not be there when the blow lands.",
+    "skill_type": "PASSIVE",
+    "effects": [
+      {
+        "effect_type": "shield",
+        "scaling_stat": "WIS",
+        "base_value": 4.0,
+        "scaling_coefficient": 0.5
+      }
+    ]
+  },
+  {
+    "skill_id": "stormcall",
+    "name": "Stormcall",
+    "rarity": "EPIC",
+    "spell_type": "arcane",
+    "description": "Call down a bolt from a storm you carry inside you. Arcane damage scaling with INT.",
+    "flavor_text": "The Thunderbird's storm, bottled and uncorked.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 14,
+    "cooldown_turns": 2,
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "INT",
+        "base_value": 18.0,
+        "scaling_coefficient": 2.4
+      }
+    ]
+  },
+  {
+    "skill_id": "rime_lance",
+    "name": "Rime Lance",
+    "rarity": "RARE",
+    "spell_type": "ice",
+    "description": "A spear of everfrost, hurled. Ice damage scaling with INT.",
+    "flavor_text": "Cold that the kings in the tomb would recognise.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 10,
+    "cooldown_turns": 1,
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "INT",
+        "base_value": 12.0,
+        "scaling_coefficient": 2.0
+      }
+    ]
+  },
+  {
+    "skill_id": "ember_rebirth",
+    "name": "Ember Rebirth",
+    "rarity": "EPIC",
+    "description": "When your life burns low, a phoenix ember in your chest flares and heals you. Triggers on low HP.",
+    "flavor_text": "Phoenixes do not die. They wait.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_low_hp",
+    "cooldown_turns": 6,
+    "effects": [
+      {
+        "effect_type": "heal",
+        "scaling_stat": "WIS",
+        "base_value": 25.0,
+        "scaling_coefficient": 2.0
+      }
+    ]
+  },
+  {
+    "skill_id": "brannocs_mark",
+    "name": "Brannoc's Mark",
+    "rarity": "RARE",
+    "description": "Old Brannoc's tracking and his eye for the weak spot: a lasting edge in every fight against beasts and monsters.",
+    "flavor_text": "Every monster has a soft place. You know where to look.",
+    "skill_type": "PASSIVE",
+    "effects": [
+      {
+        "effect_type": "buff",
+        "scaling_stat": "AGI",
+        "base_value": 3.0,
+        "scaling_coefficient": 0.4
+      }
+    ]
+  },
+  {
+    "skill_id": "clockwork_precision",
+    "name": "Clockwork Precision",
+    "rarity": "RARE",
+    "description": "Odo's gear-timed footwork: your strikes land with mechanical precision for bonus damage on every hit.",
+    "flavor_text": "Tick, tick, strike.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_hit",
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "AGI",
+        "base_value": 4.0,
+        "scaling_coefficient": 0.6
+      }
+    ]
+  },
+  {
+    "skill_id": "void_step",
+    "name": "Void Step",
+    "rarity": "EPIC",
+    "description": "Evasion learned from the Hollow of Unmaking: for an instant, you are not where you were.",
+    "flavor_text": "Nothing taught you this. Literally.",
+    "skill_type": "PASSIVE",
+    "effects": [
+      {
+        "effect_type": "buff",
+        "scaling_stat": "AGI",
+        "base_value": 2.0,
+        "scaling_coefficient": 0.3
+      }
+    ]
+  },
+  {
+    "skill_id": "gorgon_gaze",
+    "name": "Gorgon's Gaze",
+    "rarity": "EPIC",
+    "spell_type": "arcane",
+    "description": "A borrowed glance from Euryale's line. Stony damage scaling with WIS that leaves the target sluggish.",
+    "flavor_text": "Don't look. Nobody ever listens.",
+    "skill_type": "ACTIVE",
+    "mp_cost": 12,
+    "cooldown_turns": 3,
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "WIS",
+        "base_value": 16.0,
+        "scaling_coefficient": 2.2
+      },
+      {
+        "effect_type": "debuff",
+        "scaling_stat": "WIS",
+        "base_value": 2.0,
+        "scaling_coefficient": 0.3
+      }
+    ]
+  },
+  {
+    "skill_id": "venom_strike",
+    "name": "Venom Strike",
+    "rarity": "RARE",
+    "description": "Mabb's trick with hive venom on the blade: every basic attack carries bonus damage.",
+    "flavor_text": "It doesn't need to be a big cut.",
+    "skill_type": "TRIGGERED",
+    "trigger_condition": "on_attack",
+    "effects": [
+      {
+        "effect_type": "damage",
+        "scaling_stat": "AGI",
+        "base_value": 3.0,
+        "scaling_coefficient": 0.5
+      }
+    ]
+  }
+]
