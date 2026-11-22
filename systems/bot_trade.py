@@ -61,6 +61,27 @@ def bot_buys(bot: "BotAgent", item: "Item") -> bool:
     return bot.archetype == "trader" or item.item_type.value in _BOT_BUYS_TYPES
 
 
+def auction_interest(bot: "BotAgent", item: "Item") -> int:
+    """The most (copper) this bot would bid for one of ``item`` at auction,
+    0 if it doesn't want it. Potions for anyone short of them, materials for
+    crafters / gatherers / traders, gear for fighters and explorers; never
+    more than 40% of its purse."""
+    t = item.item_type.value
+    if t in _NEVER_TRADED or _value(item) <= 0:
+        return 0
+    v = _value(item)
+    if t == "CONSUMABLE" and sum(q for i, q in bot.inventory.items() if "potion" in i) < 2:
+        limit = int(v * 1.5)
+    elif t == "MATERIAL" and bot.archetype in ("crafter", "gatherer", "trader"):
+        limit = int(v * (1.4 if bot.archetype == "trader" else 1.3))
+    elif t in ("WEAPON", "ARMOR", "ACCESSORY") and bot.archetype in ("fighter", "explorer") \
+            and item.item_id not in bot.inventory:
+        limit = int(v * 1.6)
+    else:
+        return 0
+    return min(limit, int(bot.gold * 0.4))
+
+
 def bot_buy_price(item: "Item") -> int:
     return max(1, int(_value(item) * BOT_BUY_RATE))
 

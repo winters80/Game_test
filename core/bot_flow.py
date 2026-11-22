@@ -188,6 +188,49 @@ def plan_bot_goals(engine: "GameEngine", bots: list, turn: int) -> int:
 
 
 AUCTION_HOUSE_FEE = 0.1        # the house keeps 10% of a bot's sale
+BOT_BID_CHANCE = 0.3           # chance a bot in town looks at the listings, per auction tick
+
+
+def bot_auction_bids(engine: "GameEngine", rng: random.Random | None = None) -> int:
+    """Bots in a town bid on listings they want and can afford (the player's
+    consignments included). The bidder is ``bot:<id>``; they pay on
+    settlement. Returns the number of bids placed."""
+    from systems.bot_brain import SAFE_ZONES
+    from systems.bot_trade import auction_interest
+    mgr = engine._bot_manager
+    db = engine.state.world_db if feature("world_db") else None
+    if not feature("bot_system") or mgr is None or db is None:
+        return 0
+    rng = rng or random.Random(f"bids:{engine.state.turn_number}")
+    listings = [l for l in db.get_active_listings() if l.get("item_id") and l["item_type"] != "life_token"]
+    if not listings:
+        return 0
+    placed = 0
+    for bot in mgr.all():
+        if bot.current_zone_id not in SAFE_ZONES or rng.random() > BOT_BID_CHANCE:
+            continue
+        best = None
+        for l in listings:
+            if l.get("seller_npc_id") == f"bot:{bot.bot_id}":
+                continue
+            top = db.top_bid(l["listing_id"])
+            if top and top["bidder"] == f"bot:{bot.bot_id}":
+                continue
+            item = engine.item_registry.get(l["item_id"])
+            if item is None:
+                continue
+            cap = auction_interest(bot, item) * max(1, l.get("quantity", 1))
+            bid = int(l["current_bid"] * 1.06) + 1 if top else l["current_bid"] + 1
+            if bid <= cap and (best is None or cap - bid > best[0]):
+                best = (cap - bid, l, bid, item)
+        if best is None:
+            continue
+        _, l, bid, item = best
+        if db.place_bid(l["listing_id"], f"bot:{bot.bot_id}", bid, engine.state.turn_number):
+            placed += 1
+            l["current_bid"] = bid
+            bot.activity = f"bidding on {item.name} at the auction house"
+    return placed
 AUCTION_LISTING_TURNS = 144    # a day
 
 
@@ -218,23 +261,43 @@ def _apply_social(engine: "GameEngine", events: list) -> None:
 def settle_bot_auctions(engine: "GameEngine", settled: list) -> list[str]:
     """Pay bots for their auction sales (or give unsold items back). ``settled``
     is ``auction_system.tick_auction``'s [(listing, top_bid or None)]."""
+    from config import format_currency
     lines = []
     mgr = engine._bot_manager
     if not feature("bot_system") or mgr is None:
         return lines
+    turn = engine.state.player.turn_count
     for listing, top in settled:
         seller = listing.get("seller_npc_id") or ""
+        item = engine.item_registry.get(listing.get("item_id") or "")
+        name = item.name if item else listing.get("item_id")
+        qty = listing.get("quantity", 1)
+        bidder = (top or {}).get("bidder", "")
+        buyer_bot = mgr.get(bidder[4:]) if bidder.startswith("bot:") else None
+        if buyer_bot is not None and listing.get("item_id"):
+            price = min(top["bid_amount"], buyer_bot.gold)
+            buyer_bot.gold -= price
+            buyer_bot.add_item(listing["item_id"], qty)
+            buyer_bot.remember(f"Won {name} at auction (turn {turn})")
+            _save_bot(engine, buyer_bot)
+        buyer = ("you" if bidder == "player" else buyer_bot.name if buyer_bot is not None
+                 else "a guild buyer")
+        if seller == "player":
+            if top:
+                lines.append(f"Your {name} sold at auction to {buyer} for "
+                             f"{format_currency(int(top['bid_amount'] * (1 - AUCTION_HOUSE_FEE)))} "
+                             "(after the house's 10%).")
+            else:
+                lines.append(f"Your {name} didn't sell at auction; it's back in your bag.")
+            continue
         if not seller.startswith("bot:"):
             continue
         bot = mgr.get(seller[4:])
         if bot is None:
             continue
-        item = engine.item_registry.get(listing.get("item_id") or "")
-        name = item.name if item else listing.get("item_id")
         if top:
             earned = int(top["bid_amount"] * (1 - AUCTION_HOUSE_FEE))
             bot.gold += earned
-            buyer = "you" if top["bidder"] == "player" else "a guild buyer"
             bot.remember(f"Sold {name} at auction to {buyer} (turn {engine.state.player.turn_count})")
             lines.append(f"{bot.name} sold {name} at auction.")
         elif listing.get("item_id"):

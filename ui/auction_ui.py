@@ -39,13 +39,16 @@ def show_auction_house(engine: "GameEngine") -> None:
             bot = mgr.get(seller[4:]) if mgr is not None and seller.startswith("bot:") else None
             if bot is not None:
                 lst["seller_name"] = bot.name
+            elif seller == "player":
+                lst["seller_name"] = "you"
         _render_header()
         _render_listings(listings)
         _render_status(engine, auction_system)
 
         action = uip.select(
             "Auction house:",
-            choices=["Buy life token (direct)", "Bid on listing", "Leave auction house"],
+            choices=["Buy life token (direct)", "Bid on listing", "Consign an item",
+                     "Leave auction house"],
         ).ask()
 
         if action is None or action == "Leave auction house":
@@ -54,6 +57,34 @@ def show_auction_house(engine: "GameEngine") -> None:
             _buy_life_token(engine, auction_system)
         elif action == "Bid on listing" and listings:
             _bid_on_listing(engine, auction_system, listings)
+        elif action == "Consign an item":
+            _consign(engine, auction_system)
+
+
+def _consign(engine: "GameEngine", auction_system) -> None:
+    """Put something up for auction: bots and guild buyers bid on it, and you
+    are paid (minus the house's 10%) when it ends, or get it back."""
+    goods = auction_system.consignable(engine.state.player, engine.item_registry)
+    if not goods:
+        renderer.print_system_message("You have nothing the auction house will take.", style="dim_text")
+        renderer.prompt_any_key()
+        return
+    choices = [uip.Choice(f"{item.name} ×{qty} — starts at {item.value_gold * 100:,} each", item.item_id)
+               for item, qty in goods] + [uip.Choice("← Back", None)]
+    item_id = uip.select("Consign which item?", choices=choices).ask()
+    if not item_id:
+        return
+    qty = dict((i.item_id, q) for i, q in goods)[item_id]
+    n = 1
+    if qty > 1:
+        try:
+            n = int(uip.text(f"How many? (1-{qty})", default="1").ask() or 1)
+        except ValueError:
+            n = 1
+    ok, msg = auction_system.consign_player_item(engine.state, item_id, engine.item_registry, n)
+    renderer.print_system_message(msg + (" It runs for a day; bots in town may bid." if ok else ""),
+                                  style="system_msg" if ok else "system_warning")
+    renderer.prompt_any_key()
 
 
 def _render_header() -> None:

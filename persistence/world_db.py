@@ -431,6 +431,22 @@ class WorldDatabase:
             logger.warning("World DB backup to %s failed", dest, exc_info=True)
             return False
 
+    def top_bid(self, listing_id: str) -> dict[str, Any] | None:
+        """The highest bid on a listing ({bidder, bid_amount}) or None."""
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT bidder, bid_amount FROM auction_bids WHERE listing_id = ? "
+            "ORDER BY bid_amount DESC LIMIT 1", (listing_id,)).fetchone()
+        return dict(row) if row else None
+
+    def max_bid_by(self, listing_id: str, bidder: str) -> int:
+        """The highest amount ``bidder`` has bid on a listing (0 if none)."""
+        assert self._conn
+        row = self._conn.execute(
+            "SELECT MAX(bid_amount) AS amt FROM auction_bids WHERE listing_id = ? AND bidder = ?",
+            (listing_id, bidder)).fetchone()
+        return int(row["amt"] or 0) if row else 0
+
     def insights(self) -> dict[str, Any]:
         """Aggregates for playtest analysis (scripts/playtest_report.py)."""
         assert self._conn
