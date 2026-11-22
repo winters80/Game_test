@@ -2187,7 +2187,7 @@ def main() -> int:
         assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _wren)] == \
             ["__trade_buy__", "__trade_sell__"]
         assert [o.option_id for o in DialogueHandlerMixin._build_trade_options(_DH(), _torven)] == \
-            ["__trade_sell__"], "Torven only buys"
+            ["__trade_buy__", "__trade_sell__"], "Torven sells gear and buys weapons/armour"
         ok("buy_item checks gold + wares; dialogue offers Browse/Sell as the trader supports")
 
         # 26e. Runtime NPC registration.
@@ -3681,4 +3681,5 @@ def _test_social_world(item_reg) -> None:
 
 if __name__ == "__main__":
     # A failed check must fail the run (and so the pre-push hook).
-    sys.exit(1 if main() else 0)
+    main()
+    sys.exit(1 if ISSUES else 0)
