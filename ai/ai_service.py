@@ -57,6 +57,9 @@ class AIService:
         if self._class_executor is not None:
             self._class_executor.shutdown(wait=False, cancel_futures=True)
             self._class_executor = None
+        if getattr(self, "_decide_executor", None) is not None:
+            self._decide_executor.shutdown(wait=False, cancel_futures=True)
+            self._decide_executor = None
 
     # ── Availability ─────────────────────────────────────────────────────────
 
@@ -406,6 +409,27 @@ class AIService:
         except Exception:
             logger.info("AI decision failed", exc_info=True)
             return None
+
+    def decide_many(self, questions: list, context: str = "") -> list:
+        """``[(question, options), …]`` → one ``Decision | None`` per question,
+        in a single call. All None when offline or on failure."""
+        if self._gen is None or not questions:
+            return [None] * len(questions)
+        try:
+            out = self._gen.decide_many(questions, context)
+            return list(out) + [None] * (len(questions) - len(out))
+        except Exception:
+            logger.info("AI batch decision failed", exc_info=True)
+            return [None] * len(questions)
+
+    def submit_decide_many_async(self, questions: list, context: str = "") -> "Future | None":
+        """``decide_many`` on a worker thread (bots plan without freezing the
+        game). None when AI is unavailable."""
+        if self._gen is None or not questions:
+            return None
+        if getattr(self, "_decide_executor", None) is None:
+            self._decide_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ai-decide")
+        return self._decide_executor.submit(self.decide_many, questions, context)
 
     def generate_bot_reply(self, profile: dict, player_name: str, topic: str,
                            facts: str = "", said_so_far: list[str] | None = None) -> str | None:

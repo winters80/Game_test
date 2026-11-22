@@ -421,8 +421,45 @@ def _deepest_floor(bot: "BotAgent") -> str:
     return "dungeon_floor1"
 
 
+# ── Planned goals (a batched AI decision every few hours, core/bot_flow) ─────
+
+ZONE_HINT = {
+    "village_start": "the outer market: sell loot, buy, craft, the Gate Hall",
+    "camp_rest": "the roadside camp: rest, gather herbs",
+    "verath_city": "Verath: the auction house, guild halls, the Gate Hall",
+    "dungeon_floor1": "Floor 1: easy fights, herbs and ore",
+    "dungeon_floor2": "Floor 2: level 3+ fights, the Crystal Heart lair",
+    "dungeon_floor3": "Floor 3: level 5+ fights, the Drowned Sanctum",
+}
+
+
+def goal_options(bot: "BotAgent") -> list[tuple[str, str]]:
+    """(zone, label) choices the planner may pick for this bot."""
+    return [(z, ZONE_HINT.get(z, place(z))) for z in BOT_MAP if _allowed(bot, z)]
+
+
+def goal_question(bot: "BotAgent") -> str:
+    bag = bot.item_count()
+    hurt = "hurt" if bot.hp < bot.max_hp * 0.5 else "healthy"
+    return (f"{bot.name}, level {bot.level} {bot.archetype} ({bot.personality_seed or 'adventurer'}), "
+            f"is at {place(bot.current_zone_id)}, {hurt}, {bag} items in the bag, "
+            f"{bot.gold // 100}g. Where should they go next?")
+
+
+def apply_goal(bot: "BotAgent", zone: str, turn: int, hold: int) -> None:
+    """Point the bot at ``zone`` until ``turn + hold``; the rules still decide
+    what it does on the way and once there."""
+    if zone not in BOT_MAP or not _allowed(bot, zone):
+        return
+    bot.goal_zone, bot.goal_until = zone, turn + hold
+    bot.goal_reason = ZONE_HINT.get(zone, "").split(":")[0] or place(zone)
+
+
 def _destination(bot: "BotAgent", world: BotWorld, rng: random.Random) -> tuple[str, str]:
     """Where the bot wants to go next, and how its [W] line reads meanwhile."""
+    if (bot.goal_zone and world.turn < bot.goal_until and bot.goal_zone != bot.current_zone_id
+            and _allowed(bot, bot.goal_zone)):
+        return bot.goal_zone, f"set on {place(bot.goal_zone)}"
     kind = bot.archetype
     if kind == "fighter":
         floor = _deepest_floor(bot)

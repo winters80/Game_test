@@ -183,10 +183,68 @@ def _upcoming(enemy: "Enemy") -> dict | None:
     return None
 
 
+# ── Tactics: a boss picks its move from the fight's state (core/combat_handler
+# asks AIService.decide while the player chooses; these stay pure). ─────────────
+
+BASIC = {"kind": "basic", "name": "a basic attack"}
+
+
+def tactic_options(enemy: "Enemy", enemies: list | None = None) -> list[dict]:
+    """Moves a boss may choose this turn. Heavy blows keep their announced
+    schedule (the player was warned), so they are never offered here; the
+    other abilities need their ``every`` cooldown since their last use, a heal
+    needs missing HP, a summon needs room."""
+    if not enemy.abilities:
+        return []
+    nxt = enemy.turns_taken + 1
+    out = [BASIC]
+    for ab in enemy.abilities:
+        kind = ab.get("kind")
+        if kind == "heavy":
+            continue
+        every = max(2, int(ab.get("every", 3)))
+        last = enemy.ability_last.get(ab.get("name", kind), -10**6)
+        if nxt - last < every:
+            continue
+        if kind == "heal" and enemy.current_hp > enemy.max_hp * 0.7:
+            continue
+        if kind == "summon" and enemies is not None and \
+                sum(1 for e in enemies if e.is_alive and e.summoned) >= MAX_SUMMONS_ALIVE:
+            continue
+        out.append(ab)
+    return out if len(out) > 1 else []
+
+
+def heavy_due(enemy: "Enemy") -> bool:
+    """True if this turn is a scheduled (announced) heavy blow."""
+    nxt = enemy.turns_taken + 1
+    return any(ab.get("kind") == "heavy" and nxt % max(2, int(ab.get("every", 3))) == 0
+               for ab in enemy.abilities)
+
+
+def tactic_question(enemy: "Enemy", player: "Player", player_statuses: dict, options: list[dict]) -> tuple[str, list[str]]:
+    """The decision to ask, and one label per option."""
+    mine = f"{enemy.current_hp}/{enemy.max_hp} HP" + (", enraged" if enemy.enraged else "")
+    theirs = f"{player.current_hp}/{player.max_hp} HP"
+    if player_statuses:
+        theirs += ", " + ", ".join(sorted(k for k in player_statuses if not k.startswith("_")))
+    labels = []
+    for ab in options:
+        k = ab.get("kind")
+        what = {"basic": "a plain attack", "heal": "heal yourself", "summon": f"call {ab.get('summon', 'help')}",
+                "drain": "an attack that steals HP", "status": f"an attack that inflicts {ab.get('status', 'a status')}"
+                }.get(k, k)
+        labels.append(what if k == "basic" else f"{ab.get('name', k)}: {what}")
+    q = (f"You are {enemy.name} ({mine}) fighting an adventurer ({theirs}). "
+         "Which move gives you the best chance to win this turn?")
+    return q, labels
+
+
 def enemy_turn(
     enemy: "Enemy", player: "Player", player_statuses: dict,
     skill_registry: "SkillRegistry | None" = None,
     enemies: list | None = None, rng: random.Random | None = None,
+    chosen: dict | None = None,
 ) -> EnemyTurn:
     """One enemy's action: stunned, enraged, signature ability, or a basic
     attack (with its on-hit status)."""
@@ -206,6 +264,11 @@ def enemy_turn(
 
     frozen = FROZEN_ATTACK_PENALTY if enemy.statuses.get("frozen") else 0
     ab = _due(enemy)
+    # A tactical choice replaces the cycle, except on an announced heavy turn.
+    if chosen is not None and not (ab and ab.get("kind") == "heavy"):
+        ab = None if chosen.get("kind") == "basic" else chosen
+    if ab:
+        enemy.ability_last[ab.get("name", ab.get("kind"))] = enemy.turns_taken
     kind = (ab or {}).get("kind")
     name = (ab or {}).get("name", "")
 
