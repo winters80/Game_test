@@ -18,14 +18,16 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 
 ## What's new
 
-- **A real interface, in the terminal or the browser.** `python main.py --tui` opens the game in panels: your status, stats, gear and bag in a sidebar, the story in a scrollable log, and choices you click (or pick with the arrow keys, Enter or the number keys). `python main.py --web` serves the same thing to your browser. The classic terminal version still runs with plain `python main.py`.
-- **Locked choices explain themselves.** They stay in the list, greyed out, with the reason ("The gate guards only pass ranked adventurers…"), instead of being listed twice.
-- **Bots talk like players.** Ask what they've been up to and you get "Been grinding Floor 1: four fights, mostly crystal spiders. Then got flattened by the Crystal Golem", not their log. Ask for tips, their build or their guild, or **team up**: they'll wait in town for your next Gate run and be first in the party list.
-- **Type an action, skip the wait.** In `[?]`, if what you type is one of the choices on screen ("go to the inn"), the game just does it with one quick decision call instead of writing a whole answer.
-- **Better AI models without touching code.** Admin → **AI models** shows which model does what, checks a catalog for better ones for your machine's memory, benchmarks a model on game-shaped tasks, downloads and switches it on the spot.
-- **Diagnostics log.** Every session can be recorded (screen, choices, errors, background AI) and exported as a zip for bug reports. Switch it in the Admin panel.
-- **Safer saves.** Saves are written atomically, keep three rotating backups, and a damaged world database is restored from the newest good backup on load. The background guild simulation, which silently failed when the AI was on, now works.
-- **Starting gear is equipped**, and AI option outcomes describe what happens instead of repeating what you chose.
+- **Bosses think.** In a fight, bosses choose their next move from how it's going (heal when hurt, call help, drain you, inflict a status) while you choose yours, so there's no wait. Their big telegraphed blows keep their warning. Without the AI they use their fixed pattern.
+- **Bots make plans.** Every six in-game hours one quick AI decision sends each of the 24 adventurers somewhere that suits them: a fighter to a deeper floor, a trader to the market, a hurt explorer to camp. The rules still run them in between, and offline they plan by rules alone.
+- **Sell at auction.** Consign gear, potions or materials at the Verath auction house. Other adventurers bid on what they actually want and can afford; you're paid (minus the house's 10%) when it ends, or it comes back to you.
+- **Classes feel like classes.** Every 4 levels your class adds its own growth (a warrior hardens, a mage sharpens), rogues learn Evasion first, and Gates were rebalanced with every class's real skills: warriors end an average Gate run with 62% HP, mages 57%, rogues 58%, and every class clears every Gate at its level.
+- **A clickable sidebar** in the panel and browser versions: click something in your bag to use or equip it, or a skill to read it.
+- **Save slots with details**: name, level, class, where you are, play time and when you saved.
+- **Torven sells gear** (nine pieces from a rusty dagger to mage robes), Wren sells resistance potions, and Mira at the inn serves a meal to take with you. The guard captain's checkpoint can be reached from the city gate.
+- **Fixed:** opening a quest's details in the journal crashed the game.
+
+Also in this version: the panel interface (`--tui`) and browser play (`--web`), bots that talk like players and team up, `[?]` that takes an on-screen choice you type in your own words, AI models you can review and switch in Admin, the diagnostics log, and safer saves with backups and recovery.
 
 Built with:
 - Python 3.11 + Pydantic v2 (all data models)
@@ -209,7 +211,8 @@ Game_Test/
 - **`[?]`** Ask about this situation: type a question or an action in your own words
 - **`[K]`** Skills · **`[I]`** Items & equipment · **`[J]`** Quest journal · **`[L]`** World log · **`[W]`** Who's around
 - **`[C]`** Craft · **`[G]`** Found a guild
-- **`[S]`** Save · **`[A]`** Admin panel (AI token usage, **AI models**, diagnostics log, database health, playtest report, feature flags, World Growth log) · **`[Q]`** Quit to menu
+- **`[S]`** Save · **`[A]`** Admin panel (AI token usage, **AI models**, diagnostics log, database health, playtest report, content health, feature flags, World Growth log) · **`[Q]`** Quit to menu
+- In the panel and browser versions, **click an item in the sidebar** to use, equip or inspect it, or a skill to read it
 - Locked choices stay in the list, greyed out, with what it takes to unlock them
 
 ### The world
@@ -243,6 +246,10 @@ The clock in your status panel runs on game time: **Day 1, 08:00** at the start,
 NPCs keep day hours (06:00–20:00) and night hours. Bosses come back in hours or days, not menu clicks. Bots act, rumours spread and buffs wear off while you sleep.
 
 ### Combat
+
+**Bosses choose their moves.** With the AI on, a boss picks each non-heavy move from the state of the fight (a hurt priest heals, a lich drains a poisoned player), decided while you choose yours. Heavy blows are always announced a turn ahead and keep their schedule. Each ability has a cooldown. Offline, bosses follow their fixed pattern.
+
+**Class milestones.** At levels 4, 8, 12 and 16 your class adds its growth to your stats: a warrior STR +2, VIT +2, AGI +1; a mage INT +3, WIS +2, VIT +1, LCK +1; a rogue AGI +3 and +1 to STR, INT, LCK and VIT. Other classes use their own `stat_growth` (`data/classes/`).
 
 - **Statuses:** poison, bleed and burn hurt every round; **stun** costs you a turn (then you can't be stunned again for two rounds); **frozen** makes you slower to dodge. Many monsters inflict them on a hit. Your spells do too: fire burns, ice freezes, arcane and curse effects can stun. Bosses (rank C and up) shrug off half of all stuns.
 - **Boss moves:** every boss has signature moves, such as a heavy blow it **announces a turn ahead** (*"⚠ Asterion is gathering itself for Horned Charge!"*), a heal, a curse, a summon, or a life drain. Below a third of its health it becomes **ENRAGED** and hits 25% harder.
@@ -300,6 +307,8 @@ Finish a step, go back and choose **« Report: … »**, and the next step opens
 `[C] Craft` appears once you carry something worth crafting with. Every Gate material has a use. There are 32 Gate recipes: stronger potions, stat tonics (Bronze Whetstone Tonic: STR +2 for 30 turns), and eight pieces of gear such as a Star-Metal Dagger, a Chrono Pendant and the Voidglass Blade. Recipes you can make right now are marked ✓.
 
 ### Trading
+
+**The auction house** (in Verath) sells life tokens and whatever guilds and adventurers consign. **Consign an item** to sell your own: the starting bid is its value, and other adventurers in town bid on things they want (potions when they're short, materials for crafters and traders, gear for fighters). When the listing ends you're paid the top bid minus the house's 10%, or the item comes back. You can't bid on your own listings, and key items and the last copy of anything you've equipped can't be consigned.
 
 Traders offer **« Browse wares »** and **« Sell items »** in conversation. **Wren**, a travelling pedlar, walks between the outer market, the camp and Verath, buying materials and consumables. **Torven** buys weapons and armour. **Lady Vos** buys Gate trophies. AI-generated traders appear as the world grows. You can never sell the last copy of something you have equipped.
 
@@ -475,16 +484,17 @@ Prints `True` if Ollama is reachable and the model is pulled.
 # Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Every push runs ALL 9 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 193 checks across 35 sections
+# Every push runs ALL 10 test files via the pre-push hook
+python -X utf8 test_characters.py                  # 194 checks across 35 sections
 python -X utf8 test_quests.py                      # 771 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  24 checks (SQLite schema v9, threads, backups, recovery)
 python -X utf8 tests/test_background_tick.py       #   9 checks (BG worker)
 python -X utf8 tests/test_guild_betrayal.py        #  22 checks
 python -X utf8 tests/test_guild_founding.py        #  10 checks
-python -X utf8 tests/test_ui.py                    #  25 checks (prompt layer, diagnostics log, the Textual app driven headlessly)
-python -X utf8 tests/test_models.py                #  27 checks (model roles, catalog review, benchmark scoring, decisions)
+python -X utf8 tests/test_ui.py                    #  29 checks (prompt layer, diagnostics log, save summaries, the Textual app driven headlessly)
+python -X utf8 tests/test_models.py                #  43 checks (model roles, catalog review, decisions, bot goals, boss tactics)
+python -X utf8 tests/test_balance.py               #  13 checks (class milestones, Gate difficulty, content health, a quick balance sim)
 
 # Balance: can each build clear every Gate at its rated level? (real combat rules)
 python -X utf8 scripts/balance_sim.py 20 --class mage
@@ -496,14 +506,21 @@ python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstra
 # quest rewards / skill generation / save round-trip end-to-end. Requires Ollama.
 python -X utf8 playthrough_smoke.py                #  23 checks
 
+# Let a scripted player play the real game (offline) to find crashes and dead ends;
+# it saves autoplay_<seed> slots and writes the playtest report
+python -X utf8 scripts/autoplay.py --runs 5 --steps 1500
+
 # What happened across every save: deaths, boss kills, Gate clears, world growth, AI failures
 python -X utf8 scripts/playtest_report.py --print   # writes logs/playtest_report.md
+
+# Content that can't be reached or is never used (unreachable scenes, unoffered quests, orphan items)
+python -X utf8 scripts/content_health.py
 
 # Start a feature branch
 git checkout -b feature/my-feature
 ```
 
-**1,155 checks across 9 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
+**1,189 checks across 10 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
 
 ### Logs and diagnostics
 
@@ -522,8 +539,6 @@ What's next:
 | Item | Why |
 |------|-----|
 | Tune AI prompts on live Ollama | World growth, AI Gates, AI bosses, bot chat and decisions are tested with fake model output; real `gemma4:12b` / `qwen3.5:4b` output needs a playthrough (the diagnostics log and playtest report now capture it) |
-| Batch decisions for bots | Bots are rules-based; a batched decision call every few hours of game time could pick their goals with the whole world in view |
-| Class identity | Warriors are the tankiest class (63% HP left on an average Gate run, vs 40–49% for mages and rogues in `scripts/balance_sim.py`); worth a design pass on class skill kits |
-| Bots bid at auction | Bots consign loot and get paid; bidding on the player's listings would complete the market |
-| Richer panels | Clickable inventory and equipment in the sidebar, a mini-map of the zones |
+| More decision uses | NPC reactions to what you did, rumours, and "does this typed action finish the quest step?" are good fits for the same one-call decisions |
+| Mini-map | A map of the zones and Gates in the panel sidebar |
 | `GameEngine` mixin → composition refactor | Low priority, budget-guarded |

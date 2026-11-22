@@ -183,6 +183,13 @@
       "text": "The gate into Verath proper is a tall arch of System-lit stone. Two guards check every traveller against a floating ledger: rank, class, permits. Most of the outer market never gets past them.\n\nOne guard looks bored. Merchant carts rattle through with barely a glance at their cargo. And somewhere in the crowd, you suspect, there are ways in the ledger doesn't cover.",
       "options": [
         {
+          "option_id": "to_guard_post",
+          "label": "Find the captain who runs the checkpoint.",
+          "expected": true,
+          "leads_to": "village_start",
+          "leads_to_node": "guard_post"
+        },
+        {
           "option_id": "bribe_gate_guard",
           "label": "Press 25 gold into the bored guard's hand.",
           "expected": false,
@@ -422,6 +429,18 @@
           "leads_to": "__stay__",
           "leads_to_node": "inn_entrance",
           "triggers": ["talk_npc:mira_innkeeper"]
+        },
+        {
+          "option_id": "buy_inn_meal",
+          "label": "Order a hot meal to take with you (12g).",
+          "expected": true,
+          "requires": {
+            "min_gold": 1200,
+            "lock_reason": "Mira doesn't do credit."
+          },
+          "leads_to": "__stay__",
+          "leads_to_node": "inn_entrance",
+          "triggers": ["spend_gold:1200", "give_item:inn_meal"]
         },
         {
           "option_id": "leave_inn",

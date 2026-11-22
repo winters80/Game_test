@@ -10,7 +10,18 @@
     "starting_disposition": 5.0,
     "trades": {
       "buys": ["type:WEAPON", "type:ARMOR"],
-      "buy_rate": 0.4
+      "buy_rate": 0.4,
+      "sells": [
+        {"item_id": "rusty_dagger", "price": 750},
+        {"item_id": "padded_armor", "price": 2250},
+        {"item_id": "apprentice_staff", "price": 3000},
+        {"item_id": "adventurer_bow", "price": 3750},
+        {"item_id": "traveler_cloak", "price": 3750},
+        {"item_id": "chain_shirt", "price": 12000},
+        {"item_id": "iron_plate", "price": 12000},
+        {"item_id": "mages_wand", "price": 18000},
+        {"item_id": "mage_robes", "price": 22500}
+      ]
     },
     "appears_requires": {},
     "disposition_hooks": {
@@ -826,7 +837,8 @@
         {"item_id": "rations", "price": 500},
         {"item_id": "empty_vial", "price": 300},
         {"item_id": "antidote", "price": 2000},
-        {"item_id": "firewood", "price": 300}
+        {"item_id": "firewood", "price": 300},
+        {"item_id": "resistance_potion", "price": 6750}
       ]
     },
     "appears_requires": {},

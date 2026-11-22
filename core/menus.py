@@ -719,7 +719,8 @@ class GameMenusMixin:
         if template.reward_gold:    reward_bits.append(f"[gold]{template.reward_gold} gold[/gold]")
         if template.reward_xp:      reward_bits.append(f"[xp]{template.reward_xp} xp[/xp]")
         if template.reward_items:   reward_bits.append(f"{len(template.reward_items)} item(s)")
-        if template.reward_alignment: reward_bits.append(f"alignment {template.reward_alignment:+.1f}")
+        if template.reward_skills:  reward_bits.append(f"{len(template.reward_skills)} skill(s)")
+        if template.alignment_reward: reward_bits.append(f"alignment {template.alignment_reward:+.1f}")
         if reward_bits:
             renderer.console.print(f"  [subtitle]Rewards on completion[/subtitle]")
             renderer.console.print("    " + "   ".join(reward_bits))
@@ -867,6 +868,7 @@ class GameMenusMixin:
                 "Export diagnostics (zip for bug reports)",
                 "Database health (rows, integrity, backup now)",
                 "Playtest report (all saves)",
+                "Content health (unreachable / unused content)",
                 f"Toggle Feature Flags",
                 f"Background Generator: {bg_status}",
                 f"Active Bots / Players  ({bot_count} bots · 1 player)",
@@ -975,6 +977,15 @@ class GameMenusMixin:
                     dest = backup_dir(db.db_path.parent) / f"{db.db_path.stem}.manual.db"
                     renderer.console.print(f"\n  Pruned {removed} old log rows. Backup: "
                                            f"{dest if db.backup_to(dest) else 'failed'}")
+                renderer.prompt_any_key()
+
+            elif action.startswith("Content health"):
+                from core.content_health import check
+                report = check(self)
+                renderer.console.print()
+                for line in report.lines():
+                    renderer.console.print("  " + line, markup=False)
+                renderer.console.print(f"\n  {report.problems()} problem(s).")
                 renderer.prompt_any_key()
 
             elif action.startswith("Playtest report"):
