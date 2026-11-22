@@ -19,7 +19,7 @@
     "skill_type": "PASSIVE",
     "mp_cost": 0,
     "cooldown_turns": 0,
-    "effects": [{"effect_type": "buff", "scaling_stat": "END", "base_value": 3.0, "scaling_coefficient": 0.5}]
+    "effects": [{"effect_type": "buff", "scaling_stat": "END", "base_value": 2.0, "scaling_coefficient": 0.3}]
   },
   {
     "skill_id": "berserker_rage",

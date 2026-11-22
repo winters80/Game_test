@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 # Milestones worth a World Log ([L]) line. Everyday fights, trades and moves
 # would crowd out rumours and lore (the log shows the last 30 entries).
-_LOGGED_KINDS = {"defeat", "level", "party"}
+_LOGGED_KINDS = {"defeat", "level", "party", "guild"}
 # Shown in the player's zone: milestones whenever they happen, routine
 # actions at most every other turn; rest / gather / potion never.
 _MILESTONE_KINDS = {"defeat", "level", "boss_kill"}
-_ROUTINE_KINDS = {"fight", "craft", "trade", "party"}
+_ROUTINE_KINDS = {"fight", "craft", "trade", "party", "auction", "guild"}
 
 
 def setup_bots(engine: "GameEngine") -> None:
@@ -69,7 +69,28 @@ def bot_world(engine: "GameEngine"):
         for b in engine._bot_manager.all():
             allies.setdefault(b.current_zone_id, []).append(b)
     return BotWorld(engine.item_registry, traders_at, engine.recipes, yields, turn,
-                    lairs=lairs, gates=bot_gate_view(engine, lairs), allies=allies)
+                    lairs=lairs, gates=bot_gate_view(engine, lairs), allies=allies,
+                    guilds=bot_guilds(engine))
+
+
+def bot_guilds(engine: "GameEngine") -> list[dict]:
+    """Guilds bots may join: the authored ones, plus any the player founded."""
+    out = []
+    reg = getattr(engine, "guild_registry", None)
+    if feature("guild_system") and reg is not None:
+        for g in reg.all():
+            out.append({"guild_id": g.guild_id, "name": g.name,
+                        "ranks": [r.rank_id for r in getattr(g, "ranks", [])], "player_founded": False})
+    db = engine.state.world_db if feature("world_db") and engine.state else None
+    if db is not None:
+        try:
+            for row in db.get_all_guild_states():
+                if row.get("is_player_founded"):
+                    out.append({"guild_id": row["guild_id"], "name": row["name"],
+                                "ranks": ["recruit", "member", "officer"], "player_founded": True})
+        except Exception:
+            logger.info("Could not read founded guilds for bots", exc_info=True)
+    return out
 
 
 def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
@@ -97,6 +118,7 @@ def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
             acted.append(bot)
         except Exception:
             logger.warning("Bot %s failed to act", bot.bot_id, exc_info=True)
+    _apply_social(engine, events)
     # Boss kills move the lair's succession on (and log it); see core/lair_flow.
     if any(ev.kind == "boss_kill" for ev in events):
         from core.lair_flow import bot_killed_boss
@@ -109,6 +131,62 @@ def tick_bots(engine: "GameEngine", quiet: bool = False) -> list["BotEvent"]:
         _surface(engine, events)
     _persist(engine, acted, events)
     return events
+
+
+AUCTION_HOUSE_FEE = 0.1        # the house keeps 10% of a bot's sale
+AUCTION_LISTING_TURNS = 144    # a day
+
+
+def _apply_social(engine: "GameEngine", events: list) -> None:
+    """Write bot guild joins and auction listings into the world DB."""
+    db = engine.state.world_db if feature("world_db") else None
+    if db is None:
+        return
+    turn = engine.state.player.turn_count
+    for ev in events:
+        try:
+            if ev.kind == "auction" and feature("auction_house"):
+                item = engine.item_registry.get(ev.item_id)
+                rarity = getattr(getattr(item, "rarity", None), "value", "COMMON")
+                db.add_auction_listing(
+                    listing_id=f"bot_{ev.bot_id}_{turn}", item_id=ev.item_id, item_type="standard",
+                    auction_guild="golden_scales" if rarity in ("RARE", "EPIC", "LEGENDARY") else "iron_hammer_exchange",
+                    # The auction house expires listings by state.turn_number (its own clock).
+                    quantity=1, starting_bid=ev.price, expires_turn=engine.state.turn_number + AUCTION_LISTING_TURNS,
+                    seller_npc_id=f"bot:{ev.bot_id}")
+            elif ev.kind == "guild" and ev.guild_id.startswith("guild_"):     # the player's own guild
+                bot = engine._bot_manager.get(ev.bot_id)
+                db.add_guild_member(ev.guild_id, f"bot_{ev.bot_id}", "npc", bot.guild_rank if bot else "recruit", turn)
+        except Exception:
+            logger.info("Could not record bot %s %s", ev.kind, ev.bot_id, exc_info=True)
+
+
+def settle_bot_auctions(engine: "GameEngine", settled: list) -> list[str]:
+    """Pay bots for their auction sales (or give unsold items back). ``settled``
+    is ``auction_system.tick_auction``'s [(listing, top_bid or None)]."""
+    lines = []
+    mgr = engine._bot_manager
+    if not feature("bot_system") or mgr is None:
+        return lines
+    for listing, top in settled:
+        seller = listing.get("seller_npc_id") or ""
+        if not seller.startswith("bot:"):
+            continue
+        bot = mgr.get(seller[4:])
+        if bot is None:
+            continue
+        item = engine.item_registry.get(listing.get("item_id") or "")
+        name = item.name if item else listing.get("item_id")
+        if top:
+            earned = int(top["bid_amount"] * (1 - AUCTION_HOUSE_FEE))
+            bot.gold += earned
+            buyer = "you" if top["bidder"] == "player" else "a guild buyer"
+            bot.remember(f"Sold {name} at auction to {buyer} (turn {engine.state.player.turn_count})")
+            lines.append(f"{bot.name} sold {name} at auction.")
+        elif listing.get("item_id"):
+            bot.add_item(listing["item_id"])
+        _save_bot(engine, bot)
+    return lines
 
 
 def _surface(engine: "GameEngine", events: list) -> list[str]:
@@ -146,7 +224,11 @@ def _persist(engine: "GameEngine", acted: list, events: list) -> None:
     db = engine.state.world_db if feature("world_db") else None
     if db is None:
         return
+    from systems.bot_brain import guild_rank_for
+    ranks = {g["guild_id"]: g["ranks"] for g in bot_guilds(engine)}
     for bot in acted:
+        if bot.guild_id in ranks:
+            bot.guild_rank = guild_rank_for(bot, ranks[bot.guild_id])
         db.upsert_bot_instance(
             bot_id=bot.bot_id, definition=bot.model_dump(mode="json"),
             current_zone_id=bot.current_zone_id, last_active_turn=bot.turn_last_acted,
@@ -280,8 +362,12 @@ def whos_around_lines(engine: "GameEngine") -> list[str]:
     lines = []
     for b in bots:
         where = "HERE" if b.current_zone_id == here else place(b.current_zone_id)
+        guild = ""
+        if b.guild_id:
+            g = next((x for x in bot_guilds(engine) if x["guild_id"] == b.guild_id), None)
+            guild = f" [{g['name'] if g else b.guild_id}]"
         lines.append(f"{b.name:<10} Lv {b.level:<2} {_class_name(engine, b.class_id):<12} "
-                     f"{where:<18} {b.activity}")
+                     f"{where:<18} {b.activity}{guild}")
     return lines
 
 

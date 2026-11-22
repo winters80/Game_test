@@ -142,7 +142,10 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
     # Auction tick — expire listings, NPC counter-bids
     if feature("auction_house"):
         from systems import auction_system
-        auction_system.tick_auction(engine.state)
+        settled = auction_system.tick_auction(engine.state)
+        if settled:
+            from core.bot_flow import settle_bot_auctions
+            settle_bot_auctions(engine, settled)
 
     # Ending-path unlock (political ascension)
     if feature("faction_system") and engine.faction_registry:

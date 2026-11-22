@@ -215,7 +215,14 @@ class CombatHandlerMixin:
                                 is_heal = skill.effects and any(
                                     e.effect_type == EffectType.HEAL for e in skill.effects
                                 )
-                                if is_heal:
+                                if fx.is_defensive(skill):
+                                    player.current_mp -= skill.mp_cost
+                                    if skill.cooldown_turns > 0:
+                                        player.skill_cooldowns[skill_id] = skill.cooldown_turns
+                                    from systems.skill_system import record_skill_use
+                                    record_skill_use(player, skill_id, self.skill_registry)
+                                    renderer.print_scene_text([fx.apply_defensive(skill, player, player_statuses)])
+                                elif is_heal:
                                     from systems.skill_system import calculate_skill_damage
                                     heal_val = calculate_skill_damage(skill, player)
                                     player.current_mp -= skill.mp_cost

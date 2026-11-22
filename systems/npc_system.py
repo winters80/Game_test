@@ -322,6 +322,17 @@ def maybe_compress_memory(npc_id: str, state: "GameState") -> None:
 
 # ── Quest seed checking ───────────────────────────────────────────────────────
 
+def _standing(state: "GameState", faction_id: str) -> float:
+    """Faction standing for seed gates: the world DB when open, else the player's cache."""
+    db = getattr(state, "world_db", None)
+    if db is not None:
+        try:
+            return float(db.get_faction_standing(faction_id)[0])
+        except Exception:
+            pass
+    return float(state.player.faction_standing_cache.get(faction_id, 0.0))
+
+
 def get_available_quest_seeds(
     npc: "NPCTemplate",
     state: "GameState",
@@ -345,6 +356,8 @@ def get_available_quest_seeds(
         if seed.trigger_flag and not player.has_flag(seed.trigger_flag):
             continue
         if seed.min_level and player.level < seed.min_level:
+            continue
+        if seed.min_faction and any(_standing(state, fid) < need for fid, need in seed.min_faction.items()):
             continue
         available.append(seed)
 

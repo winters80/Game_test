@@ -52,6 +52,8 @@ class BotAgent(BaseModel):
     disposition: float = 0.0
     turn_last_acted: int = 0
     is_generated: bool = False
+    guild_id: str = ""                  # an authored guild, or a player-founded one
+    guild_rank: str = ""
 
     @field_validator("inventory", mode="before")
     @classmethod

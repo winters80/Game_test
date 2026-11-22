@@ -519,6 +519,11 @@ def available_work(state: "GameState", quest_registry: "QuestRegistry", npc_regi
     return [(n, t) for n, t, _ in out]
 
 
+def _known_skills_ctx(state: "GameState") -> dict:
+    from scenes.option_logic import _known_skills_ctx as _k
+    return _k(state.player, getattr(state, "skill_registry", None))
+
+
 def _grant_quest_skill_rewards(template: "QuestTemplate", state: "GameState") -> None:
     """Generate (or fall back to a default for) each reward_skill_hint and
     add the result to the player. Registers each generated skill in the
@@ -550,7 +555,7 @@ def _grant_quest_skill_rewards(template: "QuestTemplate", state: "GameState") ->
                 player=state.player,
                 name_hint=hint,
                 source="quest_reward",
-                context=quest_ctx,
+                context={**quest_ctx, **_known_skills_ctx(state)},
                 has_inspect=has_inspect,
             )
         if skill is None:

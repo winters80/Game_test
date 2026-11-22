@@ -120,6 +120,15 @@
           }
         },
         {
+          "option_id": "answer_the_summons",
+          "label": "The System keeps glancing at you. Answer its summons (Class Awakening).",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["class_awakening"],
+          "requires": {"flags": ["held_ground_against_system"], "flags_absent": ["class_awakened"]}
+        },
+        {
           "option_id": "gate_registry_board",
           "label": "Go to the Gate Hall (the Registry and its patrons).",
           "expected": true,
@@ -244,6 +253,15 @@
     "unknown_arrival": {
       "text": "You arrive in Verath's outer market with a strange coin in your pocket and absolutely no idea what the System has done with you.\n\nOthers who went through the Rite today are comparing class designations, showing off their new skill notifications. One man nearby got 'Iron Warrior'. A woman is practically glowing — she got 'Ember Mage'.\n\nYour status screen shows... nothing. Just 'Unclassified'. And somehow that feels exactly right.",
       "options": [
+        {
+          "option_id": "seek_awakening",
+          "label": "Step back into the Rite circle and let the System look at you properly.",
+          "expected": false,
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["class_awakening"],
+          "requires": {"flags_absent": ["class_awakened"]}
+        },
         {
           "option_id": "explore_unclassified",
           "label": "Explore the town. Figure out what being 'Unclassified' means.",

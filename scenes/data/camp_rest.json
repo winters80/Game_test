@@ -20,13 +20,13 @@
           ]
         },
         {
-          "option_id": "talk_cartographer_mira",
+          "option_id": "talk_cartographer_petra",
           "label": "Talk to Mira the Cartographer (explorer).",
           "expected": true,
           "leads_to": "camp_rest",
           "leads_to_node": "gate_hall",
           "triggers": [
-            "talk_npc:cartographer_mira"
+            "talk_npc:cartographer_petra"
           ]
         },
         {

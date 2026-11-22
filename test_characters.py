@@ -94,7 +94,7 @@ VALID_TRIGGER_PREFIXES = {
     "flag:", "give_item:", "give_skill:", "give_gold:", "spend_gold:", "set_base_class:",
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
-    "rest_camp:", "give_food:", "boss_lair:", "gate_registry", "enter_gate:", "take_item:",
+    "rest_camp:", "give_food:", "boss_lair:", "gate_registry", "enter_gate:", "take_item:", "class_awakening",
 }
 
 def validate_triggers(scene_reg: SceneRegistry, item_reg: ItemRegistry,
@@ -2838,6 +2838,7 @@ def main() -> None:
     _test_boss_succession(item_reg)
     _test_gates_and_quest_chains(item_reg)
     _test_living_world(item_reg)
+    _test_social_world(item_reg)
     _report()
 
 
@@ -3464,6 +3465,136 @@ def _test_living_world(item_reg) -> None:
             close_game(_wstate)
         for _ext in (".json", ".db", ".db-wal", ".db-shm"):
             _pp = SAVES_DIR / f"{_w_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
+
+
+def _test_social_world(item_reg) -> None:
+    section("34. Factions, bot guilds & auctions, defensive skills, class awakening")
+    _s_slot = "_social_test_"
+    _sstate = None
+    try:
+        import random as _r34
+        from unittest import mock as _m34
+        from concurrent.futures import Future
+        from core import bot_flow as _bf34
+        from core.class_awakening import awaken
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from systems import auction_system as _as, bot_brain as _bb34, combat_effects as fx, npc_system as _ns, quest_system as _qs
+        from systems.bot_system import BotAgent
+        from ai.prompt_builder import describe_known_skills, skill_gap_hint
+        from ui import renderer as _r
+
+        _eng = GameEngine()
+        with _m34.patch.object(_r.console, "print", lambda *a, **k: None):
+            _eng.bootstrap()
+        _p = Player(name="Courtier", base_class="warrior")
+        _sstate = new_game_state(_p, SAVES_DIR, _s_slot)
+        _eng.state = _sstate
+        _attach_engine_handles(_eng)
+
+        # 34a. Faction quests: hidden until standing; stages finish by deeds + reports.
+        vos = _eng.npc_registry.get("lady_vos")
+        _p.level = 10
+        offered = lambda npc: {x.quest_template_id for x in _ns.get_available_quest_seeds(npc, _sstate)}
+        assert "crown_ascension" not in offered(vos)
+        _sstate.world_db.update_faction_standing("verath_crown", 25)
+        assert "crown_ascension" in offered(vos)
+        assert "system_break_mission" not in offered(_eng.npc_registry.get("gray_wanderer"))
+        qid = _qs.start_quest("crown_ascension", "lady_vos", _sstate, _eng.quest_registry)
+        assert not _qs.reportable_quests("lady_vos", _sstate, _eng.quest_registry)
+        _p.set_flag("done_mirror_vanity_2")
+        assert _qs.report_quest(qid, _sstate, _eng.quest_registry)
+        row = _sstate.world_db.get_quest(qid)
+        assert row["current_state"] == "military_endorsement"
+        fin = [q for q in _eng.quest_registry.all() if q.chain_id == "gorgon_widows"][-1]
+        assert fin.faction_rewards.get("verath_crown"), "Patron chains raise faction standing"
+        ok("Faction quests: offered at standing 20+, stages advance by real deeds + « Report », chains raise standing")
+
+        # 34b. Bots join guilds and use the auction house; sellers get paid.
+        w = _bf34.bot_world(_eng)
+        assert any(g["guild_id"] == "iron_vanguard" for g in w.guilds)
+        b = BotAgent(bot_id="soc", name="Ryn", archetype="trader", current_zone_id="village_start", level=5)
+        evs = []
+        for i in range(30):
+            evs += _bb34._join_guild(b, w, _r34.Random(i))
+        assert b.guild_id in ("golden_scales", "iron_hammer_exchange") and sum(e.kind == "guild" for e in evs) == 1
+        b.add_item("void_crystal")
+        ev = _bb34._auction(b, w, _r34.Random(1))
+        assert ev and ev[0].kind == "auction" and not b.inventory.get("void_crystal")
+        _bf34._apply_social(_eng, ev)
+        mine = [l for l in _sstate.world_db.get_active_listings() if l.get("seller_npc_id") == "bot:soc"]
+        assert mine, "Listing written"
+        _sstate.world_db.place_bid(mine[0]["listing_id"], "golden_scales_ai", ev[0].price + 100, _sstate.turn_number)
+        g0 = b.gold
+        _sstate.turn_number = mine[0]["expires_turn"]
+        settled = _as.tick_auction(_sstate)
+        with _m34.patch.object(_eng._bot_manager, "get", lambda bid: b if bid == "soc" else None):
+            lines = _bf34.settle_bot_auctions(_eng, settled)
+        assert lines and b.gold > g0
+        ok(f"Bots join guilds ({b.name} → {b.guild_id}) and auction loot; the house pays them when it sells")
+
+        # 34c. Defensive skills ward and evade instead of hitting the enemy.
+        sk = _eng.skill_registry.get("mana_shield")
+        assert fx.is_defensive(sk) and fx.is_defensive(_eng.skill_registry.get("shadow_step"))
+        assert not fx.is_defensive(_eng.skill_registry.get("fireball"))
+        bag = {}
+        fx.apply_defensive(sk, _p, bag)
+        ward = bag["_ward"]
+        left, note = fx.absorb(bag, ward + 5)
+        assert left == 5 and "_ward" not in bag
+        bag = {"_evade": 1}
+        assert fx.absorb(bag, 30) == (0, "evaded") and not bag
+        ok(f"Mana Shield wards ({ward} absorbed), Shadow Step evades; neither is treated as an attack any more")
+
+        # 34d. AI skill prompts see the kit and its gaps.
+        _p.skills = ["power_strike", "bull_rush"]
+        known = describe_known_skills(_p, _eng.skill_registry)
+        assert known == ["Power Strike (ACTIVE: damage)", "Bull Rush (ACTIVE: damage)"]
+        assert "healing" in skill_gap_hint(known)
+        ok("AI skill prompt lists known skills by type/effect and names the gap to fill")
+
+        # 34e. Class awakening: offline → authored fallback; online → async AI class, no freeze.
+        _c = Player(name="Refuser")
+        _c.set_flag("refused_system"); _c.set_flag("held_ground_against_system")
+        _sstate.player = _c
+        quiet = [_m34.patch.object(_r.console, "print", lambda *a, **k: None),
+                 _m34.patch.object(_r, "prompt_any_key", lambda: None)]
+        for q in quiet:
+            q.start()
+        try:
+            cls = awaken(_eng)
+            assert cls is not None and _c.base_class == cls.class_id and _c.has_flag("class_awakened")
+            assert awaken(_eng) is None, "Only once"
+            _c2 = Player(name="Anomaly")
+            _c2.set_flag("refused_system")                      # +25
+            _c2.record_choice("unexpected:character_creation:born_refuse")   # +10 → AI threshold
+            _sstate.player = _c2
+            made = _eng.class_registry.get("fallback_generated").model_copy(update={"class_id": "ai_test_class", "name": "Riftborn"})
+            fut = Future(); fut.set_result(made)
+            calls = []
+            class _AI:
+                is_available = True
+                def submit_class_generation_async(self, *a, **k):
+                    calls.append(k.get("skill_registry"))
+                    return fut
+            with _m34.patch.object(_eng, "ai_service", _AI()), _m34.patch.object(_eng, "_ai_online", lambda: True):
+                cls2 = awaken(_eng)
+            assert cls2.name == "Riftborn" and _c2.base_class == "ai_test_class" and calls == [_eng.skill_registry]
+        finally:
+            for q in quiet:
+                q.stop()
+        ok("Class Awakening: unclassed refusers get a class (authored offline; AI via a background Future online)")
+    except Exception as e:
+        fail("Social world broken", e)
+        traceback.print_exc()
+    finally:
+        if _sstate is not None:
+            close_game(_sstate)
+        for _ext in (".json", ".db", ".db-wal", ".db-shm"):
+            _pp = SAVES_DIR / f"{_s_slot}{_ext}"
             if _pp.exists():
                 try: _pp.unlink()
                 except OSError: pass

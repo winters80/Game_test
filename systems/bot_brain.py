@@ -90,6 +90,9 @@ class BotWorld:
     # name, min_level, region, rooms (enemy lists), lair (or None), material.
     gates: list[dict] = field(default_factory=list)
     allies: dict[str, list] = field(default_factory=dict)   # zone → bots there (group Gates)
+    # Guilds bots may join: [{guild_id, name, ranks, archetypes, player_founded}]
+    guilds: list[dict] = field(default_factory=list)
+    auction_zone: str = "verath_city"
 
 
 @dataclass
@@ -98,6 +101,10 @@ class BotEvent:
     zone_id: str          # where it happened (the zone the bot is in afterwards for moves)
     text: str
     kind: str             # move | fight | defeat | level | trade | craft | gather | rest | potion | boss_kill
+    #                       | party | guild | auction
+    item_id: str = ""     # auction: what was listed
+    price: int = 0        # auction: starting bid (copper)
+    guild_id: str = ""    # guild: which guild was joined
     from_zone: str = ""
     lair_id: str = ""     # boss_kill: which lair was cleared
     killed_by: str = ""   # boss_kill: "magic" | "physical"
@@ -277,6 +284,65 @@ def _run_gate_as_party(bot: "BotAgent", party: list, gate: dict, rng: random.Ran
                 m.current_zone_id = zone      # beaten inside a gate: home is where it is
         events += boss
     return events
+
+
+GUILD_FOR = {"fighter": ["iron_vanguard", "silver_fangs"], "explorer": ["silver_fangs", "mages_conclave"],
+             "gatherer": ["golden_scales", "iron_hammer_exchange"], "trader": ["golden_scales", "iron_hammer_exchange"],
+             "crafter": ["mages_conclave", "iron_hammer_exchange"]}
+JOIN_GUILD_LEVEL = 3
+AUCTION_MIN_VALUE = 15       # gold: only worth listing items at least this valuable
+
+
+def _join_guild(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    """An unaffiliated bot (level 3+) joins a guild that suits it, or the
+    player's own guild if they've founded one."""
+    if bot.guild_id or bot.level < JOIN_GUILD_LEVEL or not world.guilds:
+        return []
+    mine = [g for g in world.guilds if g.get("player_founded")]
+    pool = mine if mine and rng.random() < 0.3 else \
+        [g for g in world.guilds if g["guild_id"] in GUILD_FOR.get(bot.archetype, [])]
+    if not pool:
+        return []
+    g = rng.choice(pool)
+    bot.guild_id = g["guild_id"]
+    bot.guild_rank = (g.get("ranks") or ["member"])[0]
+    bot.remember(f"Joined {g['name']} (turn {world.turn})")
+    return [BotEvent(bot.bot_id, bot.current_zone_id, f"{bot.name} joined {g['name']}.", "guild",
+                     guild_id=g["guild_id"])]
+
+
+def guild_rank_for(bot: "BotAgent", ranks: list[str]) -> str:
+    """Bots rise one rank every 4 levels (never to the top rank: that's for leaders)."""
+    if not ranks:
+        return bot.guild_rank
+    return ranks[min(len(ranks) - 2 if len(ranks) > 1 else 0, max(0, (bot.level - JOIN_GUILD_LEVEL) // 4))]
+
+
+def _auction(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    """From any town, consign the most valuable thing in the bag to the
+    auction house in Verath."""
+    if bot.current_zone_id not in SAFE_ZONES or not bot.inventory:
+        return []
+    best, best_val = None, 0
+    for item_id, qty in bot.inventory.items():
+        item = world.item_registry.get(item_id)
+        if item is None or item_id in POTIONS:
+            continue
+        val = int(getattr(item, "value_gold", 0) or 0)
+        if val >= AUCTION_MIN_VALUE and val > best_val:
+            best, best_val = item_id, val
+    if best is None:
+        return []
+    bot.inventory[best] -= 1
+    if bot.inventory[best] <= 0:
+        del bot.inventory[best]
+    price = int(best_val * 100 * rng.uniform(0.9, 1.3))
+    name = world.item_registry.get(best).name
+    bot.activity = "haggling at the auction house" if bot.current_zone_id == world.auction_zone \
+        else "sending goods to the Verath auction"
+    bot.remember(f"Listed {name} at auction (turn {world.turn})")
+    return [BotEvent(bot.bot_id, bot.current_zone_id, f"{bot.name} put {name} up for auction.", "auction",
+                     item_id=best, price=price)]
 
 
 def _names(bots: list) -> str:
@@ -544,7 +610,15 @@ def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEv
         events = _gather(bot, world, rng)
         return events or _move(bot, HOME, "heading back to the market")
 
-    # 3. In a safe zone: trade, craft, restock, then set off.
+    # 3. In a safe zone: guild, auction, trade, craft, restock, then set off.
+    if rng.random() < 0.15:
+        events = _join_guild(bot, world, rng)
+        if events:
+            return events
+    if bot.archetype in ("trader", "gatherer", "fighter") and rng.random() < 0.4:
+        events = _auction(bot, world, rng)
+        if events:
+            return events
     for step in (_sell_all, _craft):
         events = step(bot, world)
         if events:

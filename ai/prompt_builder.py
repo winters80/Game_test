@@ -216,6 +216,35 @@ Return JSON in this exact format:
 }}"""
 
 
+def describe_known_skills(player, skill_registry) -> list[str]:
+    """'Power Strike (ACTIVE: damage)' for each skill the player knows."""
+    out = []
+    for sid in list(player.skills)[:10]:
+        sk = skill_registry.get(sid) if skill_registry is not None else None
+        if sk is None:
+            out.append(sid.replace("_", " ").title())
+            continue
+        kinds = sorted({getattr(e.effect_type, "value", str(e.effect_type)) for e in sk.effects}) or ["utility"]
+        out.append(f"{sk.name} ({getattr(sk.skill_type, 'value', sk.skill_type)}: {'/'.join(kinds)})")
+    return out
+
+
+def skill_gap_hint(known: list[str]) -> str:
+    """One line telling the model what the player's kit lacks."""
+    text = " ".join(known).lower()
+    missing = [label for label, words in (
+        ("healing or recovery", ("heal", "drain")),
+        ("defence (a shield or evasion)", ("shield", "buff")),
+        ("a passive or triggered edge", ("passive", "triggered")),
+        ("damage", ("damage",)),
+    ) if not any(w in text for w in words)]
+    if not known:
+        return "This is their first skill."
+    if not missing:
+        return "Their kit covers the basics; make this one do something none of theirs does."
+    return "Their kit lacks " + " and ".join(missing[:2]) + ". Prefer filling that gap over another copy of what they have."
+
+
 def build_skill_generation_prompt(
     player: "Player",
     name_hint: str,
@@ -245,7 +274,9 @@ def build_skill_generation_prompt(
     base_cap = min(40, 5 + level * 2)       # base damage ceiling per effect
     coeff_cap = min(3.5, 1.0 + level * 0.2) # scaling-coefficient ceiling
 
-    skills_owned = ", ".join(player.skills[:8]) if player.skills else "none"
+    known = list((context or {}).get("known_skills") or [])
+    skills_owned = "; ".join(known) if known else (", ".join(player.skills[:8]) if player.skills else "none")
+    synergy = skill_gap_hint(known) + " Don't duplicate an existing skill's name or effect."
     active_class = player.active_class or player.base_class or "Unclassified"
     dominant = player.stats.dominant_stat()
 
@@ -291,6 +322,9 @@ PLAYER PROFILE:
   Dominant stat: {dominant}
   Skills already known: {skills_owned}
   Alignment: {player.alignment:+.0f}
+
+SYNERGY:
+  {synergy}
 
 SOURCE:
   {source_blurb}

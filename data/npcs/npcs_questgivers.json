@@ -576,9 +576,9 @@
   ]
  },
  {
-  "template_id": "cartographer_mira",
-  "npc_id": "cartographer_mira",
-  "name": "Mira the Cartographer",
+  "template_id": "cartographer_petra",
+  "npc_id": "cartographer_petra",
+  "name": "Petra the Cartographer",
   "role": "explorer",
   "zone_id": "camp_rest",
   "description": "An explorer with a dozen rolled maps under one arm and a compass that she taps constantly.",
@@ -586,7 +586,7 @@
   "dialogue_nodes": {
    "root": {
     "node_id": "root",
-    "npc_text": "'Half of my maps are wrong now,' Mira sighs. 'The rifts keep moving things. I need eyes inside them.'",
+    "npc_text": "'Half of my maps are wrong now,' Petra sighs. 'The rifts keep moving things. I need eyes inside them.'",
     "options": [
      {
       "option_id": "ask_gates",
@@ -1454,6 +1454,14 @@
     "trigger_flag": "",
     "already_given_flag": "given_order_dream_ichor",
     "min_level": 17
+   },
+   {
+    "quest_template_id": "crown_ascension",
+    "already_given_flag": "given_crown_ascension",
+    "min_level": 8,
+    "min_faction": {
+     "verath_crown": 20.0
+    }
    }
   ],
   "trades": {

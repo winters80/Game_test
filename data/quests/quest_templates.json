@@ -191,9 +191,9 @@
       {
         "stage_id": "complete_job",
         "description": "Complete the Network's errand. Details are provided in the field.",
-        "objective_text": "Complete the Network's errand (details provided in-field).",
-        "completion_condition": {"has_flag": "shadow_job_done"},
-        "on_advance_triggers": [],
+        "objective_text": "Bring the Shadow Network 3 Redcap Insignia from the Redcap Fortress. Don't ask why.",
+        "completion_condition": {"any": [{"has_flag": "shadow_job_done"}, {"has_items": {"bandit_insignia": 3}}]},
+        "on_advance_triggers": ["take_item:bandit_insignia:3"],
         "next_stage_id": null
       }
     ],
@@ -210,38 +210,93 @@
   {
     "template_id": "crown_ascension",
     "title": "The Throne Petition",
-    "description": "Four trials to prove yourself worthy of political ascension within the Verath Crown's inner circle.",
-    "giver_npc_id": null,
+    "description": "Four trials to prove yourself worthy of political ascension within the Verath Crown's inner circle. Lady Seraphine Vos sponsors the petition, and expects you to earn every signature.",
+    "giver_npc_id": "lady_vos",
     "stages": [
       {
         "stage_id": "noble_favor",
         "description": "Earn the favor of a Verath noble.",
-        "objective_text": "Earn the favor of a Verath noble.",
-        "completion_condition": {"has_flag": "noble_favor_earned"},
+        "objective_text": "Earn a noble's favour: finish one of Lady Vos's commissions, then report to her.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "noble_favor_earned"},
+            {
+              "all": [
+                {
+                  "any": [
+                    {"has_flag": "done_gorgon_widows_2"},
+                    {"has_flag": "done_mirror_vanity_2"},
+                    {"has_flag": "done_phoenix_egg_war_3"}
+                  ]
+                },
+                {"turn_in": "lady_vos"}
+              ]
+            }
+          ]
+        },
         "on_advance_triggers": [],
         "next_stage_id": "military_endorsement"
       },
       {
         "stage_id": "military_endorsement",
         "description": "Secure the Iron Vanguard's military endorsement.",
-        "objective_text": "Secure the Iron Vanguard's military endorsement.",
-        "completion_condition": {"has_flag": "vanguard_endorsement"},
+        "objective_text": "Win the watch's endorsement: finish one of Captain Venn's campaigns, then report to her.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "vanguard_endorsement"},
+            {
+              "all": [
+                {
+                  "any": [
+                    {"has_flag": "done_redcap_reckoning_3"},
+                    {"has_flag": "done_hydra_bounty_3"},
+                    {"has_flag": "done_starfall_cult_3"}
+                  ]
+                },
+                {"turn_in": "captain_venn"}
+              ]
+            }
+          ]
+        },
         "on_advance_triggers": ["flag:iron_vanguard_command_flag"],
         "next_stage_id": "conclave_approval"
       },
       {
         "stage_id": "conclave_approval",
         "description": "Gain the Mages Conclave's approval.",
-        "objective_text": "Gain the Mages Conclave's approval.",
-        "completion_condition": {"has_flag": "conclave_approval"},
+        "objective_text": "Win the Conclave's approval: complete Magister Aldane's studies, then report to him.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "conclave_approval"},
+            {
+              "all": [
+                {
+                  "any": [
+                    {"has_flag": "done_stormcall_3"},
+                    {"has_flag": "done_gorgon_gaze_3"},
+                    {"has_flag": "done_archive_forbidden_3"}
+                  ]
+                },
+                {"turn_in": "magister_aldane"}
+              ]
+            }
+          ]
+        },
         "on_advance_triggers": [],
         "next_stage_id": "throne_petition"
       },
       {
         "stage_id": "throne_petition",
         "description": "File the formal throne petition at the Palace District.",
-        "objective_text": "File the formal throne petition at the Palace.",
-        "completion_condition": {"has_flag": "throne_petition_filed"},
+        "objective_text": "File the petition: reach level 12, clear the Hoard of Vael-Ashar, then report to Lady Vos.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "throne_petition_filed"},
+            {
+              "all": [{"min_level": 12}, {"has_flag": "cleared_wyrm_hoard"}, {"turn_in": "lady_vos"}]
+            }
+          ]
+        },
         "on_advance_triggers": ["flag:crown_ruler_candidate_flag"],
         "next_stage_id": null
       }
@@ -259,14 +314,19 @@
   {
     "template_id": "system_break_mission",
     "title": "Break the Machine",
-    "description": "The System Breakers have a plan. It will change the world. It might end you.",
-    "giver_npc_id": null,
+    "description": "The System Breakers have a plan. It will change the world. It might end you. The Gray Wanderer speaks for them, when he speaks at all.",
+    "giver_npc_id": "gray_wanderer",
     "stages": [
       {
         "stage_id": "gather_breakers",
         "description": "Assemble the Breakers cell in the Undermarket.",
-        "objective_text": "Assemble the System Breakers cell in the Verath Undermarket.",
-        "completion_condition": {"has_flag": "breakers_assembled"},
+        "objective_text": "Prove you can lead a party (Registrar Ostra's Wardens of the Breach, step 2), then report to the Gray Wanderer.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "breakers_assembled"},
+            {"all": [{"has_flag": "done_wardens_of_the_breach_2"}, {"turn_in": "gray_wanderer"}]}
+          ]
+        },
         "on_advance_triggers": [],
         "next_stage_id": "infiltrate_core"
       },
@@ -281,16 +341,26 @@
       {
         "stage_id": "plant_signal",
         "description": "Access the System terminal and plant the break signal.",
-        "objective_text": "Access the System terminal and plant the break signal in the network.",
-        "completion_condition": {"has_flag": "system_override_attempted"},
+        "objective_text": "Read what the System hides: pull the core crystal in the Silent Archive, then report to the Gray Wanderer.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "system_override_attempted"},
+            {"all": [{"has_flag": "read_the_archive"}, {"turn_in": "gray_wanderer"}]}
+          ]
+        },
         "on_advance_triggers": [],
         "next_stage_id": "trigger_break"
       },
       {
         "stage_id": "trigger_break",
         "description": "Trigger the break from the Core Chamber.",
-        "objective_text": "Trigger the break sequence from the Core Chamber.",
-        "completion_condition": {"has_flag": "destroy_the_system_ready"},
+        "objective_text": "Learn how things are unmade: clear the Hollow of Unmaking, then report to the Gray Wanderer.",
+        "completion_condition": {
+          "any": [
+            {"has_flag": "destroy_the_system_ready"},
+            {"all": [{"has_flag": "cleared_hollow_of_unmaking"}, {"turn_in": "gray_wanderer"}]}
+          ]
+        },
         "on_advance_triggers": ["flag:destroy_system_path_flag"],
         "next_stage_id": null
       }

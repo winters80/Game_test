@@ -69,7 +69,7 @@ Stage `completion_condition` keys (`entities/quest.CONDITION_KEYS`):
 | `turn_in` | the player picks « Report: <title> » at that NPC. Inside `all`, the option only appears once the rest is met |
 | `all` / `any` | every / at least one sub-condition |
 
-**Chains:** give each quest `reward_flags: ["done_<id>"]` and the next quest's seed `trigger_flag: "done_<id>"`. Seeds also take `min_level` (hidden until then) and `already_given_flag`. `chain_id` / `chain_step` / `chain_kind` (`skill` / `item` / `story`) are metadata for tests and tools. `reward_skills` grants real skill ids; `reward_items` grants items. Hand-ins use `take_item:X:N` in `on_advance_triggers`.
+**Chains:** give each quest `reward_flags: ["done_<id>"]` and the next quest's seed `trigger_flag: "done_<id>"`. Seeds also take `min_level` (hidden until then), `min_faction` (`{faction_id: standing}`, e.g. Lady Vos's `crown_ascension` at `verath_crown` 20) and `already_given_flag`. `chain_id` / `chain_step` / `chain_kind` (`skill` / `item` / `story`) are metadata for tests and tools. `reward_skills` grants real skill ids; `reward_items` grants items. Hand-ins use `take_item:X:N` in `on_advance_triggers`.
 
 ### New gate (instanced dungeon) *(boss_succession)*
 Add to `data/dungeons/gates/*.json` (see "Gates" below). No scene edit needed: the Gate Registry lists every gate.
@@ -112,6 +112,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `gate_registry` | *(boss_succession)* Open the Gate Registry: every gate, its rated level and current master (`core/gate_flow.open_gate_registry`) |
 | `enter_gate:X` | *(boss_succession)* Run gate X directly: rooms, then its lair (`core/gate_flow.run_gate`) |
 | `take_item:X[:N]` | Remove up to N (default 1) of item X, never below zero. Quest hand-ins use it |
+| `class_awakening` | Run the Class Awakening (`core/class_awakening.awaken`): divergence ≥ threshold + AI online → AI class on a background Future (spinner); else nearest authored class, else `fallback_generated`. Once per save (`class_awakened`) |
 | `open_rift:N` / `open_rift:+N` | *(boss_succession)* Open a new Gate at level N, or the player's level + N, on the next turn (AI-made if online, else a Deep Echo). Special quest lines use it |
 | `alignment:+N` | Shift player alignment by +N (float) |
 | `alignment:-N` | Shift player alignment by -N (float) |
@@ -265,6 +266,8 @@ it owns the spinner, AIService owns the call.
 variable. The "No package outside ai/ bypasses AIService" check in
 `test_characters.py` fails if anything else references them.
 
+**AI skill prompts** get `context["known_skills"]` (`prompt_builder.describe_known_skills`: "Power Strike (ACTIVE: damage)") and a `skill_gap_hint` so the model fills a gap in the kit instead of duplicating it. The three callers (give_skill, quest rewards, Inspect) add it to the context dict; `AIService.generate_skill(..., skill_registry=)` can also build it.
+
 **Adding a new AI call:** put the prompt + client call in a
 `ContentGenerator` method, add a wrapper on `AIService` that returns `None`
 (or `[]`) on failure, and call the wrapper. Purely cosmetic calls
@@ -311,7 +314,7 @@ gear-price hint (`gear_price_hint()`) so the LLM sees the local economy
 before proposing rewards.
 
 ### When AI is called
-1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30). Triggered by `systems/class_system.resolve_combo_class()` via `ai_service.generate_class()`.
+1. **Class generation** — when divergence score ≥ `DIVERGENCE_THRESHOLD` (default 30), at the Class Awakening (`class_awakening` trigger, `core/class_awakening.py`) via `AIService.submit_class_generation_async` (a background Future; `await_class_result` with the spinner running). `class_system.resolve_combo_class()` still does the synchronous layered resolution for other callers.
 2. **NPC dialogue** *(npc_system)* — when NPC has no pre-written dialogue for the player's current context.
 3. **Quest generation** *(quest_system)* — fired from `dialogue_handler` when the player picks an injected `« Is there any work I could take on? »` option. Triggered by an explicit `"ai_dynamic"` seed on the NPC, **or implicitly** when the NPC has no available seeds left and disposition ≥ `AI_QUEST_DISPOSITION_MIN` (default 30) and `_ai_offered_{npc_id}` flag is unset.
 4. **Narrative generation** — when a scene option has no `leads_to` text and is flagged `"ai_narrative": true`.
@@ -390,6 +393,8 @@ What a bot does each act:
 - **Boss lairs:** fighters and explorers on a lair's floor sometimes take on its boss (`bot_brain._try_boss`, see "Boss Succession").
 - **In a safe zone:** sells loot to the traders actually present, crafts from `engine.recipes` (bots brew their own potions from the salve recipe), buys a missing potion ingredient, then walks towards what its archetype wants. Fighters go to the deepest floor their level allows (Floor 2 at level 3, Floor 3 at level 5).
 - **Trader bots** never dump stock on NPC traders. They keep up to 6 items to sell to the player.
+- **Guilds:** an unaffiliated bot of level `JOIN_GUILD_LEVEL` (3)+ joins a guild that suits its archetype (`bot_brain.GUILD_FOR`), or the player's founded guild (then also a real `guild_members` row). `BotAgent.guild_id` / `guild_rank`; rank rises every 4 levels. Shown in `[W]`.
+- **Auction:** traders, gatherers and fighters in a town consign their most valuable item (≥ `AUCTION_MIN_VALUE` 15g) to the auction house (`seller_npc_id = "bot:<id>"`, a day long, on `state.turn_number`). `auction_system.tick_auction` returns the settlements; `bot_flow.settle_bot_auctions` pays the seller (minus a 10% house fee) or returns unsold items.
 
 The player sees bots through:
 - a "Talk to Ryn (Lv 4 Warrior), …" option at the zone root (at most 4)
@@ -475,7 +480,7 @@ New Gates open three ways, all stored in `generated_dungeons` and re-registered 
 | Source | When | What |
 |--------|------|------|
 | Rift surge | Every `RIFT_SURGE_EVERY_TURNS` (288 = 2 days), up to `RIFT_MAX_GENERATED` (16) | AI online: the primary model's `AIGateResponse`. Offline: a **Deep Echo** (an authored Gate 6-10 levels below, reopened at the new level with its texts, new ids and its original material) |
-| `open_rift:` trigger | Next turn (queued on `state._pending_rifts`) | The same, at a fixed or relative level. Mira's "Uncharted Rifts" chain uses it |
+| `open_rift:` trigger | Next turn (queued on `state._pending_rifts`) | The same, at a fixed or relative level. Petra's "Uncharted Rifts" chain uses it |
 | Lair successor | After a kill, `AI_SUCCESSOR_CHANCE` | An AI-invented master that moves in first, then hands over to the planned successor |
 
 `systems/gate_generation` is the safety layer: the model supplies names and texts only; ids are new `gen_*`; enemy stats, XP and gold come from `mob_stats` / `boss_stats` for the level (the same formulas as the authored Gates, so `build_gates`-style content and generated content match); the material's value is capped; the chain always loops. `group_scale` gives group masters party-sized HP and rewards but only +20% attack per extra member.
@@ -490,6 +495,7 @@ Clearing any generated Gate sets `charted_new_rift`.
 | Stun | Loses the next action; then `STUN_GUARD_ROUNDS` (2) of immunity (stored as `_stun_guard`, hidden from labels). Rank C+ enemies resist half of all stuns |
 | Boss abilities | `abilities: [{name, kind, every, power, status, summon}]` on enemy templates (`LairAbility` in lair / gate files). Kinds: `heavy` (announced one turn ahead), `status`, `heal`, `summon` (max 2 summons alive), `drain`. `enrage_below` → +25% attack once |
 | MP regen | `combat_system.combat_mp_regen`: 1 + WIS // 5 per round |
+| Defensive actives | `combat_effects.is_defensive` (SHIELD / BUFF effects only): SHIELD → `_ward` that absorbs that much damage this fight; BUFF → 1-2 `_evade` charges. `absorb()` spends them in `enemy_attack` |
 | Basic attack | Uses `max(STR, AGI)` |
 
 `resolve_combat_auto(player, enemies, skill_registry, companions=None, use_skills=False)` runs the same rules headlessly; `use_skills` casts the best affordable damage skill each round (the balance sim uses it).

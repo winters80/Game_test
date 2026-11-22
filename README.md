@@ -169,7 +169,7 @@ Game_Test/
 
 ### The world
 
-- **Prologue and the Classification Rite:** choose gender, species and background, then the System assigns your class, unless you diverge (see below).
+- **Prologue and the Classification Rite:** choose gender, species and background, then the System assigns your class, unless you diverge (see below). Refuse the System outright and you arrive unclassed; when you're ready, **answer its summons** in the village for a **Class Awakening**: divergent enough and the AI invents a class for you (in the background, with a spinner, never freezing the game); otherwise you become a Wayward Soul.
 - **Verath's outer market** is your hub: the Adventurers' Guild, Torven's forge, the Iron Compass Inn, a cloaked wanderer, and the road to the dungeon.
 - **The Old Dungeon** has three floors, down to the Fracture Core, where you can seize the System (**The Throne**), destroy it (**The Break**), or walk away. Which endings are open depends on your standing with the Verath Crown and the System Breakers, or on completing their quest lines.
 - **The City of Verath** sits behind a guarded gate. It opens when you clear the dungeon's first floor (both fights, then report to the Guild survey post) or reach Floor 2. There are also unconventional ways in, which count as divergent: bribe the guard, talk your way past (INT 12), stow away on a cart (LCK 12), follow the Gray Wanderer through a gap in the System's sight, or find your own way with `[?]`.
@@ -203,6 +203,7 @@ NPCs keep day hours (06:00–20:00) and night hours. Bosses come back in hours o
 - **Boss moves:** every boss has signature moves, such as a heavy blow it **announces a turn ahead** (*"⚠ Asterion is gathering itself for Horned Charge!"*), a heal, a curse, a summon, or a life drain. Below a third of its health it becomes **ENRAGED** and hits 25% harder.
 - **Study** a boss first (if your INT or WIS is high enough) for a free first strike.
 - Casters regain a little MP every round (1 + WIS/5). Basic attacks use the better of STR and AGI.
+- **Defensive skills work:** Mana Shield puts up a ward that absorbs damage, and Shadow Step lets you evade the next attack or two. Before this, both were treated as attacks.
 
 ### Gates
 
@@ -220,7 +221,7 @@ Find them at the **Gate Hall** in the village and in Verath. The Registry there 
 
 The world keeps growing:
 - **Rift surges:** every two in-game days a new Gate opens (up to 16 per save). With Ollama running, the AI invents it: its name, its rooms and a chain of masters. Its stats, rewards and structure come from the Gate's level, never from the AI. With the AI offline, a **Deep Echo** opens instead: an old Gate reopened 6–10 levels deeper, with the same story and stronger masters. That's where the content past level 18 lives.
-- **Quest lines open rifts too:** Mira's **Uncharted Rifts** chain charts a brand-new Gate at every step.
+- **Quest lines open rifts too:** Petra's **Uncharted Rifts** chain charts a brand-new Gate at every step.
 - **New masters:** when a boss dies, the AI may invent who moves in next ("a wizard killed by fire rises as a burned lich"). The authored chain carries on after it.
 
 Everything new is saved with your world and comes back when you load.
@@ -232,6 +233,7 @@ You're not alone. **24 other adventurers** (bots, like playerbots in an MMO) liv
 - **When they're near you:** you'll see the occasional line, like *"Ryn took down a goblin patrol."*, *"Kael and Dova came back from the Hydra Fen together."* or *"✦ Dova and Kael are about."* Each bot in your zone gets a "Talk to …" option.
 - **Talking to them:** they tell you what they've really been doing, and you can **buy their spare loot** or **sell them** materials and consumables.
 - **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
+- **Guilds and the auction house:** bots join guilds that suit them (and your own guild, if you've founded one), rise through the ranks as they level, and consign their best loot to the Verath auction. Their listings show who consigned them, and they're paid when they sell.
 - **They change the world without you:** come back from Verath and Ryn may have killed the Golem. The World Log (`[L]`) shows who holds every lair. Bots leave each lair's first boss alone for 250 turns, so you get the first shot.
 
 Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
@@ -241,8 +243,10 @@ Their decisions are rules-based, so they keep living even with Ollama off. The A
 The Gate Halls (and the wardens' fire at the camp) are full of people with work: **213 quests** from 13 patrons, including **53 quest chains**:
 - **10 skill chains** end with a new skill (Bull Rush, Stormcall, Ember Rebirth, Void Step, Gorgon's Gaze…)
 - **10 item chains** end with a forged item (Asterion's Horn Axe, the Stormcaller Staff, the Wyrmscale Bulwark, the Dreamthread Ring…)
-- **33 story chains**, including the Drowned Sanctum's wizard → lich → priests cycle, Mira's **Uncharted Rifts** (each step opens a new Gate) and Registrar Ostra's **Wardens of the Breach** (the group Gates)
+- **33 story chains**, including the Drowned Sanctum's wizard → lich → priests cycle, Petra's **Uncharted Rifts** (each step opens a new Gate) and Registrar Ostra's **Wardens of the Breach** (the group Gates)
 - plus 32 Gate bounties and 32 material orders
+
+**Faction quest lines:** with enough standing, Lady Vos sponsors **The Throne Petition** (Verath Crown) and the Gray Wanderer offers **Break the Machine** (System Breakers). Their stages are now real deeds: finish a patron's commission, clear a Gate, then report. Finishing a patron's chain raises your standing with their faction.
 
 Finish a step, go back and choose **« Report: … »**, and the next step opens. The **`[J]` journal** shows each quest's chain progress (*skill chain 2/3*), which ones are ready to report and to whom, and **leads**: work you could pick up now, and where.
 
@@ -407,7 +411,7 @@ Prints `True` if Ollama is reachable and the model is pulled.
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
 # Every push runs ALL 7 test files via the pre-push hook
-python -X utf8 test_characters.py                  # 187 checks across 33 sections
+python -X utf8 test_characters.py                  # 192 checks across 34 sections
 python -X utf8 test_quests.py                      # 771 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  15 checks (SQLite schema, v8)
@@ -429,9 +433,9 @@ python -X utf8 playthrough_smoke.py                #  23 checks
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 1,088 checks across 7 test files (all gated by the pre-push hook).**
+**Combined test count: 1,093 checks across 7 test files (all gated by the pre-push hook).**
 
-`test_characters.py` (187 checks, 33 sections) covers:
+`test_characters.py` (192 checks, 34 sections) covers:
 - Registry loading (skills, items, classes, NPCs, scenes)
 - Scene-graph link / trigger validation
 - Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
@@ -460,6 +464,7 @@ git checkout -b feature/my-feature
 - **Bot adventurers:** generation and per-save persistence, a 120-turn brain run (fights, loot, trade, craft), retreat, level gates, trader solvency, Talk-to options, `[W]`, trading both ways, AI/fallback talk, no per-bot AI calls
 - **Boss succession:** lair content is valid with no dead ends; wizard → lich → priests and the choices that steer it; killing blow (magic) changes the successor; returning bosses scale; fight → aftermath → save/load → arrival rumour; study gives the first strike; bots clear bosses after the grace period
 - **Gates and quest chains:** 30+ branching Gates with real enemies and drops; 200+ quests and 50+ chains whose every objective is achievable and every step unlocks the next; a full gate run; a skill chain from seed to skill; bots running Gates
+- **Social world:** faction quests gated by standing and advanced by real deeds; bots joining guilds and auctioning loot (and getting paid); Mana Shield / Shadow Step ward and evade; AI skill prompts that see the player's kit; the Class Awakening offline and through a background AI Future
 - **Living world:** statuses and stun guard, telegraphed boss moves / heal / summon / one-time enrage, the XP curve, every Gate material craftable, the clock passing time (bots act meanwhile), trophies and FIRST / SWIFT CLEAR, group Gates refusing a lone player and paying the bot party, journal chain progress and leads, Deep Echoes / quest rifts / AI Gates (stats from level, not the AI) / AI successors all surviving save and load
 
 `test_quests.py` (771 checks, 23 sections) covers:
@@ -529,8 +534,8 @@ world-growth prompts against real Ollama playthroughs.
 | Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
 | **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
 | **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 1,088 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 1,088 checks across 7 files + 23-check live playthrough + `scripts/balance_sim.py` |
+| Pre-push hook (all 7 test files) | ✅ Shipped | 1,093 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
+| Test suite | ✅ Shipped | 1,093 checks across 7 files + 23-check live playthrough + `scripts/balance_sim.py` |
 | **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
 | **Bot adventurers** | ✅ **Shipped** | 24 rules-driven adventurers per save that fight, level, loot, trade, craft, run Gates and form parties; talk to them, trade with them, take them along, `[W]` Who's around |
 | **Boss succession** | ✅ **Shipped** | Bosses are replaced after a kill, steered by how they died and what you did; bots kill bosses too |
@@ -549,17 +554,21 @@ world-growth prompts against real Ollama playthroughs.
 
 | Item | Why |
 |------|-----|
-| Tune world-growth prompts on live Ollama | The loop is tested end-to-end with a fake model; real `mistral-nemo` / `gemma3:4b` output quality still needs a playthrough |
-| Tune AI Gate and successor prompts on live Ollama | Tested with fake model output; real `mistral-nemo` output needs a playthrough |
-| Warrior builds are strong | The balance sim shows warriors clearing many Gates with 75%+ HP to spare; mages and rogues are closer to the line |
-| Bots use the auction house and guilds | They already trade with NPC traders and the player; listing loot on the auction house and joining guilds would complete the MMO feel |
-| Wire the three `null`-giver faction quests | `shadow_errand`, `crown_ascension`, `system_break_mission` only reachable via implicit AI offer or scene triggers — would benefit from faction-standing-driven unlock |
-| Move class-generation off the main thread | The `Future`-based submission path exists (`AIService.submit_class_generation_async`); the Class Awakening scene still calls it synchronously |
-| Cross-skill awareness in the AI prompt | LLM sees `player.skills` but doesn't reason about which new skill would synergize best |
-| `GameEngine` mixin → composition refactor | Low priority — 169 lines, budget-guarded. Working fine. |
-| `world_db.py` further split | Per-table repos already cover queries; further splitting the facade is mechanical with low payoff |
+| Tune AI prompts on live Ollama | World growth, AI Gates, AI successors and the Class Awakening are tested end-to-end with fake model output; real `mistral-nemo` / `gemma3:4b` output quality needs a playthrough |
+| Class identity | Warriors stay the tankiest (63% HP left on an average Gate run vs 40–49% for mages and rogues in `scripts/balance_sim.py`); worth a design pass on class skill kits |
+| Bots bid at auction | Bots consign loot and get paid; bidding on the player's listings would complete the market |
+| `GameEngine` mixin → composition refactor | Low priority, budget-guarded. Working fine. |
+| `world_db.py` further split | Per-table repos already cover queries; `auction_system` still reads the connection directly in two places |
 
 ### Recently shipped (PRs #40 and #41)
+
+**Round three:**
+- **Class Awakening wired up:** AI class generation was never called in play. Refusers now reach it from the village; it runs on a background Future with a spinner.
+- **Faction quests reachable:** The Throne Petition and Break the Machine had stages nothing could complete; they now advance by deeds and reports, offered at faction standing 20+. Patron chains raise standing.
+- **Bots in guilds and at auction.**
+- **Defensive skills fixed:** Mana Shield and Shadow Step were dealing damage instead of protecting you.
+- **Iron Skin trimmed; AI skill prompts see the player's kit** (name, type, effects) and are told the gap to fill.
+- **Auction bug:** bot listings now use the auction's own turn counter.
 
 **Dungeons that change, and a world that grows them:**
 - **Boss succession**: kill a boss and something else moves in, steered by the killing blow, your choice over the body, and who killed it (you or a bot). Returning bosses grow stronger. Floor 2 and Floor 3 have chains (wizard → lich → corrupted priests).

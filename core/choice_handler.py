@@ -97,6 +97,9 @@ class ChoiceHandlerMixin:
                     any(kw in option.label.lower() for kw in ("ambush", "sneak", "surprise", "ledge", "stealth"))
                 )
                 self._run_combat(encounter_id, surprise=_surprise)
+            elif trigger == "class_awakening":
+                from core.class_awakening import awaken
+                awaken(self)
             elif trigger == "gate_registry" and feature("boss_succession"):
                 from core.gate_flow import open_gate_registry
                 open_gate_registry(self)

@@ -34,6 +34,12 @@ def show_auction_house(engine: "GameEngine") -> None:
 
     while True:
         listings = auction_system.get_listings_display(engine.state)
+        mgr = getattr(engine, "_bot_manager", None)
+        for lst in listings:
+            seller = lst.get("seller", "")
+            bot = mgr.get(seller[4:]) if mgr is not None and seller.startswith("bot:") else None
+            if bot is not None:
+                lst["seller_name"] = bot.name
         _render_header()
         _render_listings(listings)
         _render_status(engine, auction_system)
@@ -67,6 +73,7 @@ def _render_listings(listings: list[dict]) -> None:
         renderer.console.print(
             f"  [{lst['listing_id'][:6]}] {lst['item']:<20} {lst['current_bid']:>8,} Shards  "
             f"{lst['turns_left']:>4} turns  {lst['guild']}"
+            + (f"  [dim_text](consigned by {lst['seller_name']})[/dim_text]" if lst.get("seller_name") else "")
         )
 
 

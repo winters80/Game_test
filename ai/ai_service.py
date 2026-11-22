@@ -97,6 +97,7 @@ class AIService:
         player: "Player",
         divergence: "DivergenceResult",
         class_registry: "ClassRegistry",
+        skill_registry: Any = None,
     ) -> "Future[ClassDefinition | None] | None":
         """
         Run AI class generation on a worker thread. Returns a Future the
@@ -113,7 +114,7 @@ class AIService:
                 max_workers=1, thread_name_prefix="ai-class",
             )
         return self._class_executor.submit(
-            self.generate_class, player, divergence, class_registry,
+            self.generate_class, player, divergence, class_registry, skill_registry,
         )
 
     @staticmethod
@@ -147,9 +148,14 @@ class AIService:
         source: str,
         context: dict | None = None,
         has_inspect: bool = False,
+        skill_registry: Any = None,
     ) -> Any:
         """Generate a single skill in context. Returns None if AI is offline,
         the generator fails, or the response doesn't validate.
+
+        With ``skill_registry`` the prompt also describes the player's known
+        skills (name, type, effects) so the model can fill a gap instead of
+        duplicating one.
 
         Callers (give_skill: trigger, quest reward path, future inspect /
         trainer flows) should fall back to a deterministic default Skill
@@ -157,12 +163,16 @@ class AIService:
         """
         if self._gen is None:
             return None
+        ctx = dict(context or {})
+        if skill_registry is not None and "known_skills" not in ctx:
+            from ai.prompt_builder import describe_known_skills
+            ctx["known_skills"] = describe_known_skills(player, skill_registry)
         try:
             return self._gen.generate_skill(
                 player=player,
                 name_hint=name_hint,
                 source=source,
-                context=context or {},
+                context=ctx,
                 has_inspect=has_inspect,
             )
         except Exception:

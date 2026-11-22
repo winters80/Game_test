@@ -370,6 +370,11 @@ def enemy_attack(
         dodge_chance = max(0.0, dodge_chance - FROZEN_DODGE_PENALTY)
     if random.random() < dodge_chance:
         return 0  # dodged
+    if player_statuses:
+        from systems.combat_effects import absorb
+        damage, _note = absorb(player_statuses, damage)
+        if damage <= 0:
+            return 0
     hp_before = player.current_hp
     player.current_hp = max(0, player.current_hp - damage)
 
@@ -401,11 +406,22 @@ def combat_mp_regen(player: "Player") -> int:
     return player.current_mp - before
 
 
-def _best_skill(player: "Player", skill_registry: "SkillRegistry | None") -> str | None:
-    """The ACTIVE damage skill a player would pick now: affordable, off cooldown, hardest-hitting."""
+def _best_skill(player: "Player", skill_registry: "SkillRegistry | None",
+                statuses: dict | None = None) -> str | None:
+    """The ACTIVE skill a player would pick now: a defensive one (ward / evade)
+    when below 60% HP with none up, else the hardest-hitting damage skill
+    that's affordable and off cooldown."""
     from entities.enums import EffectType, SkillType
+    from systems.combat_effects import is_defensive
     if skill_registry is None:
         return None
+    if player.current_hp < player.max_hp * 0.6 and not (statuses or {}).get("_ward") \
+            and not (statuses or {}).get("_evade"):
+        for sid in player.skills:
+            sk = skill_registry.get(sid)
+            if (sk and sk.skill_type == SkillType.ACTIVE and is_defensive(sk)
+                    and sk.mp_cost <= player.current_mp and player.skill_cooldowns.get(sid, 0) <= 0):
+                return sid
     best, best_val = None, 0
     for sid in player.skills:
         sk = skill_registry.get(sid)
@@ -454,9 +470,14 @@ def resolve_combat_auto(player: "Player", enemies: list[Enemy], skill_registry: 
         turn += 1
         target = next((e for e in enemies if e.is_alive), None)
         if target and not fx.consume_stun(player_statuses):
-            sid = _best_skill(player, skill_registry) if use_skills else None
-            if sid:
-                sk = skill_registry.get(sid)
+            sid = _best_skill(player, skill_registry, player_statuses) if use_skills else None
+            sk = skill_registry.get(sid) if sid else None
+            if sk is not None and fx.is_defensive(sk):
+                player.current_mp -= sk.mp_cost
+                fx.apply_defensive(sk, player, player_statuses)
+                if sk.cooldown_turns:
+                    player.skill_cooldowns[sid] = sk.cooldown_turns
+            elif sid:
                 value, ok = player_skill_attack(player, sid, target, skill_registry)
                 if ok and sk.cooldown_turns:
                     player.skill_cooldowns[sid] = sk.cooldown_turns

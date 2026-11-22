@@ -287,12 +287,22 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass  # engine-delegated: core/lair_flow.enter_lair
         elif trigger == "gate_registry" or trigger.startswith("enter_gate:"):
             pass  # engine-delegated: core/gate_flow
+        elif trigger == "class_awakening":
+            pass  # engine-delegated: core/class_awakening.awaken
         elif trigger.startswith("open_rift:"):
             # open_rift:N (level N) / open_rift:+N (player level + N); opened
             # by core/gate_growth.tick_gate_growth on the next turn.
             state._pending_rifts = list(getattr(state, "_pending_rifts", []) or []) + [trigger[len("open_rift:"):]]
 
     state.mark_dirty()
+
+
+def _known_skills_ctx(player, skill_registry) -> dict:
+    """{"known_skills": [...]} for AI skill prompts (fill a gap, don't duplicate)."""
+    if skill_registry is None:
+        return {}
+    from ai.prompt_builder import describe_known_skills
+    return {"known_skills": describe_known_skills(player, skill_registry)}
 
 
 def _generate_or_default_skill(skill_id: str, state) -> "Skill":
@@ -330,7 +340,8 @@ def _generate_or_default_skill(skill_id: str, state) -> "Skill":
             player=state.player,
             name_hint=skill_id.replace("_", " ").title(),
             source="give_skill_trigger",
-            context={"scene_title": scene_title, "scene_text": scene_text},
+            context={"scene_title": scene_title, "scene_text": scene_text,
+                     **_known_skills_ctx(state.player, getattr(state, "skill_registry", None))},
             has_inspect=has_inspect,
         )
         if ai_skill is not None:

@@ -49,6 +49,7 @@ class NPCQuestSeed(BaseModel):
     trigger_disposition_min: float = 0.0   # NPC must be at least this disposed toward player
     already_given_flag: str = ""    # flag set after quest offered; prevents re-offering
     min_level: int = 0              # hidden until the player reaches this level
+    min_faction: dict[str, float] = Field(default_factory=dict)   # {faction_id: standing} needed
 
 
 class NPCScheduleEntry(BaseModel):

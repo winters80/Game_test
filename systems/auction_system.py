@@ -164,28 +164,30 @@ def buy_life_token_direct(state: "GameState") -> tuple[bool, str]:
 
 # ── Tick ──────────────────────────────────────────────────────────────────────
 
-def tick_auction(state: "GameState") -> None:
+def tick_auction(state: "GameState") -> list[tuple[dict, dict | None]]:
     """
     Called every turn when auction_house feature is enabled.
     1. Expires old listings and settles them (award to highest bidder).
     2. Simulates NPC guild counter-bids on active listings.
+    Returns [(listing, top_bid or None)] for every listing settled, so bot
+    sellers can be paid (core/bot_flow.settle_bot_auctions).
     """
     if not state.world_db:
-        return
+        return []
 
     expired = state.world_db.expire_listings(state.turn_number)
-    for listing in expired:
-        _settle_listing(listing, state)
+    settled = [(listing, _settle_listing(listing, state)) for listing in expired]
 
     # NPC counter-bidding every 5 turns
     if state.turn_number % 5 == 0:
         _simulate_npc_bids(state)
+    return settled
 
 
-def _settle_listing(listing: dict, state: "GameState") -> None:
-    """Award the listing to whoever holds the highest bid."""
+def _settle_listing(listing: dict, state: "GameState") -> dict | None:
+    """Award the listing to whoever holds the highest bid. Returns that bid."""
     if not state.world_db:
-        return
+        return None
 
     top_bid = state.world_db._conn.execute(
         "SELECT bidder, bid_amount FROM auction_bids "
@@ -194,7 +196,8 @@ def _settle_listing(listing: dict, state: "GameState") -> None:
     ).fetchone()
 
     if not top_bid:
-        return  # No bids — listing just expires
+        return None  # No bids — listing just expires
+    top_bid = dict(top_bid)
 
     if top_bid["bidder"] != "player":
         # Player bid but lost — refund their last bid
@@ -205,7 +208,7 @@ def _settle_listing(listing: dict, state: "GameState") -> None:
         ).fetchone()
         if player_bid and player_bid["amt"]:
             state.player.gold += player_bid["amt"]
-        return
+        return top_bid
 
     # Player won
     if listing["item_type"] == "life_token":
@@ -222,6 +225,7 @@ def _settle_listing(listing: dict, state: "GameState") -> None:
             "item_name": listing["item_id"].replace("_", " ").title(),
             "rarity": listing["item_type"].upper() if listing["item_type"] != "standard" else "COMMON",
         }))
+    return top_bid
 
 
 def _simulate_npc_bids(state: "GameState") -> None:
@@ -263,5 +267,6 @@ def get_listings_display(state: "GameState") -> list[dict]:
             "current_bid": lst["current_bid"],
             "turns_left":  turns_left,
             "guild":       lst["auction_guild"],
+            "seller":      lst.get("seller_npc_id") or "",
         })
     return result

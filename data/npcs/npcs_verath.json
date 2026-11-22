@@ -627,7 +627,9 @@
         ]
       }
     },
-    "quest_seeds": []
+    "quest_seeds": [
+      {"quest_template_id": "system_break_mission", "already_given_flag": "given_system_break_mission", "min_level": 10, "min_faction": {"system_breakers": 20.0}}
+    ]
   },
   {
     "template_id": "captain_aldis",

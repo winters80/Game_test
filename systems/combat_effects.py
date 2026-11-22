@@ -62,10 +62,12 @@ def tick(bag: dict, hp: int) -> tuple[int, list[tuple[str, int]]]:
     """End of round: damage over time and countdown. Returns (new_hp, [(effect, damage)])."""
     hits = []
     for effect in list(bag):
-        if effect.startswith("_"):            # bookkeeping (stun guard), not a status
+        if effect == "_stun_guard":
             bag[effect] -= 1
             if bag[effect] <= 0:
                 del bag[effect]
+            continue
+        if effect.startswith("_"):            # ward / evade: spent by hits, not by time
             continue
         dot = _info(effect).get("damage_per_turn", 0)
         if dot and hp > 0:
@@ -102,6 +104,49 @@ def skill_status(skill: "Skill | None") -> tuple[str, float] | None:
     if st == "arcane":
         return ("stun", 0.15)
     return None
+
+
+def is_defensive(skill) -> bool:
+    """An ACTIVE skill whose effects are SHIELD / BUFF only (Mana Shield,
+    Shadow Step): it protects the caster instead of hitting the target."""
+    kinds = {getattr(e.effect_type, "value", e.effect_type) for e in getattr(skill, "effects", [])}
+    return bool(kinds) and kinds <= {"shield", "buff"}
+
+
+def apply_defensive(skill, player, bag: dict) -> str:
+    """SHIELD → a ward that absorbs that much damage this fight; BUFF → evade
+    the next 1-2 attacks. Returns the combat-log line."""
+    from systems.skill_system import calculate_skill_damage
+    value = calculate_skill_damage(skill, player)
+    kinds = {getattr(e.effect_type, "value", e.effect_type) for e in skill.effects}
+    parts = []
+    if "shield" in kinds:
+        bag["_ward"] = bag.get("_ward", 0) + value
+        parts.append(f"a ward that absorbs {bag['_ward']} damage")
+    if "buff" in kinds:
+        charges = 2 if value >= 20 else 1
+        bag["_evade"] = bag.get("_evade", 0) + charges
+        parts.append(f"{charges} evade{'s' if charges > 1 else ''}")
+    return f"You cast {skill.name}: {' and '.join(parts)}."
+
+
+def absorb(bag: dict | None, damage: int) -> tuple[int, str]:
+    """Evade or ward against an incoming hit. Returns (damage left, note)."""
+    if not bag or damage <= 0:
+        return damage, ""
+    if bag.get("_evade"):
+        bag["_evade"] -= 1
+        if bag["_evade"] <= 0:
+            del bag["_evade"]
+        return 0, "evaded"
+    ward = bag.get("_ward", 0)
+    if ward:
+        used = min(ward, damage)
+        bag["_ward"] = ward - used
+        if bag["_ward"] <= 0:
+            del bag["_ward"]
+        return damage - used, f"ward absorbs {used}"
+    return damage, ""
 
 
 def trigger_statuses(fired: list["TriggerFiring"]) -> list[tuple[str, float]]:
@@ -222,4 +267,9 @@ def tick_enemy(enemy: "Enemy") -> list[tuple[str, int]]:
 
 
 def status_label(bag: dict) -> str:
-    return ", ".join(f"{k} {v}" if k != "stun" else "stunned" for k, v in bag.items() if not k.startswith("_"))
+    parts = [f"{k} {v}" if k != "stun" else "stunned" for k, v in bag.items() if not k.startswith("_")]
+    if bag.get("_ward"):
+        parts.append(f"ward {bag['_ward']}")
+    if bag.get("_evade"):
+        parts.append(f"evade ×{bag['_evade']}")
+    return ", ".join(parts)

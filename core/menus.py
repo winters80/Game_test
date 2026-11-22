@@ -16,6 +16,8 @@ from typing import TYPE_CHECKING
 
 import questionary
 
+from scenes.option_logic import _known_skills_ctx
+
 from config import DATA_DIR, SAVES_DIR, feature
 from core.event_bus import Event, bus
 from persistence.save_manager import save_game
@@ -336,7 +338,7 @@ class GameMenusMixin:
                     player=self.state.player,
                     name_hint=hint.strip(),
                     source="inspect",
-                    context=ctx,
+                    context={**ctx, **_known_skills_ctx(self.state.player, self.skill_registry)},
                     has_inspect=True,    # this whole flow IS the Inspect passive at work
                 )
         except Exception:
