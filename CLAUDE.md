@@ -312,6 +312,13 @@ Roles `primary` / `fast` / `fallback` resolve env var → `saves/settings/ai_mod
 
 `AIService.decide(question, options, context) → Decision(index, confidence, source) | None` picks one of N declared options with a schema-constrained call (`{"choice": enum, "confidence": 0-100}`) instead of generating text. Providers (`config.DECISION_PROVIDER`): `ollama` (fast client, default), `openai_compatible` (`DECISION_ENDPOINT`, `DECISION_MODEL`, key in the `DECISION_API_KEY` env var; opt-in because it sends scene text out), `off`. Used by `[?]`: unless the text ends in `?`, `situation_query._match_existing` asks whether it means an on-screen choice; at ≥ `DECISION_MATCH_CONFIDENCE` the engine takes it (`engine._pending_option`, returned by `prompt_choice`). Use it wherever code would otherwise generate text and then parse a choice out of it.
 
+`AIService.decide_many(questions, context)` / `submit_decide_many_async(...)` ask several independent questions in **one** call (schema `{"q0": enum, "q1": enum, …}`; `Decision.confidence` is a flat 0.6 for batches). Two users, both off when `DECISION_PROVIDER == "off"` or the AI is offline:
+
+| Use | Where | How |
+|---|---|---|
+| Bot goals | `core/bot_flow.plan_bot_goals` (from `tick_bots`) | Every `BOT_GOAL_EVERY_TURNS` (36) one background call; options per bot from `bot_brain.goal_options` (zones its level allows, `ZONE_HINT` labels). The answer sets `BotAgent.goal_zone` until `goal_until` (`BOT_GOAL_HOLD_TURNS`); `bot_brain._destination` honours it, the rules do the rest. Bots waiting for the player are skipped |
+| Boss tactics | `core/combat_handler._plan_tactics` / `_tactic_for` | Submitted at the start of each round (while the player chooses), read at the enemy's turn with `BOSS_TACTIC_WAIT` (1.5 s). Options from `combat_effects.tactic_options`: basic + non-heavy abilities off cooldown (`Enemy.ability_last`), heal only below 70% HP, summon only with room. `enemy_turn(..., chosen=)` uses it, except on an announced heavy turn (`heavy_due`). `BOSS_TACTICS = False` turns it off |
+
 ### AI trigger policy (`systems/ai_trigger_policy.py`)
 
 Every trigger list the AI authors, whether on `[?]` situation options or on
@@ -432,6 +439,7 @@ What a bot does each act:
 - **In a safe zone:** sells loot to the traders actually present, crafts from `engine.recipes` (bots brew their own potions from the salve recipe), buys a missing potion ingredient, then walks towards what its archetype wants. Fighters go to the deepest floor their level allows (Floor 2 at level 3, Floor 3 at level 5).
 - **Trader bots** never dump stock on NPC traders. They keep up to 6 items to sell to the player.
 - **Guilds:** an unaffiliated bot of level `JOIN_GUILD_LEVEL` (3)+ joins a guild that suits its archetype (`bot_brain.GUILD_FOR`), or the player's founded guild (then also a real `guild_members` row). `BotAgent.guild_id` / `guild_rank`; rank rises every 4 levels. Shown in `[W]`.
+- **Bidding:** every 5 turns bots in a town may bid (`core/bot_flow.bot_auction_bids`, `BOT_BID_CHANCE`) on a listing they want, priced by `bot_trade.auction_interest` (potions when short, materials for crafters/gatherers/traders, gear for fighters/explorers; ≤ 40% of their purse). Bidder `bot:<id>`; `settle_bot_auctions` charges the winner and gives it the item.
 - **Auction:** traders, gatherers and fighters in a town consign their most valuable item (≥ `AUCTION_MIN_VALUE` 15g) to the auction house (`seller_npc_id = "bot:<id>"`, a day long, on `state.turn_number`). `auction_system.tick_auction` returns the settlements; `bot_flow.settle_bot_auctions` pays the seller (minus a 10% house fee) or returns unsold items.
 
 The player sees bots through:
@@ -503,7 +511,15 @@ Bots: fighters and explorers in town run a gate with chance `BOT_GATE_CHANCE` wh
 
 **Crafting:** `data/crafting/gate_recipes.json` uses all 32 Gate materials (24 consumables in `data/items/gate_crafts.json`, 8 pieces of gear). `alchemy_system.load_recipes` loads every file in `data/crafting/`. `[C]` appears for alchemists or anyone holding a recipe ingredient other than basic reagents.
 
-**Balance:** `python scripts/balance_sim.py [runs] [--class warrior|mage|rogue] [--offset N]` builds a character at each Gate's level (plus level-matched companions for group Gates), runs every room and the first master with the real rules, and flags Gates that are too hard (< 40%) or trivial. Run it after changing Gate stats, enemy formulas, class skills or the XP curve.
+**Balance:** `python scripts/balance_sim.py [runs] [--class warrior|mage|rogue] [--offset N]` builds a character at each Gate's level the way play does (class skills learned on level-up, class milestones), plus level-matched companions for group Gates, runs every room and the first master with the real rules, and flags Gates that are too hard (< 40%) or trivial. Run it after changing Gate stats, enemy formulas, class skills or the XP curve. Difficulty knob: `GATE_ENEMY_HP_SCALE` (1.4) / `GATE_ENEMY_ATK_SCALE` (1.1), applied to every lair and Gate enemy in `lair_system.register_enemy_templates` (authored and generated alike). Current result: warrior 62% / mage 57% / rogue 58% HP left, ≥ 96% wins at every Gate. `tests/test_balance.py` guards a sample of it.
+
+**Class milestones:** every `CLASS_MILESTONE_EVERY` (4) levels `level_system.apply_class_milestone` adds the class's `stat_growth` (and HP/MP for VIT/END/INT/WIS), publishing `CLASS_MILESTONE`. Before this, `stat_growth` was defined on every class but never used. It only fires when `add_experience` gets the class registry.
+
+**Player auctions:** `auction_system.consignable` / `consign_player_item` (Auction house → « Consign an item »): starting bid = value, a day long, `seller_npc_id = "player"`; `_settle_listing` pays the player minus `AUCTION_HOUSE_FEE` or returns the item; the player can't bid on their own listing. The game loop prints "Your … sold" lines.
+
+**Content health:** `core/content_health.check(engine)` (Admin → Content health, `scripts/content_health.py`, and `tests/test_balance.py` requires 0 problems): scenes and nodes unreachable from the prologue, dead `leads_to` links, quests no seed or `start_quest:` offers, items mentioned nowhere outside their definition, materials nothing uses.
+
+**Autoplay:** `python scripts/autoplay.py --runs N --steps M --seed S` plays the real engine offline through a scripted `ui/prompt` backend (scene choices, fights, peeks at menus, backs out of loops), saves `autoplay_<seed>`, reports crashes with tracebacks, and writes `logs/playtest_report.md`. It found the journal crash (`reward_alignment`). Run it after big changes.
 
 ### Quest content
 
@@ -641,6 +657,7 @@ All UI notifications are driven by events. Subscribe in `ui/notifications.py`.
 | `LEVEL_UP` | `level`, `stat_points` | `systems/level_system` |
 | `SKILL_ACQUIRED` | `skill_id`, `skill_name`, `rarity` | `systems/class_system`, `scenes/scene_base` |
 | `CLASS_ASSIGNED` | `class_id`, `class_name`, `rarity` | `systems/class_system` |
+| `CLASS_MILESTONE` | `class_name`, `level`, `gained` | `systems/level_system.apply_class_milestone` |
 | `ANOMALY_DETECTED` | *(none)* | `systems/class_system` (before AI gen) |
 | `ITEM_FOUND` | `item_id`, `item_name`, `rarity` | `systems/inventory_system`, `scenes/scene_base` |
 | `WARNING` | *(none)* | various |

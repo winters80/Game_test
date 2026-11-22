@@ -77,6 +77,16 @@ def main() -> None:
     check(ENEMY_TEMPLATES[eid]["max_hp"] == max(1, round(tmpl.max_hp * config.GATE_ENEMY_HP_SCALE)),
           f"Gate enemy HP is scaled by GATE_ENEMY_HP_SCALE ({config.GATE_ENEMY_HP_SCALE})")
 
+    # ── Content health: nothing unreachable, unoffered or unused ──
+    from core.bootstrap import load_registries
+    from core.content_health import check as health
+    from core.game_engine import GameEngine
+    eng = GameEngine()
+    load_registries(eng)
+    rep = health(eng)
+    check(rep.problems() == 0, "content health: " + ("clean" if not rep.problems() else
+                                                     "; ".join(rep.lines(limit=5))))
+
     # ── Quick sim: every class clears a spread of Gates at their rated level ──
     import scripts.balance_sim as bs
     gates = sorted(gr.all(), key=lambda g: g.min_level)
