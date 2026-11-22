@@ -145,7 +145,12 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
         settled = auction_system.tick_auction(engine.state)
         if settled:
             from core.bot_flow import settle_bot_auctions
-            settle_bot_auctions(engine, settled)
+            for line in settle_bot_auctions(engine, settled):
+                if line.startswith("Your "):
+                    renderer.print_system_message(line, style="gold")
+        if engine.state.turn_number % 5 == 0:
+            from core.bot_flow import bot_auction_bids
+            bot_auction_bids(engine)
 
     # Ending-path unlock (political ascension)
     if feature("faction_system") and engine.faction_registry:

@@ -116,14 +116,13 @@ def place_player_bid(
     if amount <= listing["current_bid"]:
         return False, f"Bid must exceed the current bid of {listing['current_bid']} Shards."
 
+    if listing.get("seller_npc_id") == "player":
+        return False, "That's your own listing."
+
     # Refund any previous player bid on this listing
-    prev_bid = state.world_db._conn.execute(
-        "SELECT MAX(bid_amount) as amt FROM auction_bids "
-        "WHERE listing_id = ? AND bidder = 'player'",
-        (listing_id,),
-    ).fetchone()
-    if prev_bid and prev_bid["amt"]:
-        state.player.gold += prev_bid["amt"]
+    prev = state.world_db.max_bid_by(listing_id, "player")
+    if prev:
+        state.player.gold += prev
 
     state.player.gold -= amount
     success = state.world_db.place_bid(listing_id, "player", amount, state.turn_number)
@@ -162,6 +161,49 @@ def buy_life_token_direct(state: "GameState") -> tuple[bool, str]:
     )
 
 
+# ── The player's consignments ─────────────────────────────────────────────────
+
+AUCTION_HOUSE_FEE = 0.1          # the house keeps 10% of every sale
+PLAYER_LISTING_TURNS = 144       # a day
+
+
+def consignable(player: "Player", item_registry) -> list[tuple[object, int]]:
+    """(item, spare quantity) the player could put up for auction: anything
+    with a value except key items and life tokens, never the last copy of
+    something equipped."""
+    eq = player.equipped
+    equipped = {i for i in (eq.weapon, eq.armor, eq.accessory) if i}
+    out = []
+    for slot in player.inventory:
+        item = item_registry.get(slot.item_id)
+        if item is None or item.item_type.value in ("KEY_ITEM", "LIFE_TOKEN") or item.value_gold <= 0:
+            continue
+        spare = slot.quantity - (1 if slot.item_id in equipped else 0)
+        if spare > 0:
+            out.append((item, spare))
+    return out
+
+
+def consign_player_item(state: "GameState", item_id: str, item_registry, quantity: int = 1) -> tuple[bool, str]:
+    """List ``quantity`` of an item at the Verath auction. Starting bid = its
+    value; the item leaves the bag now and comes back if nobody bids."""
+    if not state.world_db:
+        return False, "Auction house unavailable."
+    spare = dict((i.item_id, q) for i, q in consignable(state.player, item_registry))
+    if item_id not in spare:
+        return False, "You can't consign that."
+    quantity = max(1, min(quantity, spare[item_id]))
+    item = item_registry.get(item_id)
+    start = max(1, item.value_gold * 100 * quantity)
+    import uuid
+    state.player.remove_item(item_id, quantity)
+    state.world_db.add_auction_listing(
+        listing_id=f"pl_{uuid.uuid4().hex[:10]}", auction_guild="verath_exchange",
+        item_id=item_id, item_type="standard", quantity=quantity, starting_bid=start,
+        expires_turn=state.turn_number + PLAYER_LISTING_TURNS, seller_npc_id="player")
+    return True, f"{item.name} ×{quantity} is up for auction, starting at {start:,}."
+
+
 # ── Tick ──────────────────────────────────────────────────────────────────────
 
 def tick_auction(state: "GameState") -> list[tuple[dict, dict | None]]:
@@ -189,25 +231,24 @@ def _settle_listing(listing: dict, state: "GameState") -> dict | None:
     if not state.world_db:
         return None
 
-    top_bid = state.world_db._conn.execute(
-        "SELECT bidder, bid_amount FROM auction_bids "
-        "WHERE listing_id = ? ORDER BY bid_amount DESC LIMIT 1",
-        (listing["listing_id"],),
-    ).fetchone()
+    top_bid = state.world_db.top_bid(listing["listing_id"])
+
+    # The player's own consignment: paid (minus the house fee), or it comes back.
+    if listing.get("seller_npc_id") == "player":
+        if top_bid:
+            state.player.gold += int(top_bid["bid_amount"] * (1 - AUCTION_HOUSE_FEE))
+        elif listing.get("item_id"):
+            state.player.add_item(listing["item_id"], listing.get("quantity", 1))
+        return top_bid
 
     if not top_bid:
         return None  # No bids — listing just expires
-    top_bid = dict(top_bid)
 
     if top_bid["bidder"] != "player":
         # Player bid but lost — refund their last bid
-        player_bid = state.world_db._conn.execute(
-            "SELECT MAX(bid_amount) as amt FROM auction_bids "
-            "WHERE listing_id = ? AND bidder = 'player'",
-            (listing["listing_id"],),
-        ).fetchone()
-        if player_bid and player_bid["amt"]:
-            state.player.gold += player_bid["amt"]
+        lost = state.world_db.max_bid_by(listing["listing_id"], "player")
+        if lost:
+            state.player.gold += lost
         return top_bid
 
     # Player won

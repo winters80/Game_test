@@ -57,6 +57,7 @@ _PATTERNS = [
     ("cleared",  re.compile(r"^Cleared (?P<where>.+?) with (?P<who>.+)$")),
     ("badrun",   re.compile(r"^Went into (?P<where>.+?) with (?P<who>.+?); it went badly$")),
     ("guild",    re.compile(r"^Joined (?P<what>.+)$")),
+    ("won_auction", re.compile(r"^Won (?P<what>.+?) at auction$")),
     ("listed",   re.compile(r"^Listed (?P<what>.+?) at auction$")),
     ("auction",  re.compile(r"^Sold (?P<what>.+?) at auction to (?P<who>.+)$")),
     ("soldnpc",  re.compile(r"^Sold (?P<count>\d+) items? to (?P<who>.+)$")),
@@ -94,7 +95,7 @@ def parse_memory(line: str) -> Happening:
 
 
 _PRIORITY = {"slew": 5, "cleared": 5, "badrun": 4, "boss": 4, "gate": 4, "lost": 3, "won": 3,
-             "agreed": 3, "guild": 2, "auction": 2, "listed": 1, "soldyou": 2, "boughtyou": 2,
+             "agreed": 3, "guild": 2, "won_auction": 2, "auction": 2, "listed": 1, "soldyou": 2, "boughtyou": 2,
              "soldnpc": 0, "other": 1}
 
 
@@ -150,6 +151,8 @@ def summarize_memory(memory: list[str], player_name: str = "", limit: int = 4) -
                                              else f" with {e.who}, and it went badly")
         elif e.kind == "guild":
             text = f"signed up with {e.what}"
+        elif e.kind == "won_auction":
+            text = f"won {e.what} at the auction house"
         elif e.kind == "listed":
             text = f"stuck {e.what} up at the auction house"
         elif e.kind == "auction":

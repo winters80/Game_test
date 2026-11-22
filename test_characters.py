@@ -3525,7 +3525,7 @@ def _test_social_world(item_reg) -> None:
         from core.class_awakening import awaken
         from core.game_engine import GameEngine
         from core.menu_flow import _attach_engine_handles
-        from systems import auction_system as _as, bot_brain as _bb34, combat_effects as fx, npc_system as _ns, quest_system as _qs
+        from systems import auction_system as _as, bot_brain as _bb34, bot_trade as _bt34, combat_effects as fx, npc_system as _ns, quest_system as _qs
         from systems.bot_system import BotAgent
         from ai.prompt_builder import describe_known_skills, skill_gap_hint
         from ui import renderer as _r
@@ -3578,6 +3578,39 @@ def _test_social_world(item_reg) -> None:
             lines = _bf34.settle_bot_auctions(_eng, settled)
         assert lines and b.gold > g0
         ok(f"Bots join guilds ({b.name} → {b.guild_id}) and auction loot; the house pays them when it sells")
+
+        # 34b2. The player consigns; a bot in town bids; settlement pays the player, the bot gets it.
+        _p.add_item("void_crystal", 2)
+        assert any(i.item_id == "void_crystal" for i, _q in _as.consignable(_p, _eng.item_registry))
+        okc, _msg = _as.consign_player_item(_sstate, "void_crystal", _eng.item_registry, 1)
+        assert okc and _p.has_item("void_crystal")
+        mine = [l for l in _sstate.world_db.get_active_listings() if l.get("seller_npc_id") == "player"]
+        assert mine and mine[0]["item_id"] == "void_crystal"
+        assert not _as.place_player_bid(mine[0]["listing_id"], mine[0]["current_bid"] + 1, _sstate)[0], \
+            "No bidding on your own listing"
+        buyer = BotAgent(bot_id="buy", name="Tamsin", archetype="crafter", current_zone_id="verath_city",
+                         level=5, gold=1_000_000)
+        assert _bt34.auction_interest(buyer, _eng.item_registry.get("void_crystal")) > 0
+        with _m34.patch.object(_eng._bot_manager, "all", lambda: [buyer]), \
+                _m34.patch.object(_eng._bot_manager, "get", lambda bid: buyer if bid == "buy" else None), \
+                _m34.patch.object(_bf34, "BOT_BID_CHANCE", 1.0):
+            assert _bf34.bot_auction_bids(_eng) >= 1
+            top = _sstate.world_db.top_bid(mine[0]["listing_id"])
+            assert top and top["bidder"] == "bot:buy"
+            g0, bg0 = _p.gold, buyer.gold
+            _sstate.turn_number = mine[0]["expires_turn"]
+            settled = _as.tick_auction(_sstate)
+            lines = _bf34.settle_bot_auctions(_eng, settled)
+        assert _p.gold == g0 + int(top["bid_amount"] * 0.9), "Player paid minus the house fee"
+        assert buyer.inventory.get("void_crystal") == 1 and buyer.gold == bg0 - top["bid_amount"]
+        assert any(l.startswith("Your Void") or l.startswith("Your ") for l in lines), lines
+        # Unsold: it comes back.
+        okc, _msg = _as.consign_player_item(_sstate, "void_crystal", _eng.item_registry, 1)
+        mine = [l for l in _sstate.world_db.get_active_listings() if l.get("seller_npc_id") == "player"]
+        _sstate.turn_number = mine[0]["expires_turn"]
+        _as.tick_auction(_sstate)
+        assert _p.has_item("void_crystal"), "Unsold consignments come back"
+        ok("The player consigns at auction; bots bid on what they want; the seller is paid, unsold items return")
 
         # 34c. Defensive skills ward and evade instead of hitting the enemy.
         sk = _eng.skill_registry.get("mana_shield")
