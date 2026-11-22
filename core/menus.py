@@ -1000,7 +1000,14 @@ class GameMenusMixin:
             "npc_branch":    "[dim_text]NPC[/dim_text]",
             "bot_activity":  "[cyan]ADVENTURER[/cyan]",
             "world_growth":  "[system_msg]GROWTH[/system_msg]",
+            "lair":          "[damage]DUNGEON[/damage]",
         }
+
+        if feature("boss_succession") and self.lair_registry:
+            from core.lair_flow import lair_status_lines
+            for line in lair_status_lines(self):
+                renderer.console.print(f"  [damage]LAIR[/damage]  [scene_text]{line}[/scene_text]")
+            renderer.console.print()
 
         for ev in reversed(events):
             icon     = type_icons.get(ev.get("event_type", ""), "[dim_text]EVENT[/dim_text]")

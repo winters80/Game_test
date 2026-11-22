@@ -8,5 +8,40 @@
     "flavor_text": "It hums at a frequency you feel in your fillings.",
     "combo_catalyst": true,
     "value_gold": 150
+  },
+  {
+    "item_id": "matriarch_silk",
+    "name": "Matriarch Silk",
+    "rarity": "UNCOMMON",
+    "item_type": "MATERIAL",
+    "description": "A coil of crystal-threaded silk spun by a brood matriarch. Tougher than steel wire and half the weight.",
+    "flavor_text": "It still twitches when the light catches it.",
+    "value_gold": 40,
+    "weight": 0.1,
+    "stackable": true
+  },
+  {
+    "item_id": "phylactery_shard",
+    "name": "Phylactery Shard",
+    "rarity": "RARE",
+    "item_type": "MATERIAL",
+    "description": "A sliver of the vessel a dead wizard poured himself into. The System tags it UNSTABLE: SOUL RESIDUE.",
+    "flavor_text": "Sometimes, when you are almost asleep, it whispers your name back to you.",
+    "value_gold": 120,
+    "weight": 0.1,
+    "stackable": true
+  },
+  {
+    "item_id": "pale_lamp_oil",
+    "name": "Pale Lamp Oil",
+    "rarity": "UNCOMMON",
+    "item_type": "CONSUMABLE",
+    "description": "Consecrated oil from the lamps of the Order of the Pale Lamp. Restores 40 MP when drunk.",
+    "flavor_text": "It burns cold going down. Whatever the priests prayed to, it was listening.",
+    "effect_type": "heal_mp",
+    "effect_value": 40,
+    "value_gold": 45,
+    "weight": 0.2,
+    "stackable": true
   }
 ]

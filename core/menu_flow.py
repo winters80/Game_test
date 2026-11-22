@@ -108,3 +108,6 @@ def _attach_engine_handles(engine: "GameEngine") -> None:
     # Per-save bots: load this save's adventurers, or create them for a new one.
     from core.bot_flow import setup_bots
     setup_bots(engine)
+    # Per-save boss lairs: who holds each one now (boss succession).
+    from core.lair_flow import setup_lairs
+    setup_lairs(engine)

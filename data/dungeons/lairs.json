@@ -1,0 +1,250 @@
+{
+  "_doc": "Boss lairs and who moves in after each boss dies. Read by entities/lair.LairRegistry; state lives in the world DB (dungeon_lairs / lair_history). {name} in any text is the current occupant's lineage name. See CLAUDE.md > Boss Succession.",
+
+  "enemy_templates": {
+    "brood_matriarch": {
+      "name": "Brood Matriarch", "max_hp": 70, "attack": 13, "defense": 5,
+      "xp_reward": 110, "gold_reward": 900, "rank": "D",
+      "status_on_hit": ["poison", 0.35],
+      "loot_table": [["matriarch_silk", 0.8], ["void_crystal", 0.3]]
+    },
+    "shardmind": {
+      "name": "The Shardmind", "max_hp": 80, "attack": 16, "defense": 5,
+      "xp_reward": 150, "gold_reward": 1200, "rank": "D",
+      "status_on_hit": ["frozen", 0.25],
+      "loot_table": [["void_crystal", 0.9], ["crystal_shard", 0.15]]
+    },
+    "goblin_warchief": {
+      "name": "Warchief {name}", "max_hp": 75, "attack": 13, "defense": 6,
+      "xp_reward": 120, "gold_reward": 1800, "rank": "D",
+      "loot_table": [["void_crystal", 0.4], ["health_potion", 0.5]]
+    },
+    "reforged_golem": {
+      "name": "Reforged Crystal Golem", "max_hp": 110, "attack": 15, "defense": 8,
+      "xp_reward": 170, "gold_reward": 1700, "rank": "D",
+      "loot_table": [["void_crystal", 0.8], ["mountain_root", 0.5], ["crystal_shard", 0.1]]
+    },
+    "archmage": {
+      "name": "Archmage {name}", "max_hp": 85, "attack": 18, "defense": 5,
+      "xp_reward": 200, "gold_reward": 2500, "rank": "C",
+      "status_on_hit": ["burn", 0.3],
+      "loot_table": [["mana_potion_major", 0.6], ["void_crystal", 0.4]]
+    },
+    "hollow_lich": {
+      "name": "{name}, the Hollow Lich", "max_hp": 110, "attack": 19, "defense": 7,
+      "xp_reward": 240, "gold_reward": 2200, "rank": "C",
+      "status_on_hit": ["frozen", 0.3],
+      "loot_table": [["phylactery_shard", 0.7], ["mana_potion_major", 0.4]]
+    },
+    "cabal_apprentice": {
+      "name": "Ashen Apprentice", "max_hp": 35, "attack": 11, "defense": 3,
+      "xp_reward": 60, "gold_reward": 500, "rank": "D",
+      "status_on_hit": ["burn", 0.15],
+      "loot_table": [["mana_potion", 0.5]]
+    },
+    "pale_high_priest": {
+      "name": "High Priest {name}", "max_hp": 70, "attack": 15, "defense": 5,
+      "xp_reward": 130, "gold_reward": 1400, "rank": "C",
+      "status_on_hit": ["bleed", 0.25],
+      "loot_table": [["pale_lamp_oil", 0.8], ["health_potion_major", 0.3]]
+    },
+    "pale_acolyte": {
+      "name": "Pale Lamp Acolyte", "max_hp": 32, "attack": 10, "defense": 3,
+      "xp_reward": 45, "gold_reward": 300, "rank": "D",
+      "loot_table": [["pale_lamp_oil", 0.3]]
+    },
+    "lampless_saint": {
+      "name": "Saint {name} the Lampless", "max_hp": 130, "attack": 20, "defense": 8,
+      "xp_reward": 280, "gold_reward": 2600, "rank": "C",
+      "status_on_hit": ["bleed", 0.3],
+      "loot_table": [["pale_lamp_oil", 0.9], ["phylactery_shard", 0.2]]
+    },
+    "lampwarden": {
+      "name": "{name}, Lampwarden", "max_hp": 120, "attack": 18, "defense": 9,
+      "xp_reward": 250, "gold_reward": 2400, "rank": "C",
+      "loot_table": [["pale_lamp_oil", 0.9], ["health_potion_major", 0.5]]
+    }
+  },
+
+  "lairs": [
+    {
+      "lair_id": "crystal_heart",
+      "name": "the Crystal Heart",
+      "zone_id": "dungeon_floor2",
+      "min_level": 3,
+      "respawn_turns": 30,
+      "first_occupant": "crystal_golem",
+      "clear_flags": ["boss_golem_defeated"],
+      "fallback": ["spider_matriarch", "goblin_warband"],
+      "occupants": {
+        "crystal_golem": {
+          "title": "the Crystal Golem",
+          "enemies": ["crystal_golem"],
+          "intro": "At the center stands the Crystal Golem: twelve feet of condensed void-crystal animated into something that moves with terrible purpose. Its eyes are the same deep purple as the walls. Its fists are the size of your torso.",
+          "study": {"stat": "INT", "min": 14, "text": "You watch it move. The Golem plants its left foot a half-beat before every swing, and the crystal there is cracked. You know where to hit first."},
+          "victory": "The Golem comes apart along its fault lines. Crystal dust hangs in the air, and the heart-crystal in its chest rolls free, still pulsing.",
+          "omen": "The chamber is empty. Shards of the Golem litter the floor, and fine threads of webbing already stretch between them. Something with too many legs has noticed the vacancy.",
+          "rumour": "Hunters coming up from Floor 2 say the Crystal Heart is no longer empty.",
+          "successors": [
+            {"to": "spider_matriarch", "weight": 2},
+            {"to": "shardmind", "weight": 3, "when": {"killed_by": "magic"}}
+          ]
+        },
+        "spider_matriarch": {
+          "title": "the Brood Matriarch",
+          "enemies": ["brood_matriarch", "crystal_spider", "crystal_spider"],
+          "intro": "The chamber is a cathedral of web. Crystal-studded silk hangs in curtains from the ceiling, and in the middle of it all a spider the size of a cart turns her many eyes on you. Her brood drops from the dark on silent threads.",
+          "study": {"stat": "INT", "min": 13, "text": "The webs are anchored to three pillars. Cut the right strand and the curtain falls on her brood instead of you."},
+          "victory": "The Matriarch curls in on herself and goes still. Her brood scatters into the cracks in the walls. Without her, the webs begin to sag.",
+          "omen": "The webs are torn down and burnt in places. Crude goblin glyphs are scratched into the walls beside the door, and someone has left a pick in the crystal.",
+          "rumour": "A goblin warband has moved into the Crystal Heart on Floor 2. They are mining it, by all accounts, and not kindly.",
+          "successors": [
+            {"to": "goblin_warband", "weight": 1}
+          ]
+        },
+        "shardmind": {
+          "title": "the Shardmind",
+          "enemies": ["shardmind"],
+          "intro": "The Golem's broken crystals are moving. They drift in a slow orbit around the room, and where they cross the air rings like struck glass. Your arcane arts woke something in the shards, and it is thinking now.",
+          "study": {"stat": "WIS", "min": 12, "text": "The orbit has a rhythm. Every seventh pass the shards bunch together, and the mind inside them has nothing to hide behind."},
+          "victory": "The ringing stops. The shards fall all at once, like hail, and lie still. Whatever was thinking in them is gone.",
+          "omen": "The shards lie scattered and silent. Someone has been picking through them: small boot prints, and a broken goblin pick.",
+          "rumour": "Goblins have moved into the Crystal Heart on Floor 2. They say the crystals there sing, and the goblins have started singing back.",
+          "successors": [
+            {"to": "goblin_warband", "weight": 1}
+          ]
+        },
+        "goblin_warband": {
+          "title": "Warchief {name}'s warband",
+          "name_pool": ["Skrag", "Nubbin", "Grisk", "Vorla"],
+          "enemies": ["goblin_warchief", "goblin_looter", "goblin_looter"],
+          "intro": "The Crystal Heart has become a mining camp. Goblins have hacked tunnels into every wall, and in the center, on a throne of stolen crystal, sits Warchief {name}, wearing a dead adventurer's helmet several sizes too big.",
+          "study": {"stat": "INT", "min": 12, "text": "The looters keep glancing at the Warchief before they do anything. Take him down quickly and the rest will break."},
+          "victory": "Warchief {name} topples off the crystal throne. The surviving goblins look at each other, at you, and at the door.",
+          "aftermath": [
+            {"id": "drove_out", "label": "Drive the last goblins out.", "text": "They run, shrieking, into the tunnels. The mining stops. In the quiet you can hear the crystals in the walls beginning to grow again."},
+            {"id": "spared", "label": "Let the last goblins go, and tell them never to come back.", "text": "They bow, absurdly, and leave in a hurry. One of them leaves a health potion at your feet.", "triggers": ["alignment:+3", "give_item:health_potion"]}
+          ],
+          "omen": "The goblin camp is abandoned. Without the miners, the crystal is growing back over their tunnels, layer on layer, and in the center of the room something large is taking shape.",
+          "rumour": "The crystals of Floor 2 have grown a new guardian. The Crystal Heart has a Golem again, they say, and it is bigger than the last one.",
+          "successors": [
+            {"to": "reforged_golem", "weight": 1}
+          ]
+        },
+        "reforged_golem": {
+          "title": "the Reforged Golem",
+          "enemies": ["reforged_golem"],
+          "intro": "The crystal has rebuilt its guardian. The Reforged Golem is taller than the first one, its seams are clean, and its eyes burn a brighter purple. The dungeon learned from the last one.",
+          "study": {"stat": "INT", "min": 15, "text": "The new Golem has no cracked foot. But the crystal over its heart is still thin and new. That is where to aim."},
+          "victory": "The Reforged Golem falls in one piece, like a felled tree. Its heart-crystal goes dark.",
+          "omen": "The Golem's remains are already being colonised. Pale threads of webbing glint between the shards.",
+          "rumour": "The Crystal Heart on Floor 2 has new tenants. Hunters talk about webs, and about something big at the center of them.",
+          "successors": [
+            {"to": "spider_matriarch", "weight": 2},
+            {"to": "shardmind", "weight": 3, "when": {"killed_by": "magic"}}
+          ]
+        }
+      }
+    },
+    {
+      "lair_id": "drowned_sanctum",
+      "name": "the Drowned Sanctum",
+      "zone_id": "dungeon_floor3",
+      "min_level": 5,
+      "respawn_turns": 35,
+      "first_occupant": "archmage",
+      "clear_flags": ["drowned_sanctum_cleared"],
+      "fallback": ["archmage"],
+      "occupants": {
+        "archmage": {
+          "title": "Archmage {name}",
+          "name_pool": ["Veyl", "Maren", "Oskarre", "Ilsabet"],
+          "enemies": ["archmage"],
+          "intro": "Black water covers the floor of the sanctum, ankle deep and perfectly still. Bookshelves rise out of it, and floating lamps circle a reading desk. Archmage {name} closes a book and looks up at you without much interest. \"The Fracture is the greatest arcane event in history,\" {name} says, \"and you have come to interrupt my notes.\"",
+          "study": {"stat": "INT", "min": 15, "text": "The lamps are wards. Each time {name} casts, one of them dims. Strike while the third lamp is dark."},
+          "victory": "Archmage {name} falls into the water. In {name}'s hand is a small vessel of dark glass, and it is still warm.",
+          "aftermath": [
+            {"id": "left_phylactery", "label": "Leave the body where it fell.", "text": "You leave {name} to the black water. As you go, you think you hear the glass vessel in that dead hand begin to hum."},
+            {"id": "took_phylactery", "label": "Take the glass vessel.", "text": "You pry it loose. It is colder than it should be. The System tags it UNSTABLE, and a moment later the vessel cracks, and something in it flows back into the body before you can stop it.", "triggers": ["give_item:phylactery_shard", "alignment:-3"]},
+            {"id": "shattered_phylactery", "label": "Smash the vessel, and burn the body.", "text": "The glass shatters on the stone. Something screams in a voice too thin to hear, and the body burns with a cold blue flame. Whatever {name} meant to come back as, it will not.", "triggers": ["alignment:+5"]}
+          ],
+          "omen": "The lamps have gone out. {name}'s body is not where it fell. The water is colder now, and the books on the nearest shelf have frost on their spines.",
+          "rumour": "Something walks the Drowned Sanctum on Floor 3. They say it wears a dead wizard's face.",
+          "successors": [
+            {"to": "hollow_lich", "weight": 1, "when": {"aftermath": "left_phylactery"}},
+            {"to": "hollow_lich", "weight": 1, "when": {"aftermath": "took_phylactery"}},
+            {"to": "ashen_cabal", "weight": 1, "when": {"aftermath": "shattered_phylactery"}}
+          ]
+        },
+        "hollow_lich": {
+          "title": "{name}, the Hollow Lich",
+          "enemies": ["hollow_lich"],
+          "intro": "The black water has frozen. {name} stands at the old reading desk, but the face is wrong now, drawn tight over bone, and the eyes are two points of cold light. The thing that was an archmage turns a page with a finger that is only bone. \"I did tell you,\" it says. \"The Fracture is the greatest arcane event in history. I simply had to be dead to read the rest.\"",
+          "study": {"stat": "INT", "min": 16, "text": "The cold flows from the desk. Its spellbook is anchoring it here. Go for the book, not the lich."},
+          "victory": "The Hollow Lich comes apart into frost and dust, and this time there is no vessel left. Its spellbook falls open on the ice, and every page is blank.",
+          "omen": "The frost is melting. Someone has drawn circles of white chalk on the walls, and pale lamps burn at the doorway. A smell of incense hangs over everything. The priests have come to cleanse this place.",
+          "rumour": "The Order of the Pale Lamp has sent priests down to the Drowned Sanctum to cleanse the lich's den. Nobody has heard from them since.",
+          "successors": [
+            {"to": "pale_lamp_order", "weight": 1}
+          ]
+        },
+        "ashen_cabal": {
+          "title": "{name}'s Ashen Cabal",
+          "enemies": ["cabal_apprentice", "cabal_apprentice", "cabal_apprentice"],
+          "intro": "Three of {name}'s apprentices have come back to their master's sanctum. They wear grey ash smeared on their faces in mourning, and they are fighting over the books. When you come in, they stop fighting each other.",
+          "study": {"stat": "INT", "min": 13, "text": "None of them trusts the others. Hit one and the other two will hesitate."},
+          "victory": "The last apprentice falls. Their books float in the black water, soaking slowly, all those notes gone.",
+          "omen": "The apprentices' bodies have been laid out in a row and covered with white cloth. Pale lamps burn at the doorway. Someone is praying in here.",
+          "rumour": "Priests of the Pale Lamp have taken over the Drowned Sanctum on Floor 3, to bless the dead there. Something about them has changed, the hunters say.",
+          "successors": [
+            {"to": "pale_lamp_order", "weight": 1}
+          ]
+        },
+        "pale_lamp_order": {
+          "title": "the Order of the Pale Lamp",
+          "name_pool": ["Aldous", "Seraphine", "Corwen", "Halveth"],
+          "enemies": ["pale_high_priest", "pale_acolyte", "pale_acolyte"],
+          "intro": "The sanctum has become a chapel. Rows of pale lamps float above the water, and the priests of the Pale Lamp kneel around them, praying. But the flames are the wrong color: the same deep purple as the Fracture below. High Priest {name} rises to greet you, and smiles too wide. \"We came to cleanse this place,\" {name} says. \"It cleansed us instead. Come. Kneel.\"",
+          "study": {"stat": "WIS", "min": 13, "text": "The acolytes take their strength from the lamps. Put out the purple flames and their prayers falter."},
+          "victory": "The High Priest falls, and the purple flames gutter. One great lamp still hangs over the altar, its oil clean, its wick unburnt.",
+          "aftermath": [
+            {"id": "left_dark", "label": "Leave the chapel dark.", "text": "You leave the lamps to gutter out. Behind you, the purple glow on the altar does not go out. It only gets smaller, and patient."},
+            {"id": "relit_lamp", "label": "Light the clean lamp on the altar.", "text": "The wick catches with an ordinary, honest yellow flame. The purple light retreats from it. For the first time since you came down here, the air feels clean.", "triggers": ["alignment:+5"]}
+          ],
+          "omen": "One figure still kneels at the altar, alone, all night and all day, without moving.",
+          "rumour": "One priest of the Pale Lamp never came back up from the Drowned Sanctum. They kneel there still, and they have stopped needing to eat.",
+          "successors": [
+            {"to": "lampless_saint", "weight": 1, "when": {"aftermath": "left_dark"}},
+            {"to": "lampwarden", "weight": 1, "when": {"aftermath": "relit_lamp"}}
+          ]
+        },
+        "lampless_saint": {
+          "title": "Saint {name} the Lampless",
+          "name_pool": ["Odile", "Brannoch", "Mireth"],
+          "enemies": ["lampless_saint"],
+          "intro": "One priest stayed when the others fell. {name} kneels at the altar, praying to the dark lamp. Their eyes are gone, and purple light pours out of the sockets. \"The lamp went out,\" Saint {name} says, \"and I saw what was behind it.\"",
+          "study": {"stat": "WIS", "min": 14, "text": "The saint never stops praying, not even to fight. Every blow lands in the pauses between verses."},
+          "victory": "Saint {name} slumps against the altar. The purple light pours out of them like water out of a jar, and sinks away down through the floor.",
+          "omen": "The chapel has been stripped. Somebody has been carrying the books back in, and a new reading desk stands in the water, with notes scattered on it in a careful hand.",
+          "rumour": "There is a new scholar in the Drowned Sanctum on Floor 3. They are said to be studying the Fracture, just as the last archmage did.",
+          "successors": [
+            {"to": "archmage", "weight": 1}
+          ]
+        },
+        "lampwarden": {
+          "title": "{name}, Lampwarden",
+          "name_pool": ["Tamsin", "Hollis", "Wren"],
+          "enemies": ["lampwarden"],
+          "intro": "The yellow lamp you lit still burns. Beneath it stands a priest in clean armour: {name}, the last of the Order, now sworn to guard the flame. \"You lit it,\" the Lampwarden says. \"Thank you. And now no one else may come near it. Not even you.\"",
+          "study": {"stat": "INT", "min": 14, "text": "The Lampwarden never steps out of the lamp's light. Draw the fight into the shadows at the edge of the room."},
+          "victory": "The Lampwarden lays down their shield before they fall. \"Keep it lit,\" they say, and then nothing.",
+          "omen": "The yellow lamp is guttering. Nobody tends it now. A new reading desk stands in the water, with notes scattered on it in a careful hand.",
+          "rumour": "There is a new scholar in the Drowned Sanctum on Floor 3. They are said to be studying the Fracture, just as the last archmage did.",
+          "successors": [
+            {"to": "archmage", "weight": 1}
+          ]
+        }
+      }
+    }
+  ]
+}

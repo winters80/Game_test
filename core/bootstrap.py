@@ -92,6 +92,13 @@ def load_registries(engine: "GameEngine") -> None:
             DATA_DIR / "factions" / "faction_definitions.json"
         )
 
+    if feature("boss_succession"):
+        from entities.lair import LairRegistry
+        from systems.lair_system import register_enemy_templates
+        engine.lair_registry = LairRegistry()
+        engine.lair_registry.load_from_dir(DATA_DIR / "dungeons")
+        register_enemy_templates(engine.lair_registry)
+
     if feature("bot_system"):
         from systems.bot_system import BotRegistry, BotManager
         bot_registry = BotRegistry()

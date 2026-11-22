@@ -8,7 +8,7 @@
   ],
   "nodes": {
     "root": {
-      "text": "The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. System notifications appear in your vision and immediately corrupt into static. A System terminal stands against the far wall, still functional, its glow steady and incongruously mundane. To the east, the wound in reality pulses. Behind a sealed door to the north, something waits — something that will recognize you if you have the access.",
+      "text": "The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. System notifications appear in your vision and immediately corrupt into static. A System terminal stands against the far wall, still functional, its glow steady and incongruously mundane. To the east, the wound in reality pulses. Behind a sealed door to the north, something waits — something that will recognize you if you have the access. To the west, a flooded side passage drips steadily, and lamplight moves on the water.",
       "options": [
         {
           "option_id": "examine_core",
@@ -35,10 +35,37 @@
           }
         },
         {
+          "option_id": "go_drowned_sanctum",
+          "label": "Follow the flooded passage west.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "drowned_sanctum"
+        },
+        {
           "option_id": "leave_dungeon",
           "label": "Turn back. Climb out of the dungeon.",
           "expected": true,
           "leads_to": "village_start",
+          "leads_to_node": "root"
+        }
+      ]
+    },
+    "drowned_sanctum": {
+      "text": "The passage ends at a pair of bronze doors, green with age and standing half-open. Black water runs out under them, ankle deep. The System marks the doorway in red: DESIGNATED ENCOUNTER ZONE. THE DROWNED SANCTUM.\n\nThis was a scholar's retreat once, built long before the Fracture. Whoever lives here now, they did not ask to be disturbed.",
+      "options": [
+        {
+          "option_id": "enter_drowned_sanctum",
+          "label": "Push the doors open and step inside.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "drowned_sanctum",
+          "triggers": ["boss_lair:drowned_sanctum"]
+        },
+        {
+          "option_id": "leave_drowned_sanctum",
+          "label": "Go back to the antechamber.",
+          "expected": true,
+          "leads_to": "dungeon_floor3",
           "leads_to_node": "root"
         }
       ]

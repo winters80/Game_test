@@ -83,6 +83,9 @@ class BotWorld:
     recipes: list[dict] = field(default_factory=list)
     yields: dict[str, list[str]] = field(default_factory=dict)   # zone → world-growth yield items
     turn: int = 0
+    # zone → occupied boss lairs (core/lair_flow.bot_lair_view): lair_id,
+    # lair_name, title, min_level, enemies. A lair a bot clears is removed.
+    lairs: dict[str, list[dict]] = field(default_factory=dict)
 
 
 @dataclass
@@ -90,8 +93,10 @@ class BotEvent:
     bot_id: str
     zone_id: str          # where it happened (the zone the bot is in afterwards for moves)
     text: str
-    kind: str             # move | fight | defeat | level | trade | craft | gather | rest | potion
+    kind: str             # move | fight | defeat | level | trade | craft | gather | rest | potion | boss_kill
     from_zone: str = ""
+    lair_id: str = ""     # boss_kill: which lair was cleared
+    killed_by: str = ""   # boss_kill: "magic" | "physical"
 
 
 def place(zone_id: str) -> str:
@@ -147,6 +152,53 @@ def _fight(bot: "BotAgent", encounter_id: str, rng: random.Random, world: BotWor
     return events
 
 
+def bot_blow(bot: "BotAgent") -> str:
+    """How a bot fights: casters (INT their best stat) kill with magic."""
+    s = bot.stats
+    return "magic" if s.INT > max(s.STR, s.AGI) else "physical"
+
+
+def _try_boss(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    """Fighters and explorers sometimes take on the floor's boss, if they
+    meet the lair's level and the fight looks survivable."""
+    from config import LAIR_BOT_CHALLENGE_CHANCE, LAIR_BOT_SAFETY
+
+    for lair in world.lairs.get(bot.current_zone_id, []):
+        if bot.level < lair["min_level"] or rng.random() >= LAIR_BOT_CHALLENGE_CHANCE:
+            continue
+        if expected_damage(bot, lair["enemies"]) >= bot.hp * LAIR_BOT_SAFETY:
+            continue
+        return _fight_boss(bot, lair, rng, world)
+    return []
+
+
+def _fight_boss(bot: "BotAgent", lair: dict, rng: random.Random, world: BotWorld) -> list[BotEvent]:
+    from systems.combat_system import roll_loot
+
+    enemies = lair["enemies"]
+    zone = bot.current_zone_id
+    taken = int(expected_damage(bot, enemies) * rng.uniform(0.75, 1.3))
+    if taken >= bot.hp:
+        bot.hp = 1
+        bot.current_zone_id = HOME
+        bot.activity = "licking their wounds in the outer market"
+        bot.remember(f"Beaten by {lair['title']} in {lair['lair_name']} (turn {world.turn})")
+        return [BotEvent(bot.bot_id, zone, f"{bot.name} was driven out of {lair['lair_name']} by {lair['title']}.",
+                         "defeat", from_zone=zone)]
+    bot.hp -= taken
+    bot.gold += sum(e.gold_reward for e in enemies)
+    bot.kills += len(enemies)
+    for item_id in roll_loot(enemies):
+        bot.add_item(item_id)
+    world.lairs[zone] = [l for l in world.lairs.get(zone, []) if l is not lair]
+    bot.activity = f"celebrating a kill on {place(zone)}"
+    bot.remember(f"Slew {lair['title']} in {lair['lair_name']} (turn {world.turn})")
+    events = [BotEvent(bot.bot_id, zone, f"{bot.name} slew {lair['title']} in {lair['lair_name']}!",
+                       "boss_kill", lair_id=lair["lair_id"], killed_by=bot_blow(bot))]
+    events += _gain_xp(bot, sum(e.xp_reward for e in enemies))
+    return events
+
+
 def _gain_xp(bot: "BotAgent", xp: int) -> list[BotEvent]:
     from systems.bot_system import bot_max_hp
     from systems.level_system import xp_for_level
@@ -198,6 +250,12 @@ def _move(bot: "BotAgent", target: str, doing: str) -> list[BotEvent]:
     bot.current_zone_id = step
     bot.activity = doing
     return [BotEvent(bot.bot_id, step, f"{bot.name} headed to {place(step)}.", "move", from_zone=old)]
+
+
+def _can_handle(bot: "BotAgent", zone: str) -> bool:
+    """At full health, at least one of the floor's fights looks comfortable."""
+    return any(expected_damage(bot, _preview(e)) < bot.max_hp * 0.4
+               for e in ZONE_ENCOUNTERS.get(zone, []))
 
 
 def _deepest_floor(bot: "BotAgent") -> str:
@@ -375,8 +433,21 @@ def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEv
     if not safe:
         if bot.item_count() >= BAG_FULL or (bot.archetype in ("trader", "crafter") and rng.random() < 0.3):
             return _move(bot, HOME, "hauling loot back to the market")
+        # Healthy fighters and explorers push on to the deepest floor their
+        # level allows (without this they never left Floor 1).
+        if bot.archetype in ("fighter", "explorer") and bot.hp > bot.max_hp * 0.6:
+            deepest = _deepest_floor(bot)
+            if deepest != zone and _can_handle(bot, deepest) and \
+                    rng.random() < (0.5 if bot.archetype == "fighter" else 0.25):
+                events = _move(bot, deepest, f"pushing on to {place(deepest)}")
+                if events:
+                    return events
         fighty = {"fighter": 0.9, "explorer": 0.5, "gatherer": 0.3, "crafter": 0.1, "trader": 0.1}[bot.archetype]
         if rng.random() < fighty:
+            if bot.archetype in ("fighter", "explorer"):
+                events = _try_boss(bot, world, rng)
+                if events:
+                    return events
             options = [
                 e for e in ZONE_ENCOUNTERS.get(zone, [])
                 if expected_damage(bot, _preview(e)) < bot.hp * (0.7 if bot.archetype == "fighter" else 0.45)

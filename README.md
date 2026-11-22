@@ -196,6 +196,16 @@ You're not alone. A dozen other adventurers (**bots**, like playerbots in an MMO
 
 Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
 
+### Boss succession
+
+Boss rooms don't stay the same. When a boss dies, the dungeon finds a replacement, and **how it died decides what comes next**:
+- **Floor 3, the Drowned Sanctum:** Archmage Veyl studies the Fracture. Kill him and leave the body, and he comes back as **Veyl, the Hollow Lich**. Smash his phylactery instead and his apprentices move in. The priests of the Pale Lamp come down to cleanse the lich's den and are corrupted by it. Relight their lamp and a Lampwarden guards it; leave it dark and a blind saint keeps praying to it. Eventually a new scholar moves in, and the cycle starts again.
+- **Floor 2, the Crystal Heart:** the Crystal Golem. Kill it with magic and its shards wake as the Shardmind; otherwise a spider matriarch nests in the remains. Goblins come to mine the place, and when they leave the crystal grows a new, stronger Golem.
+
+After a kill the lair stays empty for a while (30 to 35 turns), with signs of what's moving in. Then a rumour spreads in town. A boss that takes its lair back is 10% stronger each time (up to +40%). With enough INT or WIS you can **study** a boss first and get the first strike.
+
+The other adventurers fight bosses too. Come back from Verath and Ryn may have killed the Golem while you were away. The World Log (`[L]`) shows who holds each lair now. Bots leave each lair's first boss alone for the first 250 turns, so you get the first shot. New chains are pure JSON in `data/dungeons/` (see CLAUDE.md).
+
 ### Trading
 
 Traders offer **« Browse wares »** and **« Sell items »** in conversation. **Wren**, a travelling pedlar, walks between the outer market, the camp and Verath, buying materials and consumables. **Torven** buys weapons and armour. AI-generated traders appear as the world grows. You can never sell the last copy of something you have equipped.
@@ -261,6 +271,7 @@ FEATURES = {
     "world_db":           True,   # SQLite world state (required by npc/quest systems)
     "synergy_system":     True,   # Stat synergy bonuses in combat
     "bot_system":         True,   # AI-driven autonomous bot agents
+    "boss_succession":    True,   # Boss lairs whose occupant changes after each kill
 }
 ```
 
@@ -274,7 +285,7 @@ Save files live in `saves/`. Each slot creates two files:
 - `<slot>.json` — player data (Pydantic model)
 - `<slot>.db` — world state (SQLite: NPC memory, quest instances, etc.)
 
-Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 6), both upgraded on load.
+Both files must be present to load a save. The game handles migration automatically when either format changes: the player JSON has its own save version, and the world database has its own schema version (currently 7), both upgraded on load.
 
 Each save has its **own grown world**. Items, recipes, traders and skills the AI created for one save are stored in that save's `.db`, restored when you load it, and never appear in another save.
 
@@ -387,6 +398,7 @@ git checkout -b feature/my-feature
 - **Ollama startup:** the right message for "server down" / "model missing", fallback to the primary model, background preload
 - **Every scene `combat:X` spawns real enemies** (caught a crash and two missing Floor 2 fights)
 - **Bot adventurers:** generation and per-save persistence, a 120-turn brain run (fights, loot, trade, craft), retreat, level gates, trader solvency, Talk-to options, `[W]`, trading both ways, AI/fallback talk, no per-bot AI calls
+- **Boss succession:** lair content is valid with no dead ends; wizard → lich → priests and the choices that steer it; killing blow (magic) changes the successor; returning bosses scale; fight → aftermath → save/load → arrival rumour; study gives the first strike; bots clear bosses after the grace period
 
 `test_quests.py` (132 checks, 23 sections) covers:
 - Schema integrity for every quest template

@@ -18,6 +18,8 @@ Tables created by this module:
   - turn_log            — lightweight event log for quest/NPC triggers
   - world_actions       — player actions the world has noticed (world growth)
   - world_expansions    — AI-built content bundles per action, re-registered on load
+  - dungeon_lairs       — who holds each boss lair now (boss succession)
+  - lair_history        — every boss kill: who, how, and who moved in next
 """
 
 from __future__ import annotations
@@ -29,7 +31,7 @@ from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 6
+DB_SCHEMA_VERSION = 7
 
 _SCHEMA_SQL = """
 PRAGMA journal_mode=WAL;
@@ -257,6 +259,26 @@ CREATE TABLE IF NOT EXISTS world_expansions (
     yield_item_id   TEXT DEFAULT '',
     created_turn    INTEGER NOT NULL DEFAULT 0
 );
+CREATE TABLE IF NOT EXISTS dungeon_lairs (
+    lair_id         TEXT PRIMARY KEY,
+    state           TEXT NOT NULL,
+    updated_turn    INTEGER NOT NULL DEFAULT 0
+);
+CREATE TABLE IF NOT EXISTS lair_history (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    lair_id         TEXT NOT NULL,
+    generation      INTEGER NOT NULL DEFAULT 0,
+    occupant_id     TEXT NOT NULL,
+    occupant_name   TEXT DEFAULT '',
+    killer_kind     TEXT DEFAULT '',
+    killer_name     TEXT DEFAULT '',
+    killer_level    INTEGER DEFAULT 0,
+    killed_by       TEXT DEFAULT '',
+    aftermath       TEXT DEFAULT '',
+    successor_id    TEXT DEFAULT '',
+    zone_id         TEXT DEFAULT '',
+    turn            INTEGER DEFAULT 0
+);
 """
 
 
@@ -429,6 +451,29 @@ class WorldDatabase:
                     bundle          TEXT NOT NULL,
                     yield_item_id   TEXT DEFAULT '',
                     created_turn    INTEGER NOT NULL DEFAULT 0
+                );
+            """)
+        if from_version < 7:
+            self._conn.executescript("""
+                CREATE TABLE IF NOT EXISTS dungeon_lairs (
+                    lair_id         TEXT PRIMARY KEY,
+                    state           TEXT NOT NULL,
+                    updated_turn    INTEGER NOT NULL DEFAULT 0
+                );
+                CREATE TABLE IF NOT EXISTS lair_history (
+                    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                    lair_id         TEXT NOT NULL,
+                    generation      INTEGER NOT NULL DEFAULT 0,
+                    occupant_id     TEXT NOT NULL,
+                    occupant_name   TEXT DEFAULT '',
+                    killer_kind     TEXT DEFAULT '',
+                    killer_name     TEXT DEFAULT '',
+                    killer_level    INTEGER DEFAULT 0,
+                    killed_by       TEXT DEFAULT '',
+                    aftermath       TEXT DEFAULT '',
+                    successor_id    TEXT DEFAULT '',
+                    zone_id         TEXT DEFAULT '',
+                    turn            INTEGER DEFAULT 0
                 );
             """)
         self._conn.execute(
@@ -744,6 +789,28 @@ class WorldDatabase:
         from persistence.repos import ai_content_repo
         assert self._conn
         return ai_content_repo.get_recent_events(self._conn, limit=limit, event_type=event_type)
+
+    # ── Boss lairs (delegates to persistence/repos/lair_repo.py) ─────────────
+
+    def upsert_lair_state(self, lair_id: str, state: dict, turn: int = 0) -> None:
+        from persistence.repos import lair_repo
+        assert self._conn
+        lair_repo.upsert_lair(self._conn, lair_id, state, turn)
+
+    def load_lair_states(self) -> dict[str, dict]:
+        from persistence.repos import lair_repo
+        assert self._conn
+        return lair_repo.load_lairs(self._conn)
+
+    def add_lair_history(self, row: dict) -> None:
+        from persistence.repos import lair_repo
+        assert self._conn
+        lair_repo.add_history(self._conn, row)
+
+    def get_lair_history(self, lair_id: str | None = None) -> list[dict[str, Any]]:
+        from persistence.repos import lair_repo
+        assert self._conn
+        return lair_repo.lair_history(self._conn, lair_id)
 
     # ── Bot instances (delegates to persistence/repos/bot_repo.py) ───────────
 

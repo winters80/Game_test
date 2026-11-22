@@ -152,26 +152,15 @@
       ]
     },
     "boss_chamber": {
-      "text": "The sealed door opens to a chamber that the System has marked with a red border in your vision: DESIGNATED ENCOUNTER ZONE. DANGER RATING: HIGH.\n\nAt the center stands the Crystal Golem — twelve feet of condensed void-crystal animated into something that moves with terrible purpose. Its eyes are the same deep purple as the walls. Its fists are the size of your torso.\n\nIt turns toward you slowly, and the System produces a combat notification.",
+      "text": "The sealed door opens to a chamber that the System has marked with a red border in your vision: DESIGNATED ENCOUNTER ZONE. DANGER RATING: HIGH.\n\nThis is the Crystal Heart, the room the dungeon keeps for its guardian. The guardian does not always stay the same. When one falls, the dungeon finds another.",
       "options": [
         {
-          "option_id": "fight_golem",
-          "label": "Engage the Crystal Golem.",
+          "option_id": "enter_crystal_heart",
+          "label": "Step into the Crystal Heart.",
           "expected": true,
           "leads_to": "dungeon_floor2",
-          "leads_to_node": "boss_chamber",
-          "triggers": ["combat:crystal_golem", "flag:boss_golem_defeated"]
-        },
-        {
-          "option_id": "study_golem",
-          "label": "Observe the Golem's movement patterns before engaging.",
-          "expected": false,
-          "leads_to": "dungeon_floor2",
-          "leads_to_node": "boss_chamber",
-          "triggers": ["flag:golem_weakness_known"],
-          "requires": {
-            "min_stats": {"INT": 14}
-          }
+          "leads_to_node": "root",
+          "triggers": ["boss_lair:crystal_heart"]
         },
         {
           "option_id": "flee_boss",

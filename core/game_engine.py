@@ -58,6 +58,8 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self.quest_registry = None
         self.guild_registry = None
         self.faction_registry = None
+        self.lair_registry = None      # boss lairs (entities/lair.py); state per save in _lair_states
+        self._lair_states: dict = {}
 
         # World content
         self.system_messages: dict = {}

@@ -87,6 +87,9 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
     # Bot adventurers live their lives (rules-based; no AI calls).
     from core.bot_flow import tick_bots
     tick_bots(engine)
+    # Boss lairs: a dead boss's successor moves in once its time comes.
+    from core.lair_flow import tick_lairs
+    tick_lairs(engine)
 
     # Buff tick — decrement durations
     if engine.state.player.active_buffs:

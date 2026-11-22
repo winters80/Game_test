@@ -36,7 +36,7 @@ try:
     db = WorldDatabase(":memory:")
     db.open()
 
-    check("DB_SCHEMA_VERSION == 6", DB_SCHEMA_VERSION == 6, str(DB_SCHEMA_VERSION))
+    check("DB_SCHEMA_VERSION == 7", DB_SCHEMA_VERSION == 7, str(DB_SCHEMA_VERSION))
 
     # Check tables exist via sqlite_master
     def table_exists(d, name):
@@ -53,7 +53,7 @@ try:
     meta_row = db._conn.execute(
         "SELECT value FROM db_meta WHERE key = 'schema_version'"
     ).fetchone()
-    check("db_meta schema_version == 6", meta_row is not None and meta_row["value"] == "6",
+    check("db_meta schema_version == 7", meta_row is not None and meta_row["value"] == "7",
           str(meta_row["value"] if meta_row else "None"))
 
     db.close()
@@ -101,11 +101,13 @@ try:
     check("guild_members created after migration", table_exists2(db2, "guild_members"))
     check("world_actions created after migration (v6)", table_exists2(db2, "world_actions"))
     check("world_expansions created after migration (v6)", table_exists2(db2, "world_expansions"))
+    check("dungeon_lairs created after migration (v7)", table_exists2(db2, "dungeon_lairs"))
+    check("lair_history created after migration (v7)", table_exists2(db2, "lair_history"))
 
     meta_row2 = db2._conn.execute(
         "SELECT value FROM db_meta WHERE key = 'schema_version'"
     ).fetchone()
-    check("schema_version updated to 6", meta_row2 is not None and meta_row2["value"] == "6",
+    check("schema_version updated to 7", meta_row2 is not None and meta_row2["value"] == "7",
           str(meta_row2["value"] if meta_row2 else "None"))
 
     db2.close()

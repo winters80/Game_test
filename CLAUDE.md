@@ -68,6 +68,9 @@ Add a new `scenes/data/*.json` file. `SceneRegistry.load_from_dir()` loads all J
 ### New zone
 Add to `data/world/zones.json`.
 
+### New boss lair or successor *(boss_succession)*
+Add to `data/dungeons/*.json` (see "Boss Succession" below). Enemies go under `enemy_templates`; a lair lists its `occupants` and each occupant's `successors`. Put the lair in a scene with an option whose trigger is `boss_lair:LAIR_ID`. `test_characters.py` fails if an occupant is unreachable, has no successor, or uses an unknown enemy or item.
+
 ---
 
 ## Trigger String Reference
@@ -90,6 +93,7 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `set_species:X` | *(species_system)* Queue species X; applied after the choice resolves |
 | `set_background:X` | Queue background X; applied after the choice resolves (alongside species) |
 | `combat:X` | Start encounter X (see the `encounters` table in `combat_system.spawn_encounter()`) |
+| `boss_lair:X` | *(boss_succession)* Enter boss lair X: meet / study / fight its current occupant, or cross it while empty (`core/lair_flow.enter_lair`) |
 | `alignment:+N` | Shift player alignment by +N (float) |
 | `alignment:-N` | Shift player alignment by -N (float) |
 | `rest_camp:full` / `rest_camp:short` | Restore all / half of HP + MP, then run the rest flow (`systems/rest_system.handle_rest`) |
@@ -170,6 +174,7 @@ if feature("npc_system"):
 | `lives_system` | 9-lives death mechanic (replaces instant game over) |
 | `crafting_system` | Recipe + material crafting |
 | `stat_gating` | INT/Perception/LCK/WIS content gates via `systems/stat_gate.py` |
+| `boss_succession` | Boss lairs whose occupant changes after each kill (`data/dungeons/`). State needs `world_db` to persist |
 
 **Enable order matters.** `world_db` must be True before `npc_system`, `quest_system`, `faction_system`, or `auction_house`. `stat_gating` should be enabled before `npc_system`.
 
@@ -213,6 +218,8 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 | `turn_log` | Lightweight event log for quest/NPC trigger processing |
 | `world_actions` | *(schema v6)* Every AI-option action the player took (`verb:subject`), status `pending` / `expanded` / `empty` / `no_ai`, yield cooldown |
 | `world_expansions` | *(schema v6)* The validated content bundle the world grew for each action; re-registered on load |
+| `dungeon_lairs` | *(schema v7)* Who holds each boss lair now, as a `LairState` JSON blob (occupant, lineage name, generation, vacant/occupied, who's coming and when) |
+| `lair_history` | *(schema v7)* Every boss kill: occupant, killer (player / bot, name, level), killing blow, aftermath, successor |
 
 **Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
 
@@ -355,7 +362,8 @@ playerbots: they level, fight, loot, trade and craft on their own.
 
 What a bot does each act:
 - **Hurt:** drinks a potion in the dungeon, rests in a safe zone, or walks home.
-- **In the dungeon:** fights real encounters from `combat_system.ENCOUNTERS`, getting the XP, gold and loot from `ENEMY_TEMPLATES` (only fights it can survive); forages; or gathers world-growth yields. It heads home when its bag is full.
+- **In the dungeon:** a healthy fighter or explorer pushes on to the deepest floor its level allows, if one of that floor's fights looks comfortable (`bot_brain._can_handle`). Otherwise it fights real encounters from `combat_system.ENCOUNTERS`, getting the XP, gold and loot from `ENEMY_TEMPLATES` (only fights it can survive); forages; or gathers world-growth yields. It heads home when its bag is full.
+- **Boss lairs:** fighters and explorers on a lair's floor sometimes take on its boss (`bot_brain._try_boss`, see "Boss Succession").
 - **In a safe zone:** sells loot to the traders actually present, crafts from `engine.recipes` (bots brew their own potions from the salve recipe), buys a missing potion ingredient, then walks towards what its archetype wants. Fighters go to the deepest floor their level allows (Floor 2 at level 3, Floor 3 at level 5).
 - **Trader bots** never dump stock on NPC traders. They keep up to 6 items to sell to the player.
 
@@ -365,6 +373,38 @@ The player sees bots through:
 - one activity line at most per turn in their zone: level-ups and defeats at once, fights / crafts / trades at most every other turn, and arrivals batched every `BOT_ARRIVALS_EVERY_TURNS`
 
 World Log entries are only written for milestones (level-ups, defeats). Talking uses `AIService.generate_bot_line` (fast model, grounded in the bot's memory) with `bot_system.fallback_line` when offline. `BOT_AI_DECISIONS = True` restores the old "ask the primary model for every bot decision" path. It's slow and freezes bots without Ollama.
+
+## Boss Succession (the dungeon remembers who you killed)
+
+A boss room is a **lair** whose occupant changes after each kill. A wizard dies and comes back as a lich; priests come to cleanse the lich's den and are corrupted by it; a new scholar moves in and the cycle repeats.
+
+| Piece | Where |
+|-------|-------|
+| Content: enemies, lairs, occupants, texts, successor rules | `data/dungeons/*.json`, loaded by `entities/lair.LairRegistry` (references validated on load) |
+| Logic: initial state, scaled spawn, successor choice, arrival | `systems/lair_system.py` (pure) |
+| Engine: `boss_lair:X` trigger, per-turn arrivals + rumours, bot kills, bot view | `core/lair_flow.py` |
+| State per save | `dungeon_lairs` / `lair_history` (world DB v7), mirrored in `engine._lair_states` |
+
+Lairs today: **the Crystal Heart** (Floor 2: Crystal Golem → Brood Matriarch or, if killed by magic, the Shardmind → goblin warband → Reforged Golem → …) and **the Drowned Sanctum** (Floor 3: Archmage → Hollow Lich, or the Ashen Cabal if the phylactery is smashed → Order of the Pale Lamp → Lampless Saint or, if the lamp is relit, the Lampwarden → a new Archmage).
+
+Occupant fields:
+
+| Field | Effect |
+|-------|--------|
+| `title`, `intro`, `victory`, `omen`, `rumour` | Texts; `{name}` is the lineage name. `omen` shows in the empty lair while the successor moves in; `rumour` spreads when it arrives |
+| `name_pool` | A fresh name, drawn in order each time this occupant takes the lair. Empty → inherit the previous occupant's name (the lich keeps the wizard's) |
+| `enemies` | Enemy template ids (lair `enemy_templates` or `combat_system.ENEMY_TEMPLATES`) |
+| `study` | `{stat, min, text}`: with the stat, studying first gives a surprise round |
+| `aftermath` | Choices over the body (`id`, `label`, `text`, `triggers`, the same state triggers as scene options). The **first** is the default, used for bot kills |
+| `successors` | `{to, weight, when}`. `when` can match `killed_by` (`magic` / `physical`), `killer` (`player` / `bot`), `aftermath`, `alignment_min` / `alignment_max` (player kills). Matching rules are weighted; none match → the lair's `fallback` |
+
+Lair fields: `zone_id`, `min_level` (bots), `respawn_turns` (how long it stays empty), `first_occupant`, `clear_flags` (set when the player kills any occupant **or** crosses the empty lair; `boss_golem_defeated` opens Floor 3), `fallback`.
+
+Rules:
+- The killing blow is `magic` for a spell (spell_type, MP cost or INT/WIS scaling, `lair_system.killing_blow_kind`), else `physical`. `_run_combat` returns `"victory" / "fled" / "defeat" / "none"` and leaves it in `engine._last_killing_blow`.
+- A returning occupant gets `+LAIR_SCALING_PER_RETURN` (10%) HP / ATK / rewards per previous stay, capped at `LAIR_MAX_SCALING` (40%).
+- Bots challenge a lair with chance `LAIR_BOT_CHALLENGE_CHANCE` when its level allows and expected damage < `LAIR_BOT_SAFETY` × HP. They leave each lair's first occupant alone for `LAIR_BOT_GRACE_TURNS` (250), so the player gets the first shot. Bot kills advance the chain and go to the World Log.
+- `[L]` World Log shows who holds each lair now; kills and arrivals are logged as `lair` events.
 
 ## Divergence System (How AI Classes Are Triggered)
 
@@ -390,7 +430,7 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
 
-The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **6** (v6 added `world_actions` + `world_expansions`). Migrations run automatically on open.
+The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **7** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`). Migrations run automatically on open.
 
 ## Skill System
 

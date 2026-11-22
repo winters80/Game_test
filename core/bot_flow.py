@@ -29,7 +29,7 @@ logger = logging.getLogger(__name__)
 _LOGGED_KINDS = {"defeat", "level"}
 # Shown in the player's zone: milestones whenever they happen, routine
 # actions at most every other turn; rest / gather / potion never.
-_MILESTONE_KINDS = {"defeat", "level"}
+_MILESTONE_KINDS = {"defeat", "level", "boss_kill"}
 _ROUTINE_KINDS = {"fight", "craft", "trade"}
 
 
@@ -61,7 +61,9 @@ def bot_world(engine: "GameEngine"):
             b = row["bundle"]
             if b.get("yield_item_id") and engine.item_registry.get(b["yield_item_id"]):
                 yields.setdefault(b.get("zone_id") or "", []).append(b["yield_item_id"])
-    return BotWorld(engine.item_registry, traders_at, engine.recipes, yields, turn)
+    from core.lair_flow import bot_lair_view
+    return BotWorld(engine.item_registry, traders_at, engine.recipes, yields, turn,
+                    lairs=bot_lair_view(engine))
 
 
 def tick_bots(engine: "GameEngine") -> list["BotEvent"]:
@@ -88,6 +90,14 @@ def tick_bots(engine: "GameEngine") -> list["BotEvent"]:
             acted.append(bot)
         except Exception:
             logger.warning("Bot %s failed to act", bot.bot_id, exc_info=True)
+    # Boss kills move the lair's succession on (and log it); see core/lair_flow.
+    if any(ev.kind == "boss_kill" for ev in events):
+        from core.lair_flow import bot_killed_boss
+        for ev in events:
+            if ev.kind == "boss_kill":
+                bot = engine._bot_manager.get(ev.bot_id)
+                if bot is not None:
+                    bot_killed_boss(engine, ev.lair_id, bot, ev.killed_by)
     _surface(engine, events)
     _persist(engine, acted, events)
     return events

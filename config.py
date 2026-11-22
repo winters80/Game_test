@@ -86,6 +86,14 @@ WORLD_MAX_TRADERS_PER_LOCATION = 2     # generated traders per zone (and on the 
 WORLD_MAX_EXPANSIONS = 60              # world expansions per save; later new actions are 'capped'
 WORLD_RETRY_ON_LOAD = 3                # pending / no_ai actions re-queued per load
 
+# ── Boss succession (systems/lair_system.py, data/dungeons/*.json) ─────────────
+LAIR_SCALING_PER_RETURN = 0.10         # +10% HP/ATK/rewards each time an occupant retakes its lair
+LAIR_MAX_SCALING = 0.40                # cap on that bonus
+LAIR_BOT_CHALLENGE_CHANCE = 0.3       # chance a fighter bot on a lair's floor tries the boss
+LAIR_BOT_SAFETY = 0.85                 # bots only try if expected damage < this share of their HP
+LAIR_BOT_GRACE_TURNS = 250             # bots leave each lair's first boss alone this long,
+                                       # so the player gets the first shot at it
+
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP
@@ -165,6 +173,7 @@ FEATURES: dict[str, bool] = {
     "world_db":           True,    # SQLite world state (required by npc/quest systems)
     "synergy_system":     True,    # Stat synergy bonuses in combat
     "bot_system":         True,    # AI-driven autonomous bot agents
+    "boss_succession":    True,    # Boss lairs whose occupant changes after each kill
 }
 
 

@@ -94,7 +94,7 @@ VALID_TRIGGER_PREFIXES = {
     "flag:", "give_item:", "give_skill:", "give_gold:", "spend_gold:", "set_base_class:",
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
-    "rest_camp:", "give_food:",
+    "rest_camp:", "give_food:", "boss_lair:",
 }
 
 def validate_triggers(scene_reg: SceneRegistry, item_reg: ItemRegistry,
@@ -2835,7 +2835,226 @@ def main() -> None:
                 try: _pp.unlink()
                 except OSError: pass
 
+    _test_boss_succession(item_reg)
     _report()
+
+
+def _test_boss_succession(item_reg) -> None:
+    section("31. Boss succession (lairs: wizard → lich → priests, bots clear bosses too)")
+    _l_slot = "_lair_test_"
+    _lstate = None
+    try:
+        import json as _json31
+        import random as _rnd31
+        from unittest import mock as _m31
+        import questionary as _q31
+        from core import lair_flow as _lf
+        from core.game_engine import GameEngine
+        from core.menu_flow import _attach_engine_handles
+        from entities.lair import LairRegistry
+        from systems import bot_brain as _bb31, lair_system as _ls
+        from systems.bot_system import BotAgent
+        from systems.combat_system import ENEMY_TEMPLATES
+        from ui import renderer as _rdr31
+
+        # 31a. Content: every lair loads, every enemy and loot item is real,
+        # every boss_lair: trigger names a real lair, every occupant is reachable.
+        _reg = LairRegistry()
+        _reg.load_from_dir(DATA_DIR / "dungeons")
+        _ls.register_enemy_templates(_reg)
+        assert {l.lair_id for l in _reg.all()} >= {"crystal_heart", "drowned_sanctum"}
+        for _lair in _reg.all():
+            _seen, _todo = set(), [_lair.first_occupant]
+            while _todo:
+                _o = _todo.pop()
+                if _o in _seen:
+                    continue
+                _seen.add(_o)
+                _todo += [s.to for s in _lair.occupants[_o].successors]
+            assert _seen == set(_lair.occupants), f"{_lair.lair_id}: unreachable {set(_lair.occupants) - _seen}"
+            for _occ in _lair.occupants.values():
+                assert _occ.successors, f"{_occ.occupant_id} has no successor (chain would end)"
+                for _eid in _occ.enemies:
+                    assert _eid in ENEMY_TEMPLATES, f"unknown enemy {_eid}"
+                    for _item, _ in ENEMY_TEMPLATES[_eid].get("loot_table", []):
+                        assert item_reg.get(_item), f"{_eid} drops unknown item {_item}"
+                for _a in _occ.aftermath:
+                    for _t in _a.triggers:
+                        if _t.startswith("give_item:"):
+                            assert item_reg.get(_t[10:]), f"aftermath gives unknown {_t}"
+        _lair_triggers = []
+        for _sp in (Path(__file__).parent / "scenes" / "data").glob("*.json"):
+            for _node in _json31.loads(_sp.read_text(encoding="utf-8")).get("nodes", {}).values():
+                for _opt in _node.get("options", []):
+                    _lair_triggers += [t[10:] for t in _opt.get("triggers", []) if t.startswith("boss_lair:")]
+        assert set(_lair_triggers) == {"crystal_heart", "drowned_sanctum"}, _lair_triggers
+        ok("Lair content is valid: enemies, loot, triggers, every occupant reachable, no dead ends")
+
+        # 31b. The wizard chain from the design: wizard → lich (keeps the name) → priests.
+        _sanc = _reg.get("drowned_sanctum")
+        _st = _ls.initial_state(_sanc)
+        assert (_st.occupant_id, _st.lineage_name) == ("archmage", "Veyl")
+        assert _ls.occupant_title(_sanc, _st) == "Archmage Veyl"
+        _ls.record_kill(_sanc, _st, _ls.KillInfo("player", "P", 6), turn=10)
+        assert not _st.occupied and _st.next_occupant_id == "hollow_lich", "Left the phylactery → lich"
+        assert not _ls.tick(_sanc, _st, 10 + _sanc.respawn_turns - 1), "Not before respawn_turns"
+        assert _ls.tick(_sanc, _st, 10 + _sanc.respawn_turns)
+        assert _ls.occupant_title(_sanc, _st) == "Veyl, the Hollow Lich" and _st.generation == 1
+        assert _ls.spawn_occupant(_sanc, _st)[0].name == "Veyl, the Hollow Lich"
+        _ls.record_kill(_sanc, _st, _ls.KillInfo("bot", "Ryn", 7), turn=100)
+        _ls.tick(_sanc, _st, 1000)
+        assert _st.occupant_id == "pale_lamp_order" and _st.lineage_name == "Aldous"
+        _ls.record_kill(_sanc, _st, _ls.KillInfo("player", "P", 7, aftermath="relit_lamp"), turn=1001)
+        assert _st.next_occupant_id == "lampwarden", "Relighting the lamp → Lampwarden, not the corrupted saint"
+        _ls.tick(_sanc, _st, 2000)
+        _ls.record_kill(_sanc, _st, _ls.KillInfo("player", "P", 8), turn=2001)
+        _ls.tick(_sanc, _st, 3000)
+        assert _st.occupant_id == "archmage" and _st.lineage_name == "Maren", "A new wizard moves in: the cycle repeats"
+        _st2 = _ls.initial_state(_sanc)
+        _ls.record_kill(_sanc, _st2, _ls.KillInfo("player", "P", 6, aftermath="shattered_phylactery"), turn=5)
+        assert _st2.next_occupant_id == "ashen_cabal", "Shattering the phylactery stops the lich"
+        ok("Wizard → Hollow Lich (same name) → Pale Lamp priests → … → a new archmage; choices steer the chain")
+
+        # 31c. How the boss died matters: only magic wakes the Shardmind.
+        _heart = _reg.get("crystal_heart")
+        _by = {"magic": set(), "physical": set()}
+        for _i in range(60):
+            for _kind in _by:
+                _s = _ls.initial_state(_heart)
+                _ls.record_kill(_heart, _s, _ls.KillInfo("player", "P", 4, killed_by=_kind),
+                                turn=1, rng=_rnd31.Random(_i))
+                _by[_kind].add(_s.next_occupant_id)
+        assert _by["physical"] == {"spider_matriarch"} and _by["magic"] == {"spider_matriarch", "shardmind"}, _by
+        # Returning occupants are stronger, capped.
+        _s = _ls.initial_state(_heart)
+        _s.held_counts["crystal_golem"] = 2
+        _g = _ls.spawn_occupant(_heart, _s)[0]
+        assert _g.max_hp == round(ENEMY_TEMPLATES["crystal_golem"]["max_hp"] * 1.1)
+        _s.held_counts["crystal_golem"] = 50
+        assert abs(_ls.scaling(_s) - 1.4) < 1e-9
+        assert _ls.killing_blow_kind(None) == "physical"
+        ok("Killing blow steers succession (magic → Shardmind); returning bosses scale +10%, capped at +40%")
+
+        # 31d. In the engine: fight, aftermath choice, state saved, successor arrives, rumour logged.
+        _eng = GameEngine()
+        with _m31.patch.object(_rdr31.console, "print", lambda *a, **k: None):
+            _eng.bootstrap()
+        _lp = Player(name="LairTester", base_class="mage")
+        _lp.level = 6
+        _lstate = new_game_state(_lp, SAVES_DIR, _l_slot)
+        _eng.state = _lstate
+        _attach_engine_handles(_eng)
+        assert set(_lstate.world_db.load_lair_states()) >= {"crystal_heart", "drowned_sanctum"}
+
+        def _pick(prefer):
+            def _select(_msg, choices=None, **_k):
+                labels = [c if isinstance(c, str) else c.title for c in choices]
+                hit = next((l for l in labels if prefer(l)), labels[0])
+                return _m31.Mock(ask=lambda: hit)
+            return _select
+
+        _fought = []
+        def _fake_combat(enc, surprise=False, enemies=None):
+            _fought.append((enc, [e.name for e in enemies or []]))
+            _eng._last_killing_blow = "magic"
+            return "victory"
+        _quiet = [_m31.patch.object(_rdr31.console, "print", lambda *a, **k: None),
+                  _m31.patch.object(_rdr31, "prompt_any_key", lambda: None),
+                  _m31.patch.object(_eng, "_run_combat", _fake_combat)]
+        for _p in _quiet:
+            _p.start()
+        try:
+            with _m31.patch.object(_q31, "select", _pick(lambda l: l.startswith("Fight") or l.startswith("Leave"))):
+                assert _lf.enter_lair(_eng, "drowned_sanctum") == "victory"
+            assert _fought and _fought[0][1] == ["Archmage Veyl"]
+            _sst = _lf.get_state(_eng, "drowned_sanctum")
+            assert not _sst.occupied and _sst.next_occupant_id == "hollow_lich"
+            assert _lp.has_flag("drowned_sanctum_cleared") and _lp.has_flag("slew_archmage")
+            _hist = _lstate.world_db.get_lair_history("drowned_sanctum")
+            assert len(_hist) == 1 and _hist[0]["killed_by"] == "magic" and _hist[0]["killer_kind"] == "player"
+            # Vacant: the omen hints at what's coming.
+            with _m31.patch.object(_q31, "select", _pick(lambda l: False)):
+                assert _lf.enter_lair(_eng, "drowned_sanctum") == "vacant"
+            # Save + load keeps the empty lair and who's coming.
+            save_game(_lstate, _l_slot, SAVES_DIR)
+            close_game(_lstate); _lstate = None
+            _lstate = load_game(_l_slot, SAVES_DIR)
+            _eng.state = _lstate
+            _attach_engine_handles(_eng)
+            _sst = _lf.get_state(_eng, "drowned_sanctum")
+            assert not _sst.occupied and _sst.next_occupant_id == "hollow_lich"
+            _lstate.player.turn_count = _sst.arrives_turn
+            _lstate.current_scene_id = "village_start"
+            _rumours = _lf.tick_lairs(_eng)
+            assert _rumours and "dead wizard" in _rumours[0]
+            assert _lf.get_state(_eng, "drowned_sanctum").occupant_id == "hollow_lich"
+            assert any(e.get("event_type") == "lair" for e in _lstate.world_db.get_recent_events(10))
+            # Studying first gives the surprise round; a locked study stays locked.
+            _lstate.player.stats.INT = 30
+            _seen_surprise = []
+            def _fake2(enc, surprise=False, enemies=None):
+                _seen_surprise.append(surprise)
+                return "fled"
+            with _m31.patch.object(_eng, "_run_combat", _fake2):
+                _calls = iter(["Study", "Fight"])
+                _want = {"v": next(_calls)}
+                def _sel(_msg, choices=None, **_k):
+                    labels = [c if isinstance(c, str) else c.title for c in choices]
+                    hit = next(l for l in labels if l.startswith(_want["v"]))
+                    try: _want["v"] = next(_calls)
+                    except StopIteration: pass
+                    return _m31.Mock(ask=lambda: hit)
+                with _m31.patch.object(_q31, "select", _sel):
+                    assert _lf.enter_lair(_eng, "drowned_sanctum") == "fled"
+            assert _seen_surprise == [True]
+            assert _lf.get_state(_eng, "drowned_sanctum").occupied, "Fleeing leaves the boss in place"
+        finally:
+            for _p in _quiet:
+                _p.stop()
+        ok("Engine: fight → aftermath → successor queued, saved, arrives with a rumour; study gives first strike")
+
+        # 31e. Bots clear bosses too, and the chain moves on without the player.
+        _bot = BotAgent(bot_id="lt", name="Ryn", archetype="fighter", current_zone_id="dungeon_floor2")
+        _bot.level = 15
+        from systems.bot_system import bot_max_hp
+        _bot.max_hp = _bot.hp = bot_max_hp(_bot) * 4
+        from core.bot_flow import bot_world
+        from config import LAIR_BOT_GRACE_TURNS
+        _lstate.player.turn_count = 1
+        assert "dungeon_floor2" not in bot_world(_eng).lairs, "Grace: bots leave the first boss to the player"
+        _lstate.player.turn_count = LAIR_BOT_GRACE_TURNS
+        _w = bot_world(_eng)
+        assert "dungeon_floor2" in _w.lairs
+        with _m31.patch("config.LAIR_BOT_CHALLENGE_CHANCE", 1.0):
+            _evs = _bb31._try_boss(_bot, _w, _rnd31.Random(3))
+        assert _evs and _evs[0].kind == "boss_kill" and _evs[0].lair_id == "crystal_heart", _evs
+        assert not _w.lairs["dungeon_floor2"], "A cleared lair can't be cleared twice in one tick"
+        _lf.bot_killed_boss(_eng, "crystal_heart", _bot, _evs[0].killed_by)
+        _hst = _lf.get_state(_eng, "crystal_heart")
+        assert not _hst.occupied
+        _last = _lstate.world_db.get_lair_history("crystal_heart")[-1]
+        assert _last["killer_kind"] == "bot" and _last["killer_name"] == "Ryn"
+        _weak = BotAgent(bot_id="w", name="W", archetype="fighter", current_zone_id="dungeon_floor3")
+        with _m31.patch("config.LAIR_BOT_CHALLENGE_CHANCE", 1.0):
+            assert _bb31._try_boss(_weak, _bf_world := bot_world(_eng), _rnd31.Random(1)) == []
+        # A fresh player walking into the empty Crystal Heart can still go on down.
+        _lstate.player.flags.pop("boss_golem_defeated", None)
+        with _m31.patch.object(_rdr31.console, "print", lambda *a, **k: None), \
+             _m31.patch.object(_rdr31, "prompt_any_key", lambda: None):
+            assert _lf.enter_lair(_eng, "crystal_heart") == "vacant"
+        assert _lstate.player.has_flag("boss_golem_defeated")
+        ok("Bots slay lair bosses after a grace period (logged, chain advances); weak bots don't try; an emptied lair lets you pass")
+    except Exception as e:
+        fail("Boss succession broken", e)
+        traceback.print_exc()
+    finally:
+        if _lstate is not None:
+            close_game(_lstate)
+        for _ext in (".json", ".db", ".db-wal", ".db-shm"):
+            _pp = SAVES_DIR / f"{_l_slot}{_ext}"
+            if _pp.exists():
+                try: _pp.unlink()
+                except OSError: pass
 
 
 def _report() -> None:

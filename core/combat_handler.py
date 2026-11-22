@@ -8,7 +8,7 @@ import questionary
 
 from config import feature
 from core.event_bus import bus, Event
-from systems import combat_system, level_system
+from systems import combat_system, lair_system, level_system
 from ui import renderer
 from entities.enums import SkillType
 
@@ -53,10 +53,15 @@ def _print_triggers(fired) -> None:
 
 class CombatHandlerMixin:
 
-    def _run_combat(self, encounter_id: str, surprise: bool = False) -> None:
-        enemies = combat_system.spawn_encounter(encounter_id)
+    def _run_combat(self, encounter_id: str, surprise: bool = False, enemies: list | None = None) -> str:
+        """Fight ``encounter_id`` (or the given pre-spawned ``enemies``, e.g. a
+        scaled lair boss). Returns "victory", "fled", "defeat" or "none".
+        ``self._last_killing_blow`` is "magic" or "physical" afterwards."""
+        if enemies is None:
+            enemies = combat_system.spawn_encounter(encounter_id)
+        self._last_killing_blow = "physical"
         if not enemies:
-            return
+            return "none"
 
         # Give numbered display names to duplicates — "Goblin Scout #1", "Goblin Scout #2"
         _name_counts: dict[str, int] = {}
@@ -139,7 +144,7 @@ class CombatHandlerMixin:
                 if combat_system.try_flee(player, alive_enemies[0]):
                     renderer.print_scene_text(["You flee from combat!"])
                     renderer.prompt_any_key()
-                    return
+                    return "fled"
                 else:
                     renderer.print_scene_text(["You failed to flee!"])
 
@@ -173,6 +178,7 @@ class CombatHandlerMixin:
                         f"  [dim_text]→ {target.name}: {target.current_hp}/{target.max_hp} HP remaining[/dim_text]"
                     )
                     if not target.is_alive:
+                        self._last_killing_blow = "physical"
                         renderer.print_combat_action(target.name, "is defeated!", style="success")
 
                 else:
@@ -219,6 +225,7 @@ class CombatHandlerMixin:
                                 else:
                                     renderer.print_scene_text(["Not enough MP!"])
                                 if not target.is_alive:
+                                    self._last_killing_blow = lair_system.killing_blow_kind(skill)
                                     renderer.print_combat_action(target.name, "is defeated!", style="success")
 
             # ── Enemy turns ───────────────────────────────────────────────────
@@ -272,7 +279,7 @@ class CombatHandlerMixin:
                 renderer.print_scene_text(["The System records your defeat."])
                 renderer.prompt_any_key()
                 self._running = False
-            return
+            return "defeat"
 
         # Victory
         total_xp = sum(e.xp_reward for e in enemies)
@@ -314,6 +321,7 @@ class CombatHandlerMixin:
 
         bus.flush()
         renderer.prompt_any_key()
+        return "victory"
 
     def _stat_allocation_prompt(self) -> None:
         player = self.state.player
