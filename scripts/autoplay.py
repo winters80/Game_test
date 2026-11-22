@@ -41,8 +41,9 @@ def _is_back(title: str) -> bool:
     return t.startswith("←") or t.split(" ")[0].rstrip(".") in ("back", "leave", "farewell", "return", "done", "close")
 
 
-class _Stop(Exception):
-    pass
+class _Stop(BaseException):
+    """The step budget ran out. BaseException, so the game's own error
+    handling (which logs and carries on) can't swallow it as a crash."""
 
 
 class AutoBackend:

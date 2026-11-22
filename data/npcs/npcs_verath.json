@@ -1023,6 +1023,9 @@
             "requires": {
               "items": [
                 "void_crystal"
+              ],
+              "flags_absent": [
+                "sold_void_crystal_to_vael"
               ]
             },
             "npc_response": "He goes very still. 'May I?' He examines it without taking it, leaning forward. 'Floor one. That's unusual — void crystal formation at that depth suggests a fracture resonance point nearby. Somewhere the boundary between layers is thin.' He straightens. 'I'll pay five hundred silver for it, and I'll tell you what I find.'",
@@ -1164,11 +1167,15 @@
             "requires": {
               "items": [
                 "void_crystal"
+              ],
+              "flags_absent": [
+                "sold_void_crystal_to_vael"
               ]
             },
             "npc_response": "He takes the crystal with both hands and sets it in a padded case. 'Thank you. I'll have results within the week. Come back and ask for me by name.'",
             "triggers": [
-              "give_gold:50000",
+              "take_item:void_crystal",
+              "give_gold:5000",
               "flag:sold_void_crystal_to_vael"
             ],
             "disposition_change": 20.0,

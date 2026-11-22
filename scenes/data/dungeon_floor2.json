@@ -119,7 +119,8 @@
           "leads_to": "dungeon_floor2",
           "leads_to_node": "hidden_cache",
           "requires": {
-            "flags": ["surveyed_goblins"]
+            "flags": ["surveyed_goblins"],
+            "flags_absent": ["floor2_cache_found"]
           }
         },
         {
@@ -140,6 +141,7 @@
           "expected": true,
           "leads_to": "dungeon_floor2",
           "leads_to_node": "north_tunnels",
+          "requires": {"flags_absent": ["floor2_cache_found"]},
           "triggers": ["give_gold:80", "give_item:health_potion", "flag:floor2_cache_found"]
         },
         {

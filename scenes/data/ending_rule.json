@@ -97,8 +97,8 @@
           "option_id": "continue_to_end",
           "label": "[ The story of your rule begins now. ]",
           "leads_to": "__stay__",
-          "triggers": ["give_gold:500000"],
-          "requires": {},
+          "triggers": ["give_gold:500000", "flag:rule_treasury_granted"],
+          "requires": {"flags_absent": ["rule_treasury_granted"]},
           "expected": true
         }
       ]

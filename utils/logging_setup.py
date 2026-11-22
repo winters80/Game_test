@@ -179,8 +179,8 @@ def log_player_error(
 
     if player is not None:
         try:
-            base = getattr(player, "base_class_id", None) or "none"
-            combo = getattr(player, "combo_class_id", None) or "none"
+            base = getattr(player, "base_class", None) or "none"
+            combo = getattr(player, "active_class", None) or "none"
             parts += [
                 f"player={player.name!r}",
                 f"level={player.level}",
