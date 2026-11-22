@@ -30,7 +30,8 @@ Built with:
 ### 1. Install the prerequisites (once)
 
 - **Python 3.11+**: https://www.python.org/downloads/
-- **Ollama**: https://ollama.com/download. It's optional, but without it there's no AI: no unique classes, no `[?]` answers, no world growth.
+- **Ollama**: https://ollama.com/download. It's optional, but without it there's no AI: no unique classes, no `[?]` answers, no world growth, no AI-made Gates.
+- **Disk:** about 10 GB for the two default models (less with smaller ones, see below).
 
 ### 2. Start the game (recommended)
 
@@ -110,7 +111,7 @@ The game tells you what's wrong at startup:
 | `Ollama is running, but the model 'mistral-nemo' isn't downloaded` | You declined the download. `ollama pull mistral-nemo`, or point `OLLAMA_MODEL` at a model you have |
 | `Fast model 'gemma3:4b' isn't downloaded; using 'mistral-nemo'…` | AI still works, but `[?]` is slower. `ollama pull gemma3:4b` |
 
-Without Ollama the game stays fully playable, with hand-crafted classes, static dialogue, no dynamic quests and no world growth. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
+Without Ollama the game stays fully playable, with hand-crafted classes (the Class Awakening gives refusers the Wayward Soul), static dialogue, no dynamic quests and no world growth. New rifts still open as Deep Echoes, and bosses follow their authored succession chains. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
 
 ### 4. (Optional) Install the pre-push test hook
 
@@ -130,7 +131,9 @@ If you plan to push commits, install the local git hook that runs the test suite
 git pull
 ```
 
-Your saves upgrade automatically when you load them.
+Then start the game with the launcher as usual (it installs any new Python dependencies), or run `pip install -r requirements.txt` yourself. If you installed the pre-push hook, run the install script again so you get its latest version.
+
+Your saves upgrade automatically when you load them: the world database migrates to the current schema, older saves are topped up to the full cast of bots, and new content (Gates, boss lairs, quests and quest givers) is there the next time you visit the Gate Hall.
 
 ---
 

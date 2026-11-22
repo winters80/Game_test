@@ -37,5 +37,5 @@ for hook in "$SRC"/*; do
 done
 
 echo ""
-echo "Hooks installed. The pre-push hook will now run test_characters.py"
-echo "and test_quests.py before every push, and abort on failure."
+echo "Hooks installed. The pre-push hook will now run all 7 test suites"
+echo "before every push, and abort on failure."

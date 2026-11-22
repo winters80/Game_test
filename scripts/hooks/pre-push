@@ -6,7 +6,7 @@ cd "$(git rev-parse --show-toplevel)"
 # Runs every test file in the repo. The two main suites
 # (test_characters / test_quests) gate the core gameplay surface; the
 # supplementary tests under tests/ and test_runs.py cover migrations,
-# the background worker, and the guild simulator. All five must pass
+# the background worker, and the guild simulator. All seven must pass
 # before a push is allowed.
 
 # Pick a Python that can import the project's dependencies. A bare

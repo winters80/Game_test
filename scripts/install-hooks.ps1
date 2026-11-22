@@ -36,5 +36,5 @@ Get-ChildItem $src -File | ForEach-Object {
 }
 
 Write-Host ""
-Write-Host "Hooks installed. The pre-push hook will now run test_characters.py"
-Write-Host "and test_quests.py before every push, and abort on failure."
+Write-Host "Hooks installed. The pre-push hook will now run all 7 test suites"
+Write-Host "before every push, and abort on failure."
