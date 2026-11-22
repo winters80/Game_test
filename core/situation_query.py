@@ -73,6 +73,15 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
 
     option_labels = [opt.label for opt in current_options if not opt.locked]
 
+    # Decision first: if the player typed one of the existing choices in their
+    # own words ("go to the inn"), just do it. One short constrained call,
+    # instead of a whole generated answer.
+    matched = _match_existing(engine, ai_service, question, current_options)
+    if matched is not None:
+        renderer.console.print(f"  [dim_text]→ {matched.label}[/dim_text]")
+        engine._pending_option = matched
+        return
+
     # AIService logs and swallows generation failures and returns None,
     # which lands in the "could not generate a response" path below.
     with renderer.show_ai_thinking_spinner(f"ANALYZING: {question[:40]}..."):
@@ -140,6 +149,27 @@ def handle_situation_query(engine: "GameEngine", current_options: list) -> None:
 
     renderer.console.print("  [dim_text]New options unlocked. Choose below.[/dim_text]")
     renderer.prompt_any_key()
+
+
+_NONE = "None of these: it's a question, or something new"
+
+
+def _match_existing(engine, ai_service, question: str, current_options: list):
+    """The unlocked choice the typed text clearly means, or None."""
+    from config import DECISION_MATCH_CONFIDENCE
+    choices = [o for o in current_options if not o.locked]
+    if not choices or question.rstrip().endswith("?"):
+        return None                       # questions go to the full answer
+    labels = [o.label for o in choices] + [_NONE]
+    with renderer.show_ai_thinking_spinner("..."):
+        d = ai_service.decide(
+            f"The player typed: \"{question}\". Which option is the same action?", labels,
+            context="Pick an option only if it really is what they typed; otherwise pick the last one.")
+    if d is None or d.index >= len(choices) or d.confidence < DECISION_MATCH_CONFIDENCE:
+        return None
+    logger.info("Typed action %r matched existing option %r (%.2f, %s)",
+                question, choices[d.index].label, d.confidence, d.source)
+    return choices[d.index]
 
 
 def _norm(text: str) -> str:

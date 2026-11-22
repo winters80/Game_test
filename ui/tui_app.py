@@ -94,7 +94,9 @@ class TuiBackend:
     def select(self, message, choices, default=None):
         return self._ask("select", message, (choices, default))
 
-    def text(self, message, default=""):
+    def text(self, message, default="", instruction=None):
+        if instruction:
+            message = f"{message}  [dim]{instruction}[/dim]"
         return self._ask("text", message, default)
 
     def confirm(self, message, default=True):

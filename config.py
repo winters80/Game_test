@@ -18,7 +18,14 @@ OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL") or "gemma4:12b"     # Primary: 12B (~8 GB), 256K context, tools
 OLLAMA_FAST_MODEL = os.environ.get("OLLAMA_FAST_MODEL", "qwen3.5:4b")  # Small model for interactive calls. "" = use primary.
 # Tiny models (0.8b-2b) are faster but mostly echo the prompt back for [?] questions.
-OLLAMA_FALLBACK_MODEL = "qwen3.5:9b"  # used if the primary fails to load (~6.6 GB)
+OLLAMA_FALLBACK_MODEL = os.environ.get("OLLAMA_FALLBACK_MODEL") or "qwen3.5:9b"  # used if the primary isn't there (~6.6 GB)
+# These are only defaults: Admin → « AI models » picks per role without editing
+# this file (saved in saves/settings/ai_models.json; ai/model_registry.py).
+# The catalog of known models is data/ai/model_catalog.json; the newest copy
+# is read from the repository so recommendations update without a code change.
+MODEL_CATALOG_URL = os.environ.get(
+    "MODEL_CATALOG_URL",
+    "https://raw.githubusercontent.com/winters80/Game_test/main/data/ai/model_catalog.json")
 OLLAMA_TIMEOUT_JSON = 60               # seconds for structured generation (primary model)
 OLLAMA_TIMEOUT_FAST = 15              # seconds for fast-model interactive calls
 OLLAMA_TIMEOUT_TEXT = 20               # seconds for narrative generation
@@ -28,6 +35,13 @@ OLLAMA_PRELOAD = True                  # load both models into memory at startup
 OLLAMA_WARMUP_TIMEOUT = 180            # seconds allowed for the first model load
 OLLAMA_TEMP_JSON = 0.4                 # lower = more consistent structured output
 OLLAMA_TEMP_TEXT = 0.85                # higher = more creative narrative
+
+# ── Decisions (ai/decision.py): pick one of N options instead of writing text ──
+DECISION_PROVIDER = os.environ.get("DECISION_PROVIDER", "ollama")   # "ollama" | "openai_compatible" | "off"
+DECISION_ENDPOINT = os.environ.get("DECISION_ENDPOINT", "")        # e.g. https://openrouter.ai/api/v1
+DECISION_MODEL = os.environ.get("DECISION_MODEL", "")              # the remote model id
+# The remote key is read from the DECISION_API_KEY environment variable only.
+DECISION_MATCH_CONFIDENCE = 0.7    # [?] text that matches an existing choice this surely just does it
 
 # ── Background AI generation ────────────────────────────────────────────────
 BG_GEN_ENABLED  = True    # master switch for background content generation

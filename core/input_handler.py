@@ -188,6 +188,10 @@ def prompt_choice(engine: "GameEngine", options: list[SceneOption]) -> SceneOpti
         elif method == "_handle_situation_query":
             # Only hotkey that takes an argument
             getattr(engine, method)(options)
+            pending = getattr(engine, "_pending_option", None)
+            if pending is not None:       # typed text matched an existing choice
+                engine._pending_option = None
+                return pending
         else:
             getattr(engine, method)()
         return None

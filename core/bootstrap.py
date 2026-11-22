@@ -18,8 +18,7 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from config import (
-    AI_ENABLED, DATA_DIR, OLLAMA_BASE_URL, OLLAMA_FAST_MODEL, OLLAMA_MODEL,
-    OLLAMA_PRELOAD, OLLAMA_TIMEOUT_FAST, feature,
+    AI_ENABLED, DATA_DIR, OLLAMA_BASE_URL, OLLAMA_PRELOAD, OLLAMA_TIMEOUT_FAST, feature,
 )
 from ui import renderer
 
@@ -132,9 +131,23 @@ def setup_ai(engine: "GameEngine") -> None:
         engine.ai_offline_reason = "AI_ENABLED is False in config.py."
         return
 
+    # Stop the previous wiring's worker when re-running (Admin → AI models).
+    old_bg = getattr(engine, "_bg_generator", None)
+    if old_bg is not None:
+        try:
+            old_bg.stop()
+        except Exception:
+            pass
+        engine._bg_generator = None
+        engine._world_director = None
+
     try:
         from ai.ollama_client import OllamaClient
         from ai.content_generator import ContentGenerator
+        from ai.model_registry import active_models
+        roles = active_models()
+        OLLAMA_MODEL, OLLAMA_FAST_MODEL = roles["primary"], roles["fast"]
+        engine.ai_models = dict(roles)
         client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
         if not client.is_available():
             engine.ai_offline_reason = (
@@ -148,7 +161,15 @@ def setup_ai(engine: "GameEngine") -> None:
                 "scripts/start.sh, which do it for you.[/dim_text]"
             )
             return
-        _offer_model_downloads(client)
+        _offer_model_downloads(client, roles)
+        fallback = roles["fallback"]
+        if not client.has_model() and fallback and fallback != OLLAMA_MODEL and client.has_model(fallback):
+            renderer.console.print(
+                f"  [dim_text]Primary model '{OLLAMA_MODEL}' isn't downloaded; using the fallback "
+                f"'{fallback}'.[/dim_text]")
+            OLLAMA_MODEL = fallback
+            engine.ai_models["primary"] = fallback
+            client = OllamaClient(model=OLLAMA_MODEL, base_url=OLLAMA_BASE_URL)
         if not client.has_model():
             have = ", ".join(sorted(client.installed_models())) or "none"
             engine.ai_offline_reason = (
@@ -211,17 +232,22 @@ def setup_ai(engine: "GameEngine") -> None:
         )
 
 
-def _wanted_models() -> list[str]:
-    """The models config.py asks for: primary, plus fast if it's separate."""
-    return list(dict.fromkeys(m for m in (OLLAMA_MODEL, OLLAMA_FAST_MODEL) if m))
+def _wanted_models(roles: dict | None = None) -> list[str]:
+    """The models the active roles ask for: primary, plus fast if it's separate."""
+    if roles is None:
+        from ai.model_registry import active_models
+        roles = active_models()
+    return list(dict.fromkeys(m for m in (roles.get("primary"), roles.get("fast")) if m))
 
 
 def _confirm_download(missing: list[str]) -> bool:
     """Ask before a multi-GB download. No terminal (tests, pipes) → no."""
     import sys
-    if not sys.stdin.isatty():
-        return False
     from ui import prompt as uip
+    # No terminal (tests, pipes) → no; a non-terminal front end (Textual, the
+    # browser) can still ask.
+    if isinstance(uip.get_backend(), uip.TerminalBackend) and not sys.stdin.isatty():
+        return False
     answer = uip.confirm(
         f"Download {' and '.join(missing)} now? (one-time; the game waits until it's done)",
         default=True,
@@ -229,13 +255,13 @@ def _confirm_download(missing: list[str]) -> bool:
     return bool(answer)
 
 
-def _offer_model_downloads(client) -> None:
+def _offer_model_downloads(client, roles: dict | None = None) -> None:
     """Startup pre-check: if a model config.py needs isn't pulled, say so and
     offer to download it with a progress bar, so the AI works this session."""
     from ai.ollama_client import model_in
 
     installed = client.installed_models()
-    missing = [m for m in _wanted_models() if not model_in(m, installed)]
+    missing = [m for m in _wanted_models(roles) if not model_in(m, installed)]
     if not missing:
         return
     renderer.console.print(
@@ -245,8 +271,8 @@ def _offer_model_downloads(client) -> None:
     others = sorted(installed)
     if others:
         renderer.console.print(
-            f"  [dim_text]Installed: {', '.join(others)}. To use one of those instead, set the "
-            "OLLAMA_MODEL / OLLAMA_FAST_MODEL environment variables (see README).[/dim_text]"
+            f"  [dim_text]Installed: {', '.join(others)}. To use one of those instead, pick it in "
+            "Admin → AI models (or set OLLAMA_MODEL / OLLAMA_FAST_MODEL).[/dim_text]"
         )
     if not _confirm_download(missing):
         return

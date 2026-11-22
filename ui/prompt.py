@@ -65,9 +65,10 @@ class TerminalBackend:
         kw = {"default": default} if default is not None else {}
         return questionary.select(message, choices=qs, **kw).ask()
 
-    def text(self, message, default=""):
+    def text(self, message, default="", instruction=None):
         import questionary
-        return questionary.text(message, default=default).ask()
+        kw = {"instruction": instruction} if instruction else {}
+        return questionary.text(message, default=default, **kw).ask()
 
     def confirm(self, message, default=True):
         import questionary
@@ -118,8 +119,14 @@ def select(message: str, choices, default: Any = None, **_ignored) -> _Question:
     return _Question(lambda: _backend.select(message, items, default), message)
 
 
-def text(message: str, default: str = "", **_ignored) -> _Question:
-    return _Question(lambda: _backend.text(message, default), message)
+def text(message: str, default: str = "", instruction: str | None = None, **_ignored) -> _Question:
+    def run():
+        try:
+            return _backend.text(message, default, instruction=instruction) if instruction \
+                else _backend.text(message, default)
+        except TypeError:                 # a backend without instruction support
+            return _backend.text(message, default)
+    return _Question(run, message)
 
 
 def confirm(message: str, default: bool = True, **_ignored) -> _Question:
