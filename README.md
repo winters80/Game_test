@@ -16,6 +16,18 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 
 **The dungeons are alive.** Kill a boss and something else moves in: a wizard rises as a lich, the priests who come to cleanse it are corrupted. Two dozen other adventurers level up, run Gates, form parties and kill bosses while you're away. New rifts keep opening, invented by the AI or echoing old ones deeper.
 
+## What's new
+
+- **Dungeons that remember.** Kill a boss and something else moves in, decided by how it died and what you did with the body. A wizard rises as a lich; the priests sent to cleanse its den are corrupted.
+- **32 Gates** (rift dungeons, levels 2–18) with branching boss chains, trophies, First Clear and Swift Clear bonuses, and **9 group Gates** that need a party of bot companions.
+- **The world grows by itself.** New rifts open every couple of in-game days (AI-made, or Deep Echoes of old Gates when offline), quest lines chart new ones, and the AI can invent new bosses.
+- **213 quests in 53 chains**, including 10 that teach a skill and 10 that end with a forged item, plus faction quest lines for the Crown and the System Breakers.
+- **24 bot adventurers** who level, run Gates, form parties, kill bosses, join guilds and sell at auction while you're away.
+- **Deeper combat:** status effects, bosses that telegraph their big moves and enrage, working shields and evasion.
+- **A world clock:** resting, travelling and dungeon runs take time, and the world moves on meanwhile.
+- **Class Awakening:** refuse the System and it will eventually write a class just for you.
+- **New default AI models:** `gemma4:12b` and `qwen3.5:4b`.
+
 Built with:
 - Python 3.11 + Pydantic v2 (all data models)
 - [Rich](https://github.com/Textualize/rich) for terminal UI
@@ -27,13 +39,22 @@ Built with:
 
 ## Quick Start
 
-### 1. Install the prerequisites (once)
+### 1. Get the code
+
+```bash
+git clone https://github.com/winters80/Game_test.git
+cd Game_test
+```
+
+This needs **git** (https://git-scm.com/downloads). Without it, choose **Code → Download ZIP** on the repository page and unzip it; you'd then update by downloading again instead of `git pull`.
+
+### 2. Install the prerequisites (once)
 
 - **Python 3.11+**: https://www.python.org/downloads/
 - **Ollama**: https://ollama.com/download. It's optional, but without it there's no AI: no unique classes, no `[?]` answers, no world growth, no AI-made Gates.
 - **Disk:** about 11 GB for the two default models (less with smaller ones, see below).
 
-### 2. Start the game (recommended)
+### 3. Start the game (recommended)
 
 The launcher makes sure everything is ready every time you play:
 
@@ -55,7 +76,7 @@ Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game
 
 On the title screen you should see **`AI system online. Ollama connected.`** The admin panel (`[A]`) shows **`AI: online`**.
 
-### 3. Or start it by hand
+### 4. Or start it by hand
 
 ```bash
 pip install -r requirements.txt
@@ -113,7 +134,7 @@ The game tells you what's wrong at startup:
 
 Without Ollama the game stays fully playable, with hand-crafted classes (the Class Awakening gives refusers the Wayward Soul), static dialogue, no dynamic quests and no world growth. New rifts still open as Deep Echoes, and bosses follow their authored succession chains. Actions you take are still logged, and the world catches up the next time you load that save with Ollama running. Ollama on another machine or port? Set the `OLLAMA_BASE_URL` environment variable (the launchers and the game both read it).
 
-### 4. (Optional) Install the pre-push test hook
+### 5. (Optional) Install the pre-push test hook
 
 If you plan to push commits, install the local git hook that runs the test suite before every push:
 
@@ -126,6 +147,8 @@ If you plan to push commits, install the local git hook that runs the test suite
 ```
 
 ### Updating
+
+From the game's folder:
 
 ```bash
 git pull
@@ -206,7 +229,7 @@ NPCs keep day hours (06:00–20:00) and night hours. Bosses come back in hours o
 - **Boss moves:** every boss has signature moves, such as a heavy blow it **announces a turn ahead** (*"⚠ Asterion is gathering itself for Horned Charge!"*), a heal, a curse, a summon, or a life drain. Below a third of its health it becomes **ENRAGED** and hits 25% harder.
 - **Study** a boss first (if your INT or WIS is high enough) for a free first strike.
 - Casters regain a little MP every round (1 + WIS/5). Basic attacks use the better of STR and AGI.
-- **Defensive skills work:** Mana Shield puts up a ward that absorbs damage, and Shadow Step lets you evade the next attack or two. Before this, both were treated as attacks.
+- **Defensive skills:** Mana Shield puts up a ward that absorbs damage, and Shadow Step lets you evade the next attack or two.
 
 ### Gates
 
@@ -436,67 +459,7 @@ python -X utf8 playthrough_smoke.py                #  23 checks
 git checkout -b feature/my-feature
 ```
 
-**Combined test count: 1,093 checks across 7 test files (all gated by the pre-push hook).**
-
-`test_characters.py` (192 checks, 34 sections) covers:
-- Registry loading (skills, items, classes, NPCs, scenes)
-- Scene-graph link / trigger validation
-- Three simulated character playthroughs (warrior, divergent, mage) with save/load round-trip
-- Player model edge cases, inventory API, combat (auto-resolve + loot, lvl-up)
-- Background generator thread lifecycle (start/stop/restart)
-- Feature-flag toggling
-- Quest lifecycle: start → tick advance → completion → rewards
-- Save migration v1 → v2 → v3 → v4 (with `SaveMigrationError` for missing steps + disk-fixture round-trip)
-- AIService facade (sync + async class-gen Future, exception handling)
-- Quest reward currency cap (validates `MAX_QUEST_REWARD_GOLD = 5000`)
-- Class resolver Layer 2 superset-match bug fix regression guard
-- Free-function trigger processing (`scenes/option_logic.py`)
-- Every extracted module's exports (game_engine, bootstrap, integrator, etc.)
-- Bot action handlers all fire (regression guard for the elif-chain bug)
-- Hotkey table integrity in `input_handler`
-- Soft budget guard: `core/game_engine.py` must stay under 200 lines
-- Every class's starting **and learnable** skills exist in the registry
-- `AIService` boundary guard: nothing outside `ai/` (bar `core/bootstrap.py`) touches `ContentGenerator` or raw Ollama clients
-- **Verath gate:** every scene reachable from the prologue; `flags_any` / `min_gold` / `lock_reason` gates; every normal and divergent route in
-- **AI trigger allow-list:** gold, skills, classes, quests and gear dropped; flags namespaced to `ai_*`; items, alignment and combat limited
-- **Traders:** travelling routes, ambient "Talk to …" options, buying and selling, equipped-item protection, runtime NPCs and recipes, the crafting-quantity fix
-- **World growth end-to-end** (fake primary model through the real background worker, integrator, registries and DB): discovery, clamped bundle, reward, trader presence, yield cooldown, per-save isolation, offline behaviour
-- **World growth guard rails:** trader cap with stock merging, expansion cap, retry on load, admin World Growth log
-- **Ollama startup:** the right message for "server down" / "model missing", fallback to the primary model, background preload
-- **Every scene `combat:X` spawns real enemies** (caught a crash and two missing Floor 2 fights)
-- **Bot adventurers:** generation and per-save persistence, a 120-turn brain run (fights, loot, trade, craft), retreat, level gates, trader solvency, Talk-to options, `[W]`, trading both ways, AI/fallback talk, no per-bot AI calls
-- **Boss succession:** lair content is valid with no dead ends; wizard → lich → priests and the choices that steer it; killing blow (magic) changes the successor; returning bosses scale; fight → aftermath → save/load → arrival rumour; study gives the first strike; bots clear bosses after the grace period
-- **Gates and quest chains:** 30+ branching Gates with real enemies and drops; 200+ quests and 50+ chains whose every objective is achievable and every step unlocks the next; a full gate run; a skill chain from seed to skill; bots running Gates
-- **Social world:** faction quests gated by standing and advanced by real deeds; bots joining guilds and auctioning loot (and getting paid); Mana Shield / Shadow Step ward and evade; AI skill prompts that see the player's kit; the Class Awakening offline and through a background AI Future
-- **Living world:** statuses and stun guard, telegraphed boss moves / heal / summon / one-time enrage, the XP curve, every Gate material craftable, the clock passing time (bots act meanwhile), trophies and FIRST / SWIFT CLEAR, group Gates refusing a lone player and paying the bot party, journal chain progress and leads, Deep Echoes / quest rifts / AI Gates (stats from level, not the AI) / AI successors all surviving save and load
-
-`test_quests.py` (771 checks, 23 sections) covers:
-- Schema integrity for every quest template (all files in `data/quests/`)
-- NPC giver references resolve; dialogue triggers reference real templates
-- Reward references (items, factions, guilds) point to real entities
-- Full lifecycles for 2-stage, 3-stage, and 4-stage quests
-- Concurrent quests, failure conditions, time-limit expiration
-- AI quest data DB round-trip + event payload shapes
-- Trigger format resolution
-- Dialogue quest-seed injection (concrete seeds, `ai_dynamic`, implicit AI offers)
-- **Economy formula** — `recommended_quest_reward(level, difficulty)` tier ladder + clamp regression
-- **Skill audit fixes** — validators on mp/cd/scaling_coefficient, dup-id resolution, `give_skill:` auto-create has effects, `_build_skill_from_stub` parses `effect_hint`
-- **Skill design (F3–F9)** — passive aggregator stacking + caps, TRIGGERED `on_attack`/`on_kill` firing, combat-turn cooldowns, skill leveling via use count, `grant_next_learnable_skill`
-- **Contextual AI skill generation** — `AISkillResponse` clamping, `_generate_or_default_skill` AI/fallback, quest `reward_skill_hints` registered + granted
-- **AI quest skill rewards** — AIQuestResponse parses/clamps/coerces `reward_skill_hints`; hand-crafted demos (`blacksmith_hammer` → 'Forge-Born Strike', `theft_investigation` → 'Hushed Step')
-- **Polish items** — `SKILL_LEVELED_UP` listener wired, stat-points menu present, `_inspect_existing_skill` helper, trainer NPC option on Torven, NPC-dialogue start paths for `dungeon_survey` / `fracture_investigation` / `verath_courier`, v1 → v4 chained migration
-
-`playthrough_smoke.py` (23 checks) — headless live playthrough with real Ollama:
-- Engine bootstrap (registries, AIService, BG generator, WorldDirector, bot manager)
-- Character creation
-- 2-stage quest lifecycle (`blacksmith_hammer`) with reward gold/XP/flag/**AI-generated skill** assertions
-- 3-stage quest lifecycle (`theft_investigation`) + level-up cascade
-- Quest failure path
-- Save → close → load → verify gold + completed quests + flags + skill_uses persistence
-- BG task submission + scheduler tick
-- Live AI quest generation through `AIService` with level-scaled reward clamping
-
-All 7 test files run automatically via `.git/hooks/pre-push` before every push (`playthrough_smoke.py` is optional — needs Ollama).
+**1,093 checks across 7 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
 
 See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax, event bus events, SQLite table descriptions, the `AIService` boundary contract, and the directory map.
 
@@ -504,142 +467,12 @@ See **CLAUDE.md** for the full developer reference: trigger strings, gate syntax
 
 ## Roadmap
 
-### Current stage: **Phase 5: a living world of dungeons**
-
-The AI-as-co-author premise now reaches the world itself. Classes, quests and
-skills all flow through one `AIService` boundary with contextual prompts,
-Pydantic-validated outputs and level-scaled clamping. On top of that, the
-player's own typed actions make the primary model add items, recipes, traders
-and skills, per save, behind a strict allow-list. The next step is tuning the
-world-growth prompts against real Ollama playthroughs.
-
-| Feature | Status | Notes |
-|---------|--------|-------|
-| Core game loop, scenes, classes, skills | ✅ Shipped | |
-| AI-generated unique classes (Ollama) | ✅ Shipped | Divergence ≥ 30 triggers generation; opt-in `rich_skills=True` for per-skill AI gen |
-| Background AI world generation | ✅ Shipped | Worker thread; non-blocking |
-| Dual-model Ollama (slow + fast) | ✅ Shipped | `gemma4:12b` + `qwen3.5:4b` (were `mistral-nemo` + `gemma3:4b`) |
-| NPC system (memory, stat-gated dialogue) | ✅ Shipped | |
-| Species + alignment systems | ✅ Shipped | |
-| Stat gating | ✅ Shipped | |
-| Interactive AI situational options (`[?]`) | ✅ Shipped | Uses fast model |
-| WorldDirector (off-thread) | ✅ Shipped | Submits to BG queue, never blocks |
-| Quest system (state machine + UI + tests) | ✅ Shipped | 9 templates, `[J] Quest Journal`, `start_quest:` / `advance_quest:` / `complete_quest:` triggers |
-| **Contextual AI skill generation** | ✅ **Shipped** | `give_skill:` / quest `reward_skill_hints` / Inspect — all flow through `AIService.generate_skill` with player + source + scene context |
-| **Skill leveling via use count + auto-learn on level-up** | ✅ **Shipped** | F8/F9. Lvl 1-10 per skill, `+1 base / +10% scaling` per level |
-| **Passive skill aggregator (F3)** | ✅ **Shipped** | 9 previously-decorative passives now contribute defense / dodge / crit / utility tags with stack caps |
-| **Level-scaled quest reward economy** | ✅ **Shipped** | `systems/economy.py` — `gold = 20 × level × tier_mult`, clamped per level |
-| Guild system | ✅ Shipped | Membership, ranks, perks, found-a-guild flow |
-| Faction system | ✅ Shipped | Standing, rank changes, `update_faction:` trigger |
-| Auction house + life tokens | ✅ Shipped | Listings, bids, life-token purchase |
-| 9-lives death mechanic | ✅ Shipped | Replaces instant game over |
-| Crafting system | ✅ Shipped | Recipes + materials, `[C] Craft` menu |
-| Bot agents (autonomous AI players) | ✅ Shipped | Arrivals/departures + in-zone actions surface in-world |
-| **Trainer NPC pattern** | ✅ **Shipped** | Torven offers `give_skill:torven_forge_lesson` after the hammer quest — AI generates the skill contextually |
-| **Inspect UI flow** | ✅ **Shipped** | `[K]` menu → "✦ Inspect an unknown skill" (gated by Inspect passive) → player describes a skill → AI materialises it |
-| Pre-push hook (all 7 test files) | ✅ Shipped | 1,093 checks gated; `scripts/install-hooks.sh`/`.ps1` for collaborators |
-| Test suite | ✅ Shipped | 1,093 checks across 7 files + 23-check live playthrough + `scripts/balance_sim.py` |
-| **World growth** | ✅ **Shipped** | Typed `[?]` actions are tagged; the primary model grows the world around new ones (items, recipes, traders, skills), validated + economy-clamped, per save. See CLAUDE.md "World Growth" |
-| **Bot adventurers** | ✅ **Shipped** | 24 rules-driven adventurers per save that fight, level, loot, trade, craft, run Gates and form parties; talk to them, trade with them, take them along, `[W]` Who's around |
-| **Boss succession** | ✅ **Shipped** | Bosses are replaced after a kill, steered by how they died and what you did; bots kill bosses too |
-| **Gates** | ✅ **Shipped** | 32 instanced dungeons (9 group Gates), trophies, FIRST / SWIFT CLEAR, companions, the Gate Hall |
-| **Growing dungeons** | ✅ **Shipped** | Rift surges (AI-made Gates, or Deep Echoes offline), quest-opened rifts, AI-invented successors; per save |
-| **Quest chains** | ✅ **Shipped** | 213 quests, 53 chains (10 skill, 10 item), « Report » hand-ins, journal chain progress and leads |
-| **Combat depth** | ✅ **Shipped** | Statuses, telegraphed boss moves, enrage, combat MP regen, finesse attacks |
-| **World clock** | ✅ **Shipped** | Day / time, activities pass time, NPC day and night |
-| **Balance pass** | ✅ **Shipped** | `scripts/balance_sim.py`: every Gate beatable at its level by warrior, mage and rogue builds; flatter XP curve past level 8 |
-| **One-step launchers** | ✅ **Shipped** | `start.bat` / `scripts/start.ps1` / `scripts/start.sh` start Ollama, pull models, run the game; models preloaded |
-| **AI trigger allow-list** | ✅ **Shipped** | AI-authored options can't give gold, gear, classes, quests or story flags (`systems/ai_trigger_policy.py`) |
-| **Traders** | ✅ **Shipped** | Buy/sell menus, travelling traders (Wren), AI-generated traders in the outer market / Verath / camp / road |
-| **Verath gate** | ✅ **Shipped** | Capital unlocks by clearing Floor 1 or via divergent routes (bribe, INT, LCK, the Wanderer, AI) |
-
-### Next up — long-tail
+What's next:
 
 | Item | Why |
 |------|-----|
-| Tune AI prompts on live Ollama | World growth, AI Gates, AI successors and the Class Awakening are tested end-to-end with fake model output; real `gemma4:12b` / `qwen3.5:4b` output quality needs a playthrough |
-| Class identity | Warriors stay the tankiest (63% HP left on an average Gate run vs 40–49% for mages and rogues in `scripts/balance_sim.py`); worth a design pass on class skill kits |
+| Tune AI prompts on live Ollama | World growth, AI Gates, AI bosses and the Class Awakening are tested with fake model output; real `gemma4:12b` / `qwen3.5:4b` output needs a playthrough |
+| Class identity | Warriors are the tankiest class (63% HP left on an average Gate run, vs 40–49% for mages and rogues in `scripts/balance_sim.py`); worth a design pass on class skill kits |
 | Bots bid at auction | Bots consign loot and get paid; bidding on the player's listings would complete the market |
-| `GameEngine` mixin → composition refactor | Low priority, budget-guarded. Working fine. |
-| `world_db.py` further split | Per-table repos already cover queries; `auction_system` still reads the connection directly in two places |
-
-### Recently shipped (PRs #40 and #41)
-
-**Round three:**
-- **Class Awakening wired up:** AI class generation was never called in play. Refusers now reach it from the village; it runs on a background Future with a spinner.
-- **Faction quests reachable:** The Throne Petition and Break the Machine had stages nothing could complete; they now advance by deeds and reports, offered at faction standing 20+. Patron chains raise standing.
-- **Bots in guilds and at auction.**
-- **Defensive skills fixed:** Mana Shield and Shadow Step were dealing damage instead of protecting you.
-- **Iron Skin trimmed; AI skill prompts see the player's kit** (name, type, effects) and are told the gap to fill.
-- **Auction bug:** bot listings now use the auction's own turn counter.
-
-**Dungeons that change, and a world that grows them:**
-- **Boss succession**: kill a boss and something else moves in, steered by the killing blow, your choice over the body, and who killed it (you or a bot). Returning bosses grow stronger. Floor 2 and Floor 3 have chains (wizard → lich → corrupted priests).
-- **32 Gates** with branching four-master chains, signature materials, trophies, FIRST / SWIFT CLEAR bonuses, bot companions and **9 group Gates** that need a party. Bots form parties for them too.
-- **New rifts open by themselves**: AI-made Gates, Deep Echoes when offline, quest-opened rifts, AI-invented successors. All per save (world DB v8).
-- **213 quests, 53 chains**, « Report » hand-ins, new objective types, journal chain progress and leads.
-- **Combat**: statuses now apply, bosses telegraph signature moves and enrage, casters regain MP, basic attacks use STR or AGI.
-- **World clock**: activities take time and the world moves meanwhile; NPC day / night follows it.
-- **Balance**: flatter XP curve past level 8 (level 15 → 16 is 3,777 XP, was 29,192); `scripts/balance_sim.py`; Power Strike gets a cooldown.
-- **Bot fix**: bots never left Floor 1; now they push deeper.
-
-### Earlier (PRs #30 and #32)
-
-**The world grows around the player:**
-- **World growth**: every `[?]` option carries a `world_action:VERB:SUBJECT` tag. New actions queue a background expansion. The primary model's bundle (yield item, derived items, recipes, trader, optional skill) is made safe: `gen_` ids, materials and consumables only, values clamped by `economy.py`, recipes checked, and traders who sell at 1–3× value. It's stored per save (world DB v6), and repeating an action gathers its yield.
-- **Guard rails**: 2 generated traders per location (extras merge into an existing trader's stock), 60 expansions per save, retry on load, and an admin **World Growth log**.
-- **Traders**: `trades` / `ambient` / `route` NPC fields, « Browse wares » / « Sell items », Wren the travelling pedlar, and Torven buying gear.
-- **AI trigger allow-list**: AI options and AI NPC dialogue can only set `ai_*` flags, give one cheap consumable or material, nudge alignment ±5, or start a known fight.
-- **Verath gate**: the capital was unreachable. It now opens by clearing Floor 1 or through five divergent routes. The start is reworded as "Verath's outer market".
-
-**Content and systems:**
-- **28 missing class skills added**: Priest, Ranger and every combo class were stuck on their starting skills. Auto-learn now skips unknown ids instead of stalling.
-- **`AIService` boundary enforced in `core/`**: 13 call sites moved behind the facade, with a guard test.
-
-**Bug fixes:**
-- `flags_any` was never evaluated, so the Floor 3 door to both endings was always open.
-- Crafting checked that ingredients were present, not their quantity, so a 2-herb recipe worked with 1.
-- 66 double-encoded em dashes (`â€”`) in NPC dialogue.
-- CLAUDE.md trigger reference was out of date (11 undocumented triggers; `give_gold` is copper).
-
-### Earlier (audit arc — 18 PRs from #9 to #26)
-
-**AI as backbone:**
-- **Contextual AI skill generation** — `give_skill:X` (when ID unknown), quest `reward_skill_hints`, and the player-facing Inspect flow all funnel through `ai_service.generate_skill(player, name_hint, source, context, has_inspect)`. Pydantic-clamps mp/cd/scaling so a hallucinating LLM can't break the economy. Same hint + same player = different output based on `has_inspect` (rich tooltip vs in-fiction prose).
-- **AI quests propose `reward_skill_hints`** — the LLM is taught about the optional field in its prompt; the validator coerces every output shape (`["A"]`, `[{"name":"A"}]`, `"A"`).
-- **AI class generation contextual** — opt-in `rich_skills=True` puts every class skill stub through `generate_skill` instead of the deterministic builder.
-- **AI quest generation wired into NPC dialogue** — `quest_seeds` injection, plus implicit "I might have work for you" offer when disposition ≥ `AI_QUEST_DISPOSITION_MIN`.
-- **`AIService` facade** — single boundary `systems/` imports; centralises try/except, fallback paths, `is_available` gating.
-- **Async class-gen Future** — `AIService.submit_class_generation_async` returns a `Future` the awakening scene can poll while the Rich spinner animates from its own thread.
-
-**Skill system (audit + design):**
-- **Passive aggregator (F3)** — 9 previously-decorative passives (Iron Skin, Evasion, etc.) now contribute attack / defense / dodge / crit / utility-tags with hard caps (dodge 40%, crit 30%, etc.).
-- **Combat-turn cooldowns (F5)** — `reset_cooldowns_for_combat` at fight start, `tick_combat_cooldowns` per round. No more "5-CD spell refreshed by walking 5 menu steps in town".
-- **TRIGGERED skills fire (F6)** — `try_fire_trigger(player, event, sr)` from `combat_system` for `on_attack` / `on_hit` / `on_kill` (basic attacks) and `on_low_hp` (enemy hit crossing 30% HP). Exact, comma-separated matching; honours `cooldown_turns`. Filtered out of the active menu.
-- **Skill leveling (F8)** — `skill_uses` + `skill_levels` per player; every 5 uses → +1 level (capped at `max_level=10`); each level adds `+1 base` and `+10% scaling`.
-- **Auto-learn on level-up (F9)** — `grant_next_learnable_skill` walks the class's `learnable_skills` list.
-- **Skill validators (F10)** — `mp_cost`, `cooldown_turns`, `scaling_coefficient` hard-clamped against LLM hallucination.
-- **Dup skill IDs renamed** — `fireball` / `backstab` / `berserker_rage` no longer silently shadow each other across files.
-- **Inspect UI** — `[K]` menu adds "✦ Inspect an unknown skill" (when Inspect passive owned + AI online); skill detail view adds "✦ Inspect mechanics" for owned skills.
-- **`SKILL_LEVELED_UP` notification** — fires a "SKILL MASTERY DEEPENS" panel when a skill grows via use-count.
-- **Stat-points menu** — spendable from `[K]` anywhere, not just post-combat.
-
-**Quest + economy:**
-- **Level-scaled quest economy** (`systems/economy.py`) — `gold = 20 × level × tier_multiplier`; clamped both sides. AI quest reward of "250g for a level-1 player" became 30g (within L1 standard bounds).
-- **Quest reward currency cap** — `reward_gold ≤ MAX_QUEST_REWARD_GOLD` (5000) hard-bound on `QuestTemplate`.
-- **Hand-crafted demo skill rewards** — `blacksmith_hammer` rewards "Forge-Born Strike", `theft_investigation` rewards "Hushed Step".
-- **Trainer NPC pattern** — Torven offers `give_skill:torven_forge_lesson` after the hammer quest (unknown ID → AI generates contextually).
-- **NPC dialogue start paths** — Sylara now offers `dungeon_survey` + `fracture_investigation`; Captain Aldis offers `verath_courier`.
-
-**Bug fixes caught along the way:**
-- Save migration v2→v3 was a silent no-op — now explicit per-version functions + `SaveMigrationError`.
-- Class resolver Layer 2 was granting combos without checking item/flag requirements.
-- Bot action elif chain — `trade`/`rest`/`craft`/`talk_npc` were dead branches.
-- `_setup_notifications` had a missing import (latent crash).
-- `test_background_tick.py` was using stale `ai_generator=` kwarg for a month (pre-push hook only ran 2 of 7 files).
-
-**Refactors:**
-- **`core/game_engine.py` slimmed 1049 → 165 lines (-84%)** across 6 PRs. Extracted to: `core/{bootstrap,background_integrator,situation_query,menu_flow,game_loop,bg_scheduler,input_handler}.py`, `ui/{scene_renderer,auction_ui}.py`, `systems/{rest_system,faction_endings}.py`. Soft budget guard: must stay under 200 lines.
-- **`scenes/scene_base.py`: 295 → 72 lines** — trigger processing extracted to `scenes/option_logic.py`.
-- **`persistence/world_db.py`: 1103 → 787 lines** + 9 per-table repos in `persistence/repos/`.
-- **Pre-push hook gates all 7 test files** — was 2; one test sat broken for a month before this was tightened.
+| `GameEngine` mixin → composition refactor | Low priority, budget-guarded |
+| `world_db.py` further split | `auction_system` still reads the database connection directly in two places |
