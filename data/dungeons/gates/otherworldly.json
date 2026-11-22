@@ -46,7 +46,7 @@
   "redcap_fortress_chief_boss": {
    "name": "Chief {name}",
    "max_hp": 93,
-   "attack": 12,
+   "attack": 10,
    "defense": 4,
    "xp_reward": 150,
    "gold_reward": 1150,
@@ -1665,8 +1665,7 @@
      "redcap_fortress_chief": {
       "title": "Chief {name} Redcap",
       "enemies": [
-       "redcap_fortress_chief_boss",
-       "redcap_fortress_thug"
+       "redcap_fortress_chief_boss"
       ],
       "intro": "The bandit chief sits on a throne made of stolen carts. Chief {name} dips a cap in a bucket of something red. 'New hat,' they say. 'Yours.'",
       "victory": "Chief {name} goes down, and the bandits look at each other.",

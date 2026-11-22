@@ -125,6 +125,8 @@ LAIR_MAX_SCALING = 0.40                # cap on that bonus
 LAIR_BOT_CHALLENGE_CHANCE = 0.3       # chance a fighter bot on a lair's floor tries the boss
 LAIR_BOT_SAFETY = 0.85                 # bots only try if expected damage < this share of their HP
 GATE_LEVEL_GRACE = 1                   # a gate can be entered from (rated level - this)
+GATE_ENEMY_HP_SCALE = 1.4              # multiplies HP / attack of every lair and Gate enemy
+GATE_ENEMY_ATK_SCALE = 1.1             # (tuned with scripts/balance_sim.py; see README Balance)
 GATE_BREATHER = 0.15                   # HP and MP recovered between Gate rooms (catch your breath)
 BOT_GATE_CHANCE = 0.12                 # chance a fighter/explorer in town runs a gate this act
 RIFT_SURGE_EVERY_TURNS = 288           # a new rift opens every 2 in-game days (AI-made, or an echo offline)
@@ -139,6 +141,7 @@ XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP, up to XP_
 XP_SOFT_CAP_LEVEL = 8                 # past this level the curve flattens ...
 XP_LATE_SCALING = 1.12                # ... to x1.12 per level, so level-18 Gates are reachable
 STAT_POINTS_PER_LEVEL = 3
+CLASS_MILESTONE_EVERY = 4             # every N levels the class adds its stat_growth (identity)
 STARTING_GOLD    = 5000             # copper pieces (50 gold)
 COPPER_PER_GOLD  = 100              # 1 gold = 100 copper
 COPPER_PER_SILVER = 10              # 1 silver = 10 copper

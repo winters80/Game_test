@@ -271,6 +271,13 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
         )
 
     bus.subscribe("LEVEL_UP", on_level_up)
+
+    def on_class_milestone(event: Event) -> None:
+        gained = event.data.get("gained", {})
+        bits = " ".join(f"{k} +{v}" for k, v in gained.items())
+        console.print(f"\n  [system_msg]✦ CLASS MILESTONE · {event.data.get('class_name', '')} · {bits}[/system_msg]")
+
+    bus.subscribe("CLASS_MILESTONE", on_class_milestone)
     bus.subscribe("SKILL_ACQUIRED", on_skill_acquired)
     bus.subscribe("SKILL_LEVELED_UP", on_skill_leveled_up)
     bus.subscribe("CLASS_ASSIGNED", on_class_assigned)

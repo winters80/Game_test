@@ -4,7 +4,8 @@ import math
 from typing import TYPE_CHECKING
 
 from config import (
-    BASE_XP_PER_LEVEL, STAT_POINTS_PER_LEVEL, XP_LATE_SCALING, XP_SCALING_FACTOR, XP_SOFT_CAP_LEVEL,
+    BASE_XP_PER_LEVEL, CLASS_MILESTONE_EVERY, STAT_POINTS_PER_LEVEL, XP_LATE_SCALING, XP_SCALING_FACTOR,
+    XP_SOFT_CAP_LEVEL,
 )
 from core.event_bus import Event, bus
 
@@ -52,6 +53,11 @@ def add_experience(
         leveled_up_to.append(player.level)
         bus.publish(Event("LEVEL_UP", {"level": player.level, "stat_points": STAT_POINTS_PER_LEVEL}))
 
+        # Class milestone: every CLASS_MILESTONE_EVERY levels the class's
+        # stat_growth is added (a warrior hardens, a mage sharpens).
+        if class_registry is not None and player.level % CLASS_MILESTONE_EVERY == 0:
+            apply_class_milestone(player, class_registry)
+
         # Auto-grant a class skill on level-up. Optional — only fires when
         # both registries are passed (combat / quest reward paths supply
         # them; legacy callers without them stay backward-compatible).
@@ -60,6 +66,27 @@ def add_experience(
             grant_next_learnable_skill(player, class_registry, skill_registry)
 
     return leveled_up_to
+
+
+def apply_class_milestone(player: "Player", class_registry: "ClassRegistry") -> dict[str, int]:
+    """Add the active (or base) class's ``stat_growth`` to the player's stats.
+    Returns what was added ({} if the class is unknown or has no growth)."""
+    cls = class_registry.get(player.active_class or player.base_class or "")
+    if cls is None:
+        return {}
+    gained = {s: v for s, v in cls.stat_growth.model_dump().items() if v}
+    for stat, v in gained.items():
+        setattr(player.stats, stat, getattr(player.stats, stat) + v)
+    if gained:
+        hp = 2 * (gained.get("VIT", 0) + gained.get("END", 0))
+        mp = 2 * (gained.get("INT", 0) + gained.get("WIS", 0))
+        player.max_hp += hp
+        player.current_hp += hp
+        player.max_mp += mp
+        player.current_mp += mp
+        bus.publish(Event("CLASS_MILESTONE", {"class_name": cls.name, "level": player.level,
+                                              "gained": gained}))
+    return gained
 
 
 def spend_stat_point(player: "Player", stat: str) -> bool:

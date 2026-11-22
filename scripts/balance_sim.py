@@ -40,7 +40,9 @@ def make_player(level: int, cls: str, class_registry, skill_registry=None):
         class_system.assign_base_class(p, cls, class_registry, skill_registry)
     build = BUILDS.get(cls, BUILDS["warrior"])
     while p.level < level:
-        level_system.add_experience(p, level_system.xp_for_level(p.level))
+        # With the registries, like real play: class skills are learned on
+        # level-up and class milestones apply.
+        level_system.add_experience(p, level_system.xp_for_level(p.level), class_registry, skill_registry)
         i = 0
         while p.stat_points > 0:
             level_system.spend_stat_point(p, build[i % len(build)])
