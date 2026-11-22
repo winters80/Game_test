@@ -18,7 +18,7 @@
     "flavor_text": "Why bleed when you can think?",
     "skill_type": "ACTIVE",
     "mp_cost": 5,
-    "cooldown_turns": 4,
+    "cooldown_turns": 3,
     "effects": [{"effect_type": "shield", "scaling_stat": "INT", "base_value": 10.0, "scaling_coefficient": 2.0}]
   },
   {

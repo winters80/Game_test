@@ -78,7 +78,11 @@ def register_enemy_templates(registry: "LairRegistry") -> int:
             logger.warning("Lair enemy %s clashes with an existing enemy; skipped", eid)
             continue
         data = tmpl.model_dump()
-        data.update(enemy_id=eid, current_hp=tmpl.max_hp)
+        # One difficulty knob for every lair / Gate enemy (authored and AI-made).
+        from config import GATE_ENEMY_ATK_SCALE, GATE_ENEMY_HP_SCALE
+        hp = max(1, round(tmpl.max_hp * GATE_ENEMY_HP_SCALE))
+        data.update(enemy_id=eid, max_hp=hp, current_hp=hp,
+                    attack=max(1, round(tmpl.attack * GATE_ENEMY_ATK_SCALE)))
         ENEMY_TEMPLATES[eid] = data
         _REGISTERED.add(eid)
         added += 1

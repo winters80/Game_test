@@ -308,7 +308,7 @@ def validate_npcs(npc_reg: NPCRegistry, scene_reg: SceneRegistry) -> None:
 
 # ── Main ───────────────────────────────────────────────────────────────────────
 
-def main() -> None:
+def main() -> int:
     print("\n" + "═"*60)
     print("  SYSTEM BREAKER — Automated Character Test Suite")
     print("═"*60)
@@ -3114,6 +3114,7 @@ def _report() -> None:
     else:
         print("\n  All checks passed!")
     print()
+    return len(ISSUES)
 
 
 def _test_gates_and_quest_chains(item_reg) -> None:
@@ -3480,7 +3481,9 @@ def _test_living_world(item_reg) -> None:
         ai_gate = next(g for g in _gg.generated_gates(_eng) if g.name == "the Salt Wound")
         boss = cs.ENEMY_TEMPLATES[ai_gate.lair.occupants[ai_gate.lair.first_occupant].enemies[0]]
         from systems.gate_generation import boss_stats
-        assert ai_gate.name == "the Salt Wound" and boss["max_hp"] == boss_stats(9)["max_hp"], "Stats from level, not AI"
+        from config import GATE_ENEMY_HP_SCALE as _HPS
+        assert ai_gate.name == "the Salt Wound" and \
+            boss["max_hp"] == max(1, round(boss_stats(9)["max_hp"] * _HPS)), "Stats from level, not AI"
         assert boss["abilities"][0]["name"] == "Brine Crush"
         lair = _eng.lair_registry.get("bronze_labyrinth")
         st = _lf33.get_state(_eng, "bronze_labyrinth")
@@ -3677,4 +3680,5 @@ def _test_social_world(item_reg) -> None:
 
 
 if __name__ == "__main__":
-    main()
+    # A failed check must fail the run (and so the pre-push hook).
+    sys.exit(1 if main() else 0)
