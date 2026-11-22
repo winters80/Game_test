@@ -2764,11 +2764,16 @@ def main() -> None:
 
         # 30f. Talk: AI line when online, grounded fallback otherwise.
         _seller.remember("Defeated a goblin patrol on Floor 1 (turn 3)")
-        assert "defeated a goblin patrol" in fallback_line(_seller)
+        assert fallback_line(_seller)
+        from systems.bot_chat import reply as _reply
+        assert "goblin patrol" in _reply(_seller, "catch_up"), _reply(_seller, "catch_up")
         from ai.ai_service import AIService
         class _Talky:
             def generate_bot_line(self, profile, player_name):
                 assert profile["recent"] and profile["name"] == _seller.name
+                return "Watch the wolves on Floor 1."
+            def generate_bot_reply(self, profile, player_name, topic, facts, said):
+                assert profile["recent"] and "(turn" not in " ".join(profile["recent"]), profile["recent"]
                 return "Watch the wolves on Floor 1."
         assert AIService(content_generator=_Talky()).generate_bot_line(
             {"name": _seller.name, "recent": ["x"]}, "P") == "Watch the wolves on Floor 1."
@@ -2783,6 +2788,38 @@ def main() -> None:
             _bf.talk_to_bot(_beng, _seller.bot_id)
         assert _said == ["Watch the wolves on Floor 1."], _said
         ok("Talking to a bot uses the AI line (grounded in its memory) or a fallback")
+
+        # 30f2. Bots talk like players: memory is summarised, not recited.
+        from systems import bot_chat as _bc
+        _chatty = BotAgent(bot_id="chatty", name="Chatty", archetype="fighter", class_id="warrior", level=4)
+        for _m in ["Defeated a nest of crystal spiders on Floor 1 (turn 3)",
+                   "Defeated a dungeon slime on Floor 1 (turn 5)",
+                   "Defeated a nest of crystal spiders on Floor 1 (turn 7)",
+                   "Sold 3 items to Old Brannoc (turn 8)",
+                   "Beaten by the Crystal Golem in the Crystal Heart (turn 12)"]:
+            _chatty.remember(_m)
+        _sum = _bc.summarize_memory(_chatty.memory)
+        assert any("three fights" in x and "crystal spiders" in x for x in _sum), _sum
+        assert sum("crystal spiders" in x for x in _sum) == 1, f"Repeated kills fold into one phrase: {_sum}"
+        _up = _bc.reply(_chatty, "catch_up", _bc.ChatContext())
+        assert "(turn" not in _up and "Defeated" not in _up and "Crystal Golem" in _up, _up
+        assert _bc.looks_robotic("Defeated a dungeon slime on Floor 1. Defeated a nest of crystal spiders "
+                                 "on Floor 1.", _chatty.memory)
+        assert not _bc.looks_robotic("Been smashing spiders all morning, then a golem flattened me.", _chatty.memory)
+        _lines = {_bc.reply(_chatty, "greeting", _bc.ChatContext(seed=s)) for s in range(8)}
+        assert len(_lines) >= 3, f"Greetings vary between visits: {_lines}"
+        for _t in _bc.TOPICS:
+            assert _bc.reply(_chatty, _t, _bc.ChatContext(player_name="P", can_party=True)).strip(), _t
+        _trader = BotAgent(bot_id="tt", name="Tt", archetype="trader")
+        assert _bc.party_refusal(_trader, None, 1), "Traders don't run Gates"
+        assert not _bc.party_refusal(_chatty, None, 4)
+        # Agreeing to team up keeps the bot in town (and first in the companion list).
+        _chatty.current_zone_id, _chatty.waiting_until = "village_start", 10**9
+        from systems import bot_brain as _bb
+        _w = _bf.bot_world(_beng)
+        assert _bb.tick_bot(_chatty, _w, __import__("random").Random(1)) == [] and \
+            _chatty.current_zone_id == "village_start", "A bot waiting for the player stays put"
+        ok("Bots talk like players: summarised news, varied voice, tips, build, guild, team-up")
 
         # 30g. Bots survive save + load unchanged (they used to reset every load).
         _snap = {b.bot_id: (b.level, b.current_zone_id, b.gold, dict(b.inventory)) for b in _beng._bot_manager.all()}

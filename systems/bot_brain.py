@@ -399,7 +399,12 @@ def _move(bot: "BotAgent", target: str, doing: str) -> list[BotEvent]:
         return []
     old = bot.current_zone_id
     bot.current_zone_id = step
-    bot.activity = doing
+    # En route, say where they're going; once there, say what they're doing.
+    if step == target:
+        bot.activity = (f"looking for a fight on {place(step)}" if step not in SAFE_ZONES
+                        else f"just got back to {place(step)}")
+    else:
+        bot.activity = doing
     return [BotEvent(bot.bot_id, step, f"{bot.name} headed to {place(step)}.", "move", from_zone=old)]
 
 
@@ -579,6 +584,11 @@ def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEv
             bot.activity = f"resting in {place(zone)}"
             return [BotEvent(bot.bot_id, zone, f"{bot.name} patched themselves up.", "rest")]
         return _move(bot, HOME, "limping back to the outer market")
+
+    # 1b. Promised the player a Gate run: hang around town until they go.
+    if safe and world.turn < bot.waiting_until:
+        bot.activity = "waiting around for a Gate run"
+        return []
 
     # 2. In the dungeon: fight, forage, or head home.
     if not safe:

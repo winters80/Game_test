@@ -5,8 +5,7 @@ import random
 import time as _time
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from config import feature
 from core.event_bus import bus, Event
 from systems import combat_system, lair_system, level_system
@@ -60,6 +59,9 @@ class CombatHandlerMixin:
         """Fight ``encounter_id`` (or the given pre-spawned ``enemies``, e.g. a
         scaled lair boss). Returns "victory", "fled", "defeat" or "none".
         ``self._last_killing_blow`` is "magic" or "physical" afterwards."""
+        from utils import session_log as _slog
+        _slog.event("combat_start", encounter=encounter_id, surprise=surprise,
+                    enemies=[getattr(e, "name", e) for e in (enemies or [])] or None)
         if enemies is None:
             enemies = combat_system.spawn_encounter(encounter_id)
         self._last_killing_blow = "physical"
@@ -148,7 +150,7 @@ class CombatHandlerMixin:
                 renderer.print_combat_action("You", "are stunned and lose your turn!", style="system_warning")
                 action = "__stunned__"
             else:
-                action = questionary.select("Your action:", choices=action_choices).ask()
+                action = uip.select("Your action:", choices=action_choices).ask()
 
                 if action is None:
                     # Treat cancellation as re-prompt (loop continues naturally)
@@ -158,6 +160,7 @@ class CombatHandlerMixin:
                     if combat_system.try_flee(player, alive_enemies[0]):
                         renderer.print_scene_text(["You flee from combat!"])
                         renderer.prompt_any_key()
+                        _slog.event("combat_end", encounter=encounter_id, result="fled", hp=self.state.player.current_hp)
                         return "fled"
                     else:
                         renderer.print_scene_text(["You failed to flee!"])
@@ -169,7 +172,7 @@ class CombatHandlerMixin:
                             f"[{i}] {e.name}  ({e.current_hp}/{e.max_hp} HP)"
                             for i, e in enumerate(alive_enemies, 1)
                         ]
-                        t_answer = questionary.select("Target:", choices=target_choices).ask()
+                        t_answer = uip.select("Target:", choices=target_choices).ask()
                         try:
                             t_idx = int(t_answer.split("]")[0].lstrip("[")) - 1
                             target = alive_enemies[t_idx]
@@ -346,6 +349,7 @@ class CombatHandlerMixin:
                 renderer.print_scene_text(["The System records your defeat."])
                 renderer.prompt_any_key()
                 self._running = False
+            _slog.event("combat_end", encounter=encounter_id, result="defeat", hp=self.state.player.current_hp)
             return "defeat"
 
         # Victory
@@ -388,6 +392,7 @@ class CombatHandlerMixin:
 
         bus.flush()
         renderer.prompt_any_key()
+        _slog.event("combat_end", encounter=encounter_id, result="victory", hp=self.state.player.current_hp)
         return "victory"
 
     def _stat_allocation_prompt(self) -> None:
@@ -396,7 +401,7 @@ class CombatHandlerMixin:
             renderer.print_status_bar(player, self.item_registry)
             renderer.console.print(f"\n  [system_msg]You have {player.stat_points} stat point(s) to spend.[/system_msg]")
             stats = ["STR", "INT", "AGI", "LCK", "VIT", "WIS", "END", "Skip"]
-            choice = questionary.select("Allocate stat point:", choices=stats).ask()
+            choice = uip.select("Allocate stat point:", choices=stats).ask()
             if choice == "Skip" or choice is None:
                 break
             level_system.spend_stat_point(player, choice)

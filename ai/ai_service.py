@@ -396,6 +396,17 @@ class AIService:
             logger.info("AI bot line generation failed", exc_info=True)
             return None
 
+    def generate_bot_reply(self, profile: dict, player_name: str, topic: str,
+                           facts: str = "", said_so_far: list[str] | None = None) -> str | None:
+        """A bot's conversational reply (cosmetic: failures log at INFO)."""
+        if self._gen is None:
+            return None
+        try:
+            return self._gen.generate_bot_reply(profile, player_name, topic, facts, said_so_far or [])
+        except Exception:
+            logger.info("AI bot reply generation failed", exc_info=True)
+            return None
+
     # ── Diagnostics ──────────────────────────────────────────────────────────
 
     def token_usage(self) -> list[tuple[str, str, dict]]:

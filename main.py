@@ -13,6 +13,8 @@ def main() -> None:
     # Initialise logging before anything else
     from utils.logging_setup import setup_logging
     setup_logging()
+    from utils import session_log
+    session_log.start_if_enabled()      # diagnostics transcript (toggle in Admin)
 
     log = logging.getLogger("core.main")
     log.info("=" * 60)

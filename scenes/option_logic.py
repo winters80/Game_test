@@ -157,6 +157,10 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             item_id = trigger[10:]
             state.player.add_item(item_id)
             bus.publish(Event("ITEM_FOUND", {"item_id": item_id}))
+            reg = getattr(state, "item_registry", None)
+            if reg is not None:
+                from systems.inventory_system import auto_equip_if_empty
+                auto_equip_if_empty(state.player, item_id, reg)
 
         elif trigger.startswith("give_skill:"):
             skill_id = trigger[11:]

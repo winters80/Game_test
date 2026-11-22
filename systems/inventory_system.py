@@ -19,6 +19,7 @@ def pick_up_item(player: "Player", item_id: str, item_registry: "ItemRegistry", 
         "item_name": item.name,
         "rarity": item.rarity.value,
     }))
+    auto_equip_if_empty(player, item_id, item_registry)
     return True
 
 
@@ -52,6 +53,42 @@ def equip_item(player: "Player", item_id: str, item_registry: "ItemRegistry") ->
         _apply_stats(player, item.stats_bonus)
 
     return True, f"Equipped {item.name}."
+
+
+_SLOTS = {"WEAPON": "weapon", "ARMOR": "armor", "ACCESSORY": "accessory"}
+
+
+def _power(item) -> int:
+    sb = getattr(item, "stats_bonus", None)
+    return sum(getattr(sb, s, 0) or 0 for s in ("STR", "INT", "AGI", "LCK", "VIT", "WIS", "END")) if sb else 0
+
+
+def auto_equip_if_empty(player: "Player", item_id: str, item_registry: "ItemRegistry") -> str | None:
+    """Equip a newly gained weapon / armour / accessory when that slot is
+    empty (starting gear used to sit unused in the bag). Returns the item
+    name if it was equipped."""
+    item = item_registry.get(item_id) if item_registry else None
+    slot = _SLOTS.get(getattr(getattr(item, "item_type", None), "value", "")) if item else None
+    if not slot or getattr(player.equipped, slot) or not player.has_item(item_id):
+        return None
+    ok, _ = equip_item(player, item_id, item_registry)
+    return item.name if ok else None
+
+
+def equip_best_for_empty_slots(player: "Player", item_registry: "ItemRegistry") -> list[str]:
+    """For each empty slot, equip the strongest matching item in the bag
+    (used on load, so older saves get their starting gear on)."""
+    done = []
+    for type_name, slot in _SLOTS.items():
+        if getattr(player.equipped, slot):
+            continue
+        cands = [item_registry.get(s.item_id) for s in player.inventory]
+        cands = [i for i in cands if i is not None and i.item_type.value == type_name]
+        if cands:
+            best = max(cands, key=_power)
+            if equip_item(player, best.item_id, item_registry)[0]:
+                done.append(best.name)
+    return done
 
 
 def unequip_item(player: "Player", slot: str, item_registry: "ItemRegistry") -> tuple[bool, str]:

@@ -54,6 +54,7 @@ class BotAgent(BaseModel):
     is_generated: bool = False
     guild_id: str = ""                  # an authored guild, or a player-founded one
     guild_rank: str = ""
+    waiting_until: int = 0              # agreed to team up: stays in town until this turn
 
     @field_validator("inventory", mode="before")
     @classmethod
@@ -256,14 +257,16 @@ def bot_profile(bot: BotAgent) -> dict:
     return {
         "name": bot.name, "level": bot.level, "class": bot.class_id,
         "archetype": bot.archetype, "personality": bot.personality_seed,
-        "doing": bot.activity, "recent": bot.memory[-3:],
+        "doing": bot.activity, "recent": _summary(bot),
     }
 
 
+def _summary(bot: BotAgent) -> list[str]:
+    from systems.bot_chat import summarize_memory
+    return summarize_memory(bot.memory)
+
+
 def fallback_line(bot: BotAgent) -> str:
-    """What a bot says when no AI line is available: greeting + latest news."""
-    line = _GREETINGS.get(bot.archetype, "'Well met.'")
-    if bot.memory:
-        news = bot.memory[-1].split(" (turn")[0].rstrip(".")
-        line += f" A shrug. 'Just {news[0].lower() + news[1:]}.'"
-    return line
+    """What a bot says when no AI line is available (systems/bot_chat)."""
+    from systems.bot_chat import reply
+    return reply(bot, "greeting")

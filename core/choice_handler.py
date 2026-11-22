@@ -3,8 +3,7 @@ from __future__ import annotations
 import logging
 from typing import TYPE_CHECKING
 
-import questionary
-
+from ui import prompt as uip
 from config import feature
 from core.event_bus import bus, Event
 from systems import class_system
@@ -56,11 +55,31 @@ def _sanitise_narrative(text: str) -> str:
     return text
 
 
+_RESTATE_START = ("attempt", "you attempt", "try to", "you try", "i attempt", "i try", "you decide to")
+_STOP = {"the", "a", "an", "to", "of", "and", "from", "in", "on", "at", "your", "you", "their", "its", "with", "for"}
+
+
+def is_restatement(narrative: str, label: str) -> bool:
+    """True when an option's 'outcome' just repeats the action ("Search the
+    goblin weapons" → "Attempt to gather the goblins' weapons from the
+    tunnel."). Such text tells the player nothing happened."""
+    text = narrative.strip().lower()
+    if text.startswith(_RESTATE_START):
+        return True
+    words = lambda s: {w.strip(".,!?'\"").removesuffix("'s").removesuffix("s") for w in s.lower().split()} - _STOP
+    n, l = words(narrative), words(label.removeprefix("[AI] "))
+    return bool(n) and len(n) <= 12 and len(n & l) / len(n) >= 0.5
+
+
 class ChoiceHandlerMixin:
 
     def _handle_choice(self, option: SceneOption) -> None:
         player = self.state.player
         scene = self.scene_registry.get(self.state.current_scene_id)
+        from utils import session_log
+        session_log.event("choice", scene=self.state.current_scene_id, node=self.state.current_node_id,
+                          option=option.option_id, label=option.label,
+                          triggers=list(option.triggers or []), turn=getattr(self.state, "turn_number", 0))
 
         # Record as unexpected if flagged
         if not option.expected:
@@ -168,8 +187,13 @@ class ChoiceHandlerMixin:
         if option.option_id.startswith("ai_"):
             state_key = f"{self.state.current_scene_id}:{self.state.current_node_id}"
             narrative_text = ""
-            if option.narrative and _sanitise_narrative(option.narrative):
-                narrative_text = _sanitise_narrative(option.narrative)
+            canned = _sanitise_narrative(option.narrative or "")
+            if canned and is_restatement(canned, option.label) and self._ai_online():
+                # The model only paraphrased the action ("Attempt to gather…");
+                # ask what actually happens instead.
+                canned = self._generate_action_narrative(option.label.removeprefix("[AI] ")) or canned
+            if canned:
+                narrative_text = canned
                 renderer.print_divider()
                 renderer.print_scene_text([f"» {narrative_text}"])
                 renderer.print_divider()
@@ -222,6 +246,7 @@ class ChoiceHandlerMixin:
                     renderer.console.print("  [dim_text]New options available.[/dim_text]")
                     renderer.prompt_any_key()
                 else:
+                    renderer.console.print("  [dim_text]Nothing more comes of it for now.[/dim_text]")
                     renderer.prompt_any_key()
             else:
                 renderer.prompt_any_key()

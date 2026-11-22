@@ -75,8 +75,7 @@ def hall_news(engine: "GameEngine", limit: int = 4) -> list[str]:
 
 
 def open_gate_registry(engine: "GameEngine") -> None:
-    import questionary
-
+    from ui import prompt as uip
     if not feature("boss_succession") or engine.gate_registry is None:
         renderer.print_system_message("The Gate Registry is closed.", style="dim_text")
         return
@@ -92,17 +91,17 @@ def open_gate_registry(engine: "GameEngine") -> None:
         choices = []
         for gate, label, ok in gate_lines(engine):
             if ok:
-                choices.append(questionary.Choice(label, value=gate.gate_id))
+                choices.append(uip.Choice(label, value=gate.gate_id))
             else:
-                choices.append(questionary.Choice(label, value=gate.gate_id,
+                choices.append(uip.Choice(label, value=gate.gate_id,
                                                   disabled=f"rated for level {gate.min_level}"))
-        choices.append(questionary.Choice("← Leave the registry", value="__leave__"))
-        pick = questionary.select("Which Gate?", choices=choices).ask()
+        choices.append(uip.Choice("← Leave the registry", value="__leave__"))
+        pick = uip.select("Which Gate?", choices=choices).ask()
         if pick in (None, "__leave__"):
             return
         gate = engine.gate_registry.get(pick)
         renderer.print_scene_text([gate.description])
-        go = questionary.select("Enter it?", choices=["Enter the Gate.", "Not yet."]).ask()
+        go = uip.select("Enter it?", choices=["Enter the Gate.", "Not yet."]).ask()
         if go == "Enter the Gate.":
             run_gate(engine, pick)
             return
@@ -197,7 +196,7 @@ def companion_candidates(engine: "GameEngine", gate: "GateDefinition") -> list:
     return sorted((b for b in mgr.all()
                    if b.current_zone_id == here and b.level >= gate.min_level - COMPANION_LEVEL_GAP
                    and b.hp > b.max_hp * 0.5 and b.archetype in ("fighter", "explorer", "gatherer")),
-                  key=lambda b: -b.level)[:4]
+                  key=lambda b: (b.waiting_until <= engine.state.player.turn_count, -b.level))[:4]
 
 
 def needed_companions(engine: "GameEngine", gate: "GateDefinition") -> int:
@@ -210,7 +209,7 @@ def needed_companions(engine: "GameEngine", gate: "GateDefinition") -> int:
 def _recruit(engine: "GameEngine", gate: "GateDefinition") -> list | None:
     """Pick companions. Returns the party ([] = alone), or None if a group
     Gate can't be entered (not enough adventurers here, or the player backed out)."""
-    import questionary
+    from ui import prompt as uip
     from core.bot_flow import bot_label
 
     need = needed_companions(engine, gate)
@@ -231,7 +230,7 @@ def _recruit(engine: "GameEngine", gate: "GateDefinition") -> list | None:
         else:
             prompt = "Take a companion?" if not party else "Anyone else?"
             tail = ["Set off." if party else "Go alone."]
-        pick = questionary.select(prompt, choices=labels + tail).ask()
+        pick = uip.select(prompt, choices=labels + tail).ask()
         if pick in labels:
             bot = cands.pop(labels.index(pick))
             party.append(bot)
@@ -264,6 +263,7 @@ def _pay_companions(engine: "GameEngine", gate: "GateDefinition", party: list, r
         else:
             bot.remember(f"Went into {gate.name} with {player.name}; it went badly (turn {player.turn_count})")
         bot.hp = max(1, bot.hp)
+        bot.waiting_until = 0            # the promised run happened
         _save_bot(engine, bot)
     if result == "cleared":
         renderer.print_npc_response(party[0].name, "Good run. We'll take our share: that's fair. Find us if you go again.")
@@ -273,8 +273,7 @@ def _run(engine: "GameEngine", gate: "GateDefinition", rng: random.Random) -> st
     from config import TIME_COSTS
     from core.lair_flow import enter_lair
     from core.time_flow import pass_time
-    import questionary
-
+    from ui import prompt as uip
     player = engine.state.player
     renderer.print_divider()
     renderer.print_system_message(f"ENTERING GATE · {gate.name.upper()} · RATED LEVEL {gate.min_level}",
@@ -290,7 +289,7 @@ def _run(engine: "GameEngine", gate: "GateDefinition", rng: random.Random) -> st
             return outcome
         breather(player)
         nxt = "Press on to the heart of the Gate." if idx == len(gate.rooms) - 1 else "Press on."
-        go = questionary.select(f"HP {player.current_hp}/{player.max_hp}.",
+        go = uip.select(f"HP {player.current_hp}/{player.max_hp}.",
                                 choices=[nxt, "Withdraw through the rift."]).ask()
         if go != nxt:
             renderer.print_scene_text(["You back out through the rift. It will still be here."])
