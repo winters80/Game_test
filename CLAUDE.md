@@ -23,7 +23,8 @@ The game is a Python terminal LitRPG. **Static content** (class definitions, ski
 | `scenes/data/*.json` | Scene definitions — all game narrative and choice trees |
 | `data/` | All static content definitions (JSON) |
 | `core/` | Engine (game loop), event bus, game state |
-| `ui/` | All Rich rendering — **only files under `ui/` import `rich`** |
+| `ui/` | All Rich rendering — **only files under `ui/` import `rich`** (and `textual`). `ui/prompt.py` is the only place that asks the player anything; `ui/tui_app.py` is the Textual front end |
+| `utils/` | `logging_setup.py` (rotating logs) and `session_log.py` (the diagnostics log) |
 | `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite facade), repos/* (per-table query modules) |
 | `saves/` | Runtime save files — gitignored except `.gitkeep` |
 
@@ -87,6 +88,31 @@ Add to `data/world/zones.json`.
 Add to `data/dungeons/*.json` (see "Boss Succession" below). Enemies go under `enemy_templates`; a lair lists its `occupants` and each occupant's `successors`. Put the lair in a scene with an option whose trigger is `boss_lair:LAIR_ID`. `test_characters.py` fails if an occupant is unreachable, has no successor, or uses an unknown enemy or item.
 
 ---
+
+## Asking the Player (`ui/prompt.py`) and the Front Ends
+
+Never call `questionary` directly (`tests/test_ui.py` fails if anything outside `ui/prompt.py` does). Use:
+
+```python
+from ui import prompt as uip
+pick = uip.select("Choose:", choices=["Fight", uip.Choice("Flee", value="flee", disabled="Rooted")]).ask()
+name = uip.text("Name:", default="Ash", instruction="(blank to cancel)").ask()
+ok   = uip.confirm("Sure?", default=True).ask()
+```
+
+The call shape is questionary's (build, then `.ask()`), and the terminal backend still calls `questionary.select(...)` at call time, so tests can keep patching it. `uip.set_backend(...)` swaps the front end; a backend may also provide renderer hooks (`clear`, `status`, `spinner`, `any_key_hook`, `hides_title`, `set_busy_text`) that `ui/renderer.py` checks via `_ui_hook`. Every answer is written to the diagnostics log.
+
+| Front end | Start | How |
+|---|---|---|
+| Classic terminal | `python main.py` | Rich + questionary |
+| Panels (Textual) | `python main.py --tui` | `ui/tui_app.GameApp`: the engine runs unchanged on a worker thread; `TuiBackend` turns prompts into widgets and blocks the engine on a queue; a Rich render hook on `renderer.console` sends everything printed to the story `RichLog` (the app's console carries `GAME_THEME`) |
+| Browser | `python main.py --web` | `textual-serve` runs `main.py --tui` per browser tab. Nothing may write to the real stdout in this mode (it is the protocol channel) |
+
+`core/input_handler.prompt_choice` passes locked scene options as disabled `Choice`s with their `lock_reason` (+ `hint_text`), so the numbers match and the player sees what unlocks them. Hotkey entries (`[K] Skills` …) become the Textual hotkey bar.
+
+## Diagnostics Log (`utils/session_log.py`)
+
+On by default (Admin → Diagnostics log; remembered in `logs/diagnostics_settings.json`). `logs/sessions/session_<time>.log` gets plain-text screen output (a render hook), `>> CHOICE` lines from `ui/prompt`, `## EVENT` lines (`session_log.event("combat_start", ...)` — the choice handler and combat already emit them), INFO+ log records from every thread, and `!! CRASH` tracebacks (`sys.excepthook` / `threading.excepthook`). Admin → Export diagnostics zips logs + the last 3 sessions + a setup summary into `logs/exports/`. Add `session_log.event(...)` at any new milestone worth seeing in a bug report.
 
 ## Trigger String Reference
 
@@ -244,6 +270,10 @@ One `.db` file per save slot. Always opened/closed alongside the `.json` file.
 
 **Never query the `.db` from outside `persistence/world_db.py`.** All access is through typed methods on `WorldDatabase`.
 
+**Threads:** the connection is opened with `check_same_thread=False` and a `_LockedConnection` factory (an `RLock` around execute / commit / rollback; `transaction()` holds it for the whole block), because the background guild simulation and world growth write from worker threads. Before v9 every background guild tick failed with SQLite's same-thread error.
+
+**Maintenance (schema v9):** pragmas on every open (WAL, `synchronous=NORMAL`, `busy_timeout=5000`); indexes in `_INDEXES_SQL` (created `IF NOT EXISTS` on every open, so old saves get them); `prune()` trims `turn_log` (5,000 rows) and shown `world_events` (1,000) on save; `integrity_ok()`, `backup_to(path)`, `stats()`, `insights()` (aggregates for `scripts/playtest_report.py`). `save_manager.save_game` writes the JSON atomically and keeps 3 rotating backups in `saves/backups/` (at most one per 5 minutes); `load_game` restores the newest good backup if the `.db` fails `quick_check`.
+
 ---
 
 ## AI Integration Contract
@@ -273,6 +303,14 @@ variable. The "No package outside ai/ bypasses AIService" check in
 (or `[]`) on failure, and call the wrapper. Purely cosmetic calls
 (e.g. follow-up option flavour) log failures at INFO. The console handler
 shows WARNING and above from the main thread, so a WARNING would print mid-scene. Records from background threads (world growth, quests, the director) only go to the log files.
+
+### Model roles and review (`ai/model_registry.py`, `core/model_admin.py`)
+
+Roles `primary` / `fast` / `fallback` resolve env var → `saves/settings/ai_models.json` (Admin → AI models) → `config.py`. `bootstrap.setup_ai` reads `active_models()`, falls back to the fallback model when the primary isn't installed, records `engine.ai_models`, and can be re-run live (it stops the old background generator). `data/ai/model_catalog.json` lists known models (roles, size, RAM, a relative quality score) and RAM `tiers`; `load_catalog(remote=True)` also fetches `config.MODEL_CATALOG_URL` (this repo's `main`) and caches it, so **updating recommendations is a JSON edit on GitHub**. `review()` suggests a better model per role for the machine's RAM (a recorded benchmark beats the catalog estimate) and offers unknown installed models for benchmarking; `benchmark()` scores JSON validity (45), option picking (35) and speed (20). `installed_models()` / `pull_model()` exist so `core/` never builds an `OllamaClient`.
+
+### Decisions (`ai/decision.py`)
+
+`AIService.decide(question, options, context) → Decision(index, confidence, source) | None` picks one of N declared options with a schema-constrained call (`{"choice": enum, "confidence": 0-100}`) instead of generating text. Providers (`config.DECISION_PROVIDER`): `ollama` (fast client, default), `openai_compatible` (`DECISION_ENDPOINT`, `DECISION_MODEL`, key in the `DECISION_API_KEY` env var; opt-in because it sends scene text out), `off`. Used by `[?]`: unless the text ends in `?`, `situation_query._match_existing` asks whether it means an on-screen choice; at ≥ `DECISION_MATCH_CONFIDENCE` the engine takes it (`engine._pending_option`, returned by `prompt_choice`). Use it wherever code would otherwise generate text and then parse a choice out of it.
 
 ### AI trigger policy (`systems/ai_trigger_policy.py`)
 
@@ -401,7 +439,7 @@ The player sees bots through:
 - `[W] Who's around`
 - one activity line at most per turn in their zone: level-ups and defeats at once, fights / crafts / trades at most every other turn, and arrivals batched every `BOT_ARRIVALS_EVERY_TURNS`
 
-World Log entries are only written for milestones (level-ups, defeats). Talking uses `AIService.generate_bot_line` (fast model, grounded in the bot's memory) with `bot_system.fallback_line` when offline. `BOT_AI_DECISIONS = True` restores the old "ask the primary model for every bot decision" path. It's slow and freezes bots without Ollama.
+World Log entries are only written for milestones (level-ups, defeats). Talking (`core/bot_flow.talk_to_bot`) is player-style chat: topics `greeting` / `catch_up` / `tips` / `build` / `guild` / `team_up` (`systems/bot_chat.TOPICS`). `bot_chat.summarize_memory` folds the raw memory log into first-person phrases ("been grinding Floor 1: four fights, mostly crystal spiders"), prioritising fights and Gates over trading; `reply()` gives the deterministic per-archetype fallback, varied by `ChatContext.seed`. Online, `AIService.generate_bot_reply` (fast model) gets the summary plus facts (Gates for the player's level, a changed lair, party yes/no) and lines that `looks_robotic()` (recite the log) are replaced by the fallback. `team_up` sets `BotAgent.waiting_until` (30 turns): the bot stays in town (`bot_brain.tick_bot` step 1b) and sorts first in `gate_flow.companion_candidates`; a Gate run clears it. Memory lines a new bot action writes should match a `bot_chat._PATTERNS` entry, or they're shown as-is. `BOT_AI_DECISIONS = True` restores the old "ask the primary model for every bot decision" path. It's slow and freezes bots without Ollama.
 
 ## Boss Succession (the dungeon remembers who you killed)
 
@@ -528,7 +566,7 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
 
-The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **8** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`, v8 added `generated_dungeons`). Migrations run automatically on open.
+The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **9** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`, v8 added `generated_dungeons`, v9 added indexes, pragmas and the shareable connection). Migrations run automatically on open.
 
 ## Skill System
 
