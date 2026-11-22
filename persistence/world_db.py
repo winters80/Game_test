@@ -26,17 +26,83 @@ Tables created by this module:
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
+import threading
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Any, Generator
 
 
-DB_SCHEMA_VERSION = 8
+DB_SCHEMA_VERSION = 9
+
+logger = logging.getLogger(__name__)
+
+# Run on every open. WAL + synchronous=NORMAL is crash-safe for a game save
+# and far cheaper than a full fsync per write; busy_timeout makes a second
+# writer wait instead of failing.
+_PRAGMAS_SQL = """
+PRAGMA journal_mode=WAL;
+PRAGMA synchronous=NORMAL;
+PRAGMA foreign_keys=ON;
+PRAGMA busy_timeout=5000;
+PRAGMA temp_store=MEMORY;
+"""
+
+# v9: indexes for the look-ups the game makes every turn. IF NOT EXISTS, so
+# they're (re)created on every open and older saves get them too.
+_INDEXES_SQL = """
+CREATE INDEX IF NOT EXISTS ix_npc_memory_npc      ON npc_memory(npc_id, id);
+CREATE INDEX IF NOT EXISTS ix_quest_active        ON quest_instances(is_active);
+CREATE INDEX IF NOT EXISTS ix_auction_status      ON auction_listings(status, expires_turn);
+CREATE INDEX IF NOT EXISTS ix_auction_bids        ON auction_bids(listing_id);
+CREATE INDEX IF NOT EXISTS ix_turn_log_turn       ON turn_log(turn_number);
+CREATE INDEX IF NOT EXISTS ix_ai_content_pending  ON ai_generated_content(integrated, content_type);
+CREATE INDEX IF NOT EXISTS ix_world_events_shown  ON world_events(shown, generated_turn);
+CREATE INDEX IF NOT EXISTS ix_world_events_zone   ON world_events(zone_id);
+CREATE INDEX IF NOT EXISTS ix_bot_zone            ON bot_instances(current_zone_id);
+CREATE INDEX IF NOT EXISTS ix_lair_history_lair   ON lair_history(lair_id, turn);
+CREATE INDEX IF NOT EXISTS ix_world_actions_state ON world_actions(status);
+CREATE INDEX IF NOT EXISTS ix_guild_members_ent   ON guild_members(entity_id);
+"""
+
+# Rows kept by prune(): logs that only ever grow.
+KEEP_TURN_LOG = 5000
+KEEP_SHOWN_EVENTS = 1000
+
+
+class _LockedConnection(sqlite3.Connection):
+    """A connection several threads can share (the background guild sim and
+    world growth write from worker threads). Python's sqlite3 is built
+    serialized here; the lock also keeps one thread's statement + commit
+    from interleaving with another's."""
+
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__(*args, **kwargs)
+        self.lock = threading.RLock()
+
+    def execute(self, *args, **kwargs):
+        with self.lock:
+            return super().execute(*args, **kwargs)
+
+    def executemany(self, *args, **kwargs):
+        with self.lock:
+            return super().executemany(*args, **kwargs)
+
+    def executescript(self, *args, **kwargs):
+        with self.lock:
+            return super().executescript(*args, **kwargs)
+
+    def commit(self):
+        with self.lock:
+            return super().commit()
+
+    def rollback(self):
+        with self.lock:
+            return super().rollback()
+
 
 _SCHEMA_SQL = """
-PRAGMA journal_mode=WAL;
-PRAGMA foreign_keys=ON;
 
 CREATE TABLE IF NOT EXISTS db_meta (
     key     TEXT PRIMARY KEY,
@@ -303,10 +369,14 @@ class WorldDatabase:
     # ── Connection lifecycle ───────────────────────────────────────────────────
 
     def open(self) -> None:
-        self._conn = sqlite3.connect(str(self.db_path))
+        # check_same_thread=False: worker threads (guild sim, world growth)
+        # use this connection too; _LockedConnection serialises them.
+        self._conn = sqlite3.connect(str(self.db_path), timeout=10.0,
+                                     check_same_thread=False, factory=_LockedConnection)
         self._conn.row_factory = sqlite3.Row
-        self._conn.executescript(_SCHEMA_SQL)
+        self._conn.executescript(_PRAGMAS_SQL + _SCHEMA_SQL)
         self._ensure_meta()
+        self._conn.executescript(_INDEXES_SQL)
 
     def close(self) -> None:
         if self._conn:
@@ -316,12 +386,78 @@ class WorldDatabase:
     @contextmanager
     def transaction(self) -> Generator[sqlite3.Connection, None, None]:
         assert self._conn, "Database not open"
+        with self._conn.lock:            # the whole block, not statement by statement
+            try:
+                yield self._conn
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+
+    # ── Maintenance ───────────────────────────────────────────────────────────
+
+    def integrity_ok(self) -> bool:
+        """``PRAGMA quick_check``: True if the file is sound."""
+        assert self._conn
         try:
-            yield self._conn
-            self._conn.commit()
+            row = self._conn.execute("PRAGMA quick_check").fetchone()
+            return bool(row) and row[0] == "ok"
+        except sqlite3.DatabaseError:
+            return False
+
+    def prune(self, keep_turn_log: int = KEEP_TURN_LOG, keep_events: int = KEEP_SHOWN_EVENTS) -> int:
+        """Trim logs that only grow (turn_log, shown world events). Returns rows removed."""
+        assert self._conn
+        with self.transaction() as c:
+            n = c.execute(
+                "DELETE FROM turn_log WHERE id <= (SELECT id FROM turn_log ORDER BY id DESC "
+                "LIMIT 1 OFFSET ?)", (keep_turn_log,)).rowcount
+            n += c.execute(
+                "DELETE FROM world_events WHERE shown = 1 AND id <= (SELECT id FROM world_events "
+                "WHERE shown = 1 ORDER BY id DESC LIMIT 1 OFFSET ?)", (keep_events,)).rowcount
+        return max(0, n)
+
+    def backup_to(self, dest: Path) -> bool:
+        """A consistent copy of the live database (SQLite's online backup)."""
+        assert self._conn
+        try:
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            target = sqlite3.connect(str(dest))
+            with self._conn.lock:
+                self._conn.backup(target)
+            target.close()
+            return True
         except Exception:
-            self._conn.rollback()
-            raise
+            logger.warning("World DB backup to %s failed", dest, exc_info=True)
+            return False
+
+    def insights(self) -> dict[str, Any]:
+        """Aggregates for playtest analysis (scripts/playtest_report.py)."""
+        assert self._conn
+        q = lambda sql: [dict(r) for r in self._conn.execute(sql).fetchall()]   # noqa: E731
+        return {
+            "deaths_by_zone": q("SELECT zone_id, COUNT(*) AS n, ROUND(AVG(level_at_death),1) AS avg_level "
+                                "FROM death_records GROUP BY zone_id ORDER BY n DESC"),
+            "deaths_by_cause": q("SELECT cause, COUNT(*) AS n FROM death_records GROUP BY cause "
+                                 "ORDER BY n DESC LIMIT 15"),
+            "lair_kills": q("SELECT lair_id, occupant_id, killer_kind, COUNT(*) AS n, "
+                            "ROUND(AVG(killer_level),1) AS avg_level FROM lair_history "
+                            "GROUP BY lair_id, occupant_id, killer_kind ORDER BY n DESC"),
+            "world_actions": q("SELECT status, COUNT(*) AS n, SUM(times) AS uses FROM world_actions "
+                               "GROUP BY status"),
+            "top_actions": q("SELECT action_key, times, status FROM world_actions ORDER BY times DESC LIMIT 10"),
+            "quests": q("SELECT COALESCE(outcome, CASE WHEN is_active THEN 'active' END) AS outcome, "
+                        "COUNT(*) AS n FROM quest_instances GROUP BY 1"),
+            "generated": q("SELECT kind, COUNT(*) AS n FROM generated_dungeons GROUP BY kind"),
+            "rows": self.stats(),
+        }
+
+    def stats(self) -> dict[str, int]:
+        """Row count per table (for the admin panel and diagnostics)."""
+        assert self._conn
+        names = [r[0] for r in self._conn.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'").fetchall()]
+        return {n: self._conn.execute(f'SELECT COUNT(*) FROM "{n}"').fetchone()[0] for n in sorted(names)}
 
     def _ensure_meta(self) -> None:
         assert self._conn
