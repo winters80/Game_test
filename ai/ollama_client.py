@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 import logging
 from typing import Any
 
@@ -21,6 +22,37 @@ class OllamaTimeoutError(Exception):
 
 class OllamaParseError(Exception):
     pass
+
+
+# Reasoning a "thinking" model can leave in its answer even with think=False
+# (Gemma 4 12B+ emits an empty thought block): <think>…</think>, <thought>…</thought>,
+# and Gemma's <|channel>thought … <channel|> markers. Only a *leading* block is removed.
+_REASONING_BLOCK = re.compile(
+    r"^\s*(?:<think>.*?</think>|<thought>.*?</thought>|<\|?channel\|?>\s*thought.*?<\|?channel\|?>)\s*",
+    re.DOTALL | re.IGNORECASE,
+)
+
+
+def strip_reasoning(text: str) -> str:
+    """Drop leading thinking blocks from a model's answer."""
+    prev = None
+    while prev != text:
+        prev = text
+        text = _REASONING_BLOCK.sub("", text, count=1)
+    return text
+
+
+def parse_json_answer(raw: str) -> dict:
+    """json.loads, after stripping reasoning; if anything still precedes or
+    follows the object, parse the outermost {...}."""
+    raw = strip_reasoning(raw or "")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        start, end = raw.find("{"), raw.rfind("}")
+        if start == -1 or end <= start:
+            raise
+        return json.loads(raw[start:end + 1])
 
 
 class OllamaClient:
@@ -178,7 +210,7 @@ class OllamaClient:
                     **self._think_kwargs(),
                 )
                 raw = response.get("response", "") if isinstance(response, dict) else response.response
-                data = json.loads(raw)
+                data = parse_json_answer(raw)
                 self._record_usage(response)
                 logger.debug(
                     "generate_json OK  keys=%s  prompt_tokens=%d  gen_tokens=%d",
@@ -234,7 +266,7 @@ class OllamaClient:
             raw = response.get("response", "") if isinstance(response, dict) else response.response
             self._record_usage(response)
             logger.debug("generate_text OK  chars=%d", len(raw))
-            return raw.strip()
+            return strip_reasoning(raw).strip()
         except Exception as e:
             logger.error("generate_text failed: %s", e)
             raise

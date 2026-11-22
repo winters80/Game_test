@@ -2624,22 +2624,23 @@ def main() -> None:
         _e, _said, _w = _boot(False, set())
         assert not _e.ai_service.is_available and "ollama serve" in _said and "start.ps1" in _said
         assert "Nothing is answering" in _e.ai_offline_reason  # kept for the admin panel
-        _e, _said, _w = _boot(True, {"gemma3:4b"})
-        assert not _e.ai_service.is_available and "ollama pull mistral-nemo" in _said
-        assert "ollama pull mistral-nemo" in _e.ai_offline_reason and "gemma3:4b" in _e.ai_offline_reason
-        _e, _said, _w = _boot(True, {"mistral-nemo:latest"})
-        assert _e.ai_service.is_available and "ollama pull gemma3:4b" in _said and _w == ["mistral-nemo"]
-        _e, _said, _w = _boot(True, {"mistral-nemo:latest", "gemma3:4b"})
-        assert _e.ai_service.is_available and _w == ["gemma3:4b", "mistral-nemo"]
+        from config import OLLAMA_FAST_MODEL as _F, OLLAMA_MODEL as _P
+        _e, _said, _w = _boot(True, {_F})
+        assert not _e.ai_service.is_available and f"ollama pull {_P}" in _said
+        assert f"ollama pull {_P}" in _e.ai_offline_reason and _F in _e.ai_offline_reason
+        _e, _said, _w = _boot(True, {_P})
+        assert _e.ai_service.is_available and f"ollama pull {_F}" in _said and _w == [_P]
+        _e, _said, _w = _boot(True, {_P, _F})
+        assert _e.ai_service.is_available and _w == sorted([_F, _P])
         assert _e.ai_offline_reason == ""
         # Pre-check: missing models are named, other installed models suggested,
         # and accepting the offer downloads them so the AI comes online.
         _e, _said, _w = _boot(True, {"qwen3:32b"})
         assert not _e.ai_service.is_available and _boot.pulled == []
-        assert "mistral-nemo, gemma3:4b" in _said and "qwen3:32b" in _said and "OLLAMA_MODEL" in _said
+        assert f"{_P}, {_F}" in _said and "qwen3:32b" in _said and "OLLAMA_MODEL" in _said
         _e, _said, _w = _boot(True, {"qwen3:32b"}, accept_download=True)
-        assert _boot.pulled == ["mistral-nemo", "gemma3:4b"] and _e.ai_service.is_available
-        assert "Downloaded mistral-nemo" in _said and _e.ai_offline_reason == ""
+        assert _boot.pulled == [_P, _F] and _e.ai_service.is_available
+        assert f"Downloaded {_P}" in _said and _e.ai_offline_reason == ""
         # Thinking models (qwen3, deepseek-r1) are asked not to think.
         _c = _oc.OllamaClient(model="qwen3:32b")
         with _mock.patch.object(_c, "_get_client", lambda timeout=None: type("C", (), {
@@ -2649,6 +2650,11 @@ def main() -> None:
         with _mock.patch.object(_c, "_get_client", lambda timeout=None: type("C", (), {
                 "show": lambda self, m: {"capabilities": ["completion"]}})()):
             assert _c._think_kwargs() == {}
+        # Gemma 4 leaves an empty thought block even with thinking off: stripped.
+        assert _oc.strip_reasoning("<think>\n</think>\nThe gate opens.") == "The gate opens."
+        assert _oc.strip_reasoning("<|channel>thought\n<channel|>Hi") == "Hi"
+        assert _oc.parse_json_answer('<think></think>{"a": 1}') == {"a": 1}
+        assert _oc.parse_json_answer('Here: {"a": 2} ok') == {"a": 2}
         ok("Startup says exactly what's wrong (server / model), falls back to primary, preloads models; "
            "the reason is kept for the admin panel; missing models can be downloaded at startup; "
            "thinking models are asked not to think")

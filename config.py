@@ -15,10 +15,10 @@ AI_ENABLED = True
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 # Both can be overridden with environment variables of the same name, e.g.
 # OLLAMA_MODEL=qwen3:32b, to use a model you already have without editing this file.
-OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL") or "mistral-nemo"   # Primary: 12B, good JSON + creative writing
-OLLAMA_FAST_MODEL = os.environ.get("OLLAMA_FAST_MODEL", "gemma3:4b")  # Small model for interactive calls. "" = use primary.
-# gemma3:1b is faster but mostly echoes the prompt back for [?] questions.
-OLLAMA_FALLBACK_MODEL = "mistral:7b-instruct"
+OLLAMA_MODEL = os.environ.get("OLLAMA_MODEL") or "gemma4:12b"     # Primary: 12B (~8 GB), 256K context, tools
+OLLAMA_FAST_MODEL = os.environ.get("OLLAMA_FAST_MODEL", "qwen3.5:4b")  # Small model for interactive calls. "" = use primary.
+# Tiny models (0.8b-2b) are faster but mostly echo the prompt back for [?] questions.
+OLLAMA_FALLBACK_MODEL = "qwen3.5:9b"  # used if the primary fails to load (~6.6 GB)
 OLLAMA_TIMEOUT_JSON = 60               # seconds for structured generation (primary model)
 OLLAMA_TIMEOUT_FAST = 15              # seconds for fast-model interactive calls
 OLLAMA_TIMEOUT_TEXT = 20               # seconds for narrative generation
