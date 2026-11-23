@@ -35,9 +35,10 @@ in `sounds_manifest.json`.
 
 ## What's here already
 
-51 sounds (OGG): 17 effects, six ambience loops, three System lines, three
-takes each for six people (`voice/<npc_id>/greeting_1..3`) and four bot types
-(`voice/bots/<archetype>/greeting_1..3`). No music yet.
+56 sounds (OGG): five music tracks (`explore`, `combat`, `ledger`, `boss`, `camp`;
+other moods borrow one, see `media.MUSIC_FALLBACK`), 17 effects, six ambience
+loops, three System lines, three takes each for six people
+(`voice/<npc_id>/greeting_1..3`) and four bot types (`voice/bots/<archetype>/greeting_1..3`).
 
 
 20 pictures (WebP), made from `art_and_audio_direction.md`. Some spots share a
