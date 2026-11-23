@@ -24,7 +24,21 @@ smallest for loops). Pictures appear in the panel and browser versions
 and needs `pygame-ce` (in requirements.txt). Turn each layer on or off, and set
 volumes, in the game under Admin → Art & audio.
 
+## Files you may not publish: `assets_local/`
+
+`assets_local/` has the same layout and is git-ignored; the game looks there
+first. Put Pixabay, Sonniss or other files there whose license allows them in
+a game but not as raw files in a public repository. Only CC0 / your own files go
+in `assets/`. `scripts/fetch_sounds.py` builds a pack from Kenney's CC0 packs plus
+any folders you add (`--extra FOLDER:LICENSE`) and records each file's license
+in `sounds_manifest.json`.
+
 ## What's here already
+
+51 sounds (OGG): 17 effects, six ambience loops, three System lines, three
+takes each for six people (`voice/<npc_id>/greeting_1..3`) and four bot types
+(`voice/bots/<archetype>/greeting_1..3`). No music yet.
+
 
 20 pictures (WebP), made from `art_and_audio_direction.md`. Some spots share a
 picture (`media.ART_ALIASES`): both Gate Halls show `scenes/gate`, and the rest of

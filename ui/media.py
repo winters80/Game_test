@@ -25,6 +25,8 @@ from __future__ import annotations
 
 import json
 import logging
+import random
+import re
 import threading
 import time
 from pathlib import Path
@@ -34,6 +36,8 @@ from config import BASE_DIR, SAVES_DIR
 logger = logging.getLogger(__name__)
 
 ASSETS_DIR = BASE_DIR / "assets"
+# Files you may not publish (Pixabay, Sonniss, ...): same layout, git-ignored, looked at first.
+LOCAL_ASSETS_DIR = BASE_DIR / "assets_local"
 IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
 AUDIO_EXT = (".ogg", ".mp3", ".wav")
 SETTINGS_FILE = SAVES_DIR / "settings" / "media.json"
@@ -132,18 +136,45 @@ def _find(folder: Path, keys, exts) -> Path | None:
     return None
 
 
+def asset_dirs() -> list[Path]:
+    """Where files are looked for: assets_local/ (yours, git-ignored) first, then assets/."""
+    return [LOCAL_ASSETS_DIR, ASSETS_DIR]
+
+
+def _find_any(sub: str, keys, exts) -> Path | None:
+    for key in keys:                          # the most specific key wins, from either folder
+        for base in asset_dirs():
+            hit = _find(base / sub, [key], exts)
+            if hit:
+                return hit
+    return None
+
+
 def find_image(kind: str, *keys: str) -> Path | None:
     """First existing image for ``keys`` (most specific first) under images/<kind>/."""
-    return _find(ASSETS_DIR / "images" / kind, keys, IMAGE_EXT)
+    return _find_any(f"images/{kind}", keys, IMAGE_EXT)
 
 
 def find_audio(kind: str, *keys: str) -> Path | None:
-    return _find(ASSETS_DIR / "audio" / kind, keys, AUDIO_EXT)
+    return _find_any(f"audio/{kind}", keys, AUDIO_EXT)
+
+
+def find_variant(kind: str, key: str) -> Path | None:
+    """``<key>`` or one of ``<key>_1``, ``<key>_2`` … at random (several takes of a line)."""
+    pat = re.compile(rf"^{re.escape(key)}(_\d+)?$")
+    for base in asset_dirs():
+        folder = base / "audio" / kind
+        if not folder.is_dir():
+            continue
+        hits = sorted(f for f in folder.iterdir() if f.suffix.lower() in AUDIO_EXT and pat.match(f.stem))
+        if hits:
+            return random.choice(hits)
+    return None
 
 
 def has_any_assets() -> bool:
-    return ASSETS_DIR.exists() and any(p.is_file() and p.suffix.lower() in IMAGE_EXT + AUDIO_EXT
-                                       for p in ASSETS_DIR.rglob("*"))
+    return any(d.exists() and any(p.is_file() and p.suffix.lower() in IMAGE_EXT + AUDIO_EXT
+                                  for p in d.rglob("*")) for d in asset_dirs())
 
 
 # ── Pictures: handed to the front end's ``art`` hook (Textual sidebar) ────────
@@ -320,7 +351,7 @@ def system_voice(key: str) -> bool:
 def npc_voice(npc_id: str, key: str = "greeting") -> bool:
     if not settings()["voice"]:
         return False
-    path = find_audio(f"voice/{npc_id}", key)
+    path = find_variant(f"voice/{npc_id}", key)
     return bool(path) and _player.play_voice(path)
 
 
@@ -328,7 +359,7 @@ def bot_voice(archetype: str) -> bool:
     """A bot's greeting, by archetype (a pragmatic veteran when there's no file for it)."""
     if not settings()["voice"]:
         return False
-    path = find_audio(f"voice/bots/{archetype}", "greeting") or find_audio("voice/bots/trader", "greeting")
+    path = find_variant(f"voice/bots/{archetype}", "greeting") or find_variant("voice/bots/trader", "greeting")
     return bool(path) and _player.play_voice(path)
 
 

@@ -67,16 +67,16 @@ def read_state(art_id: str) -> dict:
 
 
 def safe_asset(path: str) -> Path | None:
-    """The picture's real path, only if it's an image file under assets/."""
+    """The picture's real path, only if it's an image file under assets/ or assets_local/."""
     from ui import media
     if not path:
         return None
     try:
         p = Path(path).resolve()
-        base = Path(media.ASSETS_DIR).resolve()
+        bases = [Path(d).resolve() for d in media.asset_dirs()]
     except OSError:
         return None
-    if base not in p.parents or p.suffix.lower() not in media.IMAGE_EXT or not p.is_file():
+    if not any(b in p.parents for b in bases) or p.suffix.lower() not in media.IMAGE_EXT or not p.is_file():
         return None
     return p
 

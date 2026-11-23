@@ -153,9 +153,25 @@ The game is complete as text. To add pictures and sound, put files in `assets/`:
 2. Paste the prompts into an image model, a text-to-speech model and a sound or music model, and save each result under the name shown. Images can be `.png`, `.jpg` or `.webp`; sound `.ogg`, `.mp3` or `.wav`.
 3. Play. In the browser version (`--web`) pictures are shown full size in a panel to the right of the game. In the panel version in a terminal they show at the top of the sidebar: at full resolution in a terminal with Kitty or Sixel graphics (Kitty, WezTerm, iTerm2, Windows Terminal 1.22+), elsewhere drawn with coloured half-blocks, so they look soft. Sound plays on the computer running the game.
 
-What's already included: scene art for `village_start` (the outer market), `verath_city`, the Ledger House, the Undermarket, the Fracture Core and every Gate (`gate`, also shown at both Gate Halls); portraits of Torven, Mira, the Gray Wanderer, Auditor Castell, Silas and the Ledger wardens; the Crystal Golem, the Archmage, the Hollow Lich and the High Auditor; the rusty sword, health potion, stolen jewellery and warden's seal. The art direction is in `assets/art_and_audio_direction.md`.
+What's already included: **51 sounds** (effects, the six ambience loops of your places, the System's voice, three spoken takes for each of Torven, Mira, the Gray Wanderer, Castell, Silas and the wardens, and for four kinds of bot adventurer; no music yet), and scene art for `village_start` (the outer market), `verath_city`, the Ledger House, the Undermarket, the Fracture Core and every Gate (`gate`, also shown at both Gate Halls); portraits of Torven, Mira, the Gray Wanderer, Auditor Castell, Silas and the Ledger wardens; the Crystal Golem, the Archmage, the Hollow Lich and the High Auditor; the rusty sword, health potion, stolen jewellery and warden's seal. The art direction is in `assets/art_and_audio_direction.md`.
 
 **Sound prompts.** `assets/audio_prompts/` holds 32 specs (6 ambience loops, 10 effects, 5 music loops, 7 cast voices, 4 bot voice presets) as text files plus `manifest.json` / `manifest.csv` for batch tools. `ASSET_LIST.md` shows each one against the file name the game plays (tagged `[AMB-01]`, `[SFX-07]` …), so generate, save under that name, and it plays.
+
+**Free sound packs, automatically.** `scripts/fetch_sounds.py` builds a sound pack on your computer:
+
+```bash
+python scripts/fetch_sounds.py
+```
+
+It downloads Kenney's free CC0 (public domain) audio packs, picks a file for every effect, music track and ambience loop the game plays by the words in the file names, trims and converts them to `.ogg` (when `ffmpeg` is installed: `winget install ffmpeg` / `brew install ffmpeg`), and writes `system_breaker_sounds.zip` with a manifest and credits. Add folders of sounds you downloaded yourself, labelled with their license:
+
+```bash
+python scripts/fetch_sounds.py --extra "D:/Downloads/pixabay:pixabay" --extra "D:/Sonniss GDC:sonniss"
+```
+
+`--list` shows what it would pick without writing anything. Unzip the result into the game folder, or upload it to be integrated. Kenney covers the effects; music and most ambience need Pixabay or Sonniss files.
+
+**What you may publish.** Only CC0 files belong in `assets/`, which is in the public repo. Pixabay and Sonniss allow their sounds inside a game but not as raw files, so put those in **`assets_local/`** (same layout, git-ignored). The game looks there first.
 
 | Where | What it's for |
 |---|---|
@@ -164,7 +180,7 @@ What's already included: scene art for `village_start` (the outer market), `vera
 | `assets/images/bosses/<boss>.png` | the master of a lair or Gate |
 | `assets/images/items/<item>.png` | an item you inspect |
 | `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound (`ambience/gate` inside every Gate), effects such as level-ups, hits, spells, the wardens' whistle, `gate_enter`, `crystal_shatter`, `ledger_seal` (a fine paid, an unseen crime on file) and `potion` |
-| `assets/audio/voice/system/`, `voice/<npc>/greeting`, `voice/bots/<archetype>/greeting` | the System's lines ("Classification complete.", "The System has reported you to the Ledger."), NPC greetings (`ledger_warden` when the wardens stop you), and a bot's greeting by archetype (explorer, fighter, crafter, trader; gatherers fall back to the trader's) |
+| `assets/audio/voice/system/`, `voice/<npc>/greeting` (or several takes `greeting_1`, `greeting_2` … played at random), `voice/bots/<archetype>/greeting` | the System's lines ("Classification complete.", "The System has reported you to the Ledger."), NPC greetings (`ledger_warden` when the wardens stop you), and a bot's greeting by archetype (explorer, fighter, crafter, trader; gatherers fall back to the trader's) |
 
 Admin → **Art & audio** switches pictures, effects, music, ambience and voice on or off and sets each volume. Sound needs `pygame-ce` and pictures need `textual-image`; both are in `requirements.txt`, the launchers install them, and the game simply runs without them if they're missing. See `assets/README.md` for the details.
 

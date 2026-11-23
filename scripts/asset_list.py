@@ -73,10 +73,15 @@ def _first_sentences(text: str, n: int = 2) -> str:
 
 
 def _have(path: str) -> bool:
-    from ui.media import ASSETS_DIR, AUDIO_EXT, IMAGE_EXT
-    base = ASSETS_DIR / path
+    from ui.media import AUDIO_EXT, IMAGE_EXT, asset_dirs
     exts = IMAGE_EXT if path.startswith("images/") else AUDIO_EXT
-    return any(base.with_name(base.name + e).exists() for e in exts)
+    if any((d / path).with_name((d / path).name + e).exists() for d in asset_dirs() for e in exts):
+        return True
+    if path.startswith("audio/voice/"):                        # greeting_1, greeting_2 … count too
+        from ui.media import find_variant
+        kind, _, key = path[len("audio/"):].rpartition("/")
+        return find_variant(kind, key) is not None
+    return False
 
 
 def collect(engine) -> list[tuple[str, list[tuple[str, str, str]]]]:
