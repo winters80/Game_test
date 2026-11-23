@@ -559,6 +559,8 @@ class GameMenusMixin:
                 renderer.prompt_any_key()
 
             elif sub_answer == "Inspect":
+                from ui import media
+                media.on_item(item_id, item.name)
                 from ui.panels import RARITY_COLORS, _stat_bracket
                 color = RARITY_COLORS.get(item.rarity.value, "white")
                 renderer.console.print(f"\n  [{color}]{item.name}[/{color}]  [{color}]{item.rarity.value}[/{color}]")
@@ -863,6 +865,7 @@ class GameMenusMixin:
             choices = [
                 f"AI Token Usage  (AI: {ai_status})",
                 "AI models (review, benchmark, switch)",
+                "Art & audio (pictures, sound, music, voice)",
                 "World Growth log",
                 f"Diagnostics log: {'ON' if session_log.is_enabled() else 'OFF'}",
                 "Export diagnostics (zip for bug reports)",
@@ -927,6 +930,9 @@ class GameMenusMixin:
                     renderer.console.print(f"  BG tasks queued    : [dim_text]{bg_q}[/dim_text]")
                     renderer.console.print()
                 renderer.prompt_any_key()
+
+            elif action.startswith("Art & audio"):
+                self._media_menu()
 
             elif action.startswith("AI models"):
                 from core.model_admin import models_menu
@@ -1053,6 +1059,54 @@ class GameMenusMixin:
                 renderer.console.print(f"  Buffs     : {p.active_buffs}")
                 renderer.console.print()
                 renderer.prompt_any_key()
+
+    # ── Art & audio ───────────────────────────────────────────────────────────
+
+    def _media_menu(self) -> None:
+        """Turn pictures / sound / music / ambience / voice on or off, set
+        volumes, and (re)write assets/ASSET_LIST.md."""
+        from ui import media
+        while True:
+            s = media.settings()
+            onoff = lambda k: "ON" if s[k] else "OFF"   # noqa: E731
+            have = media.has_any_assets()
+            renderer.console.print(
+                f"\n  [dim_text]Assets folder: {media.ASSETS_DIR}"
+                f"{'' if have else '  (empty: run Write the asset list for prompts)'}[/dim_text]")
+            choices = [uip.Choice(f"Pictures: {onoff('images')}", "images"),
+                       uip.Choice(f"Sound effects: {onoff('sfx')}  (volume {s['volume_sfx']:.0%})", "sfx"),
+                       uip.Choice(f"Music: {onoff('music')}  (volume {s['volume_music']:.0%})", "music"),
+                       uip.Choice(f"Ambience: {onoff('ambience')}  (volume {s['volume_ambience']:.0%})", "ambience"),
+                       uip.Choice(f"Voice: {onoff('voice')}  (volume {s['volume_voice']:.0%})", "voice"),
+                       uip.Choice("Set a volume", "volume"),
+                       uip.Choice("Write the asset list (every file + a prompt for it)", "list"),
+                       uip.Choice("← Back", None)]
+            pick = uip.select("Art & audio:", choices=choices).ask()
+            if not pick:
+                return
+            if pick == "list":
+                from importlib import util as _u
+                from pathlib import Path as _P
+                script = _P(__file__).resolve().parent.parent / "scripts" / "asset_list.py"
+                spec = _u.spec_from_file_location("asset_list", script)
+                mod = _u.module_from_spec(spec)
+                spec.loader.exec_module(mod)
+                text = mod.build_markdown(self)
+                out = media.ASSETS_DIR / "ASSET_LIST.md"
+                out.parent.mkdir(exist_ok=True)
+                out.write_text(text, encoding="utf-8")
+                renderer.print_success(f"{text.splitlines()[2].strip('*')} Written to {out}")
+                renderer.prompt_any_key()
+            elif pick == "volume":
+                which = uip.select("Which volume?", choices=["sfx", "music", "ambience", "voice"]).ask()
+                if which:
+                    raw = uip.text(f"{which} volume, 0-100:", default=str(int(s[f'volume_{which}'] * 100))).ask()
+                    try:
+                        media.set_setting(f"volume_{which}", max(0, min(100, int(raw or 0))) / 100)
+                    except ValueError:
+                        pass
+            else:
+                media.set_setting(pick, not s[pick])
 
     # ── Feature flag toggle ───────────────────────────────────────────────────
 

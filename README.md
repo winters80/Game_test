@@ -18,6 +18,8 @@ SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System han
 
 ## What's new
 
+- **Art and audio, if you want them.** Drop pictures and sounds into `assets/` and the game uses them: scene art, portraits when you talk to someone, the boss when you enter a lair, item pictures, music by place and in fights, looping ambience, sound effects, and the System speaking. `assets/ASSET_LIST.md` lists every file the game can use (576 of them) with a ready-made prompt for each, written from the game's own text. Nothing is required: without files the game is exactly as before.
+
 - **The Ledger: the System's own law.** A new faction that is neither good nor evil, just fanatical about order. Steal, burgle, bribe or smuggle where someone can see you and you gain **heat** and a **bounty**; wardens stop you in town (pay, serve time, talk your way out, run or fight), and at high heat Ledger hunters track you anywhere. Anyone working to break the System is the Ledger's gravest criminal: the System itself reports you, and before the Break you must get past the Ledger's tribunal in the Fracture Core. Bots take sides too: outlaws pick pockets, Breaker sympathisers paste pamphlets, Ledger deputies haul them off to the cells, and you can serve warrants yourself.
 - **Play a thief:** lift purses in the market, palm rings, burgle a townhouse above Verath's market, sell to Silas the Fence in the Undermarket, run his smuggling jobs, and pay him to lose a page of your record.
 
@@ -143,6 +145,25 @@ Models that "think" before answering (Gemma 4, Qwen 3.5, deepseek-r1) are asked 
 | 24 GB | `qwen3.5:27b` (~17 GB) | `qwen3.5:4b` (default) |
 | 32 GB+ | `qwen3.5:27b` | `gemma4:e4b` (~6.6 GB, stronger answers) |
 
+### Art and audio (optional)
+
+The game is complete as text. To add pictures and sound, put files in `assets/`:
+
+1. Open **`assets/ASSET_LIST.md`**. It lists every picture, sound and voice line the game can use, with the file name to save it as and a prompt to generate it. Ticks show what you already have. Rebuild it any time with `python scripts/asset_list.py` (add `--missing` for just the gaps), or from Admin → Art & audio.
+2. Paste the prompts into an image model, a text-to-speech model and a sound or music model, and save each result under the name shown. Images can be `.png`, `.jpg` or `.webp`; sound `.ogg`, `.mp3` or `.wav`.
+3. Play. Pictures show in the art box at the top of the sidebar in the panel and browser versions (`--tui`, `--web`). Sound plays on the computer running the game.
+
+| Where | What it's for |
+|---|---|
+| `assets/images/scenes/<scene>.png` (or `<scene>.<spot>.png`) | the place you're in |
+| `assets/images/npcs/<npc>.png` | whoever you're talking to (and the Ledger's wardens and hunters) |
+| `assets/images/bosses/<boss>.png` | the master of a lair or Gate |
+| `assets/images/items/<item>.png` | an item you inspect |
+| `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound, effects such as level-ups, hits, spells and the wardens' whistle |
+| `assets/audio/voice/system/`, `voice/<npc>/greeting` | the System's lines ("Classification complete.", "Your actions have been reported to the Ledger.") and NPC greetings |
+
+Admin → **Art & audio** switches pictures, effects, music, ambience and voice on or off and sets each volume. Sound needs `pygame-ce` and pictures need `textual-image`; both are in `requirements.txt`, the launchers install them, and the game simply runs without them if they're missing. See `assets/README.md` for the details.
+
 ### If the AI shows as offline
 
 The game tells you what's wrong at startup:
@@ -200,6 +221,7 @@ Game_Test/
 ├── data/                   # All static content (classes, skills, items, NPCs, quests, dungeons/Gates, recipes)
 ├── ui/                     # Rendering (Rich), the prompt layer, and the Textual app (tui_app.py)
 ├── persistence/            # Save/load (JSON player data + SQLite world state)
+├── assets/                 # Optional pictures and sound (ASSET_LIST.md has a prompt for each file)
 ├── utils/                  # Logging setup and the diagnostics log
 └── saves/                  # Runtime save files, backups/ and settings/ (gitignored)
 ```
@@ -501,7 +523,7 @@ Prints `True` if Ollama is reachable and the model is pulled.
 # Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Every push runs ALL 11 test files via the pre-push hook
+# Every push runs ALL 12 test files via the pre-push hook
 python -X utf8 test_characters.py                  # 194 checks across 35 sections
 python -X utf8 test_quests.py                      # 780 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
@@ -513,6 +535,7 @@ python -X utf8 tests/test_ui.py                    #  29 checks (prompt layer, d
 python -X utf8 tests/test_models.py                #  43 checks (model roles, catalog review, decisions, bot goals, boss tactics)
 python -X utf8 tests/test_balance.py               #  13 checks (class milestones, Gate difficulty, content health, a quick balance sim)
 python -X utf8 tests/test_law.py                   #  33 checks (crimes, heat, wardens, bot crimes and arrests, the tribunal)
+python -X utf8 tests/test_media.py                 #  19 checks (asset lookup, art in the panels, sound that never breaks, the asset list)
 
 # Balance: can each build clear every Gate at its rated level? (real combat rules)
 python -X utf8 scripts/balance_sim.py 20 --class mage
@@ -534,11 +557,14 @@ python -X utf8 scripts/playtest_report.py --print   # writes logs/playtest_repor
 # Content that can't be reached or is never used (unreachable scenes, unoffered quests, orphan items)
 python -X utf8 scripts/content_health.py
 
+# Every picture, sound and voice line the game can use, with a prompt for each
+python -X utf8 scripts/asset_list.py            # writes assets/ASSET_LIST.md (--missing: only the gaps)
+
 # Start a feature branch
 git checkout -b feature/my-feature
 ```
 
-**1,231 checks across 11 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
+**1,250 checks across 12 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
 
 ### Logs and diagnostics
 

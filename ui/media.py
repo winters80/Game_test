@@ -1,0 +1,396 @@
+"""
+Art and audio: everything optional, found by file name under ``assets/``.
+
+Drop files in and they're used; leave them out and the game is silent and
+text-only, exactly as before. Missing libraries (pygame-ce for sound,
+textual-image for pictures) or a machine without a sound device are fine too.
+
+    assets/images/scenes/<scene_id>.<node_id>.png   (falls back to <scene_id>.png)
+    assets/images/npcs/<npc_id>.png
+    assets/images/bosses/<occupant_id>.png          (or the enemy template id)
+    assets/images/items/<item_id>.png
+    assets/audio/sfx/<name>.ogg                     (see SFX)
+    assets/audio/ambience/<scene_id>.ogg            (loops while you're there)
+    assets/audio/music/<mood>.ogg                   (explore, combat, boss, ledger, verath …)
+    assets/audio/voice/system/<key>.ogg             (the System's lines, see SYSTEM_LINES)
+    assets/audio/voice/<npc_id>/greeting.ogg        (played when you talk to them)
+
+Images: .png .jpg .jpeg .webp. Audio: .ogg .mp3 .wav. ``scripts/asset_list.py``
+writes assets/ASSET_LIST.md: every file the game can use, with a prompt.
+
+Pictures show in the panel and browser versions (the art box at the top of
+the sidebar); sound plays on the machine running the game.
+"""
+from __future__ import annotations
+
+import json
+import logging
+import threading
+import time
+from pathlib import Path
+
+from config import BASE_DIR, SAVES_DIR
+
+logger = logging.getLogger(__name__)
+
+ASSETS_DIR = BASE_DIR / "assets"
+IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
+AUDIO_EXT = (".ogg", ".mp3", ".wav")
+SETTINGS_FILE = SAVES_DIR / "settings" / "media.json"
+
+DEFAULTS = {"images": True, "sfx": True, "music": True, "ambience": True, "voice": True,
+            "volume_sfx": 0.8, "volume_music": 0.45, "volume_ambience": 0.5, "volume_voice": 1.0}
+
+# Sound effects the game plays, and when.
+SFX = {
+    "system_chime": "a System message or notice",
+    "level_up": "you level up",
+    "skill_acquired": "you learn a skill",
+    "class_assigned": "the System assigns your class",
+    "class_milestone": "a class milestone (every 4 levels)",
+    "item_found": "you find an item",
+    "hit": "a weapon hits",
+    "spell": "a spell is cast",
+    "enemy_hit": "an enemy hits you",
+    "victory": "you win a fight",
+    "defeat": "you fall",
+    "warden_whistle": "a crime is seen / the wardens stop you",
+    "coins": "gold changes hands (fines, sales)",
+    "door": "you enter a new place",
+    "rift_open": "a new Gate opens",
+}
+
+# Moods for music: which file plays where.
+MUSIC_FOR_SCENE = {"verath_city": "verath", "village_start": "explore", "camp_rest": "camp",
+                   "dungeon_floor1": "dungeon", "dungeon_floor2": "dungeon", "dungeon_floor3": "dungeon_deep",
+                   "prologue": "prologue", "character_creation": "prologue",
+                   "ending_rule": "ending", "ending_destroy": "ending"}
+MUSIC_FOR_NODE = {"ledger_house": "ledger", "undermarket": "undermarket", "core_chamber": "fracture_core"}
+
+# The System's voiced lines (record them with a TTS model; see ASSET_LIST.md).
+SYSTEM_LINES = {
+    "welcome": "Registration complete. Welcome to the System.",
+    "classification_complete": "Classification complete.",
+    "divergence_detected": "Divergence detected. Analysing.",
+    "level_up": "Level up.",
+    "skill_acquired": "New skill acquired.",
+    "class_milestone": "Class milestone reached.",
+    "reported_to_ledger": "Your actions have been reported to the Ledger.",
+    "new_rift": "A new Gate has opened.",
+    "life_lost": "A life has been spent. Restoring.",
+    "game_over": "All lives spent. Your record is closed.",
+}
+
+
+# ── Settings ─────────────────────────────────────────────────────────────────
+
+_settings: dict | None = None
+
+
+def settings() -> dict:
+    global _settings
+    if _settings is None:
+        try:
+            _settings = {**DEFAULTS, **json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))}
+        except Exception:
+            _settings = dict(DEFAULTS)
+    return _settings
+
+
+def set_setting(key: str, value) -> None:
+    s = settings()
+    s[key] = value
+    try:
+        SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
+        SETTINGS_FILE.write_text(json.dumps(s, indent=2), encoding="utf-8")
+    except Exception:
+        logger.info("Could not save media settings", exc_info=True)
+    if key.startswith("volume_") or key in ("music", "ambience"):
+        _player.apply_settings()
+
+
+# ── Finding files ────────────────────────────────────────────────────────────
+
+def _find(folder: Path, keys, exts) -> Path | None:
+    for key in keys:
+        if not key:
+            continue
+        for ext in exts:
+            p = folder / f"{key}{ext}"
+            if p.exists():
+                return p
+    return None
+
+
+def find_image(kind: str, *keys: str) -> Path | None:
+    """First existing image for ``keys`` (most specific first) under images/<kind>/."""
+    return _find(ASSETS_DIR / "images" / kind, keys, IMAGE_EXT)
+
+
+def find_audio(kind: str, *keys: str) -> Path | None:
+    return _find(ASSETS_DIR / "audio" / kind, keys, AUDIO_EXT)
+
+
+def has_any_assets() -> bool:
+    return ASSETS_DIR.exists() and any(p.is_file() and p.suffix.lower() in IMAGE_EXT + AUDIO_EXT
+                                       for p in ASSETS_DIR.rglob("*"))
+
+
+# ── Pictures: handed to the front end's ``art`` hook (Textual sidebar) ────────
+
+_current_art: tuple[str, str] = ("", "")
+
+
+def show_art(kind: str, *keys: str, caption: str = "") -> Path | None:
+    """Show the first matching image, if images are on and the front end can."""
+    global _current_art
+    if not settings()["images"]:
+        return None
+    path = find_image(kind, *keys)
+    if path is None:
+        return None
+    if _current_art == (str(path), caption):
+        return path
+    _current_art = (str(path), caption)
+    from ui.prompt import get_backend
+    hook = getattr(get_backend(), "art", None)
+    if hook:
+        try:
+            hook(path, caption)
+        except Exception:
+            logger.info("Art hook failed for %s", path, exc_info=True)
+    return path
+
+
+# ── Sound ────────────────────────────────────────────────────────────────────
+
+class AudioPlayer:
+    """pygame-ce mixer with channels for ambience, voice and effects, and
+    pygame's music stream for music. Never raises; silent when unavailable."""
+
+    def __init__(self) -> None:
+        self._ok: bool | None = None
+        self._lock = threading.Lock()
+        self._sounds: dict[str, object] = {}
+        self._last_sfx: dict[str, float] = {}
+        self._music = ""
+        self._ambience = ""
+        self._amb_ch = self._voice_ch = None
+
+    def _init(self) -> bool:
+        if self._ok is not None:
+            return self._ok
+        try:
+            import os
+            os.environ.setdefault("PYGAME_HIDE_SUPPORT_PROMPT", "1")
+            import pygame
+            pygame.mixer.init()
+            pygame.mixer.set_num_channels(16)
+            self._amb_ch = pygame.mixer.Channel(14)
+            self._voice_ch = pygame.mixer.Channel(15)
+            pygame.mixer.set_reserved(2)
+            self._pg = pygame
+            self._ok = True
+        except Exception as e:                      # no pygame, no sound device …
+            logger.info("Audio off: %s", e)
+            self._ok = False
+        return self._ok
+
+    def _sound(self, path: Path):
+        key = str(path)
+        if key not in self._sounds:
+            self._sounds[key] = self._pg.mixer.Sound(key)
+        return self._sounds[key]
+
+    def play_sfx(self, path: Path, name: str) -> bool:
+        now = time.monotonic()
+        if now - self._last_sfx.get(name, 0) < 0.25:          # no machine-gunning
+            return False
+        self._last_sfx[name] = now
+        with self._lock:
+            if not self._init():
+                return False
+            try:
+                snd = self._sound(path)
+                snd.set_volume(settings()["volume_sfx"])
+                snd.play()
+                return True
+            except Exception:
+                logger.info("Could not play %s", path, exc_info=True)
+                return False
+
+    def play_voice(self, path: Path) -> bool:
+        with self._lock:
+            if not self._init():
+                return False
+            try:
+                snd = self._sound(path)
+                snd.set_volume(settings()["volume_voice"])
+                self._voice_ch.play(snd)
+                return True
+            except Exception:
+                logger.info("Could not play %s", path, exc_info=True)
+                return False
+
+    def ambience(self, path: Path | None) -> None:
+        key = str(path or "")
+        with self._lock:
+            if key == self._ambience or not self._init():
+                return
+            self._ambience = key
+            try:
+                if path is None:
+                    self._amb_ch.fadeout(800)
+                    return
+                snd = self._sound(path)
+                snd.set_volume(settings()["volume_ambience"])
+                self._amb_ch.play(snd, loops=-1, fade_ms=800)
+            except Exception:
+                logger.info("Could not loop %s", path, exc_info=True)
+
+    def music(self, path: Path | None) -> None:
+        key = str(path or "")
+        with self._lock:
+            if key == self._music or not self._init():
+                return
+            self._music = key
+            try:
+                if path is None:
+                    self._pg.mixer.music.fadeout(1000)
+                    return
+                self._pg.mixer.music.load(key)
+                self._pg.mixer.music.set_volume(settings()["volume_music"])
+                self._pg.mixer.music.play(loops=-1, fade_ms=1000)
+            except Exception:
+                logger.info("Could not play music %s", path, exc_info=True)
+
+    def apply_settings(self) -> None:
+        if not self._ok:
+            return
+        s = settings()
+        try:
+            self._pg.mixer.music.set_volume(s["volume_music"] if s["music"] else 0)
+            if not s["ambience"]:
+                self.ambience(None)
+            if not s["music"]:
+                self.music(None)
+        except Exception:
+            pass
+
+    def stop_all(self) -> None:
+        if self._ok:
+            try:
+                self._pg.mixer.stop()
+                self._pg.mixer.music.stop()
+            except Exception:
+                pass
+        self._music = self._ambience = ""
+
+
+_player = AudioPlayer()
+
+
+def sfx(name: str) -> bool:
+    if not settings()["sfx"]:
+        return False
+    path = find_audio("sfx", name)
+    return bool(path) and _player.play_sfx(path, name)
+
+
+def system_voice(key: str) -> bool:
+    if not settings()["voice"]:
+        return False
+    path = find_audio("voice/system", key)
+    return bool(path) and _player.play_voice(path)
+
+
+def npc_voice(npc_id: str, key: str = "greeting") -> bool:
+    if not settings()["voice"]:
+        return False
+    path = find_audio(f"voice/{npc_id}", key)
+    return bool(path) and _player.play_voice(path)
+
+
+def music(mood: str | None) -> None:
+    if not settings()["music"]:
+        return
+    path = find_audio("music", mood) if mood else None
+    if mood and path is None:
+        path = find_audio("music", "explore")            # a sensible default track
+    _player.music(path)
+
+
+# ── Game moments ─────────────────────────────────────────────────────────────
+
+_in_combat = False
+_events_registered = False
+
+
+def on_scene(scene_id: str, node_id: str = "root", title: str = "") -> None:
+    """Entering / showing a scene node: its art, its ambience, its music."""
+    show_art("scenes", f"{scene_id}.{node_id}", scene_id, caption=title)
+    if settings()["ambience"]:
+        _player.ambience(find_audio("ambience", f"{scene_id}.{node_id}", scene_id))
+    if not _in_combat:
+        music(MUSIC_FOR_NODE.get(node_id) or MUSIC_FOR_SCENE.get(scene_id) or "explore")
+
+
+def on_npc(npc_id: str, name: str = "") -> None:
+    show_art("npcs", npc_id, caption=name)
+    npc_voice(npc_id, "greeting")
+
+
+def on_boss(occupant_id: str, enemy_ids: list[str] | None = None, title: str = "") -> None:
+    show_art("bosses", occupant_id, *(enemy_ids or []), caption=title)
+
+
+def on_item(item_id: str, name: str = "") -> None:
+    show_art("items", item_id, caption=name)
+
+
+def on_combat_start(boss: bool = False) -> None:
+    global _in_combat
+    _in_combat = True
+    music("boss" if boss and find_audio("music", "boss") else "combat")
+
+
+def on_combat_end(result: str) -> None:
+    global _in_combat
+    _in_combat = False
+    if result == "victory":
+        sfx("victory")
+    elif result == "defeat":
+        sfx("defeat")
+    global _current_art
+    _current_art = ("", "")                     # let the scene art come back
+
+
+def stop_all() -> None:
+    _player.stop_all()
+
+
+def register_event_sounds(bus) -> None:
+    """Sounds and System voice lines for game events (once; later calls do nothing)."""
+    global _events_registered
+    if _events_registered:
+        return
+    _events_registered = True
+
+    def on(name, sound=None, voice=None, when=None):
+        def handler(event):
+            if when is not None and not when(event.data or {}):
+                return
+            if sound:
+                sfx(sound)
+            if voice:
+                system_voice(voice)
+        bus.subscribe(name, handler)
+
+    on("LEVEL_UP", "level_up", "level_up")
+    on("SKILL_ACQUIRED", "skill_acquired", "skill_acquired")
+    on("CLASS_ASSIGNED", "class_assigned", "classification_complete")
+    on("ANOMALY_DETECTED", None, "divergence_detected")
+    on("CLASS_MILESTONE", "class_milestone", "class_milestone")
+    on("ITEM_FOUND", "item_found")
+    on("CRIME_COMMITTED", "warden_whistle", None, when=lambda d: d.get("witnessed"))
+    on("CRIME_COMMITTED", None, "reported_to_ledger", when=lambda d: d.get("kind") == "sedition")

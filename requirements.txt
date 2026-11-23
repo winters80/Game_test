@@ -4,3 +4,5 @@ rich>=13.0.0
 questionary>=2.0.0
 textual>=8.0.0         # panel interface: python main.py --tui
 textual-serve>=1.1.0   # the same in a browser: python main.py --web
+pygame-ce>=2.5        # optional: sound (assets/audio)
+textual-image>=0.8    # optional: pictures in the panel/browser versions (assets/images)

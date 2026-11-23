@@ -37,5 +37,5 @@ for hook in "$SRC"/*; do
 done
 
 echo ""
-echo "Hooks installed. The pre-push hook will now run all 11 test suites"
+echo "Hooks installed. The pre-push hook will now run all 12 test suites"
 echo "before every push, and abort on failure."

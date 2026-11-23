@@ -98,6 +98,8 @@ def new_game(engine: "GameEngine") -> None:
     engine.state = new_game_state(player, SAVES_DIR, slot_name)
     _attach_engine_handles(engine)
     engine.state.current_scene_id = "prologue"
+    from ui import media
+    media.system_voice("welcome")
     engine.state.current_node_id = "root"
 
     renderer.print_success(f"Welcome, {player.name}.")

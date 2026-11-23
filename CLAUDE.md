@@ -25,6 +25,7 @@ The game is a Python text RPG (terminal, panel and browser front ends). **Static
 | `core/` | Engine (game loop), event bus, game state |
 | `ui/` | All Rich rendering — **only files under `ui/` import `rich`** (and `textual`). `ui/prompt.py` is the only place that asks the player anything; `ui/tui_app.py` is the Textual front end |
 | `utils/` | `logging_setup.py` (rotating logs) and `session_log.py` (the diagnostics log) |
+| `assets/` | Optional pictures and sound, found by file name (`ui/media.py`). `ASSET_LIST.md` (from `scripts/asset_list.py`) lists every usable file with a prompt |
 | `persistence/` | save_manager.py (JSON + SQLite open/close), world_db.py (SQLite facade), repos/* (per-table query modules) |
 | `saves/` | Runtime save files — gitignored except `.gitkeep` |
 
@@ -109,6 +110,22 @@ The call shape is questionary's (build, then `.ask()`), and the terminal backend
 | Browser | `python main.py --web` | `textual-serve` runs `main.py --tui` per browser tab. Nothing may write to the real stdout in this mode (it is the protocol channel) |
 
 `core/input_handler.prompt_choice` passes locked scene options as disabled `Choice`s with their `lock_reason` (+ `hint_text`), so the numbers match and the player sees what unlocks them. Hotkey entries (`[K] Skills` …) become the Textual hotkey bar.
+
+## Art and Audio (`ui/media.py`, `assets/`)
+
+Everything optional and found by file name; a missing file, library (`pygame-ce`, `textual-image`) or sound device means silence / no picture, never an error. Settings in `saves/settings/media.json` (Admin → Art & audio).
+
+| Hook | Called from | Uses |
+|---|---|---|
+| `on_scene(scene, node, title)` | `ui/scene_renderer.render_scene` | `images/scenes/<scene>.<node>` → `<scene>`, `audio/ambience/…` (looped), music by `MUSIC_FOR_NODE` / `MUSIC_FOR_SCENE` (fallback `explore`) |
+| `on_npc(npc_id, name)` | `core/dialogue_handler._run_dialogue` | `images/npcs/<npc_id>`, `audio/voice/<npc_id>/greeting` |
+| `on_boss(occupant, enemies, title)` | `core/lair_flow.enter_lair` | `images/bosses/<occupant_id>` or an enemy template id |
+| `on_item(item_id, name)` | Items → Inspect | `images/items/<item_id>` |
+| `on_combat_start(boss)` / `on_combat_end(result)` | `core/combat_handler._run_combat` | music `combat` / `boss`, sfx `victory` / `defeat` |
+| `sfx(name)` | `renderer.print_combat_action` (`hit` / `spell`), enemy hits, rifts, the Ledger, `register_event_sounds` | `audio/sfx/<name>` (names in `media.SFX`), 0.25 s throttle per name |
+| `system_voice(key)` | events (level up, class, divergence, milestone, sedition), new game, lives | `audio/voice/system/<key>` (lines in `media.SYSTEM_LINES`) |
+
+Pictures go to the front end's `art(path, caption)` hook (ui/prompt backend): the Textual app shows them at the top of the sidebar (`#art`), with `HalfcellImage` under the web driver and `AutoImage` in a terminal; the classic terminal shows none. When you add a new place, NPC, boss, item, sound name or System line, `scripts/asset_list.py` picks it up; keep `media.SFX` / `SYSTEM_LINES` / the prompt tables in `scripts/asset_list.py` in step.
 
 ## Diagnostics Log (`utils/session_log.py`)
 

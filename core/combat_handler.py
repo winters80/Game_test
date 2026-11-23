@@ -100,6 +100,8 @@ class CombatHandlerMixin:
         scaled lair boss). Returns "victory", "fled", "defeat" or "none".
         ``self._last_killing_blow`` is "magic" or "physical" afterwards."""
         from utils import session_log as _slog
+        from ui import media as _media
+        _media.on_combat_start(boss=any(getattr(e, "abilities", None) for e in (enemies or [])))
         _slog.event("combat_start", encounter=encounter_id, surprise=surprise,
                     enemies=[getattr(e, "name", e) for e in (enemies or [])] or None)
         if enemies is None:
@@ -203,6 +205,7 @@ class CombatHandlerMixin:
                     if combat_system.try_flee(player, alive_enemies[0]):
                         renderer.print_scene_text(["You flee from combat!"])
                         renderer.prompt_any_key()
+                        _media.on_combat_end("fled")
                         _slog.event("combat_end", encounter=encounter_id, result="fled", hp=self.state.player.current_hp)
                         return "fled"
                     else:
@@ -335,6 +338,8 @@ class CombatHandlerMixin:
                 if enemy.is_alive and player.current_hp > 0:
                     res = fx.enemy_turn(enemy, player, player_statuses, self.skill_registry, enemies,
                                         chosen=self._tactic_for(tactics, enemy))
+                    if res.damage:
+                        _media.sfx("enemy_hit")
                     for text, style in res.lines:
                         renderer.console.print(f"  [{style}]{text}[/{style}]")
                     _print_triggers(res.fired)
@@ -369,6 +374,7 @@ class CombatHandlerMixin:
             # Wardens and arrests beat you down; they don't kill you.
             player.current_hp = 1
             renderer.print_system_message("YOU ARE BEATEN DOWN.", style="system_warning")
+            _media.on_combat_end("defeat")
             _slog.event("combat_end", encounter=encounter_id, result="defeat", hp=1)
             return "defeat"
         if player.current_hp <= 0:
@@ -386,10 +392,12 @@ class CombatHandlerMixin:
                 if not survived:
                     logger.warning("Player game-over: all lives spent. encounter=%s", encounter_id)
                     renderer.print_system_message("ALL LIVES SPENT. GAME OVER.", style="system_warning")
+                    _media.system_voice("game_over")
                     renderer.print_scene_text(["The System erases your record. You are gone."])
                     renderer.prompt_any_key()
                     self._running = False
                 else:
+                    _media.system_voice("life_lost")
                     renderer.print_scene_text([
                         f"A life burns away. {player.lives_remaining} life{'s' if player.lives_remaining != 1 else ''} remaining.",
                         "You wake at your last safe point, battered but breathing.",
@@ -399,6 +407,7 @@ class CombatHandlerMixin:
                 renderer.print_scene_text(["The System records your defeat."])
                 renderer.prompt_any_key()
                 self._running = False
+            _media.on_combat_end("defeat")
             _slog.event("combat_end", encounter=encounter_id, result="defeat", hp=self.state.player.current_hp)
             return "defeat"
 
@@ -442,6 +451,7 @@ class CombatHandlerMixin:
 
         bus.flush()
         renderer.prompt_any_key()
+        _media.on_combat_end("victory")
         _slog.event("combat_end", encounter=encounter_id, result="victory", hp=self.state.player.current_hp)
         return "victory"
 

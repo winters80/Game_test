@@ -25,11 +25,17 @@ foreach ($cand in @("python", "py", "python3")) {
 if (-not $py) { Warn "Python 3.11+ is required: https://www.python.org/downloads/"; exit 1 }
 
 # 1. Python dependencies
-& $py -c "import rich, questionary, pydantic, inspect, ollama; assert 'think' in inspect.signature(ollama.Client.generate).parameters" 2>$null
+& $py -c "import rich, questionary, pydantic, textual, inspect, ollama; assert 'think' in inspect.signature(ollama.Client.generate).parameters" 2>$null
 if ($LASTEXITCODE -ne 0) {
     Say "Installing Python dependencies..."
     & $py -m pip install -r requirements.txt
     if ($LASTEXITCODE -ne 0) { Warn "pip install failed."; exit 1 }
+}
+# Optional: pictures and sound (the game runs without them).
+& $py -c "import pygame, textual_image" 2>$null
+if ($LASTEXITCODE -ne 0) {
+    & $py -m pip install -q pygame-ce textual-image 2>$null | Out-Null
+    if ($LASTEXITCODE -ne 0) { Warn "Optional art/sound packages didn't install; the game runs without them." }
 }
 
 function Cfg($expr) { (& $py -c "import config; print($expr)").Trim() }

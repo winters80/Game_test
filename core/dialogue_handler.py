@@ -29,6 +29,8 @@ class DialogueHandlerMixin:
         if not npc:
             renderer.print_error(f"NPC not found: {template_id}")
             return
+        from ui import media
+        media.on_npc(npc.npc_id, npc.name)
 
         # Visibility check (appears_requires)
         if not npc_system.check_npc_visible(npc, self.state):

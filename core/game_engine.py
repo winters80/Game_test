@@ -99,6 +99,9 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
 
     def _setup_notifications(self) -> None:
         setup_notification_listeners(renderer.console, self.system_messages)
+        from core.event_bus import bus
+        from ui import media
+        media.register_event_sounds(bus)
 
     # ── Entry point ───────────────────────────────────────────────────────────
 

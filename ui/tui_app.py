@@ -142,6 +142,9 @@ class TuiBackend:
                 skills.append((sid, f"{sk.name} · {sk.skill_type.value.lower()}"))
         self.app.call_from_thread(self.app.set_sidebar, Group(*panels), bag, skills)
 
+    def art(self, path, caption=""):
+        self.app.call_from_thread(self.app.set_art, str(path), caption)
+
     def set_busy_text(self, message):
         self.app.call_from_thread(self.app.set_busy, message)
 
@@ -163,7 +166,12 @@ class GameApp(App):
     CSS = """
     Screen { layout: horizontal; background: #0b0d12; }
     #sidebar { width: 42; border-right: tall #2a3142; padding: 0 1; }
-    .side-title { color: #7fb2ff; text-style: bold; margin: 1 0 0 1; }
+    .side-title { color: #7fb2ff; text-style: bold; margin: 1 0 0 1; display: none; }
+    .side-title.on { display: block; }
+    #art { height: auto; display: none; margin: 0 0 1 0; }
+    #art.on { display: block; }
+    #art-image { width: 100%; height: 18; }
+    #art-caption { color: #a9c1e8; text-style: italic; padding: 0 1; }
     .side-list { height: auto; max-height: 14; border: none; background: transparent; }
     #main { width: 1fr; }
     #story { height: 1fr; border: round #2a3142; padding: 0 1; scrollbar-size: 1 1; }
@@ -197,6 +205,8 @@ class GameApp(App):
     # ── layout ──
     def compose(self) -> ComposeResult:
         with VerticalScroll(id="sidebar"):
+            with Vertical(id="art"):
+                yield Label("", id="art-caption")
             yield Static("", id="panels")
             yield Label("BAG · click to use / equip", id="bag-title", classes="side-title")
             yield OptionList(id="bag", classes="side-list")
@@ -267,6 +277,7 @@ class GameApp(App):
         for wid, rows in (("#bag", bag), ("#skills", skills)):
             if rows is None:
                 continue
+            self.query_one(f"{wid}-title", Label).set_class(True, "on")
             ol = self.query_one(wid, OptionList)
             ol.clear_options()
             ol.add_options([Option(label, id=f"{wid[1:]}:{ref}") for ref, label in rows])
@@ -281,6 +292,28 @@ class GameApp(App):
             self.notify("Finish the current choice first.", severity="warning", timeout=2)
             return
         self._answer(("__item__:" if kind == "bag" else "__skill__:") + ref)
+
+    def set_art(self, path: str, caption: str = "") -> None:
+        """Show a picture at the top of the sidebar (ui/media). In a browser,
+        half-cell rendering (coloured text) always works; in a terminal the
+        best protocol it supports (Kitty, Sixel, or half-cells)."""
+        import os
+        box = self.query_one("#art", Vertical)
+        try:
+            from textual_image import widget as tiw
+            cls = tiw.HalfcellImage if "web_driver" in os.environ.get("TEXTUAL_DRIVER", "") else tiw.AutoImage
+        except Exception:
+            cls = None                       # textual-image not installed: caption only
+        for old in box.query("#art-image"):
+            old.remove()
+        if cls is not None and path:
+            try:
+                box.mount(cls(path, id="art-image"), before=0)
+            except Exception:
+                logger.info("Could not show %s", path, exc_info=True)
+        self.query_one("#art-caption", Label).update(caption or "")
+        self.art_path = path
+        box.set_class(bool(path), "on")
 
     def set_busy(self, message: str) -> None:
         busy = self.query_one("#busy", Label)

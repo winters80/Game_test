@@ -37,6 +37,8 @@ def render_scene(engine: "GameEngine") -> None:
     if not scene:
         renderer.print_error(f"Scene not found: {engine.state.current_scene_id}")
         return
+    from ui import media
+    media.on_scene(engine.state.current_scene_id, engine.state.current_node_id, getattr(scene, "title", ""))
 
     if engine.state.current_scene_id not in _INTRO_SCENES:
         renderer.print_status_bar(engine.state.player, engine.item_registry)
