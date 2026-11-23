@@ -26,7 +26,7 @@
     "flavor_text": "The truth about the Fracture would end the world. That's why we buried it.",
     "ideology": "freedom",
     "zone_id": "verath_undermarket",
-    "rival_factions": ["iron_vanguard_faction", "verath_crown"],
+    "rival_factions": ["iron_vanguard_faction", "verath_crown", "the_ledger"],
     "allied_factions": [],
     "alignment_min": -100.0,
     "alignment_max": 50.0,
@@ -86,7 +86,7 @@
     "flavor_text": "They gave you a class and called it destiny. We call it a leash.",
     "ideology": "chaos",
     "zone_id": "dungeon_deep",
-    "rival_factions": ["iron_vanguard_faction", "verath_crown"],
+    "rival_factions": ["iron_vanguard_faction", "verath_crown", "the_ledger"],
     "allied_factions": ["shadow_network_faction"],
     "alignment_min": -100.0,
     "alignment_max": 30.0,
@@ -116,6 +116,26 @@
       {"rank_id": "initiate", "name": "Initiate of the Undying", "standing_required": 20, "perks": ["undying_revival_boost"]},
       {"rank_id": "deathless", "name": "Deathless", "standing_required": 60, "perks": ["life_token_discount"]},
       {"rank_id": "eternal", "name": "The Eternal", "standing_required": 90, "perks": ["rule_system_path_flag"]}
+    ]
+  },
+  {
+    "faction_id": "the_ledger",
+    "name": "The Ledger",
+    "description": "The System's own order. Its wardens keep the peace the System describes: every theft, bribe and brawl is entered in the Ledger, and every entry is settled. They do not care whether you are good or wicked, only whether the record balances. To the Ledger, anyone who would break or reset the System is not a rebel but the gravest criminal of all, and its Auditors will stand in the Fracture Core itself to stop them.",
+    "flavor_text": "The System keeps the record. We keep the peace it describes.",
+    "ideology": "order",
+    "zone_id": "verath_city",
+    "rival_factions": ["system_breakers", "shadow_network_faction"],
+    "allied_factions": [],
+    "alignment_min": -100.0,
+    "alignment_max": 100.0,
+    "ranks": [
+      {"rank_id": "outsider", "name": "Unrecorded", "standing_required": -999},
+      {"rank_id": "recorded", "name": "Recorded", "standing_required": 0},
+      {"rank_id": "deputy", "name": "Deputy of the Ledger", "standing_required": 20, "perks": ["ledger_writ"]},
+      {"rank_id": "warden", "name": "Warden", "standing_required": 45},
+      {"rank_id": "auditor", "name": "Auditor", "standing_required": 70},
+      {"rank_id": "high_auditor", "name": "High Auditor", "standing_required": 95}
     ]
   }
 ]

@@ -160,7 +160,8 @@ def play(seed: int, steps: int) -> dict:
                    lives=p.lives_remaining, cls=p.active_class or p.base_class or "unclassed",
                    items=sum(s.quantity for s in p.inventory), skills=len(p.skills),
                    gates=sorted(k[8:] for k in p.flags if k.startswith("cleared_")),
-                   quests=len(p.active_quest_ids), done=len(p.completed_quest_ids))
+                   quests=len(p.active_quest_ids), done=len(p.completed_quest_ids),
+                   heat=round(getattr(p, "heat", 0)), crimes=dict(getattr(p, "crimes", {})))
         try:
             save_manager.close_game(state)
         except Exception:
@@ -198,7 +199,8 @@ def main() -> int:
         print(f"run {r['seed']}: {r['prompts']} prompts · level {r.get('level')} {r.get('cls')} · "
               f"turn {r.get('turn')} · at {r.get('scene')} · lives {r.get('lives')} · "
               f"gold {r.get('gold', 0) // 100}g · {r.get('items')} items · {r.get('skills')} skills · "
-              f"quests {r.get('quests')} active / {r.get('done')} done · gates cleared {r.get('gates')}")
+              f"quests {r.get('quests')} active / {r.get('done')} done · gates cleared {r.get('gates')} · "
+              f"heat {r.get('heat')} crimes {r.get('crimes') or '-'}")
         if r.get("stuck") and r["stuck"][0] > max(25, r["prompts"] // 10):
             n, msg, titles = r["stuck"]
             print(f"   most repeated prompt ({n}×): {msg!r} {titles}")

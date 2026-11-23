@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-SYSTEM BREAKER — LitRPG Text Quest
+SYSTEM BREAKER — a text RPG
 Entry point.
 """
 from __future__ import annotations

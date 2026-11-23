@@ -1,0 +1,75 @@
+{
+  "_doc": "The Ledger's tribunal in the Fracture Core. Anyone on the System Breakers' path must get past it before the Break (dungeon_floor3.core_chamber). The Ledger always sends another Auditor. min_level 99: bots never challenge it.",
+  "enemy_templates": {
+    "ledger_high_auditor": {
+      "name": "High Auditor {name}", "max_hp": 120, "attack": 18, "defense": 7, "xp_reward": 260,
+      "gold_reward": 2500, "rank": "C", "status_on_hit": ["stun", 0.15],
+      "loot_table": [["auditor_ledger_page", 0.8], ["mana_potion_major", 0.4]],
+      "abilities": [{"name": "Final Entry", "kind": "heavy", "every": 4, "power": 2.0},
+                    {"name": "Writ of Binding", "kind": "status", "every": 3, "status": "stun"},
+                    {"name": "Call the Wardens", "kind": "summon", "every": 5, "summon": "ledger_core_warden"}],
+      "enrage_below": 0.3
+    },
+    "ledger_core_warden": {
+      "name": "Ledger Warden", "max_hp": 45, "attack": 12, "defense": 4, "xp_reward": 60,
+      "gold_reward": 300, "rank": "D", "loot_table": [["health_potion", 0.4]]
+    },
+    "ledger_auditor": {
+      "name": "Auditor {name}", "max_hp": 70, "attack": 15, "defense": 5, "xp_reward": 140,
+      "gold_reward": 1200, "rank": "C", "status_on_hit": ["stun", 0.1],
+      "loot_table": [["auditor_ledger_page", 0.5]],
+      "abilities": [{"name": "Recount", "kind": "heal", "every": 4, "power": 0.15},
+                    {"name": "Sealed Verdict", "kind": "heavy", "every": 4, "power": 1.8}]
+    }
+  },
+  "lairs": [
+    {
+      "lair_id": "ledger_tribunal",
+      "name": "the Ledger's tribunal",
+      "zone_id": "dungeon_floor3",
+      "min_level": 99,
+      "respawn_turns": 72,
+      "first_occupant": "high_auditor",
+      "clear_flags": ["ledger_tribunal_broken"],
+      "fallback": ["high_auditor"],
+      "occupants": {
+        "high_auditor": {
+          "title": "High Auditor {name}",
+          "name_pool": ["Maren Kesh", "Oriel Vass", "Tobin Grael"],
+          "enemies": ["ledger_high_auditor", "ledger_core_warden"],
+          "intro": "Between you and the core stands a long table, set up on the black stone as if this were a courtroom in Verath. High Auditor {name} sits behind it with an open ledger. Wardens stand at either end. 'Your name is in here,' {name} says, turning the book so you can see. 'Every step you took to get here is in here. The System is the only thing holding this world together, and you came to switch it off. Sit down. You are under arrest.'",
+          "study": {"stat": "WIS", "min": 12, "text": "{name} glances at the ledger before every command. Take the book first and the wardens hesitate."},
+          "victory": "High Auditor {name} slumps over the table. The ledger falls open on the stone; the wardens look at it, then at you, and back away.",
+          "aftermath": [
+            {"id": "left_ledger", "label": "Leave the ledger where it fell.",
+             "text": "You leave it. Somewhere in Verath, you are sure, a clerk is already copying it out again."},
+            {"id": "burned_ledger", "label": "Burn the ledger.",
+             "text": "The pages curl and blacken. For a moment the System flickers around you, as if it has lost its place.",
+             "triggers": ["alignment:-3", "update_faction:the_ledger:-15", "update_faction:system_breakers:10"]}
+          ],
+          "omen": "The table is still there. Someone has set out three fresh chairs behind it.",
+          "rumour": "The Ledger has sent a tribunal to the Fracture Core. Three Auditors now, not one.",
+          "successors": [
+            {"to": "auditor_tribunal", "weight": 1}
+          ]
+        },
+        "auditor_tribunal": {
+          "title": "the Tribunal of {name}",
+          "name_pool": ["Three Seals", "Quiet Hands"],
+          "enemies": ["ledger_auditor", "ledger_auditor", "ledger_core_warden"],
+          "intro": "Three Auditors sit behind the long table now, each with a ledger, each reading out a different line about you at the same time. The wardens close the door behind you.",
+          "victory": "The last Auditor puts down the pen. 'It will be recorded,' they say, and stop breathing.",
+          "aftermath": [
+            {"id": "left_ledgers", "label": "Walk past the table.",
+             "text": "You don't look at what they wrote."}
+          ],
+          "omen": "The chairs are empty. A single new ledger lies on the table, bound in iron.",
+          "rumour": "A new High Auditor walks to the Fracture Core. The Ledger does not forget.",
+          "successors": [
+            {"to": "high_auditor", "weight": 1}
+          ]
+        }
+      }
+    }
+  ]
+}

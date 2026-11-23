@@ -142,7 +142,7 @@ def build_quest_generation_prompt(
     (g_min, g_max), (x_min, x_max) = quest_reward_bounds(player.level, "standard")
     economy_hint = gear_price_hint(player.level)
 
-    return f"""Generate a quest for a LitRPG game set in the world of {world_name}.
+    return f"""Generate a quest for a fantasy RPG set in the world of {world_name}.
 Capital city: {capital}. The System appeared 3 years ago during the Fracture.
 
 NPC QUEST GIVER: {npc_name} ({npc_role}, id: {giver_npc_id})

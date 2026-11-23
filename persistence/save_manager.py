@@ -208,6 +208,7 @@ def _migrate(data: dict[str, Any], from_version: int, to_version: int) -> dict[s
         1: _v1_to_v2,
         2: _v2_to_v3,
         3: _v3_to_v4,
+        4: _v4_to_v5,
     }
 
     v = from_version
@@ -308,5 +309,19 @@ def _v3_to_v4(data: dict[str, Any]) -> dict[str, Any]:
     player = data.get("player", {})
     player.setdefault("skill_uses", {})
     player.setdefault("skill_levels", {})
+    data["player"] = player
+    return data
+
+
+def _v4_to_v5(data: dict[str, Any]) -> dict[str, Any]:
+    """
+    v4 → v5: Player gained heat, bounty and crimes (the Ledger's record,
+    systems/law_system). Everyone starts clean.
+    """
+    data["save_version"] = 5
+    player = data.get("player", {})
+    player.setdefault("heat", 0.0)
+    player.setdefault("bounty", 0)
+    player.setdefault("crimes", {})
     data["player"] = player
     return data

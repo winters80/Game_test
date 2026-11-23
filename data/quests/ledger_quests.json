@@ -1,0 +1,129 @@
+[
+ {
+  "template_id": "ledger_order_1",
+  "title": "Order on the Road",
+  "description": "Redcap bandits rob every caravan out of Verath. The Ledger wants the road balanced again.",
+  "giver_npc_id": "auditor_castell",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Clear Redcap Fortress.",
+    "objective_text": "Clear Redcap Fortress.",
+    "completion_condition": {
+     "has_flag": "cleared_redcap_fortress"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Auditor Castell.",
+    "objective_text": "Report back to Auditor Castell in the Ledger House.",
+    "completion_condition": {
+     "turn_in": "auditor_castell"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 60,
+  "reward_xp": 200,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_ledger_order_1"
+  ],
+  "chain_id": "ledger_order",
+  "chain_step": 1,
+  "chain_kind": "story",
+  "faction_rewards": {
+   "the_ledger": 15
+  }
+ },
+ {
+  "template_id": "ledger_order_2",
+  "title": "Serve a Warrant",
+  "description": "Outlaws walk Verath and the outer market with debts the Ledger means to collect. Castell wants proof you can bring one in.",
+  "giver_npc_id": "auditor_castell",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Arrest an outlaw for the Ledger (read the warrant board in the Ledger House, then find them and talk to them).",
+    "objective_text": "Arrest an outlaw for the Ledger (read the warrant board in the Ledger House, then find them and talk to them).",
+    "completion_condition": {
+     "has_flag": "ledger_warrant_served"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Auditor Castell.",
+    "objective_text": "Report back to Auditor Castell in the Ledger House.",
+    "completion_condition": {
+     "turn_in": "auditor_castell"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 90,
+  "reward_xp": 300,
+  "reward_items": [],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_ledger_order_2"
+  ],
+  "chain_id": "ledger_order",
+  "chain_step": 2,
+  "chain_kind": "story",
+  "faction_rewards": {
+   "the_ledger": 15
+  }
+ },
+ {
+  "template_id": "ledger_order_3",
+  "title": "The Courier in the Undermarket",
+  "description": "A System Breaker courier passes through the Undermarket. Castell wants the cell behind them.",
+  "giver_npc_id": "auditor_castell",
+  "stages": [
+   {
+    "stage_id": "objective",
+    "description": "Follow the Breaker courier in the Undermarket and expose their cell.",
+    "objective_text": "Follow the Breaker courier in the Undermarket and expose their cell.",
+    "completion_condition": {
+     "has_flag": "breaker_cell_exposed"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": "report"
+   },
+   {
+    "stage_id": "report",
+    "description": "Report to Auditor Castell.",
+    "objective_text": "Report back to Auditor Castell in the Ledger House.",
+    "completion_condition": {
+     "turn_in": "auditor_castell"
+    },
+    "on_advance_triggers": [],
+    "next_stage_id": null
+   }
+  ],
+  "reward_gold": 160,
+  "reward_xp": 500,
+  "reward_items": [
+   "warden_seal"
+  ],
+  "reward_skills": [],
+  "reward_flags": [
+   "done_ledger_order_3",
+   "ledger_sworn"
+  ],
+  "chain_id": "ledger_order",
+  "chain_step": 3,
+  "chain_kind": "story",
+  "faction_rewards": {
+   "the_ledger": 25,
+   "system_breakers": -20
+  }
+ }
+]

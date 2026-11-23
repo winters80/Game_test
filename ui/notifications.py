@@ -278,6 +278,17 @@ def setup_notification_listeners(console: "Console", system_messages: dict) -> N
         console.print(f"\n  [system_msg]✦ CLASS MILESTONE · {event.data.get('class_name', '')} · {bits}[/system_msg]")
 
     bus.subscribe("CLASS_MILESTONE", on_class_milestone)
+
+    def on_crime(event: Event) -> None:
+        from config import format_currency
+        d = event.data
+        if d.get("witnessed"):
+            console.print(f"\n  [system_warning]⚖ SEEN. The Ledger records {d.get('kind')}. "
+                          f"Heat {d.get('heat', 0):.0f} · bounty {format_currency(d.get('bounty', 0))}[/system_warning]")
+        else:
+            console.print(f"\n  [dim_text]⚖ Nobody saw. (heat {d.get('heat', 0):.0f})[/dim_text]")
+
+    bus.subscribe("CRIME_COMMITTED", on_crime)
     bus.subscribe("SKILL_ACQUIRED", on_skill_acquired)
     bus.subscribe("SKILL_LEVELED_UP", on_skill_leveled_up)
     bus.subscribe("CLASS_ASSIGNED", on_class_assigned)

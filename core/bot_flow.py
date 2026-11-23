@@ -26,11 +26,11 @@ logger = logging.getLogger(__name__)
 
 # Milestones worth a World Log ([L]) line. Everyday fights, trades and moves
 # would crowd out rumours and lore (the log shows the last 30 entries).
-_LOGGED_KINDS = {"defeat", "level", "party", "guild"}
+_LOGGED_KINDS = {"defeat", "level", "party", "guild", "arrest"}
 # Shown in the player's zone: milestones whenever they happen, routine
 # actions at most every other turn; rest / gather / potion never.
-_MILESTONE_KINDS = {"defeat", "level", "boss_kill"}
-_ROUTINE_KINDS = {"fight", "craft", "trade", "party", "auction", "guild"}
+_MILESTONE_KINDS = {"defeat", "level", "boss_kill", "arrest", "crime"}
+_ROUTINE_KINDS = {"fight", "craft", "trade", "party", "auction", "guild", "arrest_fail"}
 
 
 def setup_bots(engine: "GameEngine") -> None:
@@ -414,10 +414,21 @@ def talk_to_bot(engine: "GameEngine", bot_id: str) -> None:
             options.append(("guild", "In a guild?"))
         if bot.waiting_until <= engine.state.player.turn_count:
             options.append(("team_up", "Want to team up for a Gate?"))
-        plain = [label for _, label in options] + ["« Buy from them »", "« Sell to them »", "Farewell."]
+        from config import feature as _feature
+        arrest = []
+        if _feature("law_system"):
+            from core.law_flow import can_arrest
+            if can_arrest(engine, bot):
+                arrest = ["« Serve the Ledger's warrant »"]
+        plain = [label for _, label in options] + arrest + ["« Buy from them »", "« Sell to them »", "Farewell."]
         choice = uip.select("Say:", choices=plain).ask()
         if choice in (None, "Farewell."):
             renderer.print_npc_response(bot.name, _farewell(bot, ctx))
+            return
+        if choice.startswith("« Serve"):
+            from core.law_flow import arrest_bot
+            arrest_bot(engine, bot)
+            renderer.prompt_any_key()
             return
         if choice.startswith("« Buy"):
             _buy_from_bot_menu(engine, bot)
@@ -478,11 +489,12 @@ def _chat_context(engine: "GameEngine", bot):
                 break
     except Exception:
         lair_note = ""
-    refusal = party_refusal(bot, None, p.level)
+    refusal = party_refusal(bot, None, p.level, getattr(p, "heat", 0.0))
     return ChatContext(player_name=p.name, player_level=p.level, player_class=player_class,
                        bot_class=_class_name(engine, bot.class_id), guild_name=guild_name,
                        gate_picks=picks, lair_note=lair_note, can_party=not refusal,
-                       party_reason=refusal, seed=engine.state.turn_number)
+                       party_reason=refusal, seed=engine.state.turn_number,
+                       player_heat=getattr(p, "heat", 0.0))
 
 
 def _facts(ctx, topic: str) -> str:

@@ -179,7 +179,7 @@ class WorldContentGenerators:
         try:
             flags_str = ", ".join(flags[:8]) if flags else "none"
             system_prompt = (
-                "You are the living-world AI for Aethoria, a post-Fracture LitRPG. "
+                "You are the living-world AI for Aethoria, a post-Fracture fantasy world where the System assigns classes and ranks. "
                 "The System — an ancient machine intelligence that appeared during the Fracture — "
                 "governs class assignments, life tracking, and death records. "
                 "Your job is to generate one piece of world content that makes the world feel "

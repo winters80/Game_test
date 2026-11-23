@@ -58,6 +58,11 @@ class BotAgent(BaseModel):
     goal_zone: str = ""                 # where the AI planner sent it (bot_brain.goal_options)
     goal_reason: str = ""
     goal_until: int = 0                 # the goal lapses after this turn
+    # The Ledger (systems/law_system): who the bot sides with, its heat, and
+    # when it gets out of the cells. Allegiance is fixed per bot (from its id).
+    allegiance: str | None = None       # "ledger" | "breakers" | "outlaw" | ""
+    heat: float = 0.0
+    jailed_until: int = 0
 
     @field_validator("inventory", mode="before")
     @classmethod
@@ -76,6 +81,8 @@ class BotAgent(BaseModel):
         return v if v in ARCHETYPES else "explorer"
 
     def model_post_init(self, __context) -> None:
+        if self.allegiance is None:
+            self.allegiance = allegiance_for(self.bot_id, self.archetype, self.personality_seed)
         if self.max_hp <= 0:
             self.max_hp = bot_max_hp(self)
         if self.hp <= 0 or self.hp > self.max_hp:
@@ -102,6 +109,24 @@ class BotAgent(BaseModel):
         self.memory.append(line)
         if len(self.memory) > keep:
             self.memory = self.memory[-keep:]
+
+
+def allegiance_for(bot_id: str, archetype: str, personality: str = "") -> str:
+    """Deterministic per bot: about 1 in 5 serve the Ledger (more fighters),
+    1 in 8 secretly side with the System Breakers, 1 in 7 are petty outlaws
+    (salvagers, traders and the like more often); the rest keep out of it."""
+    import hashlib
+    h = int(hashlib.md5(f"allegiance:{bot_id}".encode()).hexdigest(), 16) % 1000 / 1000.0
+    p = (personality or "").lower()
+    ledger = 0.28 if archetype == "fighter" else 0.18
+    outlaw = 0.22 if any(w in p for w in ("salvag", "smuggl", "thief", "fence", "trader")) or archetype == "trader" else 0.12
+    if h < ledger:
+        return "ledger"
+    if h < ledger + 0.12:
+        return "breakers"
+    if h < ledger + 0.12 + outlaw:
+        return "outlaw"
+    return ""
 
 
 def bot_max_hp(bot: BotAgent) -> int:

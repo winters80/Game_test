@@ -95,6 +95,18 @@
           "leads_to_node": "blacksmith_entrance"
         },
         {
+          "option_id": "lift_purse",
+          "label": "Lift a purse in the market crowd.",
+          "expected": false,
+          "requires": {
+            "min_stats": {"AGI": 6},
+            "lock_reason": "Your hands aren't quick enough for this crowd."
+          },
+          "leads_to": "village_start",
+          "leads_to_node": "root",
+          "triggers": ["crime:theft", "give_gold:400", "alignment:-1"]
+        },
+        {
           "option_id": "visit_inn",
           "label": "Visit the Iron Compass Inn.",
           "expected": true,
@@ -202,7 +214,8 @@
             "spend_gold:2500",
             "flag:verath_access",
             "flag:bribed_gate_guard",
-            "alignment:-3"
+            "alignment:-3",
+            "crime:bribery"
           ]
         },
         {

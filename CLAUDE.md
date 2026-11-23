@@ -6,7 +6,7 @@
 
 ## Architecture in One Paragraph
 
-The game is a Python terminal LitRPG. **Static content** (class definitions, skill definitions, item templates, species, guilds, NPCs, quests, scene scripts) lives in **JSON files** under `data/` and is read-only at runtime. **Dynamic world state** (NPC memory, active quests, faction relationships, auction listings, death records) lives in a **SQLite database** at `saves/{slot}.db`. The player's own serializable data (stats, inventory, alignment, lives, etc.) lives in `saves/{slot}.json` as a Pydantic v2 model. The two databases are always opened and closed together by `persistence/save_manager.py`.
+The game is a Python text RPG (terminal, panel and browser front ends). **Static content** (class definitions, skill definitions, item templates, species, guilds, NPCs, quests, scene scripts) lives in **JSON files** under `data/` and is read-only at runtime. **Dynamic world state** (NPC memory, active quests, faction relationships, auction listings, death records) lives in a **SQLite database** at `saves/{slot}.db`. The player's own serializable data (stats, inventory, alignment, lives, etc.) lives in `saves/{slot}.json` as a Pydantic v2 model. The two databases are always opened and closed together by `persistence/save_manager.py`.
 
 **The one rule:** content is always JSON, state is always SQLite. Never mix them.
 
@@ -152,7 +152,10 @@ Trigger strings are the `"triggers": [...]` values on scene option nodes. They a
 | `update_faction:X:±N` | *(faction_system)* Shift standing with faction X by N |
 | `show_auction` / `buy_life_token` | *(auction_house)* Open the auction house / buy a life token directly |
 | `talk_bot:BOT_ID` | *(bot_system)* Talk to / trade with a bot adventurer. Added automatically for bots in the player's zone; no need to author it |
-| `world_action:VERB:SUBJECT` | AI-only tag describing what the player did (e.g. `world_action:mine:gold`). No direct effect; feeds world expansion |
+| `world_action:VERB:SUBJECT` | AI-only tag describing what the player did (e.g. `world_action:mine:gold`). No direct effect; feeds world expansion. Crime verbs (steal, pickpocket, burgle, smuggle, bribe…) also commit the crime |
+| `crime:KIND` | *(law_system)* Commit a crime (`theft`, `burglary`, `bribery`, `smuggling`, `assault`, `trespass`, `sedition`): `law_system.commit_crime` rolls witnesses; publishes `CRIME_COMMITTED`. Counts as a cost in content health's farmable-gold check |
+| `heat:±N` | *(law_system)* Change the player's heat (0-100), e.g. Silas's `heat:-30` |
+| `ledger_settle` / `ledger_surrender` / `ledger_warrants` | *(law_system)* The Ledger House counter, the cells, the warrant board (`core/law_flow`) |
 
 ### Adding a new trigger type
 1. If it only changes player/game state, add it to `process_triggers()` in `scenes/option_logic.py`
@@ -221,6 +224,7 @@ if feature("npc_system"):
 | `crafting_system` | Recipe + material crafting |
 | `stat_gating` | INT/Perception/LCK/WIS content gates via `systems/stat_gate.py` |
 | `boss_succession` | Boss lairs whose occupant changes after each kill, Gates, and new rifts (`data/dungeons/`). State needs `world_db` to persist |
+| `law_system` | The Ledger: crimes, heat, warden encounters, bot crimes and arrests |
 
 **Enable order matters.** `world_db` must be True before `npc_system`, `quest_system`, `faction_system`, or `auction_house`. `stat_gating` should be enabled before `npc_system`.
 
@@ -449,6 +453,22 @@ The player sees bots through:
 
 World Log entries are only written for milestones (level-ups, defeats). Talking (`core/bot_flow.talk_to_bot`) is player-style chat: topics `greeting` / `catch_up` / `tips` / `build` / `guild` / `team_up` (`systems/bot_chat.TOPICS`). `bot_chat.summarize_memory` folds the raw memory log into first-person phrases ("been grinding Floor 1: four fights, mostly crystal spiders"), prioritising fights and Gates over trading; `reply()` gives the deterministic per-archetype fallback, varied by `ChatContext.seed`. Online, `AIService.generate_bot_reply` (fast model) gets the summary plus facts (Gates for the player's level, a changed lair, party yes/no) and lines that `looks_robotic()` (recite the log) are replaced by the fallback. `team_up` sets `BotAgent.waiting_until` (30 turns): the bot stays in town (`bot_brain.tick_bot` step 1b) and sorts first in `gate_flow.companion_candidates`; a Gate run clears it. Memory lines a new bot action writes should match a `bot_chat._PATTERNS` entry, or they're shown as-is. `BOT_AI_DECISIONS = True` restores the old "ask the primary model for every bot decision" path. It's slow and freezes bots without Ollama.
 
+## The Ledger (`systems/law_system.py`, `core/law_flow.py`)
+
+The System's own law: faction `the_ledger` (neutral, alignment −100…100, rival to `system_breakers` and `shadow_network_faction`). It enforces everyday law on players and bots, and treats work towards the reset as sedition.
+
+| Piece | Where |
+|---|---|
+| Rules (pure): `CRIMES` (heat, bounty, standing), `WITNESS` per zone, `stealth()` (AGI+LCK, ≤ 45%), `commit_crime`, `cool_down`, `check_sedition`, `fine_for`, `jail_turns`, `enforcement_due` | `systems/law_system.py` |
+| Player record: `heat` (0-100, cools 1/hour), `bounty` (copper), `crimes` {kind: n} | `entities/player.py` (save v5) |
+| Encounters: `tick_law` (per turn, from `game_loop`), `confront` (pay / jail / talk / run / fight), `settle_at_counter`, `surrender`, `warrant_board`, `arrest_bot`. Warden fights use `_run_combat(..., nonlethal=True)`: losing means the cells, not a life | `core/law_flow.py` |
+| Content: the Ledger House (`verath_city.ledger_house`), Auditor Castell + Silas the Fence (`data/npcs/npcs_ledger.json`), chain `ledger_order_1..3` (`data/quests/ledger_quests.json`), thief options (`village_start.root.lift_purse`, `verath_city.market_district.palm_ring` / `burgle_townhouse`), the courier choice in the Undermarket, items in `data/items/law_items.json` | data |
+| The tribunal: lair `ledger_tribunal` (`data/dungeons/ledger_tribunal.json`, Floor 3, `min_level` 99 so bots never fight it). `dungeon_floor3.core_chamber.destroy_the_system` needs `ledger_tribunal_broken` | data |
+
+Rules: `PATROL_HEAT` 25 (wardens in `LAWFUL_ZONES`, chance heat/400 per turn), `HUNTER_HEAT` 60 (anywhere but Gates, heat/900), Ledger standing ≤ `WANTED_STANDING` (−40) counts +20 heat. `SEDITION_FLAGS` are reported once each (always witnessed). The Thief background (`criminal_record`) costs −10 standing once and +10% witness chance. Deputies (standing ≥ 40 in `fine_for`; rank `deputy` at 20) pay half fines.
+
+Bots: `BotAgent.allegiance` (`ledger` / `breakers` / `outlaw` / "", fixed per id by `bot_system.allegiance_for`), `heat`, `jailed_until`. In town, outlaws and Breakers commit crimes (`bot_brain._bot_crime`, `BOT_CRIME_CHANCE`); Ledger bots arrest the most wanted bot in their zone (`_bot_patrol`, `BOT_PATROL_CHANCE`, deputies get `LEDGER_BACKUP`); a jailed bot does nothing until released. Events `crime` / `arrest` (milestones), `arrest_fail` (routine). `bot_chat` mentions allegiance in the guild topic, and a Ledger bot refuses to team up with a player at heat ≥ 25.
+
 ## Boss Succession (the dungeon remembers who you killed)
 
 A boss room is a **lair** whose occupant changes after each kill. A wizard dies and comes back as a lich; priests come to cleanse the lich's den and are corrupted by it; a new scholar moves in and the cycle repeats.
@@ -581,6 +601,7 @@ Score ≥ 30 = AI generates a unique class. Threshold configurable in `config.DI
 | 2 | Added: gender, species_id, alignment, lives_remaining/used, guild_memberships, faction_standing_cache, active/completed_quest_ids, evolution_stage, background, perception_bonus, turn_count, last_safe_zone_id. Paired SQLite .db file introduced. |
 | 3 | Added: identified_items, background_narrative, active_buffs, skill_cooldowns, play_time_seconds |
 | 4 | Added: skill_uses, skill_levels (for the use-count-based skill leveling system from F8 of the skill audit) |
+| 5 | Added: heat, bounty, crimes (the Ledger's record) |
 
 The paired SQLite world DB has its own `DB_SCHEMA_VERSION` (`persistence/world_db.py`), currently **9** (v6 added `world_actions` + `world_expansions`, v7 added `dungeon_lairs` + `lair_history`, v8 added `generated_dungeons`, v9 added indexes, pragmas and the shareable connection). Migrations run automatically on open.
 
@@ -658,6 +679,7 @@ All UI notifications are driven by events. Subscribe in `ui/notifications.py`.
 | `SKILL_ACQUIRED` | `skill_id`, `skill_name`, `rarity` | `systems/class_system`, `scenes/scene_base` |
 | `CLASS_ASSIGNED` | `class_id`, `class_name`, `rarity` | `systems/class_system` |
 | `CLASS_MILESTONE` | `class_name`, `level`, `gained` | `systems/level_system.apply_class_milestone` |
+| `CRIME_COMMITTED` | `kind`, `witnessed`, `heat`, `bounty` | `scenes/option_logic` (`crime:`), `core/world_growth_flow` (crime verbs) |
 | `ANOMALY_DETECTED` | *(none)* | `systems/class_system` (before AI gen) |
 | `ITEM_FOUND` | `item_id`, `item_name`, `rarity` | `systems/inventory_system`, `scenes/scene_base` |
 | `WARNING` | *(none)* | various |

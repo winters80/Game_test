@@ -1,6 +1,6 @@
 # SYSTEM BREAKER
 
-> A LitRPG terminal RPG where the universe watches your choices.
+> A text RPG where the universe watches your choices.
 
 The System appeared during the Fracture and rewrote the rules of the world. Most survivors got a class, a rank, and an expected path. You didn't — or you refused yours. Now the System is paying attention, and **Ollama** is generating your story in real time.
 
@@ -8,7 +8,7 @@ The System appeared during the Fracture and rewrote the rules of the world. Most
 
 ## What Is This?
 
-SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The defining mechanic: when you take unexpected paths — unusual stat combinations, refusing the System's assignments, carrying rare catalyst items — an on-device AI (Ollama) generates a unique class, skills, and narrative tailored to your specific playthrough.
+SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System hands everyone a class, a rank and a path. The defining mechanic: when you take unexpected paths — unusual stat combinations, refusing the System's assignments, carrying rare catalyst items — an on-device AI (Ollama) generates a unique class, skills, and narrative tailored to your specific playthrough.
 
 **No two divergent paths produce the same class.**
 
@@ -17,6 +17,9 @@ SYSTEM BREAKER is a Python terminal RPG inspired by progression fantasy. The def
 **The dungeons are alive.** Kill a boss and something else moves in: a wizard rises as a lich, the priests who come to cleanse it are corrupted. Two dozen other adventurers level up, run Gates, form parties and kill bosses while you're away. New rifts keep opening, invented by the AI or echoing old ones deeper.
 
 ## What's new
+
+- **The Ledger: the System's own law.** A new faction that is neither good nor evil, just fanatical about order. Steal, burgle, bribe or smuggle where someone can see you and you gain **heat** and a **bounty**; wardens stop you in town (pay, serve time, talk your way out, run or fight), and at high heat Ledger hunters track you anywhere. Anyone working to break the System is the Ledger's gravest criminal: the System itself reports you, and before the Break you must get past the Ledger's tribunal in the Fracture Core. Bots take sides too: outlaws pick pockets, Breaker sympathisers paste pamphlets, Ledger deputies haul them off to the cells, and you can serve warrants yourself.
+- **Play a thief:** lift purses in the market, palm rings, burgle a townhouse above Verath's market, sell to Silas the Fence in the Undermarket, run his smuggling jobs, and pay him to lose a page of your record.
 
 - **Bosses think.** In a fight, bosses choose their next move from how it's going (heal when hurt, call help, drain you, inflict a status) while you choose yours, so there's no wait. Their big telegraphed blows keep their warning. Without the AI they use their fixed pattern.
 - **Bots make plans.** Every six in-game hours one quick AI decision sends each of the 24 adventurers somewhere that suits them: a fighter to a deeper floor, a trader to the market, a hurt explorer to camp. The rules still run them in between, and offline they plan by rules alone.
@@ -278,6 +281,19 @@ The world keeps growing:
 
 Everything new is saved with your world and comes back when you load.
 
+### The Ledger (law and order)
+
+The Ledger is the System's own order. Its wardens don't care whether you are good or evil, only whether the record balances, and its House stands in Verath.
+
+- **Crimes:** theft, burglary, bribery, smuggling, assault and trespass. In Verath (75%), the outer market (60%) and camp (30%) someone may see you; in the dungeon nobody does. High AGI and LCK help you go unseen (up to 45%). The Thief background starts with a record the Ledger knows.
+- **Heat and bounty:** a witnessed crime adds heat (cools about 1 per hour) and a bounty in gold (stays until paid), and lowers your Ledger standing. Your record shows in the status panel once you have one.
+- **Wardens:** above heat 25 a patrol may stop you in town; above 60 hunters come for you anywhere outside a Gate. Pay the fine, go quietly (hours in the cells, stolen goods confiscated, record settled), talk your way out (INT + LCK), run (AGI) or fight. Beating the wardens is an assault on the Ledger; losing to them means the cells, not a lost life.
+- **The Ledger House** (Verath): settle your record at the counter, turn yourself in, read the warrant board, and talk to Auditor Castell, who has work for anyone who keeps the record: **Order on the Road**, **Serve a Warrant** and **The Courier in the Undermarket**, ending with the Warden's Seal. Ledger deputies (standing 20+) pay half fines.
+- **Warrants:** with a clean record and standing 0+, find a wanted adventurer from the board and talk to them to arrest them for a share of their bounty.
+- **The thief's life:** lift a purse (outer market), palm a ring or burgle a townhouse (Verath market), sell stolen goods to **Silas the Fence** in the Undermarket, run his smuggling job, or pay him 20g to lose a page of your record. Typed `[?]` actions like steal, pickpocket, burgle or smuggle count as crimes too.
+- **Breaking the System:** the System reports every step towards the reset to the Ledger (sedition, always witnessed). In the Fracture Core the Ledger's tribunal (a High Auditor and wardens; the Ledger always sends another) stands between a Breaker and the break sequence.
+- **Other adventurers** take sides: some serve the Ledger and arrest wanted bots, some are petty outlaws, some quietly side with the Breakers. A Ledger deputy won't run a Gate with someone who has a warrant out.
+
 ### Other adventurers
 
 You're not alone. **24 other adventurers** (bots, like playerbots in an MMO) live in every save:
@@ -380,6 +396,7 @@ FEATURES = {
     "synergy_system":     True,   # Stat synergy bonuses in combat
     "bot_system":         True,   # AI-driven autonomous bot agents
     "boss_succession":    True,   # Boss lairs whose occupant changes after each kill
+    "law_system":         True,   # The Ledger: crimes, heat, wardens, bot arrests
 }
 ```
 
@@ -484,9 +501,9 @@ Prints `True` if Ollama is reachable and the model is pulled.
 # Quick syntax check (no game launch needed)
 python -c "import py_compile; py_compile.compile('main.py', doraise=True)"
 
-# Every push runs ALL 10 test files via the pre-push hook
+# Every push runs ALL 11 test files via the pre-push hook
 python -X utf8 test_characters.py                  # 194 checks across 35 sections
-python -X utf8 test_quests.py                      # 771 checks across 23 sections (every quest file)
+python -X utf8 test_quests.py                      # 780 checks across 23 sections (every quest file)
 python -X utf8 test_runs.py                        #  74 checks (older run suite)
 python -X utf8 tests/test_db_migrations.py         #  24 checks (SQLite schema v9, threads, backups, recovery)
 python -X utf8 tests/test_background_tick.py       #   9 checks (BG worker)
@@ -495,6 +512,7 @@ python -X utf8 tests/test_guild_founding.py        #  10 checks
 python -X utf8 tests/test_ui.py                    #  29 checks (prompt layer, diagnostics log, save summaries, the Textual app driven headlessly)
 python -X utf8 tests/test_models.py                #  43 checks (model roles, catalog review, decisions, bot goals, boss tactics)
 python -X utf8 tests/test_balance.py               #  13 checks (class milestones, Gate difficulty, content health, a quick balance sim)
+python -X utf8 tests/test_law.py                   #  33 checks (crimes, heat, wardens, bot crimes and arrests, the tribunal)
 
 # Balance: can each build clear every Gate at its rated level? (real combat rules)
 python -X utf8 scripts/balance_sim.py 20 --class mage
@@ -520,7 +538,7 @@ python -X utf8 scripts/content_health.py
 git checkout -b feature/my-feature
 ```
 
-**1,189 checks across 10 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
+**1,231 checks across 11 test files**, all run by the pre-push hook. They cover content integrity (every scene link, trigger, quest objective, Gate chain and item reference), the game systems end to end (combat, quests, Gates, boss succession, bots, world growth, saves and migrations), and the AI boundary with fake model output. `playthrough_smoke.py` is optional and needs Ollama.
 
 ### Logs and diagnostics
 

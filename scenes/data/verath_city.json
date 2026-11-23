@@ -158,6 +158,13 @@
           "leads_to_node": "gate_hall"
         },
         {
+          "option_id": "go_ledger_house",
+          "label": "Visit the Ledger House.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "ledger_house"
+        },
+        {
           "option_id": "leave_city",
           "label": "Leave Verath. Back to the road.",
           "expected": true,
@@ -399,6 +406,30 @@
           "leads_to_node": "auction_house"
         },
         {
+          "option_id": "palm_ring",
+          "label": "Palm a ring from a jeweller's stall.",
+          "expected": false,
+          "requires": {
+            "min_stats": {"AGI": 9},
+            "lock_reason": "The jeweller watches every hand. Yours aren't quick enough yet."
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "market_district",
+          "triggers": ["crime:theft", "give_item:stolen_jewellery", "alignment:-1"]
+        },
+        {
+          "option_id": "burgle_townhouse",
+          "label": "Slip into a merchant's townhouse above the market.",
+          "expected": false,
+          "requires": {
+            "min_stats": {"AGI": 11},
+            "lock_reason": "The shutters are locked and the drop is long. You'd need to be nimbler."
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "market_district",
+          "triggers": ["crime:burglary", "give_gold:2500", "give_item:stolen_jewellery", "alignment:-3"]
+        },
+        {
           "option_id": "leave_market",
           "label": "Return to the main thoroughfare.",
           "expected": true,
@@ -446,6 +477,50 @@
         }
       ]
     },
+    "ledger_house": {
+      "text": "The Ledger House stands apart from the guild halls: grey stone, no banners, a single iron seal over the door. Inside, clerks copy entries from glowing System panes into heavy books, and wardens in grey coats come and go without a word. A long counter takes fines. A board by the door lists warrants: names, crimes, and where they were last seen.",
+      "options": [
+        {
+          "option_id": "talk_castell",
+          "label": "Speak with Auditor Castell.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "ledger_house",
+          "triggers": ["talk_npc:auditor_castell"]
+        },
+        {
+          "option_id": "settle_record",
+          "label": "Settle your record at the counter.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "ledger_house",
+          "triggers": ["ledger_settle"]
+        },
+        {
+          "option_id": "turn_yourself_in",
+          "label": "Turn yourself in and serve your time.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "ledger_house",
+          "triggers": ["ledger_surrender"]
+        },
+        {
+          "option_id": "read_warrants",
+          "label": "Read the warrant board.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "ledger_house",
+          "triggers": ["ledger_warrants"]
+        },
+        {
+          "option_id": "leave_ledger_house",
+          "label": "Leave the Ledger House.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "root"
+        }
+      ]
+    },
     "undermarket": {
       "text": "Below Verath is a different city. Accessed through a grate behind a spice stall, the Undermarket is built into the old drainage system — low ceilings, torchlight, the smell of river water and something chemical. Stalls line the tunnel walls. Nobody's System tag is visible down here. That's the point.\n\nThe Iron Hammer Exchange occupies the largest space — three connected chambers doing business that the Crown officially doesn't know about.",
       "options": [
@@ -466,6 +541,38 @@
           "requires": {
             "flags": ["shadow_network_rumors"]
           }
+        },
+        {
+          "option_id": "talk_silas",
+          "label": "Find Silas the Fence.",
+          "expected": true,
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "triggers": ["talk_npc:silas_fence"]
+        },
+        {
+          "option_id": "follow_breaker_courier",
+          "label": "Follow the courier with the Breaker mark, and report the cell to the Ledger.",
+          "expected": true,
+          "requires": {
+            "flags": ["given_ledger_order_3"],
+            "flags_absent": ["breaker_cell_exposed", "warned_breaker_cell"]
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "triggers": ["flag:breaker_cell_exposed", "update_faction:system_breakers:-10", "update_faction:the_ledger:5"]
+        },
+        {
+          "option_id": "warn_breaker_courier",
+          "label": "Warn the courier that the Ledger is watching.",
+          "expected": false,
+          "requires": {
+            "flags": ["given_ledger_order_3"],
+            "flags_absent": ["breaker_cell_exposed", "warned_breaker_cell"]
+          },
+          "leads_to": "verath_city",
+          "leads_to_node": "undermarket",
+          "triggers": ["flag:warned_breaker_cell", "update_faction:system_breakers:15", "crime:sedition"]
         },
         {
           "option_id": "leave_undermarket",
