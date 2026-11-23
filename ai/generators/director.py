@@ -29,7 +29,7 @@ class DirectorGenerators:
         player_level   = task.get("player_level", 1)
 
         system_prompt = (
-            "You are the WORLD DIRECTOR for Aethoria, a post-Fracture LitRPG world. "
+            "You are the WORLD DIRECTOR for Aethoria, a post-Fracture fantasy world where the System assigns classes, levels and ranks. "
             "Analyze the world summary and decide what content to generate next. "
             "Return ONLY valid JSON, no explanation.\n"
             '{"priority": "story"|"world"|"mechanics", '

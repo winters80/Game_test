@@ -1,0 +1,111 @@
+[
+ {
+  "template_id": "auditor_castell",
+  "npc_id": "auditor_castell",
+  "name": "Auditor Imre Castell",
+  "role": "official",
+  "zone_id": "verath_city",
+  "description": "An Auditor of the Ledger: grey coat, iron seal, a ledger chained to one wrist. Castell speaks quietly and never repeats a question.",
+  "flavor_text": "The Ledger is not the Crown's and not the Guild's. It answers to the System, and so does Castell.",
+  "starting_disposition": 0.0,
+  "appears_requires": {},
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "Castell turns a page without looking up. 'Name.' A pause while the System answers for you. 'Ah. Yes. What do you want?'",
+    "options": [
+     {
+      "option_id": "ask_ledger",
+      "label": "What is the Ledger, exactly?",
+      "npc_response": "'The System describes how the world works now: classes, ranks, Gates, debts. We keep the world matching the description. A thief changes the record without permission. So does a bribe. We correct it.' Castell finally looks up. 'We are not good. We are not cruel. We are accurate.'",
+      "leads_to_node": "root",
+      "memory_event_type": "asked_about_ledger",
+      "memory_summary": "Player asked what the Ledger is."
+     },
+     {
+      "option_id": "ask_breakers",
+      "label": "And the people who want to break the System?",
+      "npc_response": "'The world fell apart three years ago and the System is the only reason it stopped falling. The Breakers want to switch it off and see what happens.' Castell closes the ledger. 'A thief steals a purse. A Breaker steals everyone's tomorrow. We will stop them anywhere, the Fracture Core included. Remember that, if you're tempted.'",
+      "leads_to_node": "root",
+      "memory_event_type": "asked_about_breakers",
+      "memory_summary": "Player asked about the Ledger's view of the System Breakers."
+     },
+     {
+      "option_id": "ask_record",
+      "label": "What does my record say?",
+      "npc_response": "Castell runs a finger down a column. 'Settle what you owe at the counter and the record is balanced. Stay balanced and nobody comes for you. Fall behind and the wardens will find you; fall far behind and the hunters will.'",
+      "leads_to_node": "root"
+     },
+     {
+      "option_id": "ask_join",
+      "label": "Could someone like me work for the Ledger?",
+      "requires": {"flags_absent": ["ledger_sworn"]},
+      "npc_response": "'The Ledger takes anyone who keeps the record, whatever they did before.' Castell slides a sheet across the desk. 'Do the work. Your standing will say the rest.'",
+      "disposition_change": 5.0,
+      "leads_to_node": "root",
+      "memory_event_type": "asked_to_join",
+      "memory_summary": "Player asked to work for the Ledger."
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": [
+   {"quest_template_id": "ledger_order_1", "trigger_flag": "", "already_given_flag": "given_ledger_order_1", "min_level": 2},
+   {"quest_template_id": "ledger_order_2", "trigger_flag": "done_ledger_order_1", "already_given_flag": "given_ledger_order_2", "min_level": 3},
+   {"quest_template_id": "ledger_order_3", "trigger_flag": "done_ledger_order_2", "already_given_flag": "given_ledger_order_3", "min_level": 4}
+  ]
+ },
+ {
+  "template_id": "silas_fence",
+  "npc_id": "silas_fence",
+  "name": "Silas the Fence",
+  "role": "merchant",
+  "zone_id": "verath_city",
+  "description": "A soft-voiced man behind a stall of nothing in particular. He buys what honest traders won't, and he knows a clerk at the Ledger who can lose a page for the right price.",
+  "flavor_text": "'I don't steal. I just make sure stolen things find a good home.'",
+  "starting_disposition": 0.0,
+  "appears_requires": {},
+  "trades": {
+   "buys": ["stolen_jewellery", "auditor_ledger_page"],
+   "buy_rate": 0.6
+  },
+  "dialogue_nodes": {
+   "root": {
+    "node_id": "root",
+    "npc_text": "Silas doesn't look up. 'Selling, buying, or hiding?'",
+    "options": [
+     {
+      "option_id": "scrub_record",
+      "label": "Make my record lighter. (20g)",
+      "requires": {"min_gold": 2000, "lock_reason": "'Twenty gold. I don't do credit, and the clerk certainly doesn't.'"},
+      "npc_response": "'A page goes missing. It happens all the time.' The coin vanishes. 'The wardens will be a little less interested in you. Not uninterested. Less.'",
+      "triggers": ["spend_gold:2000", "heat:-30"],
+      "leads_to_node": "root",
+      "memory_event_type": "record_scrubbed",
+      "memory_summary": "Silas had a page of the player's record lost."
+     },
+     {
+      "option_id": "smuggling_job",
+      "label": "Any work that pays? (smuggling)",
+      "npc_response": "'A crate goes out the north gate, nobody opens it, you get fifteen gold.' He taps the side of his nose. 'If a warden asks, you're carrying turnips.'",
+      "triggers": ["crime:smuggling", "give_gold:1500"],
+      "leads_to_node": "root",
+      "memory_event_type": "smuggled_crate",
+      "memory_summary": "Player smuggled a crate for Silas."
+     },
+     {
+      "option_id": "farewell",
+      "label": "Farewell.",
+      "leads_to_node": "__exit__"
+     }
+    ]
+   }
+  },
+  "quest_seeds": []
+ }
+]

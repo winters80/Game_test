@@ -94,7 +94,8 @@ class CombatHandlerMixin:
                 return opts[d.index]
         return None
 
-    def _run_combat(self, encounter_id: str, surprise: bool = False, enemies: list | None = None) -> str:
+    def _run_combat(self, encounter_id: str, surprise: bool = False, enemies: list | None = None,
+                    nonlethal: bool = False) -> str:
         """Fight ``encounter_id`` (or the given pre-spawned ``enemies``, e.g. a
         scaled lair boss). Returns "victory", "fled", "defeat" or "none".
         ``self._last_killing_blow`` is "magic" or "physical" afterwards."""
@@ -364,6 +365,12 @@ class CombatHandlerMixin:
             alive_enemies = [e for e in enemies if e.is_alive]
             _time.sleep(0.3)
 
+        if player.current_hp <= 0 and nonlethal:
+            # Wardens and arrests beat you down; they don't kill you.
+            player.current_hp = 1
+            renderer.print_system_message("YOU ARE BEATEN DOWN.", style="system_warning")
+            _slog.event("combat_end", encounter=encounter_id, result="defeat", hp=1)
+            return "defeat"
         if player.current_hp <= 0:
             renderer.print_system_message("YOU HAVE FALLEN.", style="system_warning")
             logger.warning(

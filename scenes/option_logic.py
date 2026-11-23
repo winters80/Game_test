@@ -293,6 +293,24 @@ def process_triggers(triggers: list[str], state: "GameState") -> None:
             pass  # engine-delegated: core/gate_flow
         elif trigger == "class_awakening":
             pass  # engine-delegated: core/class_awakening.awaken
+        elif trigger.startswith("crime:"):
+            # crime:KIND — the Ledger may have seen it (systems/law_system).
+            from systems import law_system
+            res = law_system.commit_crime(state, trigger[len("crime:"):])
+            if res is not None:
+                bus.publish(Event("CRIME_COMMITTED", {
+                    "kind": res.kind, "witnessed": res.witnessed,
+                    "heat": res.heat, "bounty": res.bounty}))
+        elif trigger.startswith("heat:"):
+            # heat:-N (a scrubbed record) / heat:+N
+            try:
+                delta = float(trigger[len("heat:"):])
+            except ValueError:
+                delta = 0.0
+            p = state.player
+            p.heat = max(0.0, min(100.0, p.heat + delta))
+        elif trigger in ("ledger_settle", "ledger_surrender", "ledger_warrants"):
+            pass  # engine-delegated: core/law_flow
         elif trigger.startswith("open_rift:"):
             # open_rift:N (level N) / open_rift:+N (player level + N); opened
             # by core/gate_growth.tick_gate_growth on the next turn.

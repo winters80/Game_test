@@ -322,7 +322,7 @@ def player_skill_attack(player: "Player", skill_id: str, enemy: Enemy, skill_reg
     player.current_mp -= skill.mp_cost
     value = calculate_skill_damage(skill, player)
     enemy.current_hp = max(0, enemy.current_hp - value)
-    # Skills grow stronger with use (LitRPG progression)
+    # Skills grow stronger with use (use-based progression)
     from systems.skill_system import record_skill_use
     record_skill_use(player, skill_id, skill_registry)
     return value, True

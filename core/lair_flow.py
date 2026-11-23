@@ -212,6 +212,11 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
             from core.event_bus import bus
             from scenes.option_logic import process_triggers
             process_triggers(chosen.triggers, engine.state)
+            # Faction shifts need the engine (rival penalties, rank checks).
+            for t in chosen.triggers:
+                if t.startswith("update_faction:") and getattr(engine, "faction_registry", None):
+                    _, fid, delta = t.split(":", 2)
+                    engine._update_faction_standing(fid, float(delta))
             bus.flush()
 
     kill = KillInfo(

@@ -119,6 +119,10 @@ class ChoiceHandlerMixin:
             elif trigger == "class_awakening":
                 from core.class_awakening import awaken
                 awaken(self)
+            elif trigger in ("ledger_settle", "ledger_surrender", "ledger_warrants") and feature("law_system"):
+                from core import law_flow
+                {"ledger_settle": law_flow.settle_at_counter, "ledger_surrender": law_flow.surrender,
+                 "ledger_warrants": law_flow.warrant_board}[trigger](self)
             elif trigger == "gate_registry" and feature("boss_succession"):
                 from core.gate_flow import open_gate_registry
                 open_gate_registry(self)

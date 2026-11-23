@@ -167,8 +167,8 @@ def check(engine) -> HealthReport:
         trig = opt.get("triggers") or []
         if not any(t.startswith("give_gold:") and not t.startswith("give_gold:-") for t in trig):
             return False
-        if any(t.startswith(("take_item:", "spend_gold:")) for t in trig):
-            return False
+        if any(t.startswith(("take_item:", "spend_gold:", "crime:")) for t in trig):
+            return False                     # something is given up (a crime costs heat + bounty)
         sets = {t[5:] for t in trig if t.startswith("flag:")}
         hidden_by = set((opt.get("requires") or {}).get("flags_absent") or [])
         return not (sets & hidden_by)

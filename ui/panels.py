@@ -79,6 +79,12 @@ def build_status_panel(player: "Player") -> Panel:
     table.add_row("Gold", f"[gold]{format_currency(player.gold)}[/gold]")
     from systems.world_clock import label as _clock
     table.add_row("Time", f"[dim_text]{_clock(player.turn_count)}[/dim_text]")
+    heat = getattr(player, "heat", 0.0)
+    if heat >= 1 or getattr(player, "bounty", 0):
+        from systems.law_system import heat_label
+        style = "system_warning" if heat >= 25 else "dim_text"
+        table.add_row("Record", f"[{style}]{heat_label(heat)} · heat {heat:.0f} · "
+                                f"bounty {format_currency(player.bounty)}[/{style}]")
 
     if feature("species_system") and player.species_id:
         species_str = player.species_id.replace("_", " ").title()

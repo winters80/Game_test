@@ -95,6 +95,7 @@ VALID_TRIGGER_PREFIXES = {
     "combat:", "alignment:", "talk_npc:", "start_quest:", "advance_quest:",
     "set_gender:", "set_species:", "set_background:",
     "rest_camp:", "give_food:", "boss_lair:", "gate_registry", "enter_gate:", "take_item:", "class_awakening",
+    "crime:", "heat:", "ledger_settle", "ledger_surrender", "ledger_warrants", "update_faction:",
 }
 
 def validate_triggers(scene_reg: SceneRegistry, item_reg: ItemRegistry,
@@ -2933,7 +2934,7 @@ def _test_boss_succession(item_reg) -> None:
             for _node in _json31.loads(_sp.read_text(encoding="utf-8")).get("nodes", {}).values():
                 for _opt in _node.get("options", []):
                     _lair_triggers += [t[10:] for t in _opt.get("triggers", []) if t.startswith("boss_lair:")]
-        assert set(_lair_triggers) == {"crystal_heart", "drowned_sanctum"}, _lair_triggers
+        assert set(_lair_triggers) == {"crystal_heart", "drowned_sanctum", "ledger_tribunal"}, _lair_triggers
         ok("Lair content is valid: enemies, loot, triggers, every occupant reachable, no dead ends")
 
         # 31b. The wizard chain from the design: wizard → lich (keeps the name) → priests.

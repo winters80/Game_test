@@ -8,7 +8,7 @@ SAVES_DIR = BASE_DIR / "saves"
 SAVES_DIR.mkdir(exist_ok=True)
 
 # ── Save versioning ────────────────────────────────────────────────────────────
-SAVE_VERSION = 4   # bump when Player schema or world_db schema changes
+SAVE_VERSION = 5   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
 AI_ENABLED = True
@@ -218,6 +218,7 @@ FEATURES: dict[str, bool] = {
     "synergy_system":     True,    # Stat synergy bonuses in combat
     "bot_system":         True,    # AI-driven autonomous bot agents
     "boss_succession":    True,    # Boss lairs whose occupant changes after each kill
+    "law_system":         True,    # The Ledger: crimes, heat, wardens, bot arrests
 }
 
 

@@ -101,7 +101,7 @@ class BotEvent:
     zone_id: str          # where it happened (the zone the bot is in afterwards for moves)
     text: str
     kind: str             # move | fight | defeat | level | trade | craft | gather | rest | potion | boss_kill
-    #                       | party | guild | auction
+    #                       | party | guild | auction | crime | arrest
     item_id: str = ""     # auction: what was listed
     price: int = 0        # auction: starting bid (copper)
     guild_id: str = ""    # guild: which guild was joined
@@ -603,12 +603,82 @@ def _gather(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEve
 
 # ── The brain ────────────────────────────────────────────────────────────────
 
+# ── The Ledger: bot crimes and arrests (systems/law_system) ────────────────
+
+BOT_CRIME_CHANCE = 0.06        # an outlaw / Breaker bot in town commits a crime, per act
+BOT_PATROL_CHANCE = 0.25       # a Ledger bot in town looks for someone to arrest, per act
+BOT_ARREST_HEAT = 25           # bots wanted by the Ledger
+LEDGER_BACKUP = 15             # the wardens who come along with a deputy
+
+
+def _bot_crime(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    from systems.law_system import WITNESS
+    zone = bot.current_zone_id
+    seen = rng.random() < WITNESS.get(zone, 0.0) * 0.8
+    if bot.allegiance == "breakers" and rng.random() < 0.5:
+        bot.activity = f"pasting Breaker pamphlets around {place(zone)}"
+        if seen:
+            bot.heat = min(100.0, bot.heat + 30)
+            bot.remember(f"Caught spreading Breaker pamphlets in {place(zone)} (turn {world.turn})")
+        return [BotEvent(bot.bot_id, zone, f"Someone has been pasting Breaker pamphlets around {place(zone)}.",
+                         "crime")] if seen else []
+    take = 40 * bot.level + rng.randint(10, 120)
+    bot.gold += take
+    bot.activity = f"lurking in the crowd at {place(zone)}"
+    if seen:
+        bot.heat = min(100.0, bot.heat + 15)
+        bot.remember(f"Got seen lifting a purse in {place(zone)} (turn {world.turn})")
+        return [BotEvent(bot.bot_id, zone, f"A warden's whistle: {bot.name} was seen lifting a purse.", "crime")]
+    bot.remember(f"Lifted a purse in {place(zone)} (turn {world.turn})")
+    return []
+
+
+def _bot_patrol(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
+    """A Ledger bot arrests a wanted bot here, if it can take them."""
+    from systems.law_system import LAWFUL_ZONES
+    zone = bot.current_zone_id
+    if zone not in LAWFUL_ZONES:
+        return []
+    wanted = [b for b in world.allies.get(zone, [])
+              if b is not bot and b.heat >= BOT_ARREST_HEAT and b.jailed_until <= world.turn]
+    if not wanted:
+        return []
+    target = max(wanted, key=lambda b: b.heat)
+    # Deputies don't arrest alone: a couple of wardens come along (+ LEDGER_BACKUP).
+    mine = bot_attack(bot) * 2 + bot.hp // 4 + LEDGER_BACKUP + rng.randint(0, 10)
+    theirs = bot_attack(target) * 2 + target.hp // 4 + rng.randint(0, 10)
+    bot.activity = f"walking a Ledger patrol through {place(zone)}"
+    if mine >= theirs:
+        hours = max(2, int(target.heat // 10))
+        target.jailed_until = world.turn + hours * 6
+        fine = min(target.gold, int(target.heat * 40))
+        target.gold -= fine
+        bot.gold += fine // 2
+        target.heat = 0.0
+        target.activity = "in the Ledger's cells"
+        target.remember(f"Dragged to the Ledger cells by {bot.name} (turn {world.turn})")
+        bot.remember(f"Arrested {target.name} for the Ledger (turn {world.turn})")
+        return [BotEvent(bot.bot_id, zone, f"{bot.name} hauled {target.name} off to the Ledger's cells.", "arrest")]
+    bot.hp = max(1, bot.hp - bot_attack(target))
+    target.heat = min(100.0, target.heat + 10)        # fighting a deputy is an assault
+    target.current_zone_id = "camp_rest"             # and they lie low out of town
+    target.activity = "lying low at the roadside camp"
+    bot.remember(f"Tried to arrest {target.name}; it went badly (turn {world.turn})")
+    target.remember(f"Fought off {bot.name}, a Ledger deputy (turn {world.turn})")
+    return [BotEvent(bot.bot_id, zone, f"{target.name} fought off {bot.name}'s arrest and fled town.", "arrest_fail")]
+
+
 def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEvent]:
     """Decide and perform one action for this bot."""
     zone = bot.current_zone_id
     if zone not in BOT_MAP:
         bot.current_zone_id = HOME
         return []
+    if world.turn < bot.jailed_until:                 # the Ledger's cells
+        bot.activity = "in the Ledger's cells"
+        return []
+    if bot.heat > 0:
+        bot.heat = max(0.0, bot.heat - 0.4)
     safe = zone in SAFE_ZONES
     bot.turn_last_acted = world.turn
 
@@ -626,6 +696,16 @@ def tick_bot(bot: "BotAgent", world: BotWorld, rng: random.Random) -> list[BotEv
     if safe and world.turn < bot.waiting_until:
         bot.activity = "waiting around for a Gate run"
         return []
+
+    # 1c. The Ledger: deputies patrol, outlaws and Breakers make trouble.
+    if safe and bot.allegiance == "ledger" and rng.random() < BOT_PATROL_CHANCE:
+        events = _bot_patrol(bot, world, rng)
+        if events:
+            return events
+    if safe and bot.allegiance in ("outlaw", "breakers") and rng.random() < BOT_CRIME_CHANCE:
+        events = _bot_crime(bot, world, rng)
+        if events or bot.activity.startswith(("lurking", "pasting")):
+            return events
 
     # 2. In the dungeon: fight, forage, or head home.
     if not safe:

@@ -1445,7 +1445,7 @@ def main() -> None:
 
         # 21h. SAVE_VERSION bumped + _v3_to_v4 migrator runs sequentially
         from config import SAVE_VERSION
-        assert SAVE_VERSION == 4
+        assert SAVE_VERSION == 5
         from persistence.save_manager import _migrate
         # v1 → all the way to v4 in one chain
         v1 = {"save_version": 1, "player": {"name": "x", "base_class": "warrior",
@@ -1454,6 +1454,9 @@ def main() -> None:
         out = _migrate(v1.copy(), from_version=1, to_version=4)
         assert out["save_version"] == 4
         assert "skill_uses" in out["player"]
+        # v4 → v5: the Ledger's record (heat, bounty, crimes) starts clean
+        out5 = _migrate(dict(out), from_version=4, to_version=5)
+        assert out5["save_version"] == 5 and out5["player"]["heat"] == 0.0 and out5["player"]["bounty"] == 0
         assert "skill_levels" in out["player"]
         ok("v1 → v4 chained migration adds every required field along the way")
     except Exception as e:

@@ -121,7 +121,7 @@ class Player(BaseModel):
     turn_count: int = 0
     active_buffs: list[dict] = Field(default_factory=list)
     skill_cooldowns: dict[str, int] = Field(default_factory=dict)
-    # Use-count + level for skills that grow with use (LitRPG progression).
+    # Use-count + level for skills that grow with use (use-based progression).
     # skill_uses tracks raw count; skill_levels is the derived current level
     # (capped at Skill.max_level). Both default to 0/1 on first use.
     skill_uses: dict[str, int] = Field(default_factory=dict)
@@ -129,6 +129,11 @@ class Player(BaseModel):
     created_at: datetime = Field(default_factory=datetime.now)
     play_time_seconds: int = 0
     last_safe_zone_id: str = "village_start"
+    # The Ledger's record (systems/law_system): heat cools with time, the
+    # bounty (copper) stays until paid; crimes counts witnessed crimes by kind.
+    heat: float = 0.0
+    bounty: int = 0
+    crimes: dict[str, int] = Field(default_factory=dict)
 
     # ── Derived properties ────────────────────────────────────────────────────
 

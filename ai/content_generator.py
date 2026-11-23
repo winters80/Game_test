@@ -370,7 +370,7 @@ class ContentGenerator:
             '[\"Press the advantage.\", \"Step back and assess.\", \"Call out to the others.\"]'
         )
         system_prompt = (
-            "You write concise player action options for a fantasy LitRPG text game set in Aethoria. "
+            "You write concise player action options for a fantasy text RPG set in Aethoria. "
             "Return ONLY a valid JSON array of 2-3 short option strings. No explanation."
         )
         try:

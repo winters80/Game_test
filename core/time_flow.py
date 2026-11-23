@@ -39,6 +39,9 @@ def pass_time(engine: "GameEngine", turns: int) -> dict:
             logger.warning("World tick failed while passing time", exc_info=True)
         if state.player.active_buffs:
             tick_buffs(state.player)
+        if feature("law_system"):
+            from systems.law_system import cool_down
+            cool_down(state.player, 1)
         if feature("quest_system") and engine.quest_registry:
             from systems import quest_system
             quest_system.tick_quests(state, engine.quest_registry)

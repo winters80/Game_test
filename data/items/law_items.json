@@ -1,0 +1,37 @@
+[
+ {
+  "item_id": "stolen_jewellery",
+  "name": "Stolen Jewellery",
+  "rarity": "UNCOMMON",
+  "item_type": "MATERIAL",
+  "description": "Rings and a brooch with the owner's System tag scratched off. Honest traders won't touch it; the fence in the Undermarket will.",
+  "flavor_text": "The scratches are the giveaway.",
+  "value_gold": 30,
+  "weight": 0.2
+ },
+ {
+  "item_id": "warden_seal",
+  "name": "Warden's Seal",
+  "rarity": "RARE",
+  "item_type": "ACCESSORY",
+  "description": "An iron seal stamped with the Ledger's mark, given to those who keep the record. Doors open for it; outlaws step aside.",
+  "flavor_text": "Every entry is settled.",
+  "stats_bonus": {
+   "END": 2,
+   "WIS": 2,
+   "LCK": 1
+  },
+  "value_gold": 300,
+  "weight": 0.3
+ },
+ {
+  "item_id": "auditor_ledger_page",
+  "name": "Auditor's Ledger Page",
+  "rarity": "RARE",
+  "item_type": "MATERIAL",
+  "description": "A page torn from a High Auditor's ledger. Names, crimes, and one line about you, underlined twice.",
+  "flavor_text": "The System keeps the record.",
+  "value_gold": 120,
+  "weight": 0.1
+ }
+]

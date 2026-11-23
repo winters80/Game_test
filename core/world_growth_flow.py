@@ -43,6 +43,18 @@ def _db(engine: "GameEngine"):
 
 def on_world_action(engine: "GameEngine", verb: str, subject: str, narrative: str = "") -> None:
     """Record a player action and let the world react to it."""
+    # Stealing, burgling, smuggling… are crimes, whatever else they grow.
+    from config import feature as _feature
+    if _feature("law_system") and engine.state is not None:
+        from systems import law_system
+        kind = law_system.crime_for_action(verb)
+        if kind:
+            from core.event_bus import Event as _Ev, bus as _bus
+            res = law_system.commit_crime(engine.state, kind)
+            if res is not None:
+                _bus.publish(_Ev("CRIME_COMMITTED", {"kind": res.kind, "witnessed": res.witnessed,
+                                                     "heat": res.heat, "bounty": res.bounty}))
+                _bus.flush()
     db = _db(engine)
     if db is None:
         return

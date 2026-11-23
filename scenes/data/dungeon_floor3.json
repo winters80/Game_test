@@ -155,6 +155,18 @@
           }
         },
         {
+          "option_id": "face_ledger_tribunal",
+          "label": "Face the Ledger's tribunal between you and the core.",
+          "expected": false,
+          "leads_to": "dungeon_floor3",
+          "leads_to_node": "core_chamber",
+          "triggers": ["boss_lair:ledger_tribunal"],
+          "requires": {
+            "flags": ["destroy_system_path_flag"],
+            "flags_absent": ["ledger_tribunal_broken"]
+          }
+        },
+        {
           "option_id": "destroy_the_system",
           "label": "Activate the break sequence.",
           "expected": false,
@@ -162,7 +174,8 @@
           "leads_to_node": "root",
           "triggers": ["flag:destroy_the_system_ready"],
           "requires": {
-            "flags": ["destroy_system_path_flag"]
+            "flags": ["destroy_system_path_flag", "ledger_tribunal_broken"],
+            "lock_reason": "The Ledger's tribunal stands between you and the core. Get past it first."
           }
         },
         {

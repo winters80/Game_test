@@ -58,6 +58,11 @@ _PATTERNS = [
     ("badrun",   re.compile(r"^Went into (?P<where>.+?) with (?P<who>.+?); it went badly$")),
     ("guild",    re.compile(r"^Joined (?P<what>.+)$")),
     ("won_auction", re.compile(r"^Won (?P<what>.+?) at auction$")),
+    ("arrested", re.compile(r"^Arrested (?P<who>.+?) for the Ledger$")),
+    ("jailed",   re.compile(r"^Dragged to the Ledger cells by (?P<who>.+)$")),
+    ("pickpocket", re.compile(r"^Lifted a purse in (?P<where>.+)$")),
+    ("caught",   re.compile(r"^Got seen lifting a purse in (?P<where>.+)$")),
+    ("pamphlets", re.compile(r"^Caught spreading Breaker pamphlets in (?P<where>.+)$")),
     ("listed",   re.compile(r"^Listed (?P<what>.+?) at auction$")),
     ("auction",  re.compile(r"^Sold (?P<what>.+?) at auction to (?P<who>.+)$")),
     ("soldnpc",  re.compile(r"^Sold (?P<count>\d+) items? to (?P<who>.+)$")),
@@ -95,7 +100,8 @@ def parse_memory(line: str) -> Happening:
 
 
 _PRIORITY = {"slew": 5, "cleared": 5, "badrun": 4, "boss": 4, "gate": 4, "lost": 3, "won": 3,
-             "agreed": 3, "guild": 2, "won_auction": 2, "auction": 2, "listed": 1, "soldyou": 2, "boughtyou": 2,
+             "agreed": 3, "guild": 2, "won_auction": 2, "arrested": 4, "jailed": 4,
+             "pickpocket": 2, "caught": 3, "pamphlets": 3, "auction": 2, "listed": 1, "soldyou": 2, "boughtyou": 2,
              "soldnpc": 0, "other": 1}
 
 
@@ -153,6 +159,16 @@ def summarize_memory(memory: list[str], player_name: str = "", limit: int = 4) -
             text = f"signed up with {e.what}"
         elif e.kind == "won_auction":
             text = f"won {e.what} at the auction house"
+        elif e.kind == "arrested":
+            text = f"brought {e.who} in for the Ledger"
+        elif e.kind == "jailed":
+            text = f"spent a night in the Ledger's cells, thanks to {e.who}"
+        elif e.kind == "pickpocket":
+            text = f"made a little extra coin in {e.where}, don't ask how"
+        elif e.kind == "caught":
+            text = f"had a misunderstanding with the wardens in {e.where}"
+        elif e.kind == "pamphlets":
+            text = "got caught putting up some honest opinions about the System"
         elif e.kind == "listed":
             text = f"stuck {e.what} up at the auction house"
         elif e.kind == "auction":
@@ -204,6 +220,7 @@ class ChatContext:
     can_party: bool = False
     party_reason: str = ""                   # why not, in the bot's words
     seed: int = 0
+    player_heat: float = 0.0                 # the Ledger's view of the player
 
 
 _OPEN = {
@@ -332,18 +349,30 @@ def reply(bot, topic: str, ctx: ChatContext | None = None) -> str:
         return ctx.party_reason or "Not right now, sorry."
 
     if topic == "guild":
+        side = {
+            "ledger": _pick(rng, ["And I wear the grey coat for the Ledger, when they need me. Somebody has to keep the record.",
+                                  "I deputise for the Ledger too. The System's the only thing holding this together."]),
+            "breakers": _pick(rng, ["Between you and me? The System's a leash. Some of us are working on that.",
+                                    "Ever wonder who decided the System gets to decide? Some people are asking."]),
+            "outlaw": _pick(rng, ["And the Ledger and I have an understanding. They don't understand me.",
+                                  "Keep it quiet, but I've got friends in the Undermarket."]),
+        }.get(bot.allegiance or "", "")
         if ctx.guild_name:
             rank = f" I'm {bot.guild_rank} now." if bot.guild_rank else ""
             return _say(f"I run with {ctx.guild_name}.{rank}", _pick(rng, [
-                "Good people. Mostly.", "Beats going it alone.", "Dues are steep but the contacts are worth it."]))
-        return _pick(rng, ["No guild yet. Haven't found one that fits.",
-                           "Solo for now. Guilds want too much of my loot.",
-                           "Thinking about it. Got any recommendations?"])
+                "Good people. Mostly.", "Beats going it alone.", "Dues are steep but the contacts are worth it."]), side)
+        return _say(_pick(rng, ["No guild yet. Haven't found one that fits.",
+                                "Solo for now. Guilds want too much of my loot.",
+                                "Thinking about it. Got any recommendations?"]), side)
     return _pick(rng, _HELLO[arch])
 
 
-def party_refusal(bot, gate_min_level: int | None, player_level: int) -> str:
+def party_refusal(bot, gate_min_level: int | None, player_level: int, player_heat: float = 0.0) -> str:
     """Why a bot won't join (in its own words), or "" if it would."""
+    if getattr(bot, "jailed_until", 0) and getattr(bot, "activity", "") == "in the Ledger's cells":
+        return "Through the bars? Ask me when they let me out."
+    if getattr(bot, "allegiance", "") == "ledger" and player_heat >= 25:
+        return "Run a Gate with you? There's a warrant on you. Settle with the Ledger first."
     if bot.archetype in ("trader", "crafter"):
         return {"trader": "Me? In a Gate? I sell the swords, I don't swing them.",
                 "crafter": "I'm more use to you back at the bench than in a Gate, honestly."}[bot.archetype]

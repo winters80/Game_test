@@ -116,6 +116,10 @@ def _per_turn_ticks(engine: "GameEngine") -> None:
     # New rifts: quest-opened ones, and the periodic rift surge (AI or echo).
     from core.gate_growth import tick_gate_growth
     tick_gate_growth(engine)
+    # The Ledger: heat cools, sedition is reported, wardens may come.
+    if feature("law_system"):
+        from core.law_flow import tick_law
+        tick_law(engine)
 
     # Buff tick — decrement durations
     if engine.state.player.active_buffs:
