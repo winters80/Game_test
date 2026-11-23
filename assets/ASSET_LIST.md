@@ -1,6 +1,6 @@
 # Asset list
 
-**84 of 640 files present.**
+**83 of 640 files present.**
 
 Everything the game can show or play. Save each file under `assets/` with the name shown (images: .png/.jpg/.webp; sound: .ogg/.mp3/.wav). Nothing is required: whatever is missing is simply left out. Regenerate with `python scripts/asset_list.py`.
 
@@ -634,7 +634,7 @@ Everything the game can show or play. Save each file under `assets/` with the na
 |   | `audio/music/dungeon` | dungeon | A dark dungeon descent: low drones, distant drips, slow metallic percussion, unease. Seamless 90-second loop. |
 |   | `audio/music/dungeon_deep` | dungeon deep | The deepest dungeon: subterranean drones, whispering choir, cracking crystal tones, dread. Seamless 90-second loop. |
 |   | `audio/music/ending` | ending | A closing theme: bittersweet strings and choir resolving slowly, 90 seconds. |
-| ✓ | `audio/music/explore` | explore | Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion. (90s loop ~68 BPM) [MUS-01] |
+|   | `audio/music/explore` | explore | Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion. (90s loop ~68 BPM) [MUS-01] |
 |   | `audio/music/fracture_core` | fracture core | The origin of the Fracture: a vast low hum, glass-like crackles, ethereal tones, awe and dread. Seamless 60-second loop. |
 | ✓ | `audio/music/ledger` | ledger | Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop. (90s loop ~92 BPM) [MUS-03] |
 |   | `audio/music/prologue` | prologue | An opening theme: a lone piano under rising strings, mysterious and fateful, 60 seconds. |
