@@ -44,6 +44,24 @@ def _skill_label(sid: str, player, skill_registry) -> str:
 _HEAL_TRIGGER_EVENTS = ("on_kill", "on_low_hp")
 
 
+def _combat_sounds(res, player, statuses: dict, guard: tuple) -> None:
+    """The enemy's turn as sound: a ward or evade took it (block), a clean miss
+    (dodge), a heavy hit (player_hurt) or a normal one (enemy_hit); and the
+    heartbeat while HP is low."""
+    from ui import media
+    blocked = (statuses.get("_ward", 0), statuses.get("_evade", 0)) != guard
+    missed = any(style == "miss" for _t, style in res.lines)
+    if blocked:
+        media.sfx("block")
+    if res.damage:
+        heavy = res.damage >= player.max_hp * 0.15
+        if not (heavy and media.sfx("player_hurt")):
+            media.sfx("enemy_hit")
+    elif missed and not blocked:
+        media.sfx("dodge")
+    media.heartbeat(player.current_hp, player.max_hp)
+
+
 def _print_triggers(fired) -> None:
     """Log each TRIGGERED skill that fired (Arcane Strike, Last Stand, ...)."""
     for f in fired:
@@ -203,6 +221,7 @@ class CombatHandlerMixin:
 
                 if action == "🏃 Flee":
                     if combat_system.try_flee(player, alive_enemies[0]):
+                        _media.sfx("dodge")
                         renderer.print_scene_text(["You flee from combat!"])
                         renderer.prompt_any_key()
                         _media.on_combat_end("fled")
@@ -229,6 +248,7 @@ class CombatHandlerMixin:
 
                     # ── Execute action ────────────────────────────────────────────
                     if action == "⚔ Basic Attack":
+                        _media.sfx("swing")
                         fired = []
                         dmg, is_crit = combat_system.player_attack(player, target, self.skill_registry, fired)
                         crit_str = " CRITICALLY" if is_crit else ""
@@ -336,10 +356,10 @@ class CombatHandlerMixin:
                                                      style="system_warning")
                     continue
                 if enemy.is_alive and player.current_hp > 0:
+                    guard = (player_statuses.get("_ward", 0), player_statuses.get("_evade", 0))
                     res = fx.enemy_turn(enemy, player, player_statuses, self.skill_registry, enemies,
                                         chosen=self._tactic_for(tactics, enemy))
-                    if res.damage:
-                        _media.sfx("enemy_hit")
+                    _combat_sounds(res, player, player_statuses, guard)
                     for text, style in res.lines:
                         renderer.console.print(f"  [{style}]{text}[/{style}]")
                     _print_triggers(res.fired)

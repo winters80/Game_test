@@ -100,8 +100,8 @@ def _log(message: str, answer: Any) -> None:
 
 
 class _Question:
-    def __init__(self, fn, message: str) -> None:
-        self._fn, self._message = fn, message
+    def __init__(self, fn, message: str, clicks: bool = False) -> None:
+        self._fn, self._message, self._clicks = fn, message, clicks
 
     def ask(self) -> Any:
         try:
@@ -109,6 +109,12 @@ class _Question:
         except KeyboardInterrupt:
             answer = None
         _log(self._message, answer)
+        if self._clicks:                             # menu confirm / cancel sound
+            try:
+                from ui import media
+                media.ui_answer(answer)
+            except Exception:
+                pass
         return answer
 
     unsafe_ask = ask
@@ -116,7 +122,7 @@ class _Question:
 
 def select(message: str, choices, default: Any = None, **_ignored) -> _Question:
     items = _norm(choices)
-    return _Question(lambda: _backend.select(message, items, default), message)
+    return _Question(lambda: _backend.select(message, items, default), message, clicks=True)
 
 
 def text(message: str, default: str = "", instruction: str | None = None, **_ignored) -> _Question:

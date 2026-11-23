@@ -283,6 +283,13 @@ class GameApp(App):
             ol.add_options([Option(label, id=f"{wid[1:]}:{ref}") for ref, label in rows])
         self.sidebar_rows = {"bag": bag or [], "skills": skills or []}
 
+    @on(OptionList.OptionHighlighted, "#choices")
+    def _hover_tick(self, event: OptionList.OptionHighlighted) -> None:
+        import time as _t
+        if _t.monotonic() >= getattr(self, "_hover_quiet_until", 0):
+            from ui import media
+            media.ui_sound("hover")
+
     @on(OptionList.OptionSelected, ".side-list")
     def _side_pick(self, event: OptionList.OptionSelected) -> None:
         """Bag / skill clicked: answer the scene prompt with it (only from
@@ -332,6 +339,8 @@ class GameApp(App):
         busy.set_class(bool(message), "on")
 
     def show_prompt(self, kind: str, message: str, payload: Any) -> None:
+        import time as _t
+        self._hover_quiet_until = _t.monotonic() + 0.3   # a new menu's first highlight is silent
         self._kind = kind
         question = self.query_one("#question", Label)
         choices = self.query_one("#choices", OptionList)

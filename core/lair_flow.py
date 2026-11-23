@@ -161,6 +161,7 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     renderer.print_system_message(
         f"DESIGNATED ENCOUNTER ZONE · {title.upper()}{gen}", style="system_warning")
     from ui import media
+    media.sfx("lever")                          # the lair's door grinds open
     media.on_boss(occ.occupant_id, list(occ.enemies), title)
     lines = [lair_system.fmt(occ.intro, name)]
     if state.generation:

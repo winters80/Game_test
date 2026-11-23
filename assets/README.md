@@ -35,8 +35,9 @@ in `sounds_manifest.json`.
 
 ## What's here already
 
-67 sounds (OGG): five music tracks (`explore`, `combat`, `ledger`, `boss`, `camp`;
-other moods borrow one, see `media.MUSIC_FALLBACK`), all 19 effects, ten ambience
+84 sounds (OGG): five music tracks (`explore`, `combat`, `ledger`, `boss`, `camp`;
+other moods borrow one, see `media.MUSIC_FALLBACK`), all 36 effects (including menu clicks, combat foley, footsteps and the
+low-health heartbeat loop), ten ambience
 loops, three System lines, three takes each for six people
 (`voice/<npc_id>/greeting_1..3`) and four bot types (`voice/bots/<archetype>/greeting_1..3`).
 

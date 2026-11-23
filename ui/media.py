@@ -42,7 +42,7 @@ IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
 AUDIO_EXT = (".ogg", ".mp3", ".wav")
 SETTINGS_FILE = SAVES_DIR / "settings" / "media.json"
 
-DEFAULTS = {"images": True, "sfx": True, "music": True, "ambience": True, "voice": True,
+DEFAULTS = {"images": True, "ui_sounds": True, "sfx": True, "music": True, "ambience": True, "voice": True,
             "volume_sfx": 0.8, "volume_music": 0.45, "volume_ambience": 0.5, "volume_voice": 1.0}
 
 # Sound effects the game plays, and when.
@@ -66,7 +66,30 @@ SFX = {
     "crystal_shatter": "a crystal creature breaks",
     "ledger_seal": "the Ledger records an entry (a crime on file, a fine paid)",
     "potion": "you drink a potion",
+    "mana_potion": "you drink a mana potion",
+    "ui_hover": "you move between choices (panel interface)",
+    "ui_confirm": "you pick a choice",
+    "ui_cancel": "you back out of a menu",
+    "denied": "something is refused (not enough gold, an error)",
+    "menu_open": "you open your items or the quest journal",
+    "swing": "you swing a basic attack",
+    "block": "a ward or evade takes an enemy's hit",
+    "player_hurt": "a heavy hit lands on you (15%+ of your HP)",
+    "dodge": "you dodge an attack, or get away from a fight",
+    "chest_open": "a treasure room's chest opens",
+    "trap": "a trap goes off",
+    "lever": "you push into a boss's lair",
+    "footstep_stone": "you arrive somewhere paved or rocky",
+    "footstep_water": "you arrive in the flooded caverns",
+    "footstep_dirt": "you arrive on dirt and cobbles",
+    "heartbeat": "loops while your HP is below 30% in a fight",
 }
+
+# The low-health heartbeat loops on its own channel (audio/sfx/heartbeat), below this share of HP.
+HEARTBEAT_BELOW = 0.3
+# Footsteps when you travel, by the ground where you arrive.
+FOOTSTEP_FOR_SCENE = {"village_start": "dirt", "camp_rest": "dirt", "verath_city": "stone",
+                      "dungeon_floor1": "stone", "dungeon_floor2": "water", "dungeon_floor3": "stone"}
 
 # Moods for music: which file plays where.
 MUSIC_FOR_SCENE = {"verath_city": "verath", "village_start": "explore", "camp_rest": "camp",
@@ -220,7 +243,8 @@ class AudioPlayer:
         self._last_sfx: dict[str, float] = {}
         self._music = ""
         self._ambience = ""
-        self._amb_ch = self._voice_ch = None
+        self._amb_ch = self._voice_ch = self._loop_ch = None
+        self._loop = ""
         self.error = ""                              # why sound is off, for the status line
 
     def _init(self) -> bool:
@@ -232,9 +256,12 @@ class AudioPlayer:
             import pygame
             pygame.mixer.init()
             pygame.mixer.set_num_channels(16)
-            self._amb_ch = pygame.mixer.Channel(14)
-            self._voice_ch = pygame.mixer.Channel(15)
-            pygame.mixer.set_reserved(2)
+            # set_reserved(n) keeps channels 0..n-1 away from Sound.play(), so the
+            # long-running ones live there: ambience, voice and the heartbeat loop.
+            pygame.mixer.set_reserved(3)
+            self._amb_ch = pygame.mixer.Channel(0)
+            self._voice_ch = pygame.mixer.Channel(1)
+            self._loop_ch = pygame.mixer.Channel(2)
             self._pg = pygame
             self._ok = True
         except ImportError:
@@ -285,6 +312,23 @@ class AudioPlayer:
             except Exception:
                 logger.info("Could not play %s", path, exc_info=True)
                 return False
+
+    def loop(self, path: Path | None) -> None:
+        """Loop a short sound (the heartbeat) until called with None."""
+        key = str(path or "")
+        with self._lock:
+            if key == self._loop or not self._init():
+                return
+            self._loop = key
+            try:
+                if path is None:
+                    self._loop_ch.fadeout(400)
+                    return
+                snd = self._sound(path)
+                snd.set_volume(settings()["volume_sfx"])
+                self._loop_ch.play(snd, loops=-1)
+            except Exception:
+                logger.info("Could not loop %s", path, exc_info=True)
 
     def ambience(self, path: Path | None) -> None:
         key = str(path or "")
@@ -338,7 +382,7 @@ class AudioPlayer:
                 self._pg.mixer.music.stop()
             except Exception:
                 pass
-        self._music = self._ambience = ""
+        self._music = self._ambience = self._loop = ""
 
 
 _player = AudioPlayer()
@@ -393,6 +437,25 @@ def test_sound() -> str:
     if not played:
         return msg + " Nothing could be played; see logs/ for the error."
     return msg + " Playing: " + ", ".join(played) + ". If you hear nothing, check your volume and output device."
+
+
+def ui_sound(kind: str) -> bool:
+    """Menu clicks (hover / confirm / cancel), switchable on their own in Admin."""
+    return settings()["ui_sounds"] and sfx(f"ui_{kind}")
+
+
+def ui_answer(answer) -> None:
+    """A menu was answered: cancel for Back / nothing, else confirm."""
+    if answer in (None, "", False) or str(answer).lstrip().startswith(("←", "Back", "Cancel")):
+        ui_sound("cancel")
+    else:
+        ui_sound("confirm")
+
+
+def heartbeat(hp: int, max_hp: int) -> None:
+    """Loop the heartbeat while HP is low in a fight; stop it otherwise."""
+    low = max_hp > 0 and 0 < hp < max_hp * HEARTBEAT_BELOW and settings()["sfx"]
+    _player.loop(find_audio("sfx", "heartbeat") if low else None)
 
 
 def startup_notice() -> str | None:
@@ -461,8 +524,16 @@ ART_ALIASES = {
 }
 
 
+_last_scene = ""
+
+
 def on_scene(scene_id: str, node_id: str = "root", title: str = "") -> None:
-    """Entering / showing a scene node: its art, its ambience, its music."""
+    """Entering / showing a scene node: its art, its ambience, its music, and
+    footsteps when you've just travelled there."""
+    global _last_scene
+    if _last_scene and scene_id != _last_scene and scene_id in FOOTSTEP_FOR_SCENE:
+        sfx(f"footstep_{FOOTSTEP_FOR_SCENE[scene_id]}")
+    _last_scene = scene_id
     show_art("scenes", f"{scene_id}.{node_id}", ART_ALIASES.get(node_id, ""), scene_id, caption=title)
     if settings()["ambience"]:
         _player.ambience(find_audio("ambience", f"{scene_id}.{node_id}", scene_id))
@@ -501,6 +572,7 @@ def on_combat_start(boss: bool = False) -> None:
 def on_combat_end(result: str) -> None:
     global _in_combat
     _in_combat = False
+    _player.loop(None)                          # the heartbeat stops with the fight
     if result == "victory":
         sfx("victory")
     elif result == "defeat":
