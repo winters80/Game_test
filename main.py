@@ -9,6 +9,16 @@ import logging
 import sys
 
 
+def _panels_available() -> bool:
+    """Panels are the default; the classic terminal when Textual is missing
+    (or with --classic)."""
+    try:
+        import textual  # noqa: F401
+    except ImportError:
+        return False
+    return sys.stdin.isatty() and sys.stdout.isatty()
+
+
 def main() -> None:
     # Initialise logging before anything else
     from utils.logging_setup import setup_logging
@@ -24,8 +34,8 @@ def main() -> None:
         from ui.tui_app import run_web
         run_web()
         return
-    if "--tui" in sys.argv:              # the Textual app, in this terminal
-        from ui.tui_app import run_tui
+    if "--tui" in sys.argv or ("--classic" not in sys.argv and _panels_available()):
+        from ui.tui_app import run_tui       # the Textual app (the default), in this terminal
         log.info("Starting the Textual interface")
         run_tui()
         return

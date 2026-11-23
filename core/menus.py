@@ -1083,7 +1083,7 @@ class GameMenusMixin:
                        uip.Choice(f"Voice: {onoff('voice')}  (volume {s['volume_voice']:.0%})", "voice"),
                        uip.Choice("Set a volume", "volume"),
                        uip.Choice("Write the asset list (every file + a prompt for it)", "list"),
-                       uip.Choice("← Back", None)]
+                       uip.Choice("← Back", "")]
             pick = uip.select("Art & audio:", choices=choices).ask()
             if not pick:
                 return

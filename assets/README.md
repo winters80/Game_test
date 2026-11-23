@@ -35,6 +35,6 @@ the Fracture Core shows `dungeon_floor3.core_chamber`. A Gate shows
 `manifest.csv`. `scripts/asset_list.py` (`PACK_TARGETS`) maps each spec to the
 file the game plays, and `ASSET_LIST.md` shows it with its id in brackets.
 
-Pictures look sharpest in a terminal with Kitty or Sixel graphics. The browser
-version (textual-serve) has no image protocol, so it draws them with coloured
-half-blocks.
+In the browser version (`python main.py --web`) pictures are shown full size
+beside the game. In a terminal they look sharpest with Kitty or Sixel graphics;
+elsewhere they're drawn with coloured half-blocks.

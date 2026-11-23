@@ -196,10 +196,50 @@ def tui(tmp: Path) -> None:
         f.unlink()
 
 
+def web(tmp: Path) -> None:
+    """Browser play: each tab's picture is served full size, and only from assets/."""
+    try:
+        import textual_serve  # noqa: F401
+        from aiohttp.test_utils import TestClient, TestServer
+    except ImportError:
+        print("  -  textual-serve not installed: skipped")
+        return
+    from ui import media, web_server
+    _png(tmp / "assets" / "images" / "scenes" / "verath_city.png")
+    (tmp / "secret.png").write_bytes((tmp / "assets" / "images" / "scenes" / "verath_city.png").read_bytes())
+    art_id = "ab" * 16
+
+    async def run() -> None:
+        srv = web_server.make_server("true")
+        client = TestClient(TestServer(await srv._make_app()))
+        await client.start_server()
+        try:
+            page = await (await client.get("/")).text()
+            check('id="art-panel"' in page and "/art/" in page and "/ws/" in page,
+                  "the browser page has a picture panel and a per-tab art id")
+            r = await client.get(f"/art/{art_id}")
+            check((await r.json())["src"] == "", "nothing to show before the game picks a picture")
+            web_server.publish(art_id, str(tmp / "assets" / "images" / "scenes" / "verath_city.png"), "Verath")
+            d = await (await client.get(f"/art/{art_id}")).json()
+            check(d["src"].endswith(f"/art-file/{art_id}/1") and d["caption"] == "Verath",
+                  "the game's picture is published for its tab")
+            img = await client.get(f"/art-file/{art_id}/1")
+            check(img.status == 200 and (await img.read())[:4] == b"\x89PNG", "the full-size file is served")
+            web_server.publish(art_id, str(tmp / "secret.png"))
+            check((await client.get(f"/art-file/{art_id}/2")).status == 404, "files outside assets/ are never served")
+            check((await client.get("/art/..%2f..%2fconfig")).status == 404, "art ids are checked")
+        finally:
+            await client.close()
+
+    with mock.patch.object(media, "ASSETS_DIR", tmp / "assets"), \
+            mock.patch.object(web_server, "ART_DIR", tmp / "web_art"):
+        asyncio.run(run())
+
+
 if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
-    for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui)):
+    for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory() as tmp:
             fn(Path(tmp))
