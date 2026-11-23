@@ -1,0 +1,8 @@
+ID: AMB-03
+Category: Ambience
+Location: The Fracture Core
+Duration: 30s loop
+Music: No
+
+Prompt:
+A vast circular black stone chamber: a deep sub-bass low hum, sharp glass-like crackles in the air, faint cold ethereal harmonic tones, and unsettling near-silence between slow resonant pulses. Awe-inspiring, ominous, seamless loop, no music.

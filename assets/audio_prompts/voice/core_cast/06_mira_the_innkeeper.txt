@@ -1,0 +1,10 @@
+ID: VOX-CORE-06
+Category: Voice (Core Cast & System)
+Character: Mira, the Innkeeper
+
+TTS Voice Direction:
+Sharp, pragmatic female voice, early forties; brisk urban cadence, dry alto texture, guarded and observant, warms slightly only for regulars.
+
+Sample Lines:
+- "Keep the arcane arts out of my taproom and pay in copper—not System promises."
+- "You learn to watch the latch in Verath, or you don't last a season."

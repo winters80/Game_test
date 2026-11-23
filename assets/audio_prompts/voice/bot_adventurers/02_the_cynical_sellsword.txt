@@ -1,0 +1,9 @@
+ID: VOX-BOT-02
+Category: Voice (Bot Adventurers — Live Runtime TTS Presets)
+Preset Archetype: The Cynical Sellsword
+
+TTS Voice Direction:
+Dry, world-weary male, late thirties; relaxed, slightly gravelly drawl, sardonic undertone, unhurried delivery.
+
+Example Dynamic Line:
+- "Another low-rank contract, another dark tunnel. Let's grab the loot before the Wardens show up."

@@ -1,0 +1,395 @@
+{
+  "project": "Aethoria / Verath Audio Prompt Pack",
+  "total_assets": 32,
+  "counts": {
+    "ambience": 6,
+    "sfx": 10,
+    "music": 5,
+    "voice_core_cast": 7,
+    "voice_bot_adventurers": 4
+  },
+  "assets": [
+    {
+      "id": "AMB-01",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "Outer Market (Verath's Walls)",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "A busy medieval market at morning beneath high stone walls: distant haggling voices, wooden cart wheels rattling over cobbles, a blacksmith's hammer ringing far off, sparrows and morning birds, gentle wind, and a faint cold crystalline hum near the gate. Grounded, weathered, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/01_outer_market_veraths_walls.txt"
+    },
+    {
+      "id": "AMB-02",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "The Undermarket",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "An underground black market in old brick sewer tunnels: steady dripping water, slow dark river lapping against stone, echoing hushed murmurs, pitch torches crackling, and a faint metallic clank in the distance. Claustrophobic, tense, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/02_the_undermarket.txt"
+    },
+    {
+      "id": "AMB-03",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "The Fracture Core",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "A vast circular black stone chamber: a deep sub-bass low hum, sharp glass-like crackles in the air, faint cold ethereal harmonic tones, and unsettling near-silence between slow resonant pulses. Awe-inspiring, ominous, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/03_the_fracture_core.txt"
+    },
+    {
+      "id": "AMB-04",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "Verath (Capital Overview)",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "Dusk wind sweeping across slate rooftops of a vast walled city: distant muffled bells, low urban murmur far below, and a faint glassy shimmer from a huge translucent dome overhead with occasional soft static-like rift crackles. Melancholic, expansive, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/04_verath_capital_overview.txt"
+    },
+    {
+      "id": "AMB-05",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "The Ledger House",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "A stark, high-ceilinged stone hall: hollow room tone, dozens of dry quills scratching on heavy parchment, the crisp turn of thick ledger pages, a faint cold digital-crystalline hum from floating panes, and slow measured footsteps echoing once. Clinical, oppressive, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/05_the_ledger_house.txt"
+    },
+    {
+      "id": "AMB-06",
+      "category": "ambience",
+      "subcategory": "location_loop",
+      "name": "A Gate (Rift)",
+      "duration": "30s loop",
+      "tempo": "",
+      "prompt_or_direction": "A quiet mist-shrouded pine forest clearing: soft wind through dry needles disrupted at the center by a pulsing electric-glass thrumming, sharp intermittent cyan energy snaps, and a hollow alien draft pulling through a tear in reality. Uncanny, hazardous, seamless loop, no music.",
+      "sample_lines": [],
+      "file_path": "ambience/06_a_gate_rift.txt"
+    },
+    {
+      "id": "SFX-01",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "System Notification",
+      "duration": "~1.0s",
+      "tempo": "",
+      "prompt_or_direction": "A clean crystalline chime with a soft digital shimmer, cold and precise, crisp high-frequency tail, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/01_system_notification.txt"
+    },
+    {
+      "id": "SFX-02",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Class Awakening",
+      "duration": "~2.0s",
+      "tempo": "",
+      "prompt_or_direction": "A rising arcane energy swell building rapidly into a resonant glassy impact with a cold cyan harmonic shimmer, otherworldly and weighty, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/02_class_awakening.txt"
+    },
+    {
+      "id": "SFX-03",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Warden's Whistle (Caught)",
+      "duration": "~1.5s",
+      "tempo": "",
+      "prompt_or_direction": "A sharp, piercing metal pea-whistle blast echoing off stone walls, immediately followed by quick heavy leather boots running on cobblestones, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/03_wardens_whistle_caught.txt"
+    },
+    {
+      "id": "SFX-04",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Level Up",
+      "duration": "~1.5s",
+      "tempo": "",
+      "prompt_or_direction": "A bright ascending three-note crystalline chime with a soft harmonic glow and clean resonant decay, rewarding yet restrained, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/04_level_up.txt"
+    },
+    {
+      "id": "SFX-05",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Combat — Sword Hit (Armour)",
+      "duration": "~0.8s",
+      "tempo": "",
+      "prompt_or_direction": "Heavy iron sword striking plate armour: sharp metallic clang, punchy low-mid impact thud, brief steel ring, grounded and visceral, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/05_combat_sword_hit_armour.txt"
+    },
+    {
+      "id": "SFX-06",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Combat — Fireball Cast & Burst",
+      "duration": "~1.5s",
+      "tempo": "",
+      "prompt_or_direction": "Arcane flame ignition: quick rushing air whoosh building into a tight, punchy fiery burst with crackling ember tail, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/06_combat_fireball_cast_burst.txt"
+    },
+    {
+      "id": "SFX-07",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Combat — Crystal Shattering",
+      "duration": "~1.2s",
+      "tempo": "",
+      "prompt_or_direction": "Heavy massive crystal shattering: deep crystalline fracture crack followed by a dense cascade of sharp glass and stone shards hitting wet rock, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/07_combat_crystal_shattering.txt"
+    },
+    {
+      "id": "SFX-08",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Ledger Seal / Entry Logged",
+      "duration": "~1.0s",
+      "tempo": "",
+      "prompt_or_direction": "Heavy iron stamp thudding firmly onto thick parchment, followed by a subtle cold crystalline chime confirming a System record, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/08_ledger_seal_entry_logged.txt"
+    },
+    {
+      "id": "SFX-09",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Health Potion (Use)",
+      "duration": "~1.2s",
+      "tempo": "",
+      "prompt_or_direction": "Tight cork popping from a small glass vial, brief liquid glug, and a subtle warm breathy arcane shimmer, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/09_health_potion_use.txt"
+    },
+    {
+      "id": "SFX-10",
+      "category": "sfx",
+      "subcategory": "one_shot",
+      "name": "Rift / Gate Transition",
+      "duration": "~1.8s",
+      "tempo": "",
+      "prompt_or_direction": "Sharp glass-tearing crackle followed by a sudden vacuum whoosh and low resonant pressure drop as reality shifts, no music.",
+      "sample_lines": [],
+      "file_path": "sfx/10_rift_gate_transition.txt"
+    },
+    {
+      "id": "MUS-01",
+      "category": "music",
+      "subcategory": "instrumental_loop",
+      "name": "Exploring (Aethoria / Wilds)",
+      "duration": "90s loop",
+      "tempo": "~68 BPM",
+      "prompt_or_direction": "Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion.",
+      "sample_lines": [],
+      "file_path": "music/01_exploring_aethoria_wilds.txt"
+    },
+    {
+      "id": "MUS-02",
+      "category": "music",
+      "subcategory": "instrumental_loop",
+      "name": "Combat (Standard)",
+      "duration": "75s loop",
+      "tempo": "130 BPM",
+      "prompt_or_direction": "Tense dark-fantasy orchestral combat instrumental: driving low cellos and double basses playing urgent ostinatos, thunderous taiko drums, sharp muted brass stabs, and crisp metallic percussion accents. Grounded, relentless, seamless loop, no lyrics.",
+      "sample_lines": [],
+      "file_path": "music/02_combat_standard.txt"
+    },
+    {
+      "id": "MUS-03",
+      "category": "music",
+      "subcategory": "instrumental_loop",
+      "name": "The Ledger / Verath",
+      "duration": "90s loop",
+      "tempo": "~92 BPM",
+      "prompt_or_direction": "Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop.",
+      "sample_lines": [],
+      "file_path": "music/03_the_ledger_verath.txt"
+    },
+    {
+      "id": "MUS-04",
+      "category": "music",
+      "subcategory": "instrumental_loop",
+      "name": "Boss Encounter (Core / Tribunal)",
+      "duration": "90s loop",
+      "tempo": "136 BPM",
+      "prompt_or_direction": "Massive dark-fantasy boss battle orchestral instrumental: booming war drums, aggressive brass swells, frantic dissonant strings, cold crystalline synth undertones, and dramatic low choir accents. Overwhelming, ominous, seamless loop.",
+      "sample_lines": [],
+      "file_path": "music/04_boss_encounter_core_tribunal.txt"
+    },
+    {
+      "id": "MUS-05",
+      "category": "music",
+      "subcategory": "instrumental_loop",
+      "name": "Safe Haven (Mira's Inn / Rest)",
+      "duration": "75s loop",
+      "tempo": "~64 BPM",
+      "prompt_or_direction": "Quiet, weary dark-fantasy tavern ambient instrumental: solitary plucked lute and warm low acoustic drone, subtle bowed viola harmonies, intimate and understated, slightly melancholic warmth. Seamless loop, no percussion.",
+      "sample_lines": [],
+      "file_path": "music/05_safe_haven_miras_inn_rest.txt"
+    },
+    {
+      "id": "VOX-CORE-01",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "The System (Priority)",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Neutral, genderless, calm synthetic voice; crisp, precise diction; slight cold digital resonance; zero emotion; flat, even pacing with clean pauses between sentences.",
+      "sample_lines": [
+        "CLASSIFICATION COMPLETE.",
+        "DIVERGENCE DETECTED. ANALYSING.",
+        "The System has reported you to the Ledger."
+      ],
+      "file_path": "voice/core_cast/01_the_system_priority.txt"
+    },
+    {
+      "id": "VOX-CORE-02",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "Auditor Imre Castell",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Quiet, measured male voice, fifties; clipped, educated, and precise; cool dry texture; never raises his voice, letting silence carry the threat.",
+      "sample_lines": [
+        "We are not good. We are not cruel. We are accurate.",
+        "Your rank is not a suggestion, citizen. Discrepancies are corrected at the Ledger House."
+      ],
+      "file_path": "voice/core_cast/02_auditor_imre_castell.txt"
+    },
+    {
+      "id": "VOX-CORE-03",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "Silas the Fence",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Soft, smooth, amused male voice, early forties; conspiratorial half-whisper with a relaxed cadence and a slight knowing smile audible in the tone.",
+      "sample_lines": [
+        "I don't steal. I just make sure stolen things find a good home.",
+        "Wardens hate getting their coats wet. So long as the river's up, we can talk business."
+      ],
+      "file_path": "voice/core_cast/03_silas_the_fence.txt"
+    },
+    {
+      "id": "VOX-CORE-04",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "Torven, the Blacksmith",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Gruff, gravelly older male voice, mid-fifties; slow, deliberate, and economical with words; weathered baritone with quiet warmth underneath.",
+      "sample_lines": [
+        "Steel doesn't care what rank a blue box gave you. Keep the edge true.",
+        "Thirty years at the anvil, and the System calls me a Journeyman. Sit down, let me see that blade."
+      ],
+      "file_path": "voice/core_cast/04_torven_the_blacksmith.txt"
+    },
+    {
+      "id": "VOX-CORE-05",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "A Ledger Warden",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Flat, firm, bored authority; late twenties to thirties; clipped institutional delivery, emotionally detached, speaks like reading from a checklist.",
+      "sample_lines": [
+        "Your record doesn't balance. Pay, or come with us.",
+        "Halt. Present your System mark and state your business inside Verath's walls."
+      ],
+      "file_path": "voice/core_cast/05_a_ledger_warden.txt"
+    },
+    {
+      "id": "VOX-CORE-06",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "Mira, the Innkeeper",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Sharp, pragmatic female voice, early forties; brisk urban cadence, dry alto texture, guarded and observant, warms slightly only for regulars.",
+      "sample_lines": [
+        "Keep the arcane arts out of my taproom and pay in copper—not System promises.",
+        "You learn to watch the latch in Verath, or you don't last a season."
+      ],
+      "file_path": "voice/core_cast/06_mira_the_innkeeper.txt"
+    },
+    {
+      "id": "VOX-CORE-07",
+      "category": "voice",
+      "subcategory": "core_cast_and_system",
+      "name": "The Gray Wanderer",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Soft, hushed, ageless voice (indeterminate 35–50); unhurried, eerily even cadence; slightly hollow, quiet resonance as if speaking from just out of sight.",
+      "sample_lines": [
+        "People look straight through what the System refuses to label.",
+        "The Fracture did not break Aethoria. It only showed you where the cracks were waiting."
+      ],
+      "file_path": "voice/core_cast/07_the_gray_wanderer.txt"
+    },
+    {
+      "id": "VOX-BOT-01",
+      "category": "voice",
+      "subcategory": "bot_adventurers",
+      "name": "The Eager Scout",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Cheerful young woman, early twenties; quick, chatty, bright energy with light conversational inflections and slight nervous excitement.",
+      "sample_lines": [
+        "Hey, did you see that rift flicker? Tell me we're actually going in there!"
+      ],
+      "file_path": "voice/bot_adventurers/01_the_eager_scout.txt"
+    },
+    {
+      "id": "VOX-BOT-02",
+      "category": "voice",
+      "subcategory": "bot_adventurers",
+      "name": "The Cynical Sellsword",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Dry, world-weary male, late thirties; relaxed, slightly gravelly drawl, sardonic undertone, unhurried delivery.",
+      "sample_lines": [
+        "Another low-rank contract, another dark tunnel. Let's grab the loot before the Wardens show up."
+      ],
+      "file_path": "voice/bot_adventurers/02_the_cynical_sellsword.txt"
+    },
+    {
+      "id": "VOX-BOT-03",
+      "category": "voice",
+      "subcategory": "bot_adventurers",
+      "name": "The Bookish Arcanist",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Precise, slightly breathless young man, mid-twenties; articulate, slightly fast when excited about the arcane arts, tentative in combat.",
+      "sample_lines": [
+        "Fascinating—the arcane resonance near the Fracture Core is completely off the Ledger's charts."
+      ],
+      "file_path": "voice/bot_adventurers/03_the_bookish_arcanist.txt"
+    },
+    {
+      "id": "VOX-BOT-04",
+      "category": "voice",
+      "subcategory": "bot_adventurers",
+      "name": "The Pragmatic Veteran",
+      "duration": "variable",
+      "tempo": "",
+      "prompt_or_direction": "Steady, no-nonsense female, late forties; grounded, calm mid-range voice, brisk and dependable, zero melodrama.",
+      "sample_lines": [
+        "Check your potions, watch the flanks, and don't let that thing corner you."
+      ],
+      "file_path": "voice/bot_adventurers/04_the_pragmatic_veteran.txt"
+    }
+  ]
+}

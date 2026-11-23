@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import time
 from typing import TYPE_CHECKING, Any
 
@@ -221,10 +223,16 @@ def bar_color(ratio: float) -> str:
     return "hp_low"
 
 
+_CRYSTAL = re.compile(r"crystal|shard|golem|prism|geode", re.I)
+
+
 def print_combat_action(actor: str, action: str, value: int | None = None, style: str = "scene_text") -> None:
     if value is not None and actor == "You":
         from ui import media
         media.sfx("spell" if style == "rare" else "hit")
+    elif action == "is defeated!" and _CRYSTAL.search(actor):
+        from ui import media
+        media.sfx("crystal_shatter")
     if value is not None:
         console.print(f"  [{style}]{actor}[/{style}] {action} [{style}]{value}[/{style}]")
     else:

@@ -1,0 +1,8 @@
+ID: SFX-06
+Category: Sound Effect
+Effect: Combat — Fireball Cast & Burst
+Length: ~1.5s
+Music: No
+
+Prompt:
+Arcane flame ignition: quick rushing air whoosh building into a tight, punchy fiery burst with crackling ember tail, no music.

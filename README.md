@@ -18,7 +18,7 @@ SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System han
 
 ## What's new
 
-- **Art and audio, if you want them.** Drop pictures and sounds into `assets/` and the game uses them: scene art, portraits when you talk to someone, the boss when you enter a lair, item pictures, music by place and in fights, looping ambience, sound effects, and the System speaking. `assets/ASSET_LIST.md` lists every file the game can use (576 of them) with a ready-made prompt for each, written from the game's own text. Nothing is required: without files the game is exactly as before.
+- **Art and audio, if you want them.** Drop pictures and sounds into `assets/` and the game uses them: scene art, portraits when you talk to someone, the boss when you enter a lair, item pictures, music by place and in fights, looping ambience, sound effects, and the System speaking. The first **20 pictures** ship with the game (both halves of Verath, the Ledger House, the Undermarket, the Fracture Core, the rift, six portraits, four bosses, four items). `assets/ASSET_LIST.md` lists every file the game can use (623 of them) with a ready-made prompt for each; sound prompts come from the audio prompt pack in `assets/audio_prompts/`. Nothing is required: without files the game is exactly as before.
 
 - **The Ledger: the System's own law.** A new faction that is neither good nor evil, just fanatical about order. Steal, burgle, bribe or smuggle where someone can see you and you gain **heat** and a **bounty**; wardens stop you in town (pay, serve time, talk your way out, run or fight), and at high heat Ledger hunters track you anywhere. Anyone working to break the System is the Ledger's gravest criminal: the System itself reports you, and before the Break you must get past the Ledger's tribunal in the Fracture Core. Bots take sides too: outlaws pick pockets, Breaker sympathisers paste pamphlets, Ledger deputies haul them off to the cells, and you can serve warrants yourself.
 - **Play a thief:** lift purses in the market, palm rings, burgle a townhouse above Verath's market, sell to Silas the Fence in the Undermarket, run his smuggling jobs, and pay him to lose a page of your record.
@@ -151,7 +151,11 @@ The game is complete as text. To add pictures and sound, put files in `assets/`:
 
 1. Open **`assets/ASSET_LIST.md`**. It lists every picture, sound and voice line the game can use, with the file name to save it as and a prompt to generate it. Ticks show what you already have. Rebuild it any time with `python scripts/asset_list.py` (add `--missing` for just the gaps), or from Admin → Art & audio.
 2. Paste the prompts into an image model, a text-to-speech model and a sound or music model, and save each result under the name shown. Images can be `.png`, `.jpg` or `.webp`; sound `.ogg`, `.mp3` or `.wav`.
-3. Play. Pictures show in the art box at the top of the sidebar in the panel and browser versions (`--tui`, `--web`). Sound plays on the computer running the game.
+3. Play. Pictures show in the art box at the top of the sidebar in the panel and browser versions (`--tui`, `--web`). In a terminal that supports Kitty or Sixel graphics (Kitty, WezTerm, iTerm2, Windows Terminal 1.22+) they're shown at full resolution; elsewhere, including the browser, they're drawn with coloured half-blocks, so they look soft. Sound plays on the computer running the game.
+
+What's already included: scene art for `village_start` (the outer market), `verath_city`, the Ledger House, the Undermarket, the Fracture Core and every Gate (`gate`, also shown at both Gate Halls); portraits of Torven, Mira, the Gray Wanderer, Auditor Castell, Silas and the Ledger wardens; the Crystal Golem, the Archmage, the Hollow Lich and the High Auditor; the rusty sword, health potion, stolen jewellery and warden's seal. The art direction is in `assets/art_and_audio_direction.md`.
+
+**Sound prompts.** `assets/audio_prompts/` holds 32 specs (6 ambience loops, 10 effects, 5 music loops, 7 cast voices, 4 bot voice presets) as text files plus `manifest.json` / `manifest.csv` for batch tools. `ASSET_LIST.md` shows each one against the file name the game plays (tagged `[AMB-01]`, `[SFX-07]` …), so generate, save under that name, and it plays.
 
 | Where | What it's for |
 |---|---|
@@ -159,8 +163,8 @@ The game is complete as text. To add pictures and sound, put files in `assets/`:
 | `assets/images/npcs/<npc>.png` | whoever you're talking to (and the Ledger's wardens and hunters) |
 | `assets/images/bosses/<boss>.png` | the master of a lair or Gate |
 | `assets/images/items/<item>.png` | an item you inspect |
-| `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound, effects such as level-ups, hits, spells and the wardens' whistle |
-| `assets/audio/voice/system/`, `voice/<npc>/greeting` | the System's lines ("Classification complete.", "Your actions have been reported to the Ledger.") and NPC greetings |
+| `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound (`ambience/gate` inside every Gate), effects such as level-ups, hits, spells, the wardens' whistle, `gate_enter`, `crystal_shatter`, `ledger_seal` (a fine paid, an unseen crime on file) and `potion` |
+| `assets/audio/voice/system/`, `voice/<npc>/greeting`, `voice/bots/<archetype>/greeting` | the System's lines ("Classification complete.", "The System has reported you to the Ledger."), NPC greetings (`ledger_warden` when the wardens stop you), and a bot's greeting by archetype (explorer, fighter, crafter, trader; gatherers fall back to the trader's) |
 
 Admin → **Art & audio** switches pictures, effects, music, ambience and voice on or off and sets each volume. Sound needs `pygame-ce` and pictures need `textual-image`; both are in `requirements.txt`, the launchers install them, and the game simply runs without them if they're missing. See `assets/README.md` for the details.
 

@@ -1,0 +1,8 @@
+ID: SFX-02
+Category: Sound Effect
+Effect: Class Awakening
+Length: ~2.0s
+Music: No
+
+Prompt:
+A rising arcane energy swell building rapidly into a resonant glassy impact with a cold cyan harmonic shimmer, otherworldly and weighty, no music.

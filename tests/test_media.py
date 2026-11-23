@@ -92,6 +92,10 @@ def lookups(tmp: Path) -> None:
         media.on_scene("camp_rest", "root")                    # ambience + default music
         media.on_combat_start()
         media.on_combat_end("victory")
+        _wav(tmp / "audio" / "voice" / "bots" / "trader" / "greeting.wav")
+        check(media.bot_voice("gatherer") in (True, False), "a bot without its own voice falls back to a preset")
+        _wav(tmp / "audio" / "ambience" / "gate.wav")
+        media.on_gate("gate_x", "Gate X")
         media.stop_all()
         check(True, "ambience, music, voice and combat sounds run without errors")
 
@@ -141,6 +145,13 @@ def asset_list(tmp: Path) -> None:
     check("| ✓ | `images/npcs/auditor_castell`" in text and "auditor_castell`" not in missing,
           "files you have are ticked (and left out of --missing)")
     check("{name}" not in text and "| , the" not in text, "boss prompts have real names in them")
+    pack = al.load_pack()
+    check(len(pack) == 32 and set(al.PACK_TARGETS) == set(pack),
+          "every spec in the audio prompt pack is mapped to a game file")
+    sfx_targets = {t.rsplit("/", 1)[1] for ts in al.PACK_TARGETS.values() for t in ts if t.startswith("audio/sfx/")}
+    check(sfx_targets <= set(media.SFX), f"the pack's effects are ones the game plays ({sfx_targets - set(media.SFX)})")
+    for tag in ("[AMB-06]", "[SFX-10]", "[MUS-05]", "[VOX-CORE-05]", "[VOX-BOT-02]"):
+        check(tag in text, f"the asset list uses the pack's prompt {tag}")
 
 
 async def _tui(tmp: Path) -> None:

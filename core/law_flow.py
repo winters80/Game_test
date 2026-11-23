@@ -97,6 +97,7 @@ def confront(engine: "GameEngine", kind: str = "patrol", rng: random.Random | No
     session_log.event("ledger_" + kind, heat=round(p.heat), bounty=p.bounty)
     from ui import media
     media.sfx("warden_whistle")
+    media.npc_voice("ledger_warden")
     media.show_art("npcs", "ledger_hunter" if kind == "hunters" else "ledger_warden",
                    caption="Ledger hunters" if kind == "hunters" else "A Ledger warden")
     renderer.print_divider()
@@ -126,6 +127,7 @@ def confront(engine: "GameEngine", kind: str = "patrol", rng: random.Random | No
 
     if pick == "pay":
         p.gold -= fine
+        _seal()
         law.settle(p)
         _update_standing(engine, 2)
         renderer.print_success(f"You pay {format_currency(fine)}. The entry is settled.")
@@ -168,6 +170,7 @@ def confront_after_fail(engine, kind, rng) -> str:
         uip.Choice("Fight", "fight")]).ask() or "jail"
     if pick == "pay":
         p.gold -= fine
+        _seal()
         law.settle(p)
         renderer.print_success(f"You pay {format_currency(fine)}.")
         result = "paid"
@@ -186,15 +189,14 @@ def _fight(engine, kind: str) -> str:
     p = engine.state.player
     outcome = engine._run_combat(f"ledger_{kind}", enemies=_wardens(p.level, kind), nonlethal=True)
     if outcome == "victory":
-        res = law.commit_crime(engine.state, "assault")
-        if res and not res.witnessed:                # you just beat up the wardens
-            law.commit_crime(engine.state, "assault", rng=random.Random(0), zone="verath_city")
+        law.commit_crime(engine.state, "assault", seen=True)   # you just beat up the wardens
         renderer.print_system_message("The wardens are down. The Ledger will remember this.",
                                       style="system_warning")
         return "fought"
     renderer.print_scene_text(["You come to in a grey cell, your purse lighter."])
     fine = min(p.gold, law.fine_for(p))
     p.gold -= fine
+    _seal()
     _jail(engine, extra_hours=4)
     return "beaten"
 
@@ -218,6 +220,12 @@ def _jail(engine, extra_hours: int = 0) -> None:
 
 # ── The Ledger House ─────────────────────────────────────────────────────────
 
+def _seal() -> None:
+    """A fine paid: coins on the counter, the Ledger's seal on the line."""
+    from ui import media
+    media.sfx("ledger_seal") or media.sfx("coins")
+
+
 def settle_at_counter(engine: "GameEngine") -> None:
     p = engine.state.player
     if p.heat < 1 and p.bounty <= 0:
@@ -232,6 +240,7 @@ def settle_at_counter(engine: "GameEngine") -> None:
             renderer.print_error("You don't have enough. You could turn yourself in instead.")
         else:
             p.gold -= fine
+            _seal()
             law.settle(p)
             _update_standing(engine, 2)
             renderer.print_success("Settled. The clerk blots the line dry.")

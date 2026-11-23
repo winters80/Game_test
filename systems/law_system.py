@@ -93,15 +93,18 @@ def heat_label(heat: float) -> str:
 
 
 def commit_crime(state: "GameState", kind: str, rng: random.Random | None = None,
-                 zone: str | None = None) -> CrimeResult | None:
-    """Apply a crime the player just committed. Unknown kinds are ignored."""
+                 zone: str | None = None, seen: bool | None = None) -> CrimeResult | None:
+    """Apply a crime the player just committed. Unknown kinds are ignored.
+    `seen=True` skips the witness roll (the victims are the Ledger itself)."""
     crime = CRIMES.get(kind)
     if crime is None:
         return None
     rng = rng or random
     p = state.player
     zone = zone or state.current_scene_id
-    if kind == "sedition":
+    if seen is not None:
+        pass
+    elif kind == "sedition":
         seen = True                                   # the System reports it
     else:
         chance = WITNESS.get(zone, 0.0) * (1.0 - stealth(p))

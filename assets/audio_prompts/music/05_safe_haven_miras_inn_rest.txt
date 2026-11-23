@@ -1,0 +1,8 @@
+ID: MUS-05
+Category: Music
+Track / Context: Safe Haven (Mira's Inn / Rest)
+Length: 75s loop
+Tempo: ~64 BPM
+
+Prompt:
+Quiet, weary dark-fantasy tavern ambient instrumental: solitary plucked lute and warm low acoustic drone, subtle bowed viola harmonies, intimate and understated, slightly melancholic warmth. Seamless loop, no percussion.

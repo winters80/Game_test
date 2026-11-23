@@ -1,0 +1,10 @@
+ID: VOX-CORE-02
+Category: Voice (Core Cast & System)
+Character: Auditor Imre Castell
+
+TTS Voice Direction:
+Quiet, measured male voice, fifties; clipped, educated, and precise; cool dry texture; never raises his voice, letting silence carry the threat.
+
+Sample Lines:
+- "We are not good. We are not cruel. We are accurate."
+- "Your rank is not a suggestion, citizen. Discrepancies are corrected at the Ledger House."

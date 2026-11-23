@@ -1,0 +1,8 @@
+ID: SFX-01
+Category: Sound Effect
+Effect: System Notification
+Length: ~1.0s
+Music: No
+
+Prompt:
+A clean crystalline chime with a soft digital shimmer, cold and precise, crisp high-frequency tail, no music.

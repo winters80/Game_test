@@ -1,0 +1,8 @@
+ID: SFX-07
+Category: Sound Effect
+Effect: Combat — Crystal Shattering
+Length: ~1.2s
+Music: No
+
+Prompt:
+Heavy massive crystal shattering: deep crystalline fracture crack followed by a dense cascade of sharp glass and stone shards hitting wet rock, no music.

@@ -1,0 +1,8 @@
+ID: MUS-01
+Category: Music
+Track / Context: Exploring (Aethoria / Wilds)
+Length: 90s loop
+Tempo: ~68 BPM
+
+Prompt:
+Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion.

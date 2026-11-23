@@ -58,6 +58,10 @@ SFX = {
     "coins": "gold changes hands (fines, sales)",
     "door": "you enter a new place",
     "rift_open": "a new Gate opens",
+    "gate_enter": "you step through a Gate",
+    "crystal_shatter": "a crystal creature breaks",
+    "ledger_seal": "the Ledger records an entry (a crime on file, a fine paid)",
+    "potion": "you drink a potion",
 }
 
 # Moods for music: which file plays where.
@@ -65,7 +69,13 @@ MUSIC_FOR_SCENE = {"verath_city": "verath", "village_start": "explore", "camp_re
                    "dungeon_floor1": "dungeon", "dungeon_floor2": "dungeon", "dungeon_floor3": "dungeon_deep",
                    "prologue": "prologue", "character_creation": "prologue",
                    "ending_rule": "ending", "ending_destroy": "ending"}
-MUSIC_FOR_NODE = {"ledger_house": "ledger", "undermarket": "undermarket", "core_chamber": "fracture_core"}
+MUSIC_FOR_NODE = {"ledger_house": "ledger", "undermarket": "undermarket", "core_chamber": "fracture_core",
+                  "inn_entrance": "camp"}
+
+# Bot adventurers' voices: one preset per archetype (audio/voice/bots/<archetype>/greeting).
+BOT_VOICES = {"explorer": "the eager scout", "fighter": "the cynical sellsword",
+              "crafter": "the bookish arcanist", "trader": "the pragmatic veteran",
+              "gatherer": "the pragmatic veteran"}
 
 # The System's voiced lines (record them with a TTS model; see ASSET_LIST.md).
 SYSTEM_LINES = {
@@ -75,7 +85,7 @@ SYSTEM_LINES = {
     "level_up": "Level up.",
     "skill_acquired": "New skill acquired.",
     "class_milestone": "Class milestone reached.",
-    "reported_to_ledger": "Your actions have been reported to the Ledger.",
+    "reported_to_ledger": "The System has reported you to the Ledger.",
     "new_rift": "A new Gate has opened.",
     "life_lost": "A life has been spent. Restoring.",
     "game_over": "All lives spent. Your record is closed.",
@@ -214,6 +224,9 @@ class AudioPlayer:
                 snd = self._sound(path)
                 snd.set_volume(settings()["volume_sfx"])
                 snd.play()
+                # Stamp again after playing: the first call loads the mixer,
+                # which can take longer than the throttle window itself.
+                self._last_sfx[name] = time.monotonic()
                 return True
             except Exception:
                 logger.info("Could not play %s", path, exc_info=True)
@@ -311,6 +324,14 @@ def npc_voice(npc_id: str, key: str = "greeting") -> bool:
     return bool(path) and _player.play_voice(path)
 
 
+def bot_voice(archetype: str) -> bool:
+    """A bot's greeting, by archetype (a pragmatic veteran when there's no file for it)."""
+    if not settings()["voice"]:
+        return False
+    path = find_audio(f"voice/bots/{archetype}", "greeting") or find_audio("voice/bots/trader", "greeting")
+    return bool(path) and _player.play_voice(path)
+
+
 def music(mood: str | None) -> None:
     if not settings()["music"]:
         return
@@ -326,9 +347,17 @@ _in_combat = False
 _events_registered = False
 
 
+# Spots that share another picture (looked up after their own file, before the scene's).
+ART_ALIASES = {
+    "gate_hall": "gate",                                   # both Gate Halls: the rift
+    "examine_core": "dungeon_floor3.core_chamber",         # the rest of the Fracture Core
+    "system_terminal": "dungeon_floor3.core_chamber",
+}
+
+
 def on_scene(scene_id: str, node_id: str = "root", title: str = "") -> None:
     """Entering / showing a scene node: its art, its ambience, its music."""
-    show_art("scenes", f"{scene_id}.{node_id}", scene_id, caption=title)
+    show_art("scenes", f"{scene_id}.{node_id}", ART_ALIASES.get(node_id, ""), scene_id, caption=title)
     if settings()["ambience"]:
         _player.ambience(find_audio("ambience", f"{scene_id}.{node_id}", scene_id))
     if not _in_combat:
@@ -342,6 +371,15 @@ def on_npc(npc_id: str, name: str = "") -> None:
 
 def on_boss(occupant_id: str, enemy_ids: list[str] | None = None, title: str = "") -> None:
     show_art("bosses", occupant_id, *(enemy_ids or []), caption=title)
+
+
+def on_gate(gate_id: str, name: str = "") -> None:
+    """Running a Gate: its own picture, else the rift."""
+    show_art("scenes", f"gate.{gate_id}", "gate", caption=name)
+    if not sfx("gate_enter"):
+        sfx("rift_open")
+    if settings()["ambience"]:
+        _player.ambience(find_audio("ambience", f"gate.{gate_id}", "gate"))
 
 
 def on_item(item_id: str, name: str = "") -> None:
@@ -393,4 +431,5 @@ def register_event_sounds(bus) -> None:
     on("CLASS_MILESTONE", "class_milestone", "class_milestone")
     on("ITEM_FOUND", "item_found")
     on("CRIME_COMMITTED", "warden_whistle", None, when=lambda d: d.get("witnessed"))
+    on("CRIME_COMMITTED", "ledger_seal", None, when=lambda d: not d.get("witnessed"))
     on("CRIME_COMMITTED", None, "reported_to_ledger", when=lambda d: d.get("kind") == "sedition")

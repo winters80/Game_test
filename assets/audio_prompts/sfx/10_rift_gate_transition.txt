@@ -1,0 +1,8 @@
+ID: SFX-10
+Category: Sound Effect
+Effect: Rift / Gate Transition
+Length: ~1.8s
+Music: No
+
+Prompt:
+Sharp glass-tearing crackle followed by a sudden vacuum whoosh and low resonant pressure drop as reality shifts, no music.

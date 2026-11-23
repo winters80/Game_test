@@ -1,0 +1,10 @@
+ID: VOX-CORE-05
+Category: Voice (Core Cast & System)
+Character: A Ledger Warden
+
+TTS Voice Direction:
+Flat, firm, bored authority; late twenties to thirties; clipped institutional delivery, emotionally detached, speaks like reading from a checklist.
+
+Sample Lines:
+- "Your record doesn't balance. Pay, or come with us."
+- "Halt. Present your System mark and state your business inside Verath's walls."

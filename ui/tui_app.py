@@ -170,7 +170,7 @@ class GameApp(App):
     .side-title.on { display: block; }
     #art { height: auto; display: none; margin: 0 0 1 0; }
     #art.on { display: block; }
-    #art-image { width: 100%; height: 18; }
+    #art-image { width: 100%; height: 12; }
     #art-caption { color: #a9c1e8; text-style: italic; padding: 0 1; }
     .side-list { height: auto; max-height: 14; border: none; background: transparent; }
     #main { width: 1fr; }
@@ -308,7 +308,11 @@ class GameApp(App):
             old.remove()
         if cls is not None and path:
             try:
-                box.mount(cls(path, id="art-image"), before=0)
+                widget = cls(path, id="art-image")
+                cols, rows = _art_size(path, max(20, self.sidebar_width()))
+                widget.styles.width = cols
+                widget.styles.height = rows
+                box.mount(widget, before=0)
             except Exception:
                 logger.info("Could not show %s", path, exc_info=True)
         self.query_one("#art-caption", Label).update(caption or "")
@@ -428,6 +432,26 @@ class GameApp(App):
             pass
         uip.set_backend(None)
         self.answers.put(_QUIT)
+
+
+ART_MAX_ROWS = 22
+
+
+def _art_size(path: str, cols: int) -> tuple[int, int]:
+    """Cells for a picture in the sidebar, keeping its shape: a text cell
+    holds two pixel rows, so rows = cols * h / w / 2. Tall pictures are
+    narrowed rather than allowed past ART_MAX_ROWS."""
+    try:
+        from PIL import Image
+        with Image.open(path) as im:
+            w, h = im.size
+    except Exception:
+        return cols, 12
+    rows = max(4, round(cols * h / w / 2))
+    if rows > ART_MAX_ROWS:
+        cols = max(10, round(ART_MAX_ROWS * 2 * w / h))
+        rows = ART_MAX_ROWS
+    return cols, rows
 
 
 _FILLER = {"&", "and", "a", "an", "the", "to", "about", "of", "your", "this"}

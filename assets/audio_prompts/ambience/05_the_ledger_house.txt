@@ -1,0 +1,8 @@
+ID: AMB-05
+Category: Ambience
+Location: The Ledger House
+Duration: 30s loop
+Music: No
+
+Prompt:
+A stark, high-ceilinged stone hall: hollow room tone, dozens of dry quills scratching on heavy parchment, the crisp turn of thick ledger pages, a faint cold digital-crystalline hum from floating panes, and slow measured footsteps echoing once. Clinical, oppressive, seamless loop, no music.

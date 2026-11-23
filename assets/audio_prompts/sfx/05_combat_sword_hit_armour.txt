@@ -1,0 +1,8 @@
+ID: SFX-05
+Category: Sound Effect
+Effect: Combat — Sword Hit (Armour)
+Length: ~0.8s
+Music: No
+
+Prompt:
+Heavy iron sword striking plate armour: sharp metallic clang, punchy low-mid impact thud, brief steel ring, grounded and visceral, no music.

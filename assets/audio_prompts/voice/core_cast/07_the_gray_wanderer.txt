@@ -1,0 +1,10 @@
+ID: VOX-CORE-07
+Category: Voice (Core Cast & System)
+Character: The Gray Wanderer
+
+TTS Voice Direction:
+Soft, hushed, ageless voice (indeterminate 35–50); unhurried, eerily even cadence; slightly hollow, quiet resonance as if speaking from just out of sight.
+
+Sample Lines:
+- "People look straight through what the System refuses to label."
+- "The Fracture did not break Aethoria. It only showed you where the cracks were waiting."
