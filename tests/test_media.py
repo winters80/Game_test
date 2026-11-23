@@ -78,9 +78,20 @@ def lookups(tmp: Path) -> None:
             check(shown == [("verath_city.png", "The City of Verath")], f"a scene shows its picture ({shown})")
             media.on_scene("verath_city", "root", title="The City of Verath")
             check(len(shown) == 1, "the same picture isn't re-sent")
+            media.on_scene("dungeon_floor1", "root", title="Floor 1")
+            check(shown[-1] == ("", ""), f"a scene without a picture hides the last one ({shown[-1]})")
+            media.on_scene("dungeon_floor1", "corridor")
+            check(len(shown) == 2, "...once")
+            media.on_scene("verath_city", "root", title="The City of Verath")
+            check(len(shown) == 3, "coming back shows the picture again")
+            media.on_scene("dungeon_floor1", "corridor")
+            media.on_combat_end("victory")                  # a boss portrait may be up
+            media.on_scene("dungeon_floor1", "corridor")
+            check(shown[-1] == ("", ""), "after a fight, a scene without a picture clears the boss's")
             media.set_setting("images", False)
+            before = len(shown)
             media.on_scene("verath_city", "ledger_house")
-            check(len(shown) == 1, "pictures can be switched off")
+            check(len(shown) == before, "pictures can be switched off")
             media.set_setting("images", True)
             check(json_load(tmp / "m.json")["images"] is True, "media settings are saved")
         finally:
@@ -145,10 +156,18 @@ def events() -> None:
         bus.publish(Event("LEVEL_UP", {"level": 2}))
         bus.publish(Event("CRIME_COMMITTED", {"kind": "theft", "witnessed": False}))
         bus.publish(Event("CRIME_COMMITTED", {"kind": "sedition", "witnessed": True}))
+        bus.publish(Event("QUEST_STARTED", {"quest_id": "q", "title": "T"}))
+        bus.publish(Event("QUEST_COMPLETED", {"quest_id": "q", "outcome": "success"}))
+        bus.publish(Event("SPECIES_EVOLVED", {"species_id": "human", "stage": 1, "new_name": "X"}))
+        bus.publish(Event("FACTION_RANK_CHANGED", {"faction_id": "f", "old_rank": "a", "new_rank": "b"}))
         bus.flush()
     check(("sfx", "level_up") in played and ("voice", "level_up") in played, "level up: chime and the System's voice")
     check(played.count(("sfx", "warden_whistle")) == 1 and ("voice", "reported_to_ledger") in played,
           "only a seen crime gets the whistle; sedition gets the System's report")
+    check(("sfx", "system_chime") in played and ("voice", "quest_complete") in played
+          and ("voice", "evolution") in played and ("voice", "rank_changed") in played,
+          "quests, evolution and faction ranks are heard too")
+    check(all(k in media.SYSTEM_LINES for kind, k in played if kind == "voice"), "every voice line is a System line")
 
 
 def asset_list(tmp: Path) -> None:
@@ -167,6 +186,11 @@ def asset_list(tmp: Path) -> None:
     check("| ✓ | `images/npcs/auditor_castell`" in text and "auditor_castell`" not in missing,
           "files you have are ticked (and left out of --missing)")
     check("{name}" not in text and "| , the" not in text, "boss prompts have real names in them")
+    stems = {stem for _, rows in al.collect(eng) for stem, _, _ in rows}
+    check({s for s, _ in al.MOST_WANTED} <= stems,
+          f"every 'most wanted' file is one the game uses ({ {s for s, _ in al.MOST_WANTED} - stems })")
+    check("## Most wanted" in text and text.index("## Most wanted") < text.index("## Bosses"),
+          "the missing 'most wanted' files are listed first")
     pack = al.load_pack()
     check(len(pack) == 32 and set(al.PACK_TARGETS) == set(pack),
           "every spec in the audio prompt pack is mapped to a game file")

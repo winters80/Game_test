@@ -1889,6 +1889,7 @@
      "text": "An index construct, a cabinet on legs, tries to file you away.",
      "enemies": [
       "archive_vault_construct",
+      "archive_vault_warden",
       "archive_vault_warden"
      ]
     }

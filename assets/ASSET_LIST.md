@@ -6,6 +6,23 @@ Everything the game can show or play. Save each file under `assets/` with the na
 
 **Image style** (already in every image prompt): painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark
 
+## Most wanted
+
+Missing files that would cover the most play time, best first.
+
+| File | Why | Prompt |
+|---|---|---|
+| `audio/music/dungeon` | all three dungeon floors play no music without it (the fallback, explore, is missing too) | A dark dungeon descent: low drones, distant drips, slow metallic percussion, unease. Seamless 90-second loop. |
+| `audio/music/explore` | the village, the prologue and every place without a mood of its own | Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion. (90s loop ~68 BPM) [MUS-01] |
+| `images/scenes/dungeon_floor1` | Floor 1, where every new character goes first; the panel is empty there | You stand at the dungeon's entrance corridor. The path splits — a wide tunnel to the left where you can hear goblin chatter, and a narrow passage to the right that the System's compass marks as 'unmapped'. Ahead is a chamber with something glowing. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `images/scenes/camp_rest` | the camp, visited after every rest | The camp is quiet. You have time to rest, cook, or study. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `images/scenes/prologue` | the very first screen of a new game | The pressure builds. You are at the threshold. The Classification Rite is beginning. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `images/scenes/character_creation` | the Classification Rite | IDENTITY PROTOCOL INITIATED. The System begins its assessment. First: the most basic classification. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `images/scenes/dungeon_floor2` | Floor 2 and the Crystal Heart's approach | The Crystal Caverns open before you. The purple crystals in the walls pulse slowly — an irregular heartbeat that doesn't match any natural rhythm. Three paths present themselves: a broad chamber to the north-west where crystal formations cluster thickly, a set of winding tunnels heading north, and a sealed stone door to the east with System runes carved into it. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `images/scenes/dungeon_floor3` | Floor 3 and the Drowned Sanctum's approach | The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. System notifications appear in your vision and immediately corrupt into static. Wide establishing shot, 16:9. Style: painterly dark fantasy illustration, muted earth tones with cold cyan accents from the System's light, soft volumetric light, visible brushwork, cinematic, no text, no watermark |
+| `audio/music/prologue` | the prologue and the Rite (borrow explore until then) | An opening theme: a lone piano under rising strings, mysterious and fateful, 60 seconds. |
+| `audio/music/verath` | the capital (borrows the Ledger theme until then) | Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop. (90s loop ~92 BPM) [MUS-03] |
+
 ## Scenes (images/scenes)
 
 | | File | What | Prompt |

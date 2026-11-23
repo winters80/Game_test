@@ -214,6 +214,38 @@ async def _tui_flow() -> None:
         await pilot.press("ctrl+q")
 
 
+async def _story_width() -> None:
+    from rich.text import Text
+    from textual.app import App
+    from ui.tui_app import StoryLog
+
+    class One(App):
+        def compose(self):
+            yield StoryLog(id="s", wrap=True)
+
+    app = One()
+    async with app.run_test(size=(120, 20)) as pilot:
+        log = app.query_one(StoryLog)
+        log.add(Text("word " * 80))
+        await pilot.pause(0.3)
+        widest = max(len(line.text.rstrip()) for line in log.lines)
+        check(widest > 100, f"story text uses the log's width, not the console's ({widest} of {log.size.width})")
+        await pilot.resize_terminal(60, 20)
+        await pilot.pause(0.6)
+        widest = max(len(line.text.rstrip()) for line in log.lines)
+        check(widest <= 60, f"...and re-wraps when the log gets narrower ({widest})")
+
+
+def test_story_width() -> None:
+    try:
+        import textual  # noqa: F401
+    except ImportError:
+        print("  -  textual not installed: skipped")
+        return
+    import asyncio
+    asyncio.run(_story_width())
+
+
 def test_save_summary() -> None:
     from entities.player import Player
     from persistence import save_manager as sm
@@ -250,6 +282,7 @@ if __name__ == "__main__":
     print("\n  save summaries")
     test_save_summary()
     print("\n  ui/tui_app")
+    test_story_width()
     test_tui()
     for f in list(ROOT.glob("saves/pilot*")) + list(ROOT.glob("saves/Pilot*")):
         for _ in range(20):                     # the game thread may still hold the .db (Windows)

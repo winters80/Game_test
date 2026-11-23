@@ -2300,7 +2300,8 @@
      "text": "Sentries made of clock parts tick into motion.",
      "enemies": [
       "stopped_clocktower_clockwork_sentry",
-      "stopped_clocktower_clockwork_sentry"
+      "stopped_clocktower_clockwork_sentry",
+      "stopped_clocktower_time_echo"
      ]
     }
    ],
@@ -2591,7 +2592,8 @@
      "text": "Your own nightmares come at you. You recognise them, which is the worst part.",
      "enemies": [
       "dreamers_abyss_nightmare",
-      "dreamers_abyss_nightmare"
+      "dreamers_abyss_nightmare",
+      "dreamers_abyss_thought"
      ]
     },
     {

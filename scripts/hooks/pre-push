@@ -36,6 +36,10 @@ if [ -z "$PY" ]; then
     echo ""
     exit 1
 fi
+# Tests run as if Ollama were off: a running Ollama made the suites take
+# ~25 minutes and gave machine-dependent results.
+export SB_AI_OFFLINE=1
+
 echo "  Using Python: $PY ($($PY -c 'import sys; print(sys.version.split()[0])'))"
 
 run_suite() {

@@ -256,6 +256,41 @@ def _apply_pack(sections) -> None:
                     rows[key] = (sec, len(sections[sec][1]) - 1)
 
 
+# What to make first: the files that cover the most play time, in order. Only
+# the missing ones are listed at the top of ASSET_LIST.md.
+MOST_WANTED = [
+    ("audio/music/dungeon", "all three dungeon floors play no music without it (the fallback, explore, is missing too)"),
+    ("audio/music/explore", "the village, the prologue and every place without a mood of its own"),
+    ("images/scenes/dungeon_floor1", "Floor 1, where every new character goes first; the panel is empty there"),
+    ("images/scenes/camp_rest", "the camp, visited after every rest"),
+    ("images/scenes/prologue", "the very first screen of a new game"),
+    ("images/scenes/character_creation", "the Classification Rite"),
+    ("images/scenes/dungeon_floor2", "Floor 2 and the Crystal Heart's approach"),
+    ("images/scenes/dungeon_floor3", "Floor 3 and the Drowned Sanctum's approach"),
+    ("audio/music/prologue", "the prologue and the Rite (borrow explore until then)"),
+    ("audio/music/verath", "the capital (borrows the Ledger theme until then)"),
+    ("images/bosses/spider_matriarch", "the Crystal Heart's most common second master"),
+    ("images/bosses/shardmind", "the Crystal Heart's master after a magic kill"),
+    ("images/bosses/ashen_cabal", "the Drowned Sanctum's master if the phylactery is smashed"),
+    ("audio/music/dungeon_deep", "Floor 3 (borrows dungeon until then)"),
+    ("images/scenes/ending_rule", "an ending"),
+    ("images/scenes/ending_destroy", "an ending"),
+]
+
+
+def most_wanted(rows: dict[str, tuple[str, str]], limit: int = 10) -> list[str]:
+    """Markdown rows for the missing MOST_WANTED files, with their prompts."""
+    lines = []
+    for stem, why in MOST_WANTED:
+        if _have(stem):
+            continue
+        prompt = rows.get(stem, ("", ""))[1]
+        lines.append(f"| `{stem}` | {why} | {prompt.replace('|', '/')} |")
+        if len(lines) >= limit:
+            break
+    return lines
+
+
 def build_markdown(engine, missing_only: bool = False) -> str:
     out = ["# Asset list", "",
            "Everything the game can show or play. Save each file under `assets/` with the name shown "
@@ -263,7 +298,13 @@ def build_markdown(engine, missing_only: bool = False) -> str:
            "is simply left out. Regenerate with `python scripts/asset_list.py`.", "",
            f"**Image style** (already in every image prompt): {STYLE}", ""]
     total = have = 0
-    for title, rows in collect(engine):
+    sections = collect(engine)
+    by_stem = {stem: (what, prompt) for _, rows in sections for stem, what, prompt in rows}
+    wanted = most_wanted(by_stem)
+    if wanted:
+        out += ["## Most wanted", "", "Missing files that would cover the most play time, best first.", "",
+                "| File | Why | Prompt |", "|---|---|---|", *wanted, ""]
+    for title, rows in sections:
         lines = []
         for stem, what, prompt in rows:
             ok = _have(stem)

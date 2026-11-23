@@ -128,7 +128,9 @@ def setup_ai(engine: "GameEngine") -> None:
     engine.ai_offline_reason = ""
 
     if not AI_ENABLED:
-        engine.ai_offline_reason = "AI_ENABLED is False in config.py."
+        import config
+        engine.ai_offline_reason = ("SB_AI_OFFLINE is set (tests / offline play)." if config.AI_FORCED_OFFLINE
+                                    else "AI_ENABLED is False in config.py.")
         return
 
     # Stop the previous wiring's worker when re-running (Admin → AI models).

@@ -11,7 +11,11 @@ SAVES_DIR.mkdir(exist_ok=True)
 SAVE_VERSION = 5   # bump when Player schema or world_db schema changes
 
 # ── Ollama ─────────────────────────────────────────────────────────────────────
-AI_ENABLED = True
+# SB_AI_OFFLINE=1 plays (and tests) as if Ollama weren't there, even when it's
+# running: the test suites set it so they're fast and give the same result on
+# every machine (scripts/hooks/pre-push, scripts/run_tests.py).
+AI_FORCED_OFFLINE = os.environ.get("SB_AI_OFFLINE", "").strip().lower() in ("1", "true", "yes")
+AI_ENABLED = not AI_FORCED_OFFLINE
 OLLAMA_BASE_URL = os.environ.get("OLLAMA_BASE_URL", "http://127.0.0.1:11434")
 # Both can be overridden with environment variables of the same name, e.g.
 # OLLAMA_MODEL=qwen3:32b, to use a model you already have without editing this file.

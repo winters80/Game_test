@@ -123,6 +123,9 @@ SYSTEM_LINES = {
     "class_milestone": "Class milestone reached.",
     "reported_to_ledger": "The System has reported you to the Ledger.",
     "new_rift": "A new Gate has opened.",
+    "quest_complete": "Quest complete. Rewards issued.",
+    "evolution": "Evolution complete. Biological framework updated.",
+    "rank_changed": "Standing updated. New rank recorded.",
     "life_lost": "A life has been spent. Restoring.",
     "game_over": "All lives spent. Your record is closed.",
 }
@@ -229,22 +232,25 @@ def has_any_assets() -> bool:
 _current_art: tuple[str, str] = ("", "")
 
 
-def show_art(kind: str, *keys: str, caption: str = "") -> Path | None:
-    """Show the first matching image, if images are on and the front end can."""
+def show_art(kind: str, *keys: str, caption: str = "", clear: bool = False) -> Path | None:
+    """Show the first matching image, if images are on and the front end can.
+    With ``clear`` (scenes), no match hides the picture instead of leaving the
+    previous place's art up."""
     global _current_art
     if not settings()["images"]:
         return None
     path = find_image(kind, *keys)
-    if path is None:
+    if path is None and not clear:
         return None
-    if _current_art == (str(path), caption):
+    state = (str(path), caption) if path is not None else ("", "")
+    if _current_art == state:
         return path
-    _current_art = (str(path), caption)
+    _current_art = state
     from ui.prompt import get_backend
     hook = getattr(get_backend(), "art", None)
     if hook:
         try:
-            hook(path, caption)
+            hook(path or "", caption if path is not None else "")
         except Exception:
             logger.info("Art hook failed for %s", path, exc_info=True)
     return path
@@ -570,8 +576,6 @@ def music(mood: str | None) -> None:
         path = find_audio("music", mood)
         mood = MUSIC_FALLBACK.get(mood, "explore")
     _player.music(path)
-    return
-    _player.music(path)
 
 
 # ── Game moments ─────────────────────────────────────────────────────────────
@@ -598,7 +602,8 @@ def on_scene(scene_id: str, node_id: str = "root", title: str = "") -> None:
     if _last_scene and scene_id != _last_scene and scene_id in FOOTSTEP_FOR_SCENE:
         sfx(f"footstep_{FOOTSTEP_FOR_SCENE[scene_id]}")
     _last_scene = scene_id
-    show_art("scenes", f"{scene_id}.{node_id}", ART_ALIASES.get(node_id, ""), scene_id, caption=title)
+    show_art("scenes", f"{scene_id}.{node_id}", ART_ALIASES.get(node_id, ""), scene_id, caption=title,
+             clear=True)
     if settings()["ambience"]:
         _player.ambience(find_audio("ambience", f"{scene_id}.{node_id}", scene_id))
     if not _in_combat:
@@ -644,7 +649,7 @@ def on_combat_end(result: str) -> None:
     elif result == "defeat":
         sfx("defeat")
     global _current_art
-    _current_art = ("", "")                     # let the scene art come back
+    _current_art = ("<combat>", "")             # the next scene re-sends its art (or clears the boss's)
 
 
 def stop_all() -> None:
@@ -674,6 +679,10 @@ def register_event_sounds(bus) -> None:
     on("ANOMALY_DETECTED", None, "divergence_detected")
     on("CLASS_MILESTONE", "class_milestone", "class_milestone")
     on("ITEM_FOUND", "item_found")
+    on("QUEST_STARTED", "system_chime")
+    on("QUEST_COMPLETED", "class_milestone", "quest_complete")
+    on("SPECIES_EVOLVED", "class_assigned", "evolution")
+    on("FACTION_RANK_CHANGED", "class_milestone", "rank_changed")
     on("CRIME_COMMITTED", "warden_whistle", None, when=lambda d: d.get("witnessed"))
     on("CRIME_COMMITTED", "ledger_seal", None, when=lambda d: not d.get("witnessed"))
     on("CRIME_COMMITTED", None, "reported_to_ledger", when=lambda d: d.get("kind") == "sedition")

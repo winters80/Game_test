@@ -74,6 +74,14 @@ class StoryLog(RichLog):
         self._reflow_timer = None
 
     def write(self, content, width=None, expand=False, shrink=True, scroll_end=None, animate=False):
+        # RichLog measures an entry against the app console's width, which in a
+        # browser can be far narrower than the log (text came out ~20 columns
+        # wide). Once the log has a size, render at the log's own width:
+        # renderables still take only the room they need inside it.
+        if width is None and getattr(self, "_size_known", False):
+            region = self.scrollable_content_region.width
+            if region > 0:
+                width, expand = region, True
         return super().write(content, width, expand or _has_rule(content), shrink, scroll_end, animate)
 
     def add(self, content) -> None:

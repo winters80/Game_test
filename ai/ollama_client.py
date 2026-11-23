@@ -92,6 +92,9 @@ class OllamaClient:
 
     def _get_client(self, timeout: int | None = None):
         """Return (or create) an ollama.Client. If timeout differs from cached, creates a new one."""
+        import config
+        if config.AI_FORCED_OFFLINE:
+            raise ConnectionError("SB_AI_OFFLINE is set")
         desired = timeout if timeout is not None else self._default_timeout
         if self._client is None or self._client_timeout != desired:
             try:

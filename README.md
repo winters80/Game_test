@@ -149,7 +149,7 @@ Models that "think" before answering (Gemma 4, Qwen 3.5, deepseek-r1) are asked 
 
 The game is complete as text. To add pictures and sound, put files in `assets/`:
 
-1. Open **`assets/ASSET_LIST.md`**. It lists every picture, sound and voice line the game can use, with the file name to save it as and a prompt to generate it. Ticks show what you already have. Rebuild it any time with `python scripts/asset_list.py` (add `--missing` for just the gaps), or from Admin → Art & audio.
+1. Open **`assets/ASSET_LIST.md`**. It lists every picture, sound and voice line the game can use, with the file name to save it as and a prompt to generate it. Ticks show what you already have. A **Most wanted** table at the top names the missing files that would cover the most play time (dungeon music, the dungeon and camp pictures …), best first. Rebuild it any time with `python scripts/asset_list.py` (add `--missing` for just the gaps), or from Admin → Art & audio.
 2. Paste the prompts into an image model, a text-to-speech model and a sound or music model, and save each result under the name shown. Images can be `.png`, `.jpg` or `.webp`; sound `.ogg`, `.mp3` or `.wav`.
 3. Play. In the browser version (`--web`) pictures are shown full size in a panel to the right of the game. In the panel version in a terminal they show at the top of the sidebar: at full resolution in a terminal with Kitty or Sixel graphics (Kitty, WezTerm, iTerm2, Windows Terminal 1.22+), elsewhere drawn with coloured half-blocks, so they look soft. Sound plays on the computer running the game.
 
@@ -218,7 +218,7 @@ Without Ollama the game stays fully playable, with hand-crafted classes (the Cla
 
 ### 5. (Optional) Install the pre-push test hook
 
-If you plan to push commits, install the local git hook that runs the test suite before every push:
+If you plan to push commits, install the local git hook that runs the test suite before every push. The hook sets `SB_AI_OFFLINE=1`, so the tests treat Ollama as absent even if it's running (faster, and the same result on every machine); you can set it yourself to play or test without the AI:
 
 ```bash
 # macOS / Linux / Git Bash

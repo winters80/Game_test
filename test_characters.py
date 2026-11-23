@@ -2606,7 +2606,8 @@ def main() -> int:
                 models.add(model)
                 return True
 
-            with _mock.patch.object(_oc.OllamaClient, "is_available", lambda self: available), \
+            with _mock.patch.object(_bs, "AI_ENABLED", True), \
+                 _mock.patch.object(_oc.OllamaClient, "is_available", lambda self: available), \
                  _mock.patch.object(_oc.OllamaClient, "installed_models", lambda self: set(models)), \
                  _mock.patch.object(_oc.OllamaClient, "pull", _pull), \
                  _mock.patch.object(_bs, "_confirm_download", lambda missing: accept_download), \

@@ -112,7 +112,7 @@ def main() -> None:
                 mr.set_role("primary", "qwen3.5:9b")
                 mr.set_role("fast", "qwen3.5:4b")
                 FakeClient.installed = {"qwen3.5:9b", "qwen3.5:4b"}
-                with mock.patch("ai.ollama_client.OllamaClient", FakeClient), \
+                with mock.patch("ai.ollama_client.OllamaClient", FakeClient),                         mock.patch.object(bootstrap, "AI_ENABLED", True), \
                         mock.patch.object(bootstrap, "_preload_models", lambda *a: None), \
                         mock.patch.dict(config.FEATURES, {"world_db": False}), \
                         mock.patch.object(bootstrap.renderer, "print_success", lambda *a: None):
