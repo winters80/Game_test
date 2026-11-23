@@ -76,6 +76,10 @@ MUSIC_FOR_SCENE = {"verath_city": "verath", "village_start": "explore", "camp_re
 MUSIC_FOR_NODE = {"ledger_house": "ledger", "undermarket": "undermarket", "core_chamber": "fracture_core",
                   "inn_entrance": "camp"}
 
+# A mood without its own track plays a similar one (then explore).
+MUSIC_FALLBACK = {"verath": "ledger", "undermarket": "ledger", "fracture_core": "boss",
+                  "dungeon_deep": "dungeon", "ending": "camp", "prologue": "explore"}
+
 # Bot adventurers' voices: one preset per archetype (audio/voice/bots/<archetype>/greeting).
 BOT_VOICES = {"explorer": "the eager scout", "fighter": "the cynical sellsword",
               "crafter": "the bookish arcanist", "trader": "the pragmatic veteran",
@@ -366,9 +370,14 @@ def bot_voice(archetype: str) -> bool:
 def music(mood: str | None) -> None:
     if not settings()["music"]:
         return
-    path = find_audio("music", mood) if mood else None
-    if mood and path is None:
-        path = find_audio("music", "explore")            # a sensible default track
+    path = None
+    seen = set()
+    while mood and path is None and mood not in seen:      # a missing mood borrows a similar one
+        seen.add(mood)
+        path = find_audio("music", mood)
+        mood = MUSIC_FALLBACK.get(mood, "explore")
+    _player.music(path)
+    return
     _player.music(path)
 
 

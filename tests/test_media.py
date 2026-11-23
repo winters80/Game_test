@@ -95,6 +95,13 @@ def lookups(tmp: Path) -> None:
         media.system_voice("level_up")
         _wav(tmp / "audio" / "ambience" / "camp_rest.wav")
         _wav(tmp / "audio" / "music" / "explore.wav")
+        played = []
+        with mock.patch.object(media._player, "music", lambda p: played.append(p and p.name)):
+            _wav(tmp / "audio" / "music" / "ledger.wav")
+            media.music("verath")
+            media.music("dungeon")
+        check(played == ["ledger.wav", "explore.wav"],
+              f"a mood without a track borrows a similar one, then explore ({played})")
         media.on_scene("camp_rest", "root")                    # ambience + default music
         media.on_combat_start()
         media.on_combat_end("victory")

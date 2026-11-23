@@ -1,6 +1,6 @@
 # Asset list
 
-**51 of 623 files present.**
+**56 of 623 files present.**
 
 Everything the game can show or play. Save each file under `assets/` with the name shown (images: .png/.jpg/.webp; sound: .ogg/.mp3/.wav). Nothing is required: whatever is missing is simply left out. Regenerate with `python scripts/asset_list.py`.
 
@@ -611,15 +611,15 @@ Everything the game can show or play. Save each file under `assets/` with the na
 
 | | File | What | Prompt |
 |---|---|---|---|
-|   | `audio/music/boss` | boss | Massive dark-fantasy boss battle orchestral instrumental: booming war drums, aggressive brass swells, frantic dissonant strings, cold crystalline synth undertones, and dramatic low choir accents. Overwhelming, ominous, seamless loop. (90s loop 136 BPM) [MUS-04] |
-|   | `audio/music/camp` | camp | Quiet, weary dark-fantasy tavern ambient instrumental: solitary plucked lute and warm low acoustic drone, subtle bowed viola harmonies, intimate and understated, slightly melancholic warmth. Seamless loop, no percussion. (75s loop ~64 BPM) [MUS-05] |
-|   | `audio/music/combat` | combat | Tense dark-fantasy orchestral combat instrumental: driving low cellos and double basses playing urgent ostinatos, thunderous taiko drums, sharp muted brass stabs, and crisp metallic percussion accents. Grounded, relentless, seamless loop, no lyrics. (75s loop 130 BPM) [MUS-02] |
+| ✓ | `audio/music/boss` | boss | Massive dark-fantasy boss battle orchestral instrumental: booming war drums, aggressive brass swells, frantic dissonant strings, cold crystalline synth undertones, and dramatic low choir accents. Overwhelming, ominous, seamless loop. (90s loop 136 BPM) [MUS-04] |
+| ✓ | `audio/music/camp` | camp | Quiet, weary dark-fantasy tavern ambient instrumental: solitary plucked lute and warm low acoustic drone, subtle bowed viola harmonies, intimate and understated, slightly melancholic warmth. Seamless loop, no percussion. (75s loop ~64 BPM) [MUS-05] |
+| ✓ | `audio/music/combat` | combat | Tense dark-fantasy orchestral combat instrumental: driving low cellos and double basses playing urgent ostinatos, thunderous taiko drums, sharp muted brass stabs, and crisp metallic percussion accents. Grounded, relentless, seamless loop, no lyrics. (75s loop 130 BPM) [MUS-02] |
 |   | `audio/music/dungeon` | dungeon | A dark dungeon descent: low drones, distant drips, slow metallic percussion, unease. Seamless 90-second loop. |
 |   | `audio/music/dungeon_deep` | dungeon deep | The deepest dungeon: subterranean drones, whispering choir, cracking crystal tones, dread. Seamless 90-second loop. |
 |   | `audio/music/ending` | ending | A closing theme: bittersweet strings and choir resolving slowly, 90 seconds. |
-|   | `audio/music/explore` | explore | Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion. (90s loop ~68 BPM) [MUS-01] |
+| ✓ | `audio/music/explore` | explore | Melancholic dark-fantasy ambient instrumental: expressive solo cello, soft muted string swells, distant cold choir pads, sparse felt piano notes, slow unhurried tempo, weathered and bleak with a subtle hopeful undertone. Seamless loop, no vocals, no heavy percussion. (90s loop ~68 BPM) [MUS-01] |
 |   | `audio/music/fracture_core` | fracture core | The origin of the Fracture: a vast low hum, glass-like crackles, ethereal tones, awe and dread. Seamless 60-second loop. |
-|   | `audio/music/ledger` | ledger | Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop. (90s loop ~92 BPM) [MUS-03] |
+| ✓ | `audio/music/ledger` | ledger | Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop. (90s loop ~92 BPM) [MUS-03] |
 |   | `audio/music/prologue` | prologue | An opening theme: a lone piano under rising strings, mysterious and fateful, 60 seconds. |
 |   | `audio/music/undermarket` | undermarket | A shady underground market: low plucked strings, hand drum, muted clarinet, sly and tense. Seamless 60-second loop. |
 |   | `audio/music/verath` | verath | Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop. (90s loop ~92 BPM) [MUS-03] |
