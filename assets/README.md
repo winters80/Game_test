@@ -35,7 +35,7 @@ in `sounds_manifest.json`.
 
 ## What's here already
 
-84 sounds (OGG): five music tracks (`explore`, `combat`, `ledger`, `boss`, `camp`;
+83 sounds (OGG), mastered with `scripts/master_audio.py`: four music tracks (`combat`, `ledger`, `boss`, `camp`; no `explore` yet;
 other moods borrow one, see `media.MUSIC_FALLBACK`), all 36 effects (including menu clicks, combat foley, footsteps and the
 low-health heartbeat loop), ten ambience
 loops, three System lines, three takes each for six people

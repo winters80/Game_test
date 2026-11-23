@@ -42,7 +42,7 @@ IMAGE_EXT = (".png", ".jpg", ".jpeg", ".webp")
 AUDIO_EXT = (".ogg", ".mp3", ".wav")
 SETTINGS_FILE = SAVES_DIR / "settings" / "media.json"
 
-DEFAULTS = {"images": True, "ui_sounds": True, "sfx": True, "music": True, "ambience": True, "voice": True,
+DEFAULTS = {"images": True, "ui_sounds": True, "ui_hover": False, "muted": [], "sfx": True, "music": True, "ambience": True, "voice": True,
             "volume_sfx": 0.8, "volume_music": 0.45, "volume_ambience": 0.5, "volume_voice": 1.0}
 
 # Sound effects the game plays, and when.
@@ -168,8 +168,16 @@ def asset_dirs() -> list[Path]:
     return [LOCAL_ASSETS_DIR, ASSETS_DIR]
 
 
+def is_muted(rel: str) -> bool:
+    """``rel`` like ``music/explore`` or ``voice/torven_blacksmith/greeting_2`` (Admin → listen and mute)."""
+    return rel in settings()["muted"]
+
+
 def _find_any(sub: str, keys, exts) -> Path | None:
+    audio = sub.startswith("audio/")
     for key in keys:                          # the most specific key wins, from either folder
+        if not key or (audio and is_muted(f"{sub[6:]}/{key}")):
+            continue
         for base in asset_dirs():
             hit = _find(base / sub, [key], exts)
             if hit:
@@ -193,7 +201,8 @@ def find_variant(kind: str, key: str) -> Path | None:
         folder = base / "audio" / kind
         if not folder.is_dir():
             continue
-        hits = sorted(f for f in folder.iterdir() if f.suffix.lower() in AUDIO_EXT and pat.match(f.stem))
+        hits = sorted(f for f in folder.iterdir() if f.suffix.lower() in AUDIO_EXT and pat.match(f.stem)
+                      and not is_muted(f"{kind}/{f.stem}"))
         if hits:
             return random.choice(hits)
     return None
@@ -441,7 +450,50 @@ def test_sound() -> str:
 
 def ui_sound(kind: str) -> bool:
     """Menu clicks (hover / confirm / cancel), switchable on their own in Admin."""
-    return settings()["ui_sounds"] and sfx(f"ui_{kind}")
+    s = settings()
+    if not s["ui_sounds"] or (kind == "hover" and not s["ui_hover"]):
+        return False
+    return sfx(f"ui_{kind}")
+
+
+def all_sounds() -> list[tuple[str, Path]]:
+    """Every sound file the game can play, as (``music/explore``, path), for Admin."""
+    seen: dict[str, Path] = {}
+    for base in asset_dirs():
+        root = base / "audio"
+        if root.is_dir():
+            for p in sorted(root.rglob("*")):
+                if p.suffix.lower() in AUDIO_EXT:
+                    seen.setdefault(p.relative_to(root).with_suffix("").as_posix(), p)
+    order = {"music": 0, "ambience": 1, "sfx": 2, "voice": 3}
+    return sorted(seen.items(), key=lambda kv: (order.get(kv[0].split("/")[0], 9), kv[0]))
+
+
+def preview(path: Path | None) -> bool:
+    """Play one file now on the voice channel (stops the previous preview); None stops it."""
+    if not _player._init():
+        return False
+    with _player._lock:
+        try:
+            _player._voice_ch.stop()
+            if path is None:
+                return True
+            snd = _player._sound(path)
+            snd.set_volume(0.9)
+            _player._voice_ch.play(snd)
+            return True
+        except Exception:
+            logger.info("Could not preview %s", path, exc_info=True)
+            return False
+
+
+def set_muted(rel: str, muted: bool) -> None:
+    m = [x for x in settings()["muted"] if x != rel] + ([rel] if muted else [])
+    set_setting("muted", sorted(m))
+    if muted and rel.startswith("music/"):
+        _player.music(None)                      # stop it now if it's playing
+    if muted and rel.startswith("ambience/"):
+        _player.ambience(None)
 
 
 def ui_answer(answer) -> None:

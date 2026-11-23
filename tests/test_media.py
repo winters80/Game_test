@@ -297,6 +297,37 @@ def hooks(tmp: Path) -> None:
                              if t.path.startswith("audio/sfx/")}, "the sound-pack script has a target for every effect")
 
 
+def muting(tmp: Path) -> None:
+    """Admin → listen and mute: a muted file is skipped; menu ticks are off by default."""
+    from ui import media
+    with mock.patch.object(media, "ASSETS_DIR", tmp / "a"), mock.patch.object(media, "LOCAL_ASSETS_DIR", tmp / "l"), \
+            mock.patch.object(media, "SETTINGS_FILE", tmp / "m.json"):
+        media._settings = None
+        _wav(tmp / "a" / "audio" / "music" / "camp.wav")
+        _wav(tmp / "a" / "audio" / "sfx" / "ui_hover.wav")
+        for i in (1, 2):
+            _wav(tmp / "a" / "audio" / "voice" / "mira_innkeeper" / f"greeting_{i}.wav")
+        check([r for r, _ in media.all_sounds()][0] == "music/camp" and len(media.all_sounds()) == 4,
+              "the listen page lists every sound file, music first")
+        media.set_muted("music/camp", True)
+        media.set_muted("voice/mira_innkeeper/greeting_2", True)
+        check(media.find_audio("music", "camp") is None, "a muted track is never played")
+        check({media.find_variant("voice/mira_innkeeper", "greeting").name for _ in range(30)} == {"greeting_1.wav"},
+              "a muted take is skipped, the others still play")
+        check(_json_muted(tmp) == ["music/camp", "voice/mira_innkeeper/greeting_2"], "mutes are saved")
+        media.set_muted("music/camp", False)
+        check(media.find_audio("music", "camp") is not None, "and can be undone")
+        with mock.patch.object(media, "sfx", lambda n: True):
+            check(media.ui_sound("hover") is False and media.ui_sound("confirm") is True,
+                  "the tick while moving between choices is off by default; clicks stay on")
+        media._settings = None
+
+
+def _json_muted(tmp: Path) -> list:
+    import json
+    return json.loads((tmp / "m.json").read_text())["muted"]
+
+
 def sound_pack(tmp: Path) -> None:
     """scripts/fetch_sounds.py: picks a file per game sound by name, zips it with credits."""
     import zipfile
@@ -378,7 +409,7 @@ if __name__ == "__main__":
     setup_logging()
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
                      ("sound pack", sound_pack), ("sound status", status),
-                     ("sound hooks", hooks)):
+                     ("sound hooks", hooks), ("muting", muting)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory() as tmp:
             fn(Path(tmp))

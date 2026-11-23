@@ -1091,6 +1091,8 @@ class GameMenusMixin:
             renderer.console.print(f"  [{'success' if ok else 'system_warning'}]{status}[/{'success' if ok else 'system_warning'}]")
             choices = [uip.Choice(f"Pictures: {onoff('images')}", "images"),
                        uip.Choice(f"Menu clicks: {onoff('ui_sounds')}", "ui_sounds"),
+                       uip.Choice(f"Ticks while moving between choices: {onoff('ui_hover')}", "ui_hover"),
+                       uip.Choice(f"Listen to each sound and mute the bad ones ({len(s['muted'])} muted)", "listen"),
                        uip.Choice(f"Sound effects: {onoff('sfx')}  (volume {s['volume_sfx']:.0%})", "sfx"),
                        uip.Choice(f"Music: {onoff('music')}  (volume {s['volume_music']:.0%})", "music"),
                        uip.Choice(f"Ambience: {onoff('ambience')}  (volume {s['volume_ambience']:.0%})", "ambience"),
@@ -1102,6 +1104,9 @@ class GameMenusMixin:
             pick = uip.select("Art & audio:", choices=choices).ask()
             if not pick:
                 return
+            if pick == "listen":
+                self._sound_listen_menu()
+                continue
             if pick == "test":
                 renderer.print_system_message(media.test_sound())
                 renderer.prompt_any_key()
@@ -1129,6 +1134,35 @@ class GameMenusMixin:
                         pass
             else:
                 media.set_setting(pick, not s[pick])
+
+    def _sound_listen_menu(self) -> None:
+        """Play any sound file; mute the ones you don't want (saved in media settings)."""
+        from ui import media
+        last = None
+        while True:
+            sounds = media.all_sounds()
+            if not sounds:
+                renderer.print_system_message("No sound files in assets/audio yet.")
+                renderer.prompt_any_key()
+                return
+            choices = [uip.Choice(f"{'🔇 ' if media.is_muted(rel) else '▶ '}{rel}", rel) for rel, _p in sounds]
+            choices.append(uip.Choice("← Back", ""))
+            rel = uip.select("Pick a sound to hear it (🔇 = muted):", choices=choices, default=last).ask()
+            if not rel:
+                media.preview(None)
+                return
+            last = rel
+            media.preview(dict(sounds)[rel])
+            muted = media.is_muted(rel)
+            act = uip.select(f"{rel}:", choices=[
+                uip.Choice("Keep it" if not muted else "Keep it muted", "keep"),
+                uip.Choice("Mute it (the game skips it)" if not muted else "Unmute it", "toggle"),
+                uip.Choice("Play it again", "again")]).ask()
+            if act == "again":
+                media.preview(dict(sounds)[rel])
+            elif act == "toggle":
+                media.set_muted(rel, not muted)
+            media.preview(None)
 
     # ── Feature flag toggle ───────────────────────────────────────────────────
 
