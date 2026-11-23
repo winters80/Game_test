@@ -221,6 +221,7 @@ class AudioPlayer:
         self._music = ""
         self._ambience = ""
         self._amb_ch = self._voice_ch = None
+        self.error = ""                              # why sound is off, for the status line
 
     def _init(self) -> bool:
         if self._ok is not None:
@@ -236,8 +237,13 @@ class AudioPlayer:
             pygame.mixer.set_reserved(2)
             self._pg = pygame
             self._ok = True
-        except Exception as e:                      # no pygame, no sound device …
-            logger.info("Audio off: %s", e)
+        except ImportError:
+            self.error = "the sound library isn't installed (run: python -m pip install pygame-ce)"
+            logger.info("Audio off: %s", self.error)
+            self._ok = False
+        except Exception as e:                      # no sound device, driver trouble …
+            self.error = f"the sound device couldn't be opened ({e})"
+            logger.info("Audio off: %s", self.error)
             self._ok = False
         return self._ok
 
@@ -336,6 +342,66 @@ class AudioPlayer:
 
 
 _player = AudioPlayer()
+
+
+def audio_files() -> int:
+    return sum(1 for d in asset_dirs() if (d / "audio").is_dir()
+               for p in (d / "audio").rglob("*") if p.suffix.lower() in AUDIO_EXT)
+
+
+def audio_status() -> tuple[bool, str]:
+    """(sound works, a sentence saying why or why not) for Admin and the title screen."""
+    n = audio_files()
+    if not n:
+        return False, "Sound: no sound files in assets/audio yet."
+    s = settings()
+    if not any(s[k] for k in ("sfx", "music", "ambience", "voice")):
+        return False, "Sound: switched off in Admin → Art & audio."
+    if not _player._init():
+        return False, f"Sound is off: {_player.error or 'audio is unavailable'}."
+    try:
+        import pygame
+        ver = getattr(pygame, "version", None)
+        ver = getattr(ver, "ver", "") if ver else ""
+        freq, _fmt, ch = pygame.mixer.get_init() or (0, 0, 0)
+        driver = ""
+        try:
+            driver = pygame.mixer.get_driver() if hasattr(pygame.mixer, "get_driver") else ""
+        except Exception:
+            pass
+    except Exception:
+        ver, freq, ch, driver = "", 0, 0, ""
+    vols = ", ".join(f"{k} {s['volume_' + k]:.0%}" for k in ("music", "sfx", "ambience", "voice") if s[k])
+    dev = f", {driver}" if driver else ""
+    return True, f"Sound: on ({n} files; pygame-ce {ver}, {freq} Hz{dev}; {vols})."
+
+
+def test_sound() -> str:
+    """Play the System chime and a voice line now (Admin → Art & audio → Test sound)."""
+    ok, msg = audio_status()
+    if not ok:
+        return msg
+    played = []
+    chime = find_audio("sfx", "system_chime", "level_up", "item_found")
+    if chime:
+        _player._last_sfx.pop(chime.stem, None)
+        if _player.play_sfx(chime, chime.stem):
+            played.append(f"effect {chime.name}")
+    line = find_audio("voice/system", "classification_complete", "welcome")
+    if line and _player.play_voice(line):
+        played.append(f"voice {line.name}")
+    if not played:
+        return msg + " Nothing could be played; see logs/ for the error."
+    return msg + " Playing: " + ", ".join(played) + ". If you hear nothing, check your volume and output device."
+
+
+def startup_notice() -> str | None:
+    """One line for the title screen when there are sounds but they can't play."""
+    ok, msg = audio_status()
+    logger.info(msg)
+    if ok or not audio_files() or msg.startswith("Sound: switched off"):
+        return None
+    return msg
 
 
 def sfx(name: str) -> bool:

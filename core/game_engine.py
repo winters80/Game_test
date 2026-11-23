@@ -109,6 +109,10 @@ class GameEngine(GameMenusMixin, CombatHandlerMixin, DialogueHandlerMixin, Choic
         self.bootstrap()
         renderer.clear()
         renderer.print_title()
+        from ui import media
+        notice = media.startup_notice()            # e.g. "Sound is off: … pip install pygame-ce"
+        if notice:
+            renderer.console.print(f"  [system_warning]{notice}[/system_warning]")
         self._main_menu()
 
     # ── Menu / loop delegates ─────────────────────────────────────────────────
