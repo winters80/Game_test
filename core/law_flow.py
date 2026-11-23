@@ -95,6 +95,10 @@ def confront(engine: "GameEngine", kind: str = "patrol", rng: random.Random | No
     fine = law.fine_for(p, _standing(engine))
     deputy = _deputy_here(engine)
     session_log.event("ledger_" + kind, heat=round(p.heat), bounty=p.bounty)
+    from ui import media
+    media.sfx("warden_whistle")
+    media.show_art("npcs", "ledger_hunter" if kind == "hunters" else "ledger_warden",
+                   caption="Ledger hunters" if kind == "hunters" else "A Ledger warden")
     renderer.print_divider()
     if kind == "hunters":
         renderer.print_scene_text([

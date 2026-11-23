@@ -222,6 +222,9 @@ def bar_color(ratio: float) -> str:
 
 
 def print_combat_action(actor: str, action: str, value: int | None = None, style: str = "scene_text") -> None:
+    if value is not None and actor == "You":
+        from ui import media
+        media.sfx("spell" if style == "rare" else "hit")
     if value is not None:
         console.print(f"  [{style}]{actor}[/{style}] {action} [{style}]{value}[/{style}]")
     else:

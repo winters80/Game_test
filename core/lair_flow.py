@@ -160,6 +160,8 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
     gen = f" · GENERATION {state.generation + 1}" if state.generation else ""
     renderer.print_system_message(
         f"DESIGNATED ENCOUNTER ZONE · {title.upper()}{gen}", style="system_warning")
+    from ui import media
+    media.on_boss(occ.occupant_id, list(occ.enemies), title)
     lines = [lair_system.fmt(occ.intro, name)]
     if state.generation:
         prev = _previous_line(engine, lair_id)

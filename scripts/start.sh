@@ -26,9 +26,13 @@ fi
 [ -n "$PY" ] || { warn "Python 3.11+ is required: https://www.python.org/downloads/"; exit 1; }
 
 # 1. Python dependencies
-if ! "$PY" -c "import rich, questionary, pydantic, inspect, ollama; assert 'think' in inspect.signature(ollama.Client.generate).parameters" >/dev/null 2>&1; then
+if ! "$PY" -c "import rich, questionary, pydantic, textual, inspect, ollama; assert 'think' in inspect.signature(ollama.Client.generate).parameters" >/dev/null 2>&1; then
     say "Installing Python dependencies..."
     "$PY" -m pip install -r requirements.txt || { warn "pip install failed."; exit 1; }
+fi
+# Optional: pictures and sound (the game runs without them).
+if ! "$PY" -c "import pygame, textual_image" >/dev/null 2>&1; then
+    "$PY" -m pip install -q pygame-ce textual-image >/dev/null 2>&1 || warn "Optional art/sound packages didn't install; the game runs without them."
 fi
 
 cfg() { "$PY" -c "import config; print($1)"; }

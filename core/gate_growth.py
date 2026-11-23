@@ -141,6 +141,9 @@ def open_gate(engine: "GameEngine", frag: dict, source: str, announce: bool = Tr
     if announce:
         renderer.print_system_message(
             f"✦ A NEW RIFT OPENS · {gate.name.upper()} · LEVEL {gate.min_level} ({source})", style="system_msg")
+        from ui import media
+        media.sfx("rift_open")
+        media.system_voice("new_rift")
     logger.info("Gate opened (%s): %s L%d", source, gate.gate_id, gate.min_level)
     return gate
 
