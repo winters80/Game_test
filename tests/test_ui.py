@@ -82,6 +82,17 @@ def test_prompt_layer() -> None:
                 offenders.append(f.name)
     check(not offenders, f"every prompt goes through ui/prompt (direct questionary use: {offenders})")
 
+    # A Choice whose value is None answers with its label ("← Back"), which
+    # crashed Admin → Art & audio. Back / Cancel entries use "" instead.
+    import re
+    none_valued = []
+    for folder in ("core", "systems", "scenes", "ui", "persistence"):
+        for f in (ROOT / folder).rglob("*.py"):
+            if re.search(r"Choice\([^()]*,\s*(value\s*=\s*)?None\s*\)", f.read_text(encoding="utf-8")):
+                none_valued.append(f.name)
+    check(not none_valued, f"no menu choice uses None as its value ({none_valued})")
+    check(uip.Choice("← Back", "").value == "", "a Back choice answers with an empty (falsy) value")
+
 
 # ── utils/session_log ─────────────────────────────────────────────────────────
 

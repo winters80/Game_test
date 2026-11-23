@@ -133,13 +133,13 @@ def _choose(engine, catalog, installed) -> None:
         uip.Choice("primary — quests, classes, Gates (best quality)", "primary"),
         uip.Choice("fast — [?] questions, bot chat (quick)", "fast"),
         uip.Choice("fallback — if the primary won't load", "fallback"),
-        uip.Choice("← Cancel", None)]).ask()
+        uip.Choice("← Cancel", "")]).ask()
     if not role:
         return
     known = [m["name"] for m in catalog.get("models", []) if role in m.get("roles", [])]
     names = sorted(set(installed)) + [n for n in known if n not in installed]
     choices = [uip.Choice(n + ("" if n in installed else "  (download)"), n) for n in names]
-    choices += [uip.Choice("Type a model name…", "__type__"), uip.Choice("← Cancel", None)]
+    choices += [uip.Choice("Type a model name…", "__type__"), uip.Choice("← Cancel", "")]
     pick = uip.select(f"Model for {role}:", choices=choices).ask()
     if pick == "__type__":
         pick = (uip.text("Ollama model name (e.g. qwen3.5:9b):").ask() or "").strip()

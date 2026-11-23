@@ -79,17 +79,17 @@ It will:
 3. **download the two models** from `config.py` if they aren't there yet (a one-time download of about 11 GB)
 4. launch the game, which then **preloads both models into memory** in the background, so your first `[?]` question doesn't time out on a cold model
 
-Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game. Anything else you add is passed to the game, so `./scripts/start.sh --tui` starts the panel interface.
+Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game. Anything else you add is passed to the game, so `./scripts/start.sh --web` starts the browser version and `--classic` the plain terminal.
 
 #### Three ways to play
 
 | Command | What you get |
 |---|---|
-| `python main.py` | The classic terminal: scrolling text and arrow-key menus |
-| `python main.py --tui` | **Panels** in the terminal: sidebar with status, gear and bag; scrollable story; clickable choices; hotkey bar |
-| `python main.py --web` | The panel version **in your browser** at http://localhost:8000 |
+| `python main.py` | **Panels** in the terminal (the default): sidebar with status, gear and bag; scrollable story; clickable choices; hotkey bar; pictures at the top of the sidebar |
+| `python main.py --web` | The panel version **in your browser** at http://localhost:8000, with pictures **full size** in a panel beside the game. The best way to see the art |
+| `python main.py --classic` | The classic terminal: scrolling text and arrow-key menus, no pictures |
 
-All three run the same game and the same saves.
+All three run the same game and the same saves. The launchers pass these on (`start.bat --web`, `./scripts/start.sh --classic`). If Textual isn't installed, `python main.py` falls back to the classic terminal.
 
 On the title screen you should see **`AI system online. Ollama connected.`** The admin panel (`[A]`) shows **`AI: online`**.
 
@@ -151,7 +151,7 @@ The game is complete as text. To add pictures and sound, put files in `assets/`:
 
 1. Open **`assets/ASSET_LIST.md`**. It lists every picture, sound and voice line the game can use, with the file name to save it as and a prompt to generate it. Ticks show what you already have. Rebuild it any time with `python scripts/asset_list.py` (add `--missing` for just the gaps), or from Admin → Art & audio.
 2. Paste the prompts into an image model, a text-to-speech model and a sound or music model, and save each result under the name shown. Images can be `.png`, `.jpg` or `.webp`; sound `.ogg`, `.mp3` or `.wav`.
-3. Play. Pictures show in the art box at the top of the sidebar in the panel and browser versions (`--tui`, `--web`). In a terminal that supports Kitty or Sixel graphics (Kitty, WezTerm, iTerm2, Windows Terminal 1.22+) they're shown at full resolution; elsewhere, including the browser, they're drawn with coloured half-blocks, so they look soft. Sound plays on the computer running the game.
+3. Play. In the browser version (`--web`) pictures are shown full size in a panel to the right of the game. In the panel version in a terminal they show at the top of the sidebar: at full resolution in a terminal with Kitty or Sixel graphics (Kitty, WezTerm, iTerm2, Windows Terminal 1.22+), elsewhere drawn with coloured half-blocks, so they look soft. Sound plays on the computer running the game.
 
 What's already included: scene art for `village_start` (the outer market), `verath_city`, the Ledger House, the Undermarket, the Fracture Core and every Gate (`gate`, also shown at both Gate Halls); portraits of Torven, Mira, the Gray Wanderer, Auditor Castell, Silas and the Ledger wardens; the Crystal Golem, the Archmage, the Hollow Lich and the High Auditor; the rusty sword, health potion, stolen jewellery and warden's seal. The art direction is in `assets/art_and_audio_direction.md`.
 

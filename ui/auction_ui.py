@@ -70,7 +70,7 @@ def _consign(engine: "GameEngine", auction_system) -> None:
         renderer.prompt_any_key()
         return
     choices = [uip.Choice(f"{item.name} ×{qty} — starts at {item.value_gold * 100:,} each", item.item_id)
-               for item, qty in goods] + [uip.Choice("← Back", None)]
+               for item, qty in goods] + [uip.Choice("← Back", "")]
     item_id = uip.select("Consign which item?", choices=choices).ask()
     if not item_id:
         return

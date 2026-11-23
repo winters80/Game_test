@@ -299,6 +299,13 @@ class GameApp(App):
         best protocol it supports (Kitty, Sixel, or half-cells)."""
         import os
         box = self.query_one("#art", Vertical)
+        web_art = os.environ.get("SB_WEB_ART", "")
+        if web_art:                          # browser: the page shows it full size beside the game
+            from ui import web_server
+            if web_server.publish(web_art, path, caption):
+                self.art_path = path
+                box.set_class(False, "on")
+                return
         try:
             from textual_image import widget as tiw
             cls = tiw.HalfcellImage if "web_driver" in os.environ.get("TEXTUAL_DRIVER", "") else tiw.AutoImage
@@ -488,11 +495,11 @@ def run_web(host: str = "localhost", port: int = 8000) -> None:
     import sys
     from pathlib import Path
     try:
-        from textual_serve.server import Server
+        from ui.web_server import make_server
+        import textual_serve  # noqa: F401
     except ImportError:
         print("Browser mode needs textual-serve:  pip install textual-serve")
         return
     main = Path(__file__).resolve().parent.parent / "main.py"
     print(f"Open http://{host}:{port} in your browser (Ctrl+C here to stop).")
-    Server(f'"{sys.executable}" "{main}" --tui', host=host, port=port,
-           title="SYSTEM BREAKER").serve()
+    make_server(f'"{sys.executable}" "{main}" --tui', host=host, port=port).serve()

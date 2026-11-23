@@ -54,3 +54,4 @@ config_local.py
 .claude/settings.local.json
 saves/settings/
 saves/backups/
+saves/web_art/
