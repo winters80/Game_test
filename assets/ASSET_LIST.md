@@ -1,6 +1,6 @@
 # Asset list
 
-**67 of 623 files present.**
+**84 of 640 files present.**
 
 Everything the game can show or play. Save each file under `assets/` with the name shown (images: .png/.jpg/.webp; sound: .ogg/.mp3/.wav). Nothing is required: whatever is missing is simply left out. Regenerate with `python scripts/asset_list.py`.
 
@@ -587,6 +587,23 @@ Everything the game can show or play. Save each file under `assets/` with the na
 | ✓ | `audio/sfx/crystal_shatter` | when a crystal creature breaks | Heavy massive crystal shattering: deep crystalline fracture crack followed by a dense cascade of sharp glass and stone shards hitting wet rock, no music. (~1.2s) [SFX-07] |
 | ✓ | `audio/sfx/ledger_seal` | when the Ledger records an entry (a crime on file, a fine paid) | Heavy iron stamp thudding firmly onto thick parchment, followed by a subtle cold crystalline chime confirming a System record, no music. (~1.0s) [SFX-08] |
 | ✓ | `audio/sfx/potion` | when you drink a potion | Tight cork popping from a small glass vial, brief liquid glug, and a subtle warm breathy arcane shimmer, no music. (~1.2s) [SFX-09] |
+| ✓ | `audio/sfx/mana_potion` | when you drink a mana potion | you drink a mana potion |
+| ✓ | `audio/sfx/ui_hover` | when you move between choices (panel interface) | you move between choices (panel interface) |
+| ✓ | `audio/sfx/ui_confirm` | when you pick a choice | you pick a choice |
+| ✓ | `audio/sfx/ui_cancel` | when you back out of a menu | you back out of a menu |
+| ✓ | `audio/sfx/denied` | when something is refused (not enough gold, an error) | something is refused (not enough gold, an error) |
+| ✓ | `audio/sfx/menu_open` | when you open your items or the quest journal | you open your items or the quest journal |
+| ✓ | `audio/sfx/swing` | when you swing a basic attack | you swing a basic attack |
+| ✓ | `audio/sfx/block` | when a ward or evade takes an enemy's hit | a ward or evade takes an enemy's hit |
+| ✓ | `audio/sfx/player_hurt` | when a heavy hit lands on you (15%+ of your HP) | a heavy hit lands on you (15%+ of your HP) |
+| ✓ | `audio/sfx/dodge` | when you dodge an attack, or get away from a fight | you dodge an attack, or get away from a fight |
+| ✓ | `audio/sfx/chest_open` | when a treasure room's chest opens | a treasure room's chest opens |
+| ✓ | `audio/sfx/trap` | when a trap goes off | a trap goes off |
+| ✓ | `audio/sfx/lever` | when you push into a boss's lair | you push into a boss's lair |
+| ✓ | `audio/sfx/footstep_stone` | when you arrive somewhere paved or rocky | you arrive somewhere paved or rocky |
+| ✓ | `audio/sfx/footstep_water` | when you arrive in the flooded caverns | you arrive in the flooded caverns |
+| ✓ | `audio/sfx/footstep_dirt` | when you arrive on dirt and cobbles | you arrive on dirt and cobbles |
+| ✓ | `audio/sfx/heartbeat` | when loops while your HP is below 30% in a fight | loops while your HP is below 30% in a fight |
 
 ## Ambience loops (audio/ambience)
 

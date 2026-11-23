@@ -460,6 +460,11 @@ class GameMenusMixin:
     # ── Inventory menu ────────────────────────────────────────────────────────
 
     def _inventory_menu(self, focus_item: str | None = None) -> None:
+        from ui import media as _m
+        _m.sfx("menu_open")
+        self._inventory_menu_body(focus_item)
+
+    def _inventory_menu_body(self, focus_item: str | None = None) -> None:
         """Interactive inventory and equipment management menu."""
         from systems.inventory_system import (
             equip_item, unequip_item, use_item,
@@ -552,7 +557,8 @@ class GameMenusMixin:
                 renderer.print_system_message(msg, style="success" if ok else "system_warning")
                 if ok and getattr(item, "effect_type", "") in ("heal_hp", "heal_mp", "heal_both"):
                     from ui import media
-                    media.sfx("potion")
+                    if not (item.effect_type == "heal_mp" and media.sfx("mana_potion")):
+                        media.sfx("potion")
                 bus.flush()
                 renderer.prompt_any_key()
 
@@ -591,6 +597,11 @@ class GameMenusMixin:
     # ── Quest journal ─────────────────────────────────────────────────────────
 
     def _quests_menu(self) -> None:
+        from ui import media as _m
+        _m.sfx("menu_open")
+        self._quests_menu_body()
+
+    def _quests_menu_body(self) -> None:
         """
         Quest Journal — shows active quest objectives + completed quests.
         Drill into a quest to see full description, stage, rewards, turns elapsed.
@@ -1079,6 +1090,7 @@ class GameMenusMixin:
             ok, status = media.audio_status()
             renderer.console.print(f"  [{'success' if ok else 'system_warning'}]{status}[/{'success' if ok else 'system_warning'}]")
             choices = [uip.Choice(f"Pictures: {onoff('images')}", "images"),
+                       uip.Choice(f"Menu clicks: {onoff('ui_sounds')}", "ui_sounds"),
                        uip.Choice(f"Sound effects: {onoff('sfx')}  (volume {s['volume_sfx']:.0%})", "sfx"),
                        uip.Choice(f"Music: {onoff('music')}  (volume {s['volume_music']:.0%})", "music"),
                        uip.Choice(f"Ambience: {onoff('ambience')}  (volume {s['volume_ambience']:.0%})", "ambience"),

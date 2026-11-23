@@ -247,6 +247,56 @@ def status(tmp: Path) -> None:
         media._settings = None
 
 
+def hooks(tmp: Path) -> None:
+    """When each of the newer sounds plays."""
+    from types import SimpleNamespace as NS
+    from ui import media
+    from core.combat_handler import _combat_sounds
+    played, loops = [], []
+    with mock.patch.object(media, "sfx", lambda n: played.append(n) or True), \
+            mock.patch.object(media._player, "loop", lambda p: loops.append(p and p.name)), \
+            mock.patch.object(media, "find_audio", lambda kind, *k: Path(f"{k[0]}.ogg")):
+        p = NS(max_hp=100, current_hp=90)
+        _combat_sounds(NS(damage=20, lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=5, lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, lines=[("Orc swings — you dodge!", "miss")]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, lines=[("Orc swings — you dodge!", "miss")]), p, {"_evade": 1}, (0, 2))
+        check(played == ["player_hurt", "enemy_hit", "dodge", "block"],
+              f"heavy hit / light hit / dodge / ward or evade each sound different ({played})")
+        p.current_hp = 20
+        _combat_sounds(NS(damage=0, lines=[]), p, {}, (0, 0))
+        p.current_hp = 80
+        _combat_sounds(NS(damage=0, lines=[]), p, {}, (0, 0))
+        check(loops[-2:] == ["heartbeat.ogg", None], f"the heartbeat loops below 30% HP and stops above ({loops})")
+        played.clear()
+        media.ui_answer("fight"); media.ui_answer(""); media.ui_answer(None); media.ui_answer("← Back")
+        check(played == ["ui_confirm", "ui_cancel", "ui_cancel", "ui_cancel"], f"menu confirm / cancel clicks ({played})")
+        played.clear()
+        with mock.patch.object(media, "show_art", lambda *a, **k: None), mock.patch.object(media, "music", lambda m: None), \
+                mock.patch.object(media._player, "ambience", lambda p: None):
+            media._last_scene = ""
+            for sc in ("village_start", "village_start", "dungeon_floor2", "verath_city", "prologue"):
+                media.on_scene(sc)
+        check(played == ["footstep_water", "footstep_stone"],
+              f"footsteps only when you arrive somewhere new, by its ground ({played})")
+    from ui import prompt as uip
+
+    class Back:
+        def select(self, message, choices, default=None):
+            return choices[-1].value
+    clicks = []
+    uip.set_backend(Back())
+    try:
+        with mock.patch.object(media, "ui_answer", lambda a: clicks.append(a)):
+            uip.select("Pick:", ["a", uip.Choice("← Back", "")]).ask()
+            uip.text("Name:").ask if False else None
+    finally:
+        uip.set_backend(None)
+    check(clicks == [""], "every menu answer goes through the click sound")
+    check(set(media.SFX) <= {t.path.rsplit("/", 1)[1] for t in __import__("scripts.fetch_sounds", fromlist=["x"]).TARGETS
+                             if t.path.startswith("audio/sfx/")}, "the sound-pack script has a target for every effect")
+
+
 def sound_pack(tmp: Path) -> None:
     """scripts/fetch_sounds.py: picks a file per game sound by name, zips it with credits."""
     import zipfile
@@ -327,7 +377,8 @@ if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
-                     ("sound pack", sound_pack), ("sound status", status)):
+                     ("sound pack", sound_pack), ("sound status", status),
+                     ("sound hooks", hooks)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory() as tmp:
             fn(Path(tmp))

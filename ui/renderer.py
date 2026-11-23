@@ -244,6 +244,8 @@ def print_divider() -> None:
 
 
 def print_error(message: str) -> None:
+    from ui import media
+    media.sfx("denied")
     console.print(f"[error]  Error: {message}[/error]")
 
 

@@ -139,6 +139,11 @@ def _room(engine: "GameEngine", gate: "GateDefinition", idx: int, room: "GateRoo
         outcome = engine._run_combat(f"gate:{gate.gate_id}:{idx}", enemies=enemies)
         return "ok" if outcome in ("victory", "none") else outcome
 
+    from ui import media
+    if room.kind == "trap":
+        media.sfx("trap")
+    elif room.kind == "treasure":
+        media.sfx("chest_open")
     if room.check is not None:
         c = room.check
         val = getattr(player.stats, c.stat.upper(), 0)
