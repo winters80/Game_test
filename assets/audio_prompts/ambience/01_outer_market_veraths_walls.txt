@@ -1,0 +1,8 @@
+ID: AMB-01
+Category: Ambience
+Location: Outer Market (Verath's Walls)
+Duration: 30s loop
+Music: No
+
+Prompt:
+A busy medieval market at morning beneath high stone walls: distant haggling voices, wooden cart wheels rattling over cobbles, a blacksmith's hammer ringing far off, sparrows and morning birds, gentle wind, and a faint cold crystalline hum near the gate. Grounded, weathered, seamless loop, no music.

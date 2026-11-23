@@ -1,0 +1,8 @@
+ID: AMB-04
+Category: Ambience
+Location: Verath (Capital Overview)
+Duration: 30s loop
+Music: No
+
+Prompt:
+Dusk wind sweeping across slate rooftops of a vast walled city: distant muffled bells, low urban murmur far below, and a faint glassy shimmer from a huge translucent dome overhead with occasional soft static-like rift crackles. Melancholic, expansive, seamless loop, no music.

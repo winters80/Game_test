@@ -1,0 +1,10 @@
+ID: VOX-CORE-04
+Category: Voice (Core Cast & System)
+Character: Torven, the Blacksmith
+
+TTS Voice Direction:
+Gruff, gravelly older male voice, mid-fifties; slow, deliberate, and economical with words; weathered baritone with quiet warmth underneath.
+
+Sample Lines:
+- "Steel doesn't care what rank a blue box gave you. Keep the edge true."
+- "Thirty years at the anvil, and the System calls me a Journeyman. Sit down, let me see that blade."

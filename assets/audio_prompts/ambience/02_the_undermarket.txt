@@ -1,0 +1,8 @@
+ID: AMB-02
+Category: Ambience
+Location: The Undermarket
+Duration: 30s loop
+Music: No
+
+Prompt:
+An underground black market in old brick sewer tunnels: steady dripping water, slow dark river lapping against stone, echoing hushed murmurs, pitch torches crackling, and a faint metallic clank in the distance. Claustrophobic, tense, seamless loop, no music.

@@ -1,0 +1,8 @@
+ID: MUS-04
+Category: Music
+Track / Context: Boss Encounter (Core / Tribunal)
+Length: 90s loop
+Tempo: 136 BPM
+
+Prompt:
+Massive dark-fantasy boss battle orchestral instrumental: booming war drums, aggressive brass swells, frantic dissonant strings, cold crystalline synth undertones, and dramatic low choir accents. Overwhelming, ominous, seamless loop.

@@ -169,6 +169,8 @@ def run_gate(engine: "GameEngine", gate_id: str, rng: random.Random | None = Non
     player = engine.state.player
     rng = rng or random.Random(f"{gate_id}:{player.turn_count}:{player.player_id}")
     gold_before = player.gold
+    from ui import media
+    media.on_gate(gate.gate_id, gate.name)
     party = _recruit(engine, gate)
     if party is None:
         return "no_party"

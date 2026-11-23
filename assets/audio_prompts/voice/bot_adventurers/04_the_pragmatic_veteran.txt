@@ -1,0 +1,9 @@
+ID: VOX-BOT-04
+Category: Voice (Bot Adventurers — Live Runtime TTS Presets)
+Preset Archetype: The Pragmatic Veteran
+
+TTS Voice Direction:
+Steady, no-nonsense female, late forties; grounded, calm mid-range voice, brisk and dependable, zero melodrama.
+
+Example Dynamic Line:
+- "Check your potions, watch the flanks, and don't let that thing corner you."

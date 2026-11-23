@@ -1,0 +1,8 @@
+ID: SFX-04
+Category: Sound Effect
+Effect: Level Up
+Length: ~1.5s
+Music: No
+
+Prompt:
+A bright ascending three-note crystalline chime with a soft harmonic glow and clean resonant decay, rewarding yet restrained, no music.

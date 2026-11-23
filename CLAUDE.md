@@ -117,7 +117,9 @@ Everything optional and found by file name; a missing file, library (`pygame-ce`
 
 | Hook | Called from | Uses |
 |---|---|---|
-| `on_scene(scene, node, title)` | `ui/scene_renderer.render_scene` | `images/scenes/<scene>.<node>` → `<scene>`, `audio/ambience/…` (looped), music by `MUSIC_FOR_NODE` / `MUSIC_FOR_SCENE` (fallback `explore`) |
+| `on_scene(scene, node, title)` | `ui/scene_renderer.render_scene` | `images/scenes/<scene>.<node>` → `ART_ALIASES[node]` → `<scene>`, `audio/ambience/…` (looped), music by `MUSIC_FOR_NODE` / `MUSIC_FOR_SCENE` (fallback `explore`) |
+| `on_gate(gate_id, name)` | `core/gate_flow.run_gate` | `images/scenes/gate.<id>` → `gate`, sfx `gate_enter` (else `rift_open`), ambience `gate.<id>` → `gate` |
+| `bot_voice(archetype)` | `core/bot_flow.talk_to_bot` | `audio/voice/bots/<archetype>/greeting` → `bots/trader` (`media.BOT_VOICES`) |
 | `on_npc(npc_id, name)` | `core/dialogue_handler._run_dialogue` | `images/npcs/<npc_id>`, `audio/voice/<npc_id>/greeting` |
 | `on_boss(occupant, enemies, title)` | `core/lair_flow.enter_lair` | `images/bosses/<occupant_id>` or an enemy template id |
 | `on_item(item_id, name)` | Items → Inspect | `images/items/<item_id>` |
@@ -125,7 +127,7 @@ Everything optional and found by file name; a missing file, library (`pygame-ce`
 | `sfx(name)` | `renderer.print_combat_action` (`hit` / `spell`), enemy hits, rifts, the Ledger, `register_event_sounds` | `audio/sfx/<name>` (names in `media.SFX`), 0.25 s throttle per name |
 | `system_voice(key)` | events (level up, class, divergence, milestone, sedition), new game, lives | `audio/voice/system/<key>` (lines in `media.SYSTEM_LINES`) |
 
-Pictures go to the front end's `art(path, caption)` hook (ui/prompt backend): the Textual app shows them at the top of the sidebar (`#art`), with `HalfcellImage` under the web driver and `AutoImage` in a terminal; the classic terminal shows none. When you add a new place, NPC, boss, item, sound name or System line, `scripts/asset_list.py` picks it up; keep `media.SFX` / `SYSTEM_LINES` / the prompt tables in `scripts/asset_list.py` in step.
+Pictures go to the front end's `art(path, caption)` hook (ui/prompt backend): the Textual app shows them at the top of the sidebar (`#art`), with `HalfcellImage` under the web driver (textual-serve has no image protocol) and `AutoImage` in a terminal; `tui_app._art_size` sizes the widget to the picture's aspect, at most `ART_MAX_ROWS` (22) rows; the classic terminal shows none. Other sounds: `crystal_shatter` (`renderer.print_combat_action` on a crystal/shard/golem defeat), `ledger_seal` (fines in `core/law_flow`, unseen crimes), `potion` (Items → Use of a heal), warden voice `voice/ledger_warden/greeting` on a confrontation. The 20 shipped pictures are WebP. `assets/audio_prompts/manifest.json` is the audio prompt pack; `scripts/asset_list.PACK_TARGETS` maps each spec id to game files and its prompt replaces the generated one (`tests/test_media.py` checks every id is mapped and every sfx target is in `media.SFX`). When you add a new place, NPC, boss, item, sound name or System line, `scripts/asset_list.py` picks it up; keep `media.SFX` / `SYSTEM_LINES` / the prompt tables in `scripts/asset_list.py` in step.
 
 ## Diagnostics Log (`utils/session_log.py`)
 

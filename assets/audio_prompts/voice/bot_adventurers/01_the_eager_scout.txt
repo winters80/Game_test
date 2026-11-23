@@ -1,0 +1,9 @@
+ID: VOX-BOT-01
+Category: Voice (Bot Adventurers — Live Runtime TTS Presets)
+Preset Archetype: The Eager Scout
+
+TTS Voice Direction:
+Cheerful young woman, early twenties; quick, chatty, bright energy with light conversational inflections and slight nervous excitement.
+
+Example Dynamic Line:
+- "Hey, did you see that rift flicker? Tell me we're actually going in there!"

@@ -1,0 +1,10 @@
+ID: VOX-CORE-03
+Category: Voice (Core Cast & System)
+Character: Silas the Fence
+
+TTS Voice Direction:
+Soft, smooth, amused male voice, early forties; conspiratorial half-whisper with a relaxed cadence and a slight knowing smile audible in the tone.
+
+Sample Lines:
+- "I don't steal. I just make sure stolen things find a good home."
+- "Wardens hate getting their coats wet. So long as the river's up, we can talk business."

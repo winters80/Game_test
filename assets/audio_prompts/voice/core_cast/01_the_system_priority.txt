@@ -1,0 +1,11 @@
+ID: VOX-CORE-01
+Category: Voice (Core Cast & System)
+Character: The System (Priority)
+
+TTS Voice Direction:
+Neutral, genderless, calm synthetic voice; crisp, precise diction; slight cold digital resonance; zero emotion; flat, even pacing with clean pauses between sentences.
+
+Sample Lines:
+- "CLASSIFICATION COMPLETE."
+- "DIVERGENCE DETECTED. ANALYSING."
+- "The System has reported you to the Ledger."

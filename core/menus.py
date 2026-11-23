@@ -550,6 +550,9 @@ class GameMenusMixin:
             elif sub_answer == "Use":
                 ok, msg = use_item(player, item_id, self.item_registry)
                 renderer.print_system_message(msg, style="success" if ok else "system_warning")
+                if ok and getattr(item, "effect_type", "") in ("heal_hp", "heal_mp", "heal_both"):
+                    from ui import media
+                    media.sfx("potion")
                 bus.flush()
                 renderer.prompt_any_key()
 

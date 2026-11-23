@@ -1,0 +1,8 @@
+ID: AMB-06
+Category: Ambience
+Location: A Gate (Rift)
+Duration: 30s loop
+Music: No
+
+Prompt:
+A quiet mist-shrouded pine forest clearing: soft wind through dry needles disrupted at the center by a pulsing electric-glass thrumming, sharp intermittent cyan energy snaps, and a hollow alien draft pulling through a tear in reality. Uncanny, hazardous, seamless loop, no music.

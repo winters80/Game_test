@@ -97,6 +97,12 @@ def collect(engine) -> list[tuple[str, list[tuple[str, str, str]]]]:
                 continue
             rows.append((f"images/scenes/{sid}.{nid}", f"{title}: {nid.replace('_', ' ')} (optional)",
                          f"{_first_sentences(node['text'], 2)} 16:9. Style: {STYLE}"))
+    rows.append(("images/scenes/gate", "Any Gate (rift) you enter, and the Gate Halls",
+                 f"A vertical tear in reality in a forest clearing, edged with crackling cyan light, another world visible through it. 16:9. Style: {STYLE}"))
+    greg = getattr(engine, "gate_registry", None)
+    for g in sorted(greg.all() if greg else [], key=lambda g: g.min_level):
+        rows.append((f"images/scenes/gate.{g.gate_id}", f"{g.name} (a Gate, optional)",
+                     f"{_first_sentences(g.entry_text or g.description, 2)} 16:9. Style: {STYLE}"))
     sections.append(("Scenes (images/scenes)", rows))
 
     # NPCs
@@ -161,7 +167,80 @@ def collect(engine) -> list[tuple[str, list[tuple[str, str, str]]]]:
         rows.append((f"audio/voice/{n.npc_id}/greeting", f"{n.name} greets you",
                      f"Voice: {_clean(getattr(n, 'description', ''), 160)} Line: \"{quotes[0]}\""))
     sections.append(("NPC greetings (audio/voice/<npc_id>/greeting)", rows))
+    from ui.media import BOT_VOICES
+    sections.append(("Bot adventurers' voices (audio/voice/bots/<archetype>/greeting)",
+                     [(f"audio/voice/bots/{a}/greeting", f"a {a} bot greets you ({v})",
+                       f"Voice: {v}. Line: \"Hey. Heading for the Gates?\"") for a, v in BOT_VOICES.items()]))
+    _apply_pack(sections)
     return sections
+
+
+# The audio prompt pack (assets/audio_prompts/manifest.json): which game file each
+# spec is for. Its prompts replace the generated ones; NPC and bot voices take
+# its voice direction (and its sample line when the game has none).
+PACK = ROOT / "assets" / "audio_prompts" / "manifest.json"
+PACK_TARGETS = {
+    "AMB-01": ["audio/ambience/village_start"], "AMB-02": ["audio/ambience/verath_city.undermarket"],
+    "AMB-03": ["audio/ambience/dungeon_floor3.core_chamber"], "AMB-04": ["audio/ambience/verath_city"],
+    "AMB-05": ["audio/ambience/verath_city.ledger_house"], "AMB-06": ["audio/ambience/gate"],
+    "SFX-01": ["audio/sfx/system_chime"], "SFX-02": ["audio/sfx/class_assigned"],
+    "SFX-03": ["audio/sfx/warden_whistle"], "SFX-04": ["audio/sfx/level_up"], "SFX-05": ["audio/sfx/hit"],
+    "SFX-06": ["audio/sfx/spell"], "SFX-07": ["audio/sfx/crystal_shatter"], "SFX-08": ["audio/sfx/ledger_seal"],
+    "SFX-09": ["audio/sfx/potion"], "SFX-10": ["audio/sfx/gate_enter"],
+    "MUS-01": ["audio/music/explore"], "MUS-02": ["audio/music/combat"],
+    "MUS-03": ["audio/music/ledger", "audio/music/verath"], "MUS-04": ["audio/music/boss"],
+    "MUS-05": ["audio/music/camp"],
+    "VOX-CORE-01": ["audio/voice/system/*"], "VOX-CORE-02": ["audio/voice/auditor_castell/greeting"],
+    "VOX-CORE-03": ["audio/voice/silas_fence/greeting"], "VOX-CORE-04": ["audio/voice/torven_blacksmith/greeting"],
+    "VOX-CORE-05": ["audio/voice/ledger_warden/greeting"], "VOX-CORE-06": ["audio/voice/mira_innkeeper/greeting"],
+    "VOX-CORE-07": ["audio/voice/gray_wanderer/greeting"],
+    "VOX-BOT-01": ["audio/voice/bots/explorer/greeting"], "VOX-BOT-02": ["audio/voice/bots/fighter/greeting"],
+    "VOX-BOT-03": ["audio/voice/bots/crafter/greeting"],
+    "VOX-BOT-04": ["audio/voice/bots/trader/greeting", "audio/voice/bots/gatherer/greeting"],
+}
+
+
+def load_pack() -> dict[str, dict]:
+    try:
+        return {a["id"]: a for a in json.loads(PACK.read_text(encoding="utf-8"))["assets"]}
+    except (OSError, ValueError, KeyError):
+        return {}
+
+
+def _apply_pack(sections) -> None:
+    pack = load_pack()
+    if not pack:
+        return
+    rows = {r[0]: (sec, i) for sec, (_, rs) in enumerate(sections) for i, r in enumerate(rs)}
+    for pid, targets in PACK_TARGETS.items():
+        spec = pack.get(pid)
+        if not spec:
+            continue
+        text = spec.get("prompt_or_direction", "")
+        extra = " ".join(x for x in (spec.get("duration", ""), spec.get("tempo", "")) if x and x != "variable")
+        for t in targets:
+            hits = [k for k in rows if k.startswith(t[:-1])] if t.endswith("*") else [t]
+            for key in hits:
+                where = rows.get(key)
+                if spec["category"] == "voice":
+                    line = (spec.get("sample_lines") or [""])[0]
+                    if where is not None:
+                        old = sections[where[0]][1][where[1]]
+                        m = re.search(r'Line: "(.*)"', old[2])
+                        line = m.group(1) if m and not key.startswith("audio/voice/bots/") else line
+                    row = (key, (sections[where[0]][1][where[1]][1] if where else f"{spec['name']} speaks"),
+                           f"Voice: {text} Line: \"{line}\" [{pid}]")
+                else:
+                    what = sections[where[0]][1][where[1]][1] if where else spec["name"]
+                    row = (key, what, f"{text}{' (' + extra + ')' if extra else ''} [{pid}]")
+                if where is not None:
+                    sections[where[0]][1][where[1]] = row
+                else:
+                    sec = next(i for i, (n, _) in enumerate(sections) if n.startswith(
+                        "NPC greetings" if spec["category"] == "voice" else
+                        {"ambience": "Ambience", "sfx": "Sound effects", "music": "Music"}[spec["category"]]))
+                    sections[sec][1].append(row)
+                    rows[key] = (sec, len(sections[sec][1]) - 1)
 
 
 def build_markdown(engine, missing_only: bool = False) -> str:

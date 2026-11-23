@@ -1,0 +1,8 @@
+ID: SFX-03
+Category: Sound Effect
+Effect: Warden's Whistle (Caught)
+Length: ~1.5s
+Music: No
+
+Prompt:
+A sharp, piercing metal pea-whistle blast echoing off stone walls, immediately followed by quick heavy leather boots running on cobblestones, no music.

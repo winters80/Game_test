@@ -1,0 +1,8 @@
+ID: MUS-03
+Category: Music
+Track / Context: The Ledger / Verath
+Length: 90s loop
+Tempo: ~92 BPM
+
+Prompt:
+Cold and orderly dark-fantasy instrumental: precise mechanical ticking clock rhythm, tight staccato strings, a low hushed male choir pad, and sparse icy celesta pulses. Bureaucratic, quietly menacing, clinical, seamless loop.

@@ -1,0 +1,8 @@
+ID: SFX-09
+Category: Sound Effect
+Effect: Health Potion (Use)
+Length: ~1.2s
+Music: No
+
+Prompt:
+Tight cork popping from a small glass vial, brief liquid glug, and a subtle warm breathy arcane shimmer, no music.

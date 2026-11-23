@@ -1,0 +1,8 @@
+ID: SFX-08
+Category: Sound Effect
+Effect: Ledger Seal / Entry Logged
+Length: ~1.0s
+Music: No
+
+Prompt:
+Heavy iron stamp thudding firmly onto thick parchment, followed by a subtle cold crystalline chime confirming a System record, no music.

@@ -1,0 +1,8 @@
+ID: MUS-02
+Category: Music
+Track / Context: Combat (Standard)
+Length: 75s loop
+Tempo: 130 BPM
+
+Prompt:
+Tense dark-fantasy orchestral combat instrumental: driving low cellos and double basses playing urgent ostinatos, thunderous taiko drums, sharp muted brass stabs, and crisp metallic percussion accents. Grounded, relentless, seamless loop, no lyrics.

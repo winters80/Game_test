@@ -1,0 +1,9 @@
+ID: VOX-BOT-03
+Category: Voice (Bot Adventurers — Live Runtime TTS Presets)
+Preset Archetype: The Bookish Arcanist
+
+TTS Voice Direction:
+Precise, slightly breathless young man, mid-twenties; articulate, slightly fast when excited about the arcane arts, tentative in combat.
+
+Example Dynamic Line:
+- "Fascinating—the arcane resonance near the Fracture Core is completely off the Ledger's charts."

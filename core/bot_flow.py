@@ -385,6 +385,8 @@ def talk_to_bot(engine: "GameEngine", bot_id: str) -> None:
         renderer.print_system_message("They've moved on.", style="dim_text")
         return
 
+    from ui import media
+    media.bot_voice(bot.archetype)
     ctx = _chat_context(engine, bot)
     said: list[str] = []
 
