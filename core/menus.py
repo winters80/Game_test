@@ -1076,17 +1076,24 @@ class GameMenusMixin:
             renderer.console.print(
                 f"\n  [dim_text]Assets folder: {media.ASSETS_DIR}"
                 f"{'' if have else '  (empty: run Write the asset list for prompts)'}[/dim_text]")
+            ok, status = media.audio_status()
+            renderer.console.print(f"  [{'success' if ok else 'system_warning'}]{status}[/{'success' if ok else 'system_warning'}]")
             choices = [uip.Choice(f"Pictures: {onoff('images')}", "images"),
                        uip.Choice(f"Sound effects: {onoff('sfx')}  (volume {s['volume_sfx']:.0%})", "sfx"),
                        uip.Choice(f"Music: {onoff('music')}  (volume {s['volume_music']:.0%})", "music"),
                        uip.Choice(f"Ambience: {onoff('ambience')}  (volume {s['volume_ambience']:.0%})", "ambience"),
                        uip.Choice(f"Voice: {onoff('voice')}  (volume {s['volume_voice']:.0%})", "voice"),
                        uip.Choice("Set a volume", "volume"),
+                       uip.Choice("Test sound (play a chime and a System line now)", "test"),
                        uip.Choice("Write the asset list (every file + a prompt for it)", "list"),
                        uip.Choice("← Back", "")]
             pick = uip.select("Art & audio:", choices=choices).ask()
             if not pick:
                 return
+            if pick == "test":
+                renderer.print_system_message(media.test_sound())
+                renderer.prompt_any_key()
+                continue
             if pick == "list":
                 from importlib import util as _u
                 from pathlib import Path as _P

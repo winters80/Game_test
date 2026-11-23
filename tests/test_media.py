@@ -217,6 +217,36 @@ def tui(tmp: Path) -> None:
         f.unlink()
 
 
+def status(tmp: Path) -> None:
+    """Why there's no sound is said out loud (title screen, Admin → Art & audio)."""
+    from ui import media
+    with mock.patch.object(media, "ASSETS_DIR", tmp / "a"), mock.patch.object(media, "LOCAL_ASSETS_DIR", tmp / "l"), \
+            mock.patch.object(media, "SETTINGS_FILE", tmp / "m.json"):
+        media._settings = None
+        ok, msg = media.audio_status()
+        check(not ok and "no sound files" in msg and media.startup_notice() is None,
+              "no sound files: said in Admin, no title-screen warning")
+        _wav(tmp / "a" / "audio" / "sfx" / "system_chime.wav")
+        broken = media.AudioPlayer()
+        broken._ok, broken.error = False, "the sound library isn't installed (run: python -m pip install pygame-ce)"
+        with mock.patch.object(media, "_player", broken):
+            ok, msg = media.audio_status()
+            check(not ok and "pip install pygame-ce" in msg and media.startup_notice() == msg,
+                  "sound files but no library: the title screen says how to fix it")
+            check("pip install pygame-ce" in media.test_sound(), "Test sound reports the same reason")
+        fresh = media.AudioPlayer()
+        with mock.patch.object(media, "_player", fresh):
+            ok, msg = media.audio_status()
+            check(ok and msg.startswith("Sound: on (1 files") and media.startup_notice() is None,
+                  f"working sound: a status line, no warning ({msg})")
+            check("Playing: effect system_chime.wav" in media.test_sound(), "Test sound plays the chime")
+            media.set_setting("sfx", False); media.set_setting("music", False)
+            media.set_setting("ambience", False); media.set_setting("voice", False)
+            check("switched off" in media.audio_status()[1] and media.startup_notice() is None,
+                  "all sound switched off: said in Admin, not nagged about")
+        media._settings = None
+
+
 def sound_pack(tmp: Path) -> None:
     """scripts/fetch_sounds.py: picks a file per game sound by name, zips it with credits."""
     import zipfile
@@ -297,7 +327,7 @@ if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
-                     ("sound pack", sound_pack)):
+                     ("sound pack", sound_pack), ("sound status", status)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory() as tmp:
             fn(Path(tmp))

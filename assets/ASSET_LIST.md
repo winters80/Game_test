@@ -1,6 +1,6 @@
 # Asset list
 
-**56 of 623 files present.**
+**67 of 623 files present.**
 
 Everything the game can show or play. Save each file under `assets/` with the name shown (images: .png/.jpg/.webp; sound: .ogg/.mp3/.wav). Nothing is required: whatever is missing is simply left out. Regenerate with `python scripts/asset_list.py`.
 
@@ -572,16 +572,16 @@ Everything the game can show or play. Save each file under `assets/` with the na
 | ✓ | `audio/sfx/level_up` | when you level up | A bright ascending three-note crystalline chime with a soft harmonic glow and clean resonant decay, rewarding yet restrained, no music. (~1.5s) [SFX-04] |
 | ✓ | `audio/sfx/skill_acquired` | when you learn a skill | A short magical shimmer rising into a soft bell, under 1 second. |
 | ✓ | `audio/sfx/class_assigned` | when the System assigns your class | A rising arcane energy swell building rapidly into a resonant glassy impact with a cold cyan harmonic shimmer, otherworldly and weighty, no music. (~2.0s) [SFX-02] |
-|   | `audio/sfx/class_milestone` | when a class milestone (every 4 levels) | A firm rising tone with a metallic ring, confident, about 1 second. |
-|   | `audio/sfx/item_found` | when you find an item | A light pickup jingle: a coin and a soft sparkle, under 1 second. |
+| ✓ | `audio/sfx/class_milestone` | when a class milestone (every 4 levels) | A firm rising tone with a metallic ring, confident, about 1 second. |
+| ✓ | `audio/sfx/item_found` | when you find an item | A light pickup jingle: a coin and a soft sparkle, under 1 second. |
 | ✓ | `audio/sfx/hit` | when a weapon hits | Heavy iron sword striking plate armour: sharp metallic clang, punchy low-mid impact thud, brief steel ring, grounded and visceral, no music. (~0.8s) [SFX-05] |
 | ✓ | `audio/sfx/spell` | when a spell is cast | Arcane flame ignition: quick rushing air whoosh building into a tight, punchy fiery burst with crackling ember tail, no music. (~1.5s) [SFX-06] |
-|   | `audio/sfx/enemy_hit` | when an enemy hits you | A heavy blunt hit with a grunt, short. |
-|   | `audio/sfx/victory` | when you win a fight | A short triumphant brass and string sting, 2 seconds. |
-|   | `audio/sfx/defeat` | when you fall | A low mournful cello note fading out, 2 seconds. |
+| ✓ | `audio/sfx/enemy_hit` | when an enemy hits you | A heavy blunt hit with a grunt, short. |
+| ✓ | `audio/sfx/victory` | when you win a fight | A short triumphant brass and string sting, 2 seconds. |
+| ✓ | `audio/sfx/defeat` | when you fall | A low mournful cello note fading out, 2 seconds. |
 | ✓ | `audio/sfx/warden_whistle` | when a crime is seen / the wardens stop you | A sharp, piercing metal pea-whistle blast echoing off stone walls, immediately followed by quick heavy leather boots running on cobblestones, no music. (~1.5s) [SFX-03] |
-|   | `audio/sfx/coins` | when gold changes hands (fines, sales) | A small handful of coins counted onto a wooden counter, 1 second. |
-|   | `audio/sfx/door` | when you enter a new place | A heavy wooden door opening with an iron latch, 1 second. |
+| ✓ | `audio/sfx/coins` | when gold changes hands (fines, sales) | A small handful of coins counted onto a wooden counter, 1 second. |
+| ✓ | `audio/sfx/door` | when you enter a new place | A heavy wooden door opening with an iron latch, 1 second. |
 | ✓ | `audio/sfx/rift_open` | when a new Gate opens | Reality tearing: a deep crackle rising into a glassy roar, 2 seconds. |
 | ✓ | `audio/sfx/gate_enter` | when you step through a Gate | Sharp glass-tearing crackle followed by a sudden vacuum whoosh and low resonant pressure drop as reality shifts, no music. (~1.8s) [SFX-10] |
 | ✓ | `audio/sfx/crystal_shatter` | when a crystal creature breaks | Heavy massive crystal shattering: deep crystalline fracture crack followed by a dense cascade of sharp glass and stone shards hitting wet rock, no music. (~1.2s) [SFX-07] |
@@ -592,11 +592,11 @@ Everything the game can show or play. Save each file under `assets/` with the na
 
 | | File | What | Prompt |
 |---|---|---|---|
-|   | `audio/ambience/camp_rest` | Roadside Camp | Ambient soundscape, no music, no voices you can make out: The camp is quiet. You have time to rest, cook, or study. Seamless 30-second loop. |
+| ✓ | `audio/ambience/camp_rest` | Roadside Camp | Ambient soundscape, no music, no voices you can make out: The camp is quiet. You have time to rest, cook, or study. Seamless 30-second loop. |
 |   | `audio/ambience/character_creation` | Classification Rite — Identity Protocol | Ambient soundscape, no music, no voices you can make out: IDENTITY PROTOCOL INITIATED. The System begins its assessment. Seamless 30-second loop. |
-|   | `audio/ambience/dungeon_floor1` | The Old Dungeon — Floor 1 | Ambient soundscape, no music, no voices you can make out: You stand at the dungeon's entrance corridor. The path splits — a wide tunnel to the left where you can hear goblin chatter, and a narrow passage to the right that the System's compass marks as 'unmapped'. Seamless 30-second loop. |
-|   | `audio/ambience/dungeon_floor2` | Crystal Caverns — Floor 2 | Ambient soundscape, no music, no voices you can make out: The Crystal Caverns open before you. The purple crystals in the walls pulse slowly — an irregular heartbeat that doesn't match any natural rhythm. Seamless 30-second loop. |
-|   | `audio/ambience/dungeon_floor3` | The Fracture Core | Ambient soundscape, no music, no voices you can make out: The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. Seamless 30-second loop. |
+| ✓ | `audio/ambience/dungeon_floor1` | The Old Dungeon — Floor 1 | Ambient soundscape, no music, no voices you can make out: You stand at the dungeon's entrance corridor. The path splits — a wide tunnel to the left where you can hear goblin chatter, and a narrow passage to the right that the System's compass marks as 'unmapped'. Seamless 30-second loop. |
+| ✓ | `audio/ambience/dungeon_floor2` | Crystal Caverns — Floor 2 | Ambient soundscape, no music, no voices you can make out: The Crystal Caverns open before you. The purple crystals in the walls pulse slowly — an irregular heartbeat that doesn't match any natural rhythm. Seamless 30-second loop. |
+| ✓ | `audio/ambience/dungeon_floor3` | The Fracture Core | Ambient soundscape, no music, no voices you can make out: The antechamber of the Fracture Core defies calm description. The floor is solid — you test it — but the walls appear to recede when looked at directly. Seamless 30-second loop. |
 |   | `audio/ambience/ending_destroy` | THE BREAK | Ambient soundscape, no music, no voices you can make out: The Fracture Core is exposed. Raw dimensional energy bleeds from the wound in reality. Seamless 30-second loop. |
 |   | `audio/ambience/ending_rule` | THE THRONE OF AETHORIA | Ambient soundscape, no music, no voices you can make out: The Fracture Core antechamber has transformed. Somehow it knows what you intend. Seamless 30-second loop. |
 |   | `audio/ambience/prologue` | The Day the Sky Shattered | Ambient soundscape, no music, no voices you can make out: The pressure builds. You are at the threshold. Seamless 30-second loop. |

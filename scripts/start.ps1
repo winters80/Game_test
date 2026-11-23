@@ -35,7 +35,11 @@ if ($LASTEXITCODE -ne 0) {
 & $py -c "import pygame, textual_image" 2>$null
 if ($LASTEXITCODE -ne 0) {
     & $py -m pip install -q pygame-ce textual-image 2>$null | Out-Null
-    if ($LASTEXITCODE -ne 0) { Warn "Optional art/sound packages didn't install; the game runs without them." }
+    & $py -c "import pygame" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+        Warn "The sound library (pygame-ce) didn't install, so the game will be silent."
+        Warn "Try:  $py -m pip install pygame-ce   (if it fails, your Python version may be too new for it; Python 3.12 or 3.13 works)"
+    }
 }
 
 function Cfg($expr) { (& $py -c "import config; print($expr)").Trim() }

@@ -32,7 +32,8 @@ if ! "$PY" -c "import rich, questionary, pydantic, textual, inspect, ollama; ass
 fi
 # Optional: pictures and sound (the game runs without them).
 if ! "$PY" -c "import pygame, textual_image" >/dev/null 2>&1; then
-    "$PY" -m pip install -q pygame-ce textual-image >/dev/null 2>&1 || warn "Optional art/sound packages didn't install; the game runs without them."
+    "$PY" -m pip install -q pygame-ce textual-image >/dev/null 2>&1
+    "$PY" -c "import pygame" >/dev/null 2>&1 || warn "The sound library (pygame-ce) didn't install, so the game will be silent. Try: $PY -m pip install pygame-ce"
 fi
 
 cfg() { "$PY" -c "import config; print($1)"; }
