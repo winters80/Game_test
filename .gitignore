@@ -55,3 +55,8 @@ config_local.py
 saves/settings/
 saves/backups/
 saves/web_art/
+# Sounds / pictures you may use but not publish (Pixabay, Sonniss): see assets/README.md
+assets_local/
+# scripts/fetch_sounds.py downloads and output
+sound_downloads/
+system_breaker_sounds.zip

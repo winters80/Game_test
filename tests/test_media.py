@@ -57,6 +57,12 @@ def lookups(tmp: Path) -> None:
         check(media.find_image("scenes", "verath_city.ledger_house", "verath_city").name == "verath_city.ledger_house.jpg",
               "a node's own picture wins (any image extension)")
         check(media.has_any_assets(), "has_any_assets sees the files")
+        with mock.patch.object(media, "LOCAL_ASSETS_DIR", tmp / "local"):
+            _png(tmp / "local" / "images" / "scenes" / "verath_city.png")
+            check(media.find_image("scenes", "verath_city").parent.parent.parent.name == "local",
+                  "a file in assets_local/ (yours, not published) wins over assets/")
+            check(media.find_image("scenes", "verath_city.ledger_house", "verath_city").name
+                  == "verath_city.ledger_house.jpg", "...but a more specific file in assets/ still wins")
 
         shown = []
 
@@ -98,6 +104,14 @@ def lookups(tmp: Path) -> None:
         media.on_gate("gate_x", "Gate X")
         media.stop_all()
         check(True, "ambience, music, voice and combat sounds run without errors")
+
+        # Several takes of a voice line: one of them, at random.
+        for i in (1, 2, 3):
+            _wav(tmp / "audio" / "voice" / "torven_blacksmith" / f"greeting_{i}.wav")
+        _wav(tmp / "audio" / "voice" / "torven_blacksmith" / "greetings_extra.wav")
+        takes = {media.find_variant("voice/torven_blacksmith", "greeting").name for _ in range(60)}
+        check(takes == {"greeting_1.wav", "greeting_2.wav", "greeting_3.wav"},
+              f"voice lines with several takes are picked at random ({sorted(takes)})")
 
         # Broken audio backend: still no exception.
         broken = media.AudioPlayer()
@@ -196,6 +210,42 @@ def tui(tmp: Path) -> None:
         f.unlink()
 
 
+def sound_pack(tmp: Path) -> None:
+    """scripts/fetch_sounds.py: picks a file per game sound by name, zips it with credits."""
+    import zipfile
+    import json as _json
+    import scripts.fetch_sounds as fs
+    from ui import media
+    for name in ("Audio/handleCoins", "Audio/impactGlass_heavy_000", "Audio/impactMetal_heavy_001",
+                 "Audio/jingles_NES00", "Audio/bookClose", "Audio/error_002"):
+        _wav(tmp / "kenney" / f"{name}.wav")
+    for name in ("medieval-market-crowd-ambience", "epic-boss-battle-music", "referee-whistle"):
+        _wav(tmp / "pix" / f"{name}.wav")
+    srcs = fs.index([(tmp / "kenney", "cc0", "Kenney"), (tmp / "pix", "pixabay", "Pixabay")])
+    picked = fs.choose(srcs, fs.TARGETS)
+    name = lambda t: picked[t].path.name if t in picked else None
+    check(name("audio/sfx/crystal_shatter") == "impactGlass_heavy_000.wav"
+          and name("audio/sfx/coins") == "handleCoins.wav" and name("audio/sfx/warden_whistle") == "referee-whistle.wav",
+          "effects are matched by the words in their file names")
+    check(name("audio/sfx/defeat") == "error_002.wav", "keywords match word starts only ('lose' isn't 'close')")
+    check(name("audio/music/boss") == "epic-boss-battle-music.wav" and name("audio/music/explore") is None
+          and name("audio/ambience/village_start") == "medieval-market-crowd-ambience.wav",
+          "a crowd recording is ambience, never music")
+    targets = {t.path for t in fs.TARGETS}
+    check({f"audio/sfx/{k}" for k in media.SFX} <= targets, "every sound effect the game plays has a target")
+    out = tmp / "pack.zip"
+    with mock.patch("shutil.which", lambda n: None):          # no ffmpeg: files are copied as is
+        manifest = fs.build(picked, fs.TARGETS, tmp / "_pack", out)
+    names = zipfile.ZipFile(out).namelist()
+    check("sounds_manifest.json" in names and "CREDITS.md" in names and "audio/sfx/coins.wav" in names,
+          "the zip has the files under their game names, a manifest and credits")
+    lic = {f["file"]: f["license"] for f in _json.loads(zipfile.ZipFile(out).read("sounds_manifest.json"))["files"]}
+    check(lic["audio/sfx/coins.wav"] == "cc0" and lic["audio/sfx/warden_whistle.wav"] == "pixabay",
+          "the manifest records each file's license")
+    check(fs.parse_extra("D:/Downloads/pix:pixabay")[1] == "pixabay" and fs.parse_extra("D:/x")[1] == "other",
+          "--extra FOLDER:LICENSE copes with Windows drive letters")
+
+
 def web(tmp: Path) -> None:
     """Browser play: each tab's picture is served full size, and only from assets/."""
     try:
@@ -239,7 +289,8 @@ def web(tmp: Path) -> None:
 if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
-    for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web)):
+    for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
+                     ("sound pack", sound_pack)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory() as tmp:
             fn(Path(tmp))
