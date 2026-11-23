@@ -12,6 +12,7 @@ import asyncio
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -251,7 +252,12 @@ if __name__ == "__main__":
     print("\n  ui/tui_app")
     test_tui()
     for f in list(ROOT.glob("saves/pilot*")) + list(ROOT.glob("saves/Pilot*")):
-        f.unlink()
+        for _ in range(20):                     # the game thread may still hold the .db (Windows)
+            try:
+                f.unlink(missing_ok=True)       # -wal / -shm vanish when the .db closes
+                break
+            except PermissionError:
+                time.sleep(0.25)
     print()
     if failures:
         print(f"  {len(failures)} UI check(s) failed.")

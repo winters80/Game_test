@@ -112,6 +112,11 @@ TARGETS = [
     _t("audio/sfx/footstep_water", ["footstep water", "splash", "puddle"], 0.4),
     _t("audio/sfx/footstep_dirt", ["footstep grass", "footstep dirt", "footstep gravel", "footstep"], 0.4),
     _t("audio/sfx/heartbeat", ["heartbeat", "heart beat", "heart"], 3),
+    _t("audio/sfx/boss_reveal", ["impact dark", "boom", "impact heavy", "explosion"], 4),
+    _t("audio/sfx/boss_warning", ["riser", "charge", "power up", "rumble"], 3),
+    _t("audio/sfx/enrage", ["roar", "growl", "monster", "beast"], 3),
+    _t("audio/sfx/summon", ["portal", "whoosh", "magic", "spell"], 3),
+    _t("audio/sfx/life_lost", ["power down", "shut down", "game over", "fail"], 4),
     # Music (loops)
     _t("audio/music/explore", ["fantasy explore", "medieval", "adventure", "exploration", "ambient music"], 240, "music"),
     _t("audio/music/combat", ["battle", "combat", "fight", "action music"], 240, "music"),

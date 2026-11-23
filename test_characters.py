@@ -3381,6 +3381,8 @@ def _test_living_world(item_reg) -> None:
         _eng = GameEngine()
         with _m33.patch.object(_r.console, "print", lambda *a, **k: None):
             _eng.bootstrap()
+        from ai.ai_service import AIService as _AIS33
+        _eng.ai_service = _AIS33()              # offline, even when Ollama runs on this machine
         _bosses = [o.enemies[0] for g in _eng.gate_registry.all() for o in g.lair.occupants.values()]
         assert all(cs.ENEMY_TEMPLATES[b].get("abilities") for b in _bosses), "Every gate master has moves"
         ok(f"Boss moves fire on schedule (telegraphed heavy, heal, summon, one-time enrage); all {len(_bosses)} gate masters have them")

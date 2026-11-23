@@ -43,6 +43,11 @@ SFX_PROMPTS = {
     "coins": "A small handful of coins counted onto a wooden counter, 1 second.",
     "door": "A heavy wooden door opening with an iron latch, 1 second.",
     "rift_open": "Reality tearing: a deep crackle rising into a glassy roar, 2 seconds.",
+    "boss_reveal": "A deep dark cinematic impact with a long airy tail, 4 seconds.",
+    "boss_warning": "A buzzing riser that cuts off sharply: something big is coming, 2-3 seconds.",
+    "enrage": "A beast's furious roar over a percussive stinger, 2-3 seconds.",
+    "summon": "An approaching magical whoosh that lands with a soft thud, 2-3 seconds.",
+    "life_lost": "A machine powering down: a falling electronic tone, 3 seconds.",
 }
 MUSIC_PROMPTS = {
     "explore": "Melancholic dark-fantasy ambient: solo cello, soft strings, distant choir pads, sparse piano, slow, a hopeful undertone. Seamless 90-second instrumental loop.",
@@ -153,6 +158,9 @@ def collect(engine) -> list[tuple[str, list[tuple[str, str, str]]]]:
         text = ((d.get("nodes") or {}).get("root") or {}).get("text") or ""
         rows.append((f"audio/ambience/{sid}", d.get("title", sid),
                      f"Ambient soundscape, no music, no voices you can make out: {_first_sentences(text, 2)} Seamless 30-second loop."))
+    for g in sorted(greg.all() if greg else [], key=lambda g: g.min_level):
+        rows.append((f"audio/ambience/gate.{g.gate_id}", f"{g.name} (a Gate, optional; else audio/ambience/gate)",
+                     f"Ambient soundscape, no music: {_first_sentences(g.entry_text or g.description, 2)} Seamless 60-second loop."))
     sections.append(("Ambience loops (audio/ambience)", rows))
     moods = sorted(set(MUSIC_FOR_SCENE.values()) | set(MUSIC_FOR_NODE.values()) | {"explore", "combat", "boss"})
     sections.append(("Music (audio/music)",

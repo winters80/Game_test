@@ -10,6 +10,7 @@ import asyncio
 import os
 import sys
 import tempfile
+import time
 from pathlib import Path
 from unittest import mock
 
@@ -214,7 +215,12 @@ def tui(tmp: Path) -> None:
         asyncio.run(_tui(tmp))
     media._settings = None
     for f in list(ROOT.glob("saves/pic*")):
-        f.unlink()
+        for _ in range(20):                     # the game thread may still hold the .db (Windows)
+            try:
+                f.unlink(missing_ok=True)       # -wal / -shm vanish when the .db closes
+                break
+            except PermissionError:
+                time.sleep(0.25)
 
 
 def status(tmp: Path) -> None:
@@ -257,16 +263,16 @@ def hooks(tmp: Path) -> None:
             mock.patch.object(media._player, "loop", lambda p: loops.append(p and p.name)), \
             mock.patch.object(media, "find_audio", lambda kind, *k: Path(f"{k[0]}.ogg")):
         p = NS(max_hp=100, current_hp=90)
-        _combat_sounds(NS(damage=20, lines=[]), p, {}, (0, 0))
-        _combat_sounds(NS(damage=5, lines=[]), p, {}, (0, 0))
-        _combat_sounds(NS(damage=0, lines=[("Orc swings — you dodge!", "miss")]), p, {}, (0, 0))
-        _combat_sounds(NS(damage=0, lines=[("Orc swings — you dodge!", "miss")]), p, {"_evade": 1}, (0, 2))
+        _combat_sounds(NS(damage=20, cues=[], lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=5, cues=[], lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, cues=[], lines=[("Orc swings — you dodge!", "miss")]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, cues=[], lines=[("Orc swings — you dodge!", "miss")]), p, {"_evade": 1}, (0, 2))
         check(played == ["player_hurt", "enemy_hit", "dodge", "block"],
               f"heavy hit / light hit / dodge / ward or evade each sound different ({played})")
         p.current_hp = 20
-        _combat_sounds(NS(damage=0, lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, cues=[], lines=[]), p, {}, (0, 0))
         p.current_hp = 80
-        _combat_sounds(NS(damage=0, lines=[]), p, {}, (0, 0))
+        _combat_sounds(NS(damage=0, cues=[], lines=[]), p, {}, (0, 0))
         check(loops[-2:] == ["heartbeat.ogg", None], f"the heartbeat loops below 30% HP and stops above ({loops})")
         played.clear()
         media.ui_answer("fight"); media.ui_answer(""); media.ui_answer(None); media.ui_answer("← Back")
@@ -404,15 +410,55 @@ def web(tmp: Path) -> None:
         asyncio.run(run())
 
 
+def cues(tmp: Path) -> None:
+    """Boss cues (enrage, summon, a heavy blow coming), the boss sting, and
+    extra takes of an effect pooled from assets/ and assets_local/."""
+    from types import SimpleNamespace as NS
+    from ui import media
+    from core.combat_handler import _combat_sounds
+    from entities.player import Player
+    from systems import combat_effects as fx
+    from systems.combat_system import Enemy
+    boss = Enemy(enemy_id="b", name="Brute", max_hp=100, current_hp=40, attack=5, defense=0,
+                 xp_reward=1, gold_reward=1, enrage_below=0.5,
+                 abilities=[{"name": "Crush", "kind": "heavy", "every": 2, "power": 2.0}])
+    out = fx.enemy_turn(boss, Player(name="P"), {})
+    check(out.cues == ["enrage", "boss_warning"], f"enrage and the heavy-blow warning are cued ({out.cues})")
+    played = []
+    with mock.patch.object(media, "sfx", lambda n: played.append(n) or True),             mock.patch.object(media, "heartbeat", lambda *a: None), mock.patch.object(media, "music", lambda m: None):
+        _combat_sounds(NS(damage=0, cues=["summon"], lines=[]), NS(max_hp=10, current_hp=10), {}, (0, 0))
+        media.on_combat_start(boss=True)
+        media.on_combat_start(boss=False)
+        media.on_combat_end("none")
+    check(played == ["summon", "boss_reveal"], f"summons and boss fights have their sounds ({played})")
+    for rel in ("a/audio/sfx/swing.ogg", "l/audio/sfx/swing_2.ogg", "l/audio/sfx/swing.ogg", "a/audio/sfx/swing_x.ogg"):
+        (tmp / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp / rel).write_bytes(b"x")
+    with mock.patch.object(media, "ASSETS_DIR", tmp / "a"), mock.patch.object(media, "LOCAL_ASSETS_DIR", tmp / "l"),             mock.patch.object(media, "SETTINGS_FILE", tmp / "m.json"):
+        media._settings = None
+        takes = [p.relative_to(tmp).as_posix() for p in media.variants("sfx", "swing")]
+        check(takes == ["l/audio/sfx/swing.ogg", "l/audio/sfx/swing_2.ogg"],
+              f"takes pool across folders, a local file replaces its namesake ({takes})")
+        media.set_muted("sfx/swing_2", True)
+        check([p.name for p in media.variants("sfx", "swing")] == ["swing.ogg"], "a muted take is skipped")
+    media._settings = None
+
+
 if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
+    from ui import media
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
                      ("sound pack", sound_pack), ("sound status", status),
-                     ("sound hooks", hooks), ("muting", muting)):
+                     ("sound hooks", hooks), ("muting", muting), ("boss cues and takes", cues)):
         print(f"\n  {name}")
-        with tempfile.TemporaryDirectory() as tmp:
-            fn(Path(tmp))
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            # The real assets_local/ (yours, git-ignored) must not leak into the checks.
+            with mock.patch.object(media, "LOCAL_ASSETS_DIR", Path(tmp) / "_no_local"):
+                try:
+                    fn(Path(tmp))
+                finally:
+                    media.stop_all()                 # let go of files the real mixer opened
     print("\n  events")
     events()
     print()

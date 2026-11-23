@@ -83,6 +83,11 @@ SFX = {
     "footstep_water": "you arrive in the flooded caverns",
     "footstep_dirt": "you arrive on dirt and cobbles",
     "heartbeat": "loops while your HP is below 30% in a fight",
+    "boss_reveal": "a boss fight begins",
+    "boss_warning": "an enemy gathers itself for a heavy blow next turn",
+    "enrage": "an enemy becomes enraged",
+    "summon": "an enemy calls help into the fight",
+    "life_lost": "you lose one of your lives (or the last one)",
 }
 
 # The low-health heartbeat loops on its own channel (audio/sfx/heartbeat), below this share of HP.
@@ -194,18 +199,24 @@ def find_audio(kind: str, *keys: str) -> Path | None:
     return _find_any(f"audio/{kind}", keys, AUDIO_EXT)
 
 
-def find_variant(kind: str, key: str) -> Path | None:
-    """``<key>`` or one of ``<key>_1``, ``<key>_2`` … at random (several takes of a line)."""
+def variants(kind: str, key: str) -> list[Path]:
+    """Every unmuted take of ``<key>`` (``<key>``, ``<key>_1``, ``<key>_2`` …) from both
+    folders; a take in assets_local/ replaces the same-named one in assets/."""
     pat = re.compile(rf"^{re.escape(key)}(_\d+)?$")
+    takes: dict[str, Path] = {}
     for base in asset_dirs():
         folder = base / "audio" / kind
-        if not folder.is_dir():
-            continue
-        hits = sorted(f for f in folder.iterdir() if f.suffix.lower() in AUDIO_EXT and pat.match(f.stem)
-                      and not is_muted(f"{kind}/{f.stem}"))
-        if hits:
-            return random.choice(hits)
-    return None
+        if folder.is_dir():
+            for f in sorted(folder.iterdir()):
+                if f.suffix.lower() in AUDIO_EXT and pat.match(f.stem) and not is_muted(f"{kind}/{f.stem}"):
+                    takes.setdefault(f.stem, f)
+    return [takes[k] for k in sorted(takes)]
+
+
+def find_variant(kind: str, key: str) -> Path | None:
+    """``<key>`` or one of ``<key>_1``, ``<key>_2`` … at random (several takes of a line or effect)."""
+    hits = variants(kind, key)
+    return random.choice(hits) if hits else None
 
 
 def has_any_assets() -> bool:
@@ -389,6 +400,7 @@ class AudioPlayer:
             try:
                 self._pg.mixer.stop()
                 self._pg.mixer.music.stop()
+                self._pg.mixer.music.unload()          # let go of the file (Windows locks it)
             except Exception:
                 pass
         self._music = self._ambience = self._loop = ""
@@ -522,7 +534,7 @@ def startup_notice() -> str | None:
 def sfx(name: str) -> bool:
     if not settings()["sfx"]:
         return False
-    path = find_audio("sfx", name)
+    path = find_variant("sfx", name)                       # swing, swing_2 … one at random
     return bool(path) and _player.play_sfx(path, name)
 
 
@@ -619,6 +631,8 @@ def on_combat_start(boss: bool = False) -> None:
     global _in_combat
     _in_combat = True
     music("boss" if boss and find_audio("music", "boss") else "combat")
+    if boss:
+        sfx("boss_reveal")
 
 
 def on_combat_end(result: str) -> None:

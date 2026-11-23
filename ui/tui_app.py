@@ -48,6 +48,56 @@ _HOTKEY_RE = re.compile(r"^\[(?P<key>[A-Z?])\]\s")
 _QUIT = object()                  # put on the answer queue when the app closes
 
 
+def _has_rule(renderable) -> bool:
+    """A Rule (or a Group holding one) measures as narrow; it should span the log."""
+    if isinstance(renderable, Rule):
+        return True
+    return isinstance(renderable, Group) and any(_has_rule(r) for r in renderable.renderables)
+
+
+class StoryLog(RichLog):
+    """The story: a RichLog that re-wraps what it shows when its width changes.
+
+    RichLog wraps each entry once, when it's written, so text written before
+    the browser's art panel opened (or before a resize) stayed at the old width
+    and was cut off at the right. This keeps the last ``KEEP`` entries and
+    writes them again, a moment after the width settles."""
+
+    KEEP = 800
+
+    def __init__(self, **kwargs) -> None:
+        kwargs.setdefault("min_width", 20)
+        super().__init__(**kwargs)
+        from collections import deque
+        self._entries: "deque" = deque(maxlen=self.KEEP)
+        self._flow_width = 0
+        self._reflow_timer = None
+
+    def write(self, content, width=None, expand=False, shrink=True, scroll_end=None, animate=False):
+        return super().write(content, width, expand or _has_rule(content), shrink, scroll_end, animate)
+
+    def add(self, content) -> None:
+        self._entries.append(content)
+        self.write(content)
+
+    def on_resize(self, event) -> None:
+        width = event.size.width
+        if self._flow_width and width and width != self._flow_width:
+            if self._reflow_timer is not None:
+                self._reflow_timer.stop()
+            self._reflow_timer = self.set_timer(0.2, self._reflow)
+        self._flow_width = width or self._flow_width
+
+    def _reflow(self) -> None:
+        self._reflow_timer = None
+        at_end = self.is_vertical_scroll_end
+        self.clear()
+        for entry in self._entries:
+            self.write(entry, scroll_end=False)
+        if at_end:
+            self.scroll_end(animate=False)
+
+
 def _to_text(console, renderable, width: int) -> Text:
     """Render with the game's console (so theme styles resolve) into a
     plain Text the Textual widgets can show at any width."""
@@ -213,7 +263,7 @@ class GameApp(App):
             yield Label("SKILLS · click to inspect", id="skills-title", classes="side-title")
             yield OptionList(id="skills", classes="side-list")
         with Vertical(id="main"):
-            yield RichLog(id="story", wrap=True, markup=False, highlight=False, auto_scroll=True)
+            yield StoryLog(id="story", wrap=True, markup=False, highlight=False, auto_scroll=True)
             yield Label("", id="busy")
             with Vertical(id="prompt"):
                 yield Label("", id="question")
@@ -246,10 +296,11 @@ class GameApp(App):
             self.post_story(Text("The game hit an error:\n" + traceback.format_exc(), style="red"))
             self.answers.get()                       # let the player read it
         finally:
-            try:
-                self.call_from_thread(self.exit)
-            except Exception:
-                pass
+            if self.is_running:                      # else the exit coroutine is never awaited
+                try:
+                    self.call_from_thread(self.exit)
+                except Exception:
+                    pass
 
     # ── called from the engine thread ──
     def story_width(self) -> int:
@@ -266,9 +317,9 @@ class GameApp(App):
 
     def post_story(self, renderable) -> None:
         if threading.current_thread() is threading.main_thread():
-            self.query_one("#story", RichLog).write(renderable)
+            self.query_one("#story", StoryLog).add(renderable)
         else:
-            self.call_from_thread(lambda: self.query_one("#story", RichLog).write(renderable))
+            self.call_from_thread(lambda: self.query_one("#story", StoryLog).add(renderable))
 
     # ── UI-thread side ──
     def set_sidebar(self, renderable, bag: list | None = None, skills: list | None = None) -> None:

@@ -33,6 +33,14 @@ in `assets/`. `scripts/fetch_sounds.py` builds a pack from Kenney's CC0 packs pl
 any folders you add (`--extra FOLDER:LICENSE`) and records each file's license
 in `sounds_manifest.json`.
 
+`scripts/stage_packs.py` stages the purchased SFX packs (`PACK_SOUNDS` maps each
+pack file to a game sound) for `scripts/master_audio.py --out assets_local/audio`:
+56 sounds, i.e. ambience for every Gate (`ambience/gate.<gate_id>`), for the
+prologue, character creation, the endings and eleven spots, the effects
+`boss_reveal`, `boss_warning`, `enrage`, `summon`, `life_lost`, and extra takes
+(`swing_2`, `spell_3` …). Any effect plays one of its takes at random, pooled
+from both folders.
+
 ## What's here already
 
 83 sounds (OGG), mastered with `scripts/master_audio.py`: four music tracks (`combat`, `ledger`, `boss`, `camp`; no `explore` yet;

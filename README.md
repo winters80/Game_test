@@ -173,13 +173,22 @@ python scripts/fetch_sounds.py --extra "D:/Downloads/pixabay:pixabay" --extra "D
 
 **What you may publish.** Only CC0 files belong in `assets/`, which is in the public repo. Pixabay and Sonniss allow their sounds inside a game but not as raw files, so put those in **`assets_local/`** (same layout, git-ignored). The game looks there first.
 
+**Purchased packs.** `scripts/stage_packs.py` turns six bought SFX packs (Urban Cityscape, Sounds of the Metaverse, Cinematic Ambiences, Drones, Whooshes, Sound Design Essentials) into 56 game sounds: an ambience loop for every one of the 32 Gates, ambience for the prologue, character creation, both endings and eleven spots (the crystal caverns, the Drowned Sanctum, the System terminal, the Mages' Spire …), new effects (`boss_reveal` when a boss fight starts, `boss_warning` when an enemy gathers itself for a heavy blow, `enrage`, `summon`, `life_lost`) and extra takes of the swing, dodge, spell, Gate and whistle sounds. They go to `assets_local/` because the packs can't be published raw:
+
+```bash
+python scripts/stage_packs.py --zips C:/Users/me/Downloads --out D:/Stuff/Sounds/packs_staged
+python scripts/master_audio.py --src D:/Stuff/Sounds/packs_staged --out assets_local/audio
+```
+
+Every effect can have several takes (`swing`, `swing_2`, `swing_3` …); one is picked at random each time, from `assets/` and `assets_local/` together. Mute any single take you don't like in Admin → Art & audio → listen and mute.
+
 | Where | What it's for |
 |---|---|
 | `assets/images/scenes/<scene>.png` (or `<scene>.<spot>.png`) | the place you're in |
 | `assets/images/npcs/<npc>.png` | whoever you're talking to (and the Ledger's wardens and hunters) |
 | `assets/images/bosses/<boss>.png` | the master of a lair or Gate |
 | `assets/images/items/<item>.png` | an item you inspect |
-| `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound (`ambience/gate` inside every Gate), effects such as level-ups, hits, spells, the wardens' whistle, `gate_enter`, `crystal_shatter`, `ledger_seal` (a fine paid, an unseen crime on file) and `potion` |
+| `assets/audio/music/`, `ambience/`, `sfx/` | music by place (and in fights and boss fights), looping background sound (`ambience/<scene>.<spot>` or `<scene>`; inside a Gate `ambience/gate.<gate_id>`, else `ambience/gate`), effects such as level-ups, hits, spells, the wardens' whistle, `gate_enter`, `crystal_shatter`, `ledger_seal` (a fine paid, an unseen crime on file) and `potion` |
 | `assets/audio/voice/system/`, `voice/<npc>/greeting` (or several takes `greeting_1`, `greeting_2` … played at random), `voice/bots/<archetype>/greeting` | the System's lines ("Classification complete.", "The System has reported you to the Ledger."), NPC greetings (`ledger_warden` when the wardens stop you), and a bot's greeting by archetype (explorer, fighter, crafter, trader; gatherers fall back to the trader's) |
 
 Admin → **Art & audio** switches pictures, menu clicks, effects, music, ambience and voice on or off and sets each volume. Sound needs `pygame-ce` and pictures need `textual-image`; both are in `requirements.txt`, the launchers install them, and the game simply runs without them if they're missing. See `assets/README.md` for the details.

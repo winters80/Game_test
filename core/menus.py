@@ -1084,8 +1084,9 @@ class GameMenusMixin:
             s = media.settings()
             onoff = lambda k: "ON" if s[k] else "OFF"   # noqa: E731
             have = media.has_any_assets()
+            local = f" + {media.LOCAL_ASSETS_DIR} (yours, not published)" if media.LOCAL_ASSETS_DIR.is_dir() else ""
             renderer.console.print(
-                f"\n  [dim_text]Assets folder: {media.ASSETS_DIR}"
+                f"\n  [dim_text]Assets folder: {media.ASSETS_DIR}{local}"
                 f"{'' if have else '  (empty: run Write the asset list for prompts)'}[/dim_text]")
             ok, status = media.audio_status()
             renderer.console.print(f"  [{'success' if ok else 'system_warning'}]{status}[/{'success' if ok else 'system_warning'}]")

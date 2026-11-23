@@ -166,6 +166,7 @@ class EnemyTurn:
     lines: list[tuple[str, str]] = field(default_factory=list)
     summoned: list = field(default_factory=list)
     fired: list = field(default_factory=list)
+    cues: list[str] = field(default_factory=list)       # sound cues: enrage, summon, boss_warning
 
 
 def _due(enemy: "Enemy") -> dict | None:
@@ -261,6 +262,7 @@ def enemy_turn(
         enemy.enraged = True
         enemy.attack = round(enemy.attack * ENRAGE_MULT)
         out.lines.append((f"{enemy.name} becomes ENRAGED!", "system_warning"))
+        out.cues.append("enrage")
 
     frozen = FROZEN_ATTACK_PENALTY if enemy.statuses.get("frozen") else 0
     ab = _due(enemy)
@@ -292,6 +294,7 @@ def enemy_turn(
             enemies.append(new)
             out.summoned.append(new)
             out.lines.append((f"{enemy.name} uses {name}: {new.name} joins the fight!", "system_warning"))
+            out.cues.append("summon")
         else:
             kind = None
     if kind in ("heavy", "drain", "status"):
@@ -320,6 +323,7 @@ def enemy_turn(
     warn = _upcoming(enemy)
     if warn and enemy.is_alive:
         out.lines.append((f"⚠ {enemy.name} is gathering itself for {warn.get('name', 'something big')}!", "system_warning"))
+        out.cues.append("boss_warning")
     return out
 
 
