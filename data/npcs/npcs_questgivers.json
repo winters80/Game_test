@@ -61,49 +61,49 @@
     "quest_template_id": "bounty_ashgrove_manor",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_ashgrove_manor",
-    "min_level": 1
+    "min_level": 2
    },
    {
     "quest_template_id": "bounty_clockwork_foundry",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_clockwork_foundry",
-    "min_level": 1
+    "min_level": 2
    },
    {
     "quest_template_id": "bounty_bronze_labyrinth",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_bronze_labyrinth",
-    "min_level": 2
+    "min_level": 3
    },
    {
     "quest_template_id": "bounty_redcap_fortress",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_redcap_fortress",
-    "min_level": 2
+    "min_level": 3
    },
    {
     "quest_template_id": "bounty_rootdeep_caverns",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_rootdeep_caverns",
-    "min_level": 2
+    "min_level": 3
    },
    {
     "quest_template_id": "bounty_mycelial_kingdom",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_mycelial_kingdom",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "bounty_golem_assembly",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_golem_assembly",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "bounty_cinder_forge",
     "trigger_flag": "",
     "already_given_flag": "given_bounty_cinder_forge",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "bounty_witchs_bog",
@@ -211,7 +211,7 @@
     "quest_template_id": "ashgrove_inheritance_1",
     "trigger_flag": "",
     "already_given_flag": "given_ashgrove_inheritance_1",
-    "min_level": 1
+    "min_level": 2
    },
    {
     "quest_template_id": "ashgrove_inheritance_2",
@@ -229,7 +229,7 @@
     "quest_template_id": "spore_dreams_1",
     "trigger_flag": "",
     "already_given_flag": "given_spore_dreams_1",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "spore_dreams_2",
@@ -301,7 +301,7 @@
     "quest_template_id": "bull_rush_1",
     "trigger_flag": "",
     "already_given_flag": "given_bull_rush_1",
-    "min_level": 2
+    "min_level": 3
    },
    {
     "quest_template_id": "bull_rush_2",
@@ -409,7 +409,7 @@
     "quest_template_id": "foundry_strike_1",
     "trigger_flag": "",
     "already_given_flag": "given_foundry_strike_1",
-    "min_level": 1
+    "min_level": 2
    },
    {
     "quest_template_id": "foundry_strike_2",
@@ -421,7 +421,7 @@
     "quest_template_id": "golem_union_1",
     "trigger_flag": "",
     "already_given_flag": "given_golem_union_1",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "golem_union_2",
@@ -607,7 +607,7 @@
     "quest_template_id": "rootdeep_survey_1",
     "trigger_flag": "",
     "already_given_flag": "given_rootdeep_survey_1",
-    "min_level": 2
+    "min_level": 3
    },
    {
     "quest_template_id": "rootdeep_survey_2",
@@ -1297,7 +1297,7 @@
     "quest_template_id": "cinder_contract_1",
     "trigger_flag": "",
     "already_given_flag": "given_cinder_contract_1",
-    "min_level": 3
+    "min_level": 4
    },
    {
     "quest_template_id": "cinder_contract_2",

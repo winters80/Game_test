@@ -55,7 +55,7 @@
    }
   },
   "quest_seeds": [
-   {"quest_template_id": "ledger_order_1", "trigger_flag": "", "already_given_flag": "given_ledger_order_1", "min_level": 2},
+   {"quest_template_id": "ledger_order_1", "trigger_flag": "", "already_given_flag": "given_ledger_order_1", "min_level": 3},
    {"quest_template_id": "ledger_order_2", "trigger_flag": "done_ledger_order_1", "already_given_flag": "given_ledger_order_2", "min_level": 3},
    {"quest_template_id": "ledger_order_3", "trigger_flag": "done_ledger_order_2", "already_given_flag": "given_ledger_order_3", "min_level": 4}
   ]

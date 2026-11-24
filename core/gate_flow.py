@@ -18,7 +18,7 @@ import logging
 import random
 from typing import TYPE_CHECKING
 
-from config import GATE_BREATHER, GATE_LEVEL_GRACE, feature
+from config import GATE_BREATHER, GATE_GRACE_FROM_LEVEL, GATE_LEVEL_GRACE, feature
 from ui import renderer
 
 if TYPE_CHECKING:
@@ -40,12 +40,19 @@ def _status(engine: "GameEngine", gate: "GateDefinition") -> str:
     return "its master is dead; something is moving in"
 
 
+def entry_level(gate: "GateDefinition") -> int:
+    """The lowest player level the Registry lets in: one under the rating,
+    except for the first Gates, where one level is too big a step."""
+    grace = GATE_LEVEL_GRACE if gate.min_level >= GATE_GRACE_FROM_LEVEL else 0
+    return max(1, gate.min_level - grace)
+
+
 def gate_lines(engine: "GameEngine") -> list[tuple["GateDefinition", str, bool]]:
     """(gate, label, enterable) for every registered gate, lowest level first."""
     player = engine.state.player
     out = []
     for gate in engine.gate_registry.all():
-        ok = player.level >= gate.min_level - GATE_LEVEL_GRACE
+        ok = player.level >= entry_level(gate)
         done = " ✓" if player.has_flag(gate.clear_flag) else ""
         group = f" [party of {gate.party_size}]" if gate.party_size > 1 else ""
         label = f"Lv {gate.min_level:>2} · {gate.name} [{gate.theme}]{group}{done} — {_status(engine, gate)}"

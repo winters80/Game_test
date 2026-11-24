@@ -415,6 +415,10 @@ def web(tmp: Path) -> None:
             page = await (await client.get("/")).text()
             check('id="art-panel"' in page and "/art/" in page and "/ws/" in page,
                   "the browser page has a picture panel and a per-tab art id")
+            # After quitting, the dead terminal kept the keyboard and ate F5 /
+            # Ctrl+R, so a reload left "Session ended." up. The page takes them back.
+            check('contains("-closed")' in page and '"F5"' in page and "stopImmediatePropagation" in page,
+                  "after quitting, F5 / Ctrl+R / Enter start a fresh game")
             r = await client.get(f"/art/{art_id}")
             check((await r.json())["src"] == "", "nothing to show before the game picks a picture")
             web_server.publish(art_id, str(tmp / "assets" / "images" / "scenes" / "verath_city.png"), "Verath")

@@ -26,7 +26,7 @@ SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System han
 - **Bosses think.** In a fight, bosses choose their next move from how it's going (heal when hurt, call help, drain you, inflict a status) while you choose yours, so there's no wait. Their big telegraphed blows keep their warning. Without the AI they use their fixed pattern.
 - **Bots make plans.** Every six in-game hours one quick AI decision sends each of the 24 adventurers somewhere that suits them: a fighter to a deeper floor, a trader to the market, a hurt explorer to camp. The rules still run them in between, and offline they plan by rules alone.
 - **Sell at auction.** Consign gear, potions or materials at the Verath auction house. Other adventurers bid on what they actually want and can afford; you're paid (minus the house's 10%) when it ends, or it comes back to you.
-- **Classes feel like classes.** Every 4 levels your class adds its own growth (a warrior hardens, a mage sharpens), rogues learn Evasion first, and Gates were rebalanced with every class's real skills: warriors end an average Gate run with 58% HP, mages 49%, rogues 54%, every class clears every Gate at its level, and none of the 32 Gates is a walkover for any class (the big group Gates field more enemies, so companions don't carry you).
+- **Classes feel like classes.** Every 4 levels your class adds its own growth (a warrior hardens, a mage sharpens), rogues learn Evasion first, and Gates were rebalanced with every class's real skills: warriors end an average Gate run with 58% HP, mages 49%, rogues 54%, every class clears every Gate at its level, and none of the 32 Gates is a walkover for any class (the big group Gates field more enemies, so companions don't carry you). The first Gates (Lv 2-4) open at their own level, not one early: at that stage one level made the difference between winning and losing nearly every run.
 - **A clickable sidebar** in the panel and browser versions: click something in your bag to use or equip it, or a skill to read it.
 - **Save slots with details**: name, level, class, where you are, play time and when you saved.
 - **Torven sells gear** (nine pieces from a rusty dagger to mage robes), Wren sells resistance potions, and Mira at the inn serves a meal to take with you. The guard captain's checkpoint can be reached from the city gate.
@@ -86,7 +86,7 @@ Add `--check` (`-Check` on Windows) to do steps 1–3 without launching the game
 | Command | What you get |
 |---|---|
 | `python main.py` | **Panels** in the terminal (the default): sidebar with status, gear and bag; scrollable story; clickable choices; hotkey bar; pictures at the top of the sidebar |
-| `python main.py --web` | The panel version **in your browser** at http://localhost:8000, with pictures **full size** in a panel beside the game. The best way to see the art |
+| `python main.py --web` | The panel version **in your browser** at http://localhost:8000, with pictures **full size** in a panel beside the game. The best way to see the art. After you quit, press Enter or F5 (or click Restart) to start again |
 | `python main.py --classic` | The classic terminal: scrolling text and arrow-key menus, no pictures |
 
 All three run the same game and the same saves. The launchers pass these on (`start.bat --web`, `./scripts/start.sh --classic`). If Textual isn't installed, `python main.py` falls back to the classic terminal.

@@ -178,6 +178,23 @@
         }
         window.location.href = getStartUrl();
       }
+      // Once the game has quit, the dead terminal still holds the keyboard and
+      // swallows F5 / Ctrl+R, so reloading left "Session ended." on screen.
+      // While the page shows it, reload keys and Enter start a fresh game.
+      window.addEventListener(
+        "keydown",
+        function (e) {
+          if (!document.body.classList.contains("-closed")) return;
+          const reloadKey =
+            e.key === "F5" || ((e.ctrlKey || e.metaKey) && (e.key === "r" || e.key === "R"));
+          if (reloadKey || e.key === "Enter") {
+            e.preventDefault();
+            e.stopImmediatePropagation();
+            refresh();
+          }
+        },
+        true
+      );
     </script>
   </head>
   <body data-pingurl="{{ ping_url }}">

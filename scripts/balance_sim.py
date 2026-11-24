@@ -96,11 +96,15 @@ def main() -> None:
         eng = GameEngine()
         eng.bootstrap()
     regs = (eng.class_registry, eng.skill_registry)
+    from core.gate_flow import entry_level
     rng = random.Random(7)
     flagged = 0
     print(f"{'Gate':<42} {'Lv':>3} {'Party':>5} {'Win%':>5} {'HP left':>7}")
     for gate in eng.gate_registry.all():
         level = max(1, gate.min_level + args.offset)
+        if level < entry_level(gate):                   # the Registry wouldn't let this player in
+            print(f"{gate.name[:42]:<42} {level:>3} {gate.party_size:>5}     -  locked until Lv {entry_level(gate)}")
+            continue
         wins, left = 0, 0.0
         for _ in range(args.runs):
             random.seed(rng.random())

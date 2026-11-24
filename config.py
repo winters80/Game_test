@@ -129,6 +129,8 @@ LAIR_MAX_SCALING = 0.40                # cap on that bonus
 LAIR_BOT_CHALLENGE_CHANCE = 0.3       # chance a fighter bot on a lair's floor tries the boss
 LAIR_BOT_SAFETY = 0.85                 # bots only try if expected damage < this share of their HP
 GATE_LEVEL_GRACE = 1                   # a gate can be entered from (rated level - this)
+GATE_GRACE_FROM_LEVEL = 5              # ...but only Gates rated this or higher: at Lv 1-3 one level is
+                                       # too big a step (balance_sim --offset -1 lost most early runs)
 GATE_ENEMY_HP_SCALE = 1.4              # multiplies HP / attack of every lair and Gate enemy
 GATE_ENEMY_ATK_SCALE = 1.1             # (tuned with scripts/balance_sim.py; see README Balance)
 GATE_BREATHER = 0.15                   # HP and MP recovered between Gate rooms (catch your breath)

@@ -3249,8 +3249,18 @@ def _test_gates_and_quest_chains(item_reg) -> None:
             assert not _lf32.get_state(_eng, "bronze_labyrinth").occupied
             assert _gf.run_gate(_eng, "bronze_labyrinth", rng=_rnd32.Random(2)) == "cleared", "Empty lair: pass through"
             assert _p.flags["gate_clears_bronze_labyrinth"] == 2
+            _lvl32 = _p.level                     # the two clears above paid XP
+            _p.level = 1
             _lines = _gf.gate_lines(_eng)
-            assert len(_lines) == len(gates) and _lines[0][2] and not _lines[-1][2], "High gates locked at level 1"
+            assert len(_lines) == len(gates) and not _lines[-1][2], "High gates locked at level 1"
+            assert not any(ok for _g, _l, ok in _lines), "No Gate at level 1: the first are rated Lv 2, with no early entry"
+            _p.level = 2
+            assert any(ok for _g, _l, ok in _gf.gate_lines(_eng)), "The Lv 2 Gates open at level 2"
+            _byid = {g.gate_id: g for g in _eng.gate_registry.all()}
+            assert _gf.entry_level(_byid["bronze_labyrinth"]) == _byid["bronze_labyrinth"].min_level, "No grace below Lv 5"
+            _late = next(g for g in _eng.gate_registry.all() if g.min_level >= 6)
+            assert _gf.entry_level(_late) == _late.min_level - 1, "One level of grace from Lv 5 up"
+            _p.level = _lvl32
 
             # 32d. A skill chain end to end: seed → objective → report → next seed → skill.
             from scenes.option_logic import process_triggers as _pt
