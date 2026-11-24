@@ -43,8 +43,9 @@ from both folders.
 
 ## What's here already
 
-83 sounds (OGG), mastered with `scripts/master_audio.py`: four music tracks (`combat`, `ledger`, `boss`, `camp`; no `explore` yet;
-other moods borrow one, see `media.MUSIC_FALLBACK`), all 36 effects (including menu clicks, combat foley, footsteps and the
+91 sounds (OGG): twelve music tracks, four recorded and mastered with `scripts/master_audio.py` (`combat`, `ledger`, `boss`, `camp`)
+and eight composed in code by `scripts/compose_music.py` (`explore`, `dungeon`, `dungeon_deep`, `verath`, `undermarket`, `prologue`,
+`fracture_core`, `ending`; the project's own work, CC0 like the rest of this folder), all 36 effects (including menu clicks, combat foley, footsteps and the
 low-health heartbeat loop), ten ambience
 loops, three System lines, three takes each for six people
 (`voice/<npc_id>/greeting_1..3`) and four bot types (`voice/bots/<archetype>/greeting_1..3`).

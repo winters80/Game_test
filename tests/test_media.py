@@ -472,13 +472,34 @@ def cues(tmp: Path) -> None:
     media._settings = None
 
 
+def music(tmp: Path) -> None:
+    """Every music mood the game asks for ships in the repo, and the composer
+    that made the missing ones renders loops that join themselves."""
+    import numpy as np
+    from ui import media
+    sys.path.insert(0, str(ROOT / "scripts"))
+    import compose_music as cm
+    moods = set(media.MUSIC_FOR_SCENE.values()) | set(media.MUSIC_FOR_NODE.values()) | {"combat", "boss"}
+    have = {p.stem for p in (ROOT / "assets" / "audio" / "music").glob("*.ogg")}
+    check(moods <= have, f"every music mood has a track in assets/ (missing: {sorted(moods - have)})")
+    check(set(cm.MOODS) <= moods, f"the composer only writes moods the game plays ({sorted(set(cm.MOODS) - moods)})")
+    a, b = cm.render("undermarket", bars=2), cm.render("undermarket", bars=2)
+    check(np.array_equal(a, b), "a composed track is the same on every run")
+    for mood in cm.MOODS:
+        y = cm.render(mood, bars=2)
+        step = np.max(np.abs(np.diff(y)))
+        seam = abs(y[0] - y[-1])
+        ok = np.all(np.isfinite(y)) and np.max(np.abs(y)) <= 10 ** (-3 / 20) + 1e-9 and seam <= step + 1e-9
+        check(ok, f"{mood}: finite, peaks under -3 dBFS, and the loop joins (seam {seam:.4f} vs step {step:.4f})")
+
+
 if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
     from ui import media
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
                      ("sound pack", sound_pack), ("sound status", status),
-                     ("sound hooks", hooks), ("muting", muting), ("boss cues and takes", cues)):
+                     ("sound hooks", hooks), ("muting", muting), ("boss cues and takes", cues), ("music", music)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             # The real assets_local/ (yours, git-ignored) must not leak into the checks.
