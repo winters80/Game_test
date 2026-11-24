@@ -3475,6 +3475,18 @@ def _test_living_world(item_reg) -> None:
         leads = _qs33.available_work(_wstate, _eng.quest_registry, _eng.npc_registry)
         assert leads and all(t.template_id != "clockwork_precision_2" for _n, t in leads)
         ok(f"Journal: '{summ['title']}' shows {summ['chain']} and → report; {len(leads)} leads listed")
+        from core.gate_flow import entry_level as _el33
+        _glv = {g.gate_id: _el33(g) for g in _eng.gate_registry.all()}
+        _w4 = _eng.quest_registry.get("wardens_of_the_breach_4")
+        _f4 = _qs33.wanted_flags(_w4.stages[0].completion_condition)
+        assert "cleared_dreamers_abyss" in _f4, _f4
+        assert _qs33.gate_level_needed(_f4, _wp, _glv) == _glv["dreamers_abyss"] == 17
+        assert _qs33.gate_level_needed({"slew_dreamers_abyss_dreamer"}, _wp, _glv) == 17, "slew_<gate>_<occupant> maps to its Gate"
+        assert _qs33.gate_level_needed({"cleared_clockwork_foundry", "flag_x"}, _wp, _glv) == 0, "no hint once the Gate is open"
+        _wp.level = 17
+        assert _qs33.gate_level_needed(_f4, _wp, _glv) == 0
+        _wp.level = 3
+        ok("Journal: a step whose Gate is still locked says when it opens (Wardens 4 → Lv 17)")
 
         # 33h. New rifts: echoes (no AI), quest rifts, surges, AI results (clamped), successors; all persist.
         n0 = len(_gg.generated_gates(_eng))

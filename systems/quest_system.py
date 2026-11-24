@@ -155,6 +155,32 @@ def _turn_in_npcs(condition: dict) -> set[str]:
     return out
 
 
+def wanted_flags(condition: dict) -> set[str]:
+    """Every ``has_flag`` a condition mentions (inside ``all`` / ``any`` too)."""
+    if not condition:
+        return set()
+    out = {condition["has_flag"]} if condition.get("has_flag") else set()
+    for key in ("all", "any"):
+        for c in condition.get(key) or []:
+            out |= wanted_flags(c)
+    return out
+
+
+def gate_level_needed(flags, player, gate_levels: dict[str, int]) -> int:
+    """The level at which the Gates behind ``flags`` (``cleared_<gate>`` /
+    ``slew_<gate>_<occupant>``) open, if that's above the player's; else 0.
+    ``gate_levels`` maps gate id → the level the Registry lets you in."""
+    need = 0
+    for f in flags:
+        if player.has_flag(f):
+            continue
+        body = f[len("cleared_"):] if f.startswith("cleared_") else f[len("slew_"):] if f.startswith("slew_") else ""
+        gate = body if body in gate_levels else next((g for g in gate_levels if body.startswith(g + "_")), "")
+        if gate:
+            need = max(need, gate_levels[gate])
+    return need if need > player.level else 0
+
+
 def reportable_quests(npc_id: str, state: "GameState", quest_registry: "QuestRegistry") -> list[tuple]:
     """Active quests whose current stage is ready to report to ``npc_id``:
     (instance_id, template, stage) for each."""
@@ -489,6 +515,7 @@ def get_active_quest_summaries(
             "chain": f"{template.chain_kind or 'chain'} {step}/{total}" if total > 1 else "",
             "ready_to_report": ready,
             "giver_npc_id": template.giver_npc_id,
+            "flags": wanted_flags(stage.completion_condition) if stage else set(),
         })
     return summaries
 

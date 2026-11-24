@@ -625,6 +625,11 @@ class GameMenusMixin:
 
             active = qs.get_active_quest_summaries(self.state, self.quest_registry)
             completed_ids = list(player.completed_quest_ids)
+            gate_levels = self._gate_entry_levels()
+
+            def opens(flags) -> str:
+                lv = qs.gate_level_needed(flags, player, gate_levels)
+                return f"  [gold](Gate opens at Lv {lv})[/gold]" if lv else ""
 
             if not active and not completed_ids and not qs.available_work(self.state, self.quest_registry, self.npc_registry):
                 renderer.console.print("  [dim_text]No quests yet. Talk to NPCs to find work.[/dim_text]")
@@ -643,7 +648,7 @@ class GameMenusMixin:
                     if s.get("ready_to_report"):
                         giver = self.npc_registry.get(s["giver_npc_id"]) if self.npc_registry and s.get("giver_npc_id") else None
                         report = f"  [success]→ report to {giver.name}[/success]" if giver else "  [success]→ ready to report[/success]"
-                    label = f"  ● {s['title']}{chain}  [dim_text]— {s['objective']}[/dim_text]{report}"
+                    label = f"  ● {s['title']}{chain}  [dim_text]— {s['objective']}[/dim_text]{report}{opens(s['flags'])}"
                     renderer.console.print(label)
                     pick = f"● {s['title']}"
                     choices.append(pick)
@@ -670,7 +675,9 @@ class GameMenusMixin:
                 for npc, tmpl in leads[:6]:
                     step, total = qs.chain_progress(tmpl, self.quest_registry)
                     chain = f" ({tmpl.chain_kind} chain {step}/{total})" if total > 1 else ""
-                    renderer.console.print(f"  [dim_text]◦ {tmpl.title}{chain} — {npc.name}, {place(npc.zone_id)}[/dim_text]")
+                    first = tmpl.stages[0] if tmpl.stages else None
+                    need = opens(qs.wanted_flags(first.completion_condition) if first else set())
+                    renderer.console.print(f"  [dim_text]◦ {tmpl.title}{chain} — {npc.name}, {place(npc.zone_id)}[/dim_text]{need}")
                 renderer.console.print()
 
             chains = {q.chain_id for q in self.quest_registry.all() if q.chain_id}
@@ -687,6 +694,14 @@ class GameMenusMixin:
             instance_id = label_to_instance.get(answer)
             if instance_id:
                 self._quest_detail(instance_id)
+
+    def _gate_entry_levels(self) -> dict[str, int]:
+        """gate id → the level the Gate Registry lets a player in."""
+        reg = getattr(self, "gate_registry", None)
+        if not reg:
+            return {}
+        from core.gate_flow import entry_level
+        return {g.gate_id: entry_level(g) for g in reg.all()}
 
     def _quest_detail(self, instance_id: str) -> None:
         """Show full quest detail — description, current objective, rewards, NPC, turns elapsed."""
