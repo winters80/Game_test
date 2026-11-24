@@ -140,6 +140,9 @@ RIFT_MAX_GENERATED = 16                # generated Gates per save
 AI_SUCCESSOR_CHANCE = 0.25             # chance the AI invents who moves into a lair after a kill
 LAIR_BOT_GRACE_TURNS = 250             # bots leave each lair's first boss alone this long,
                                        # so the player gets the first shot at it
+LAIR_GRACE_AFTER_MEETING = 200         # dungeon lairs (not Gates): the first boss is kept for the
+                                       # player until they have met it, then this many turns more
+LAIR_GRACE_MAX_TURNS = 2016            # ... but never longer than two in-game weeks
 
 # ── Game balance ───────────────────────────────────────────────────────────────
 BASE_XP_PER_LEVEL = 100

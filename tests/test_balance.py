@@ -87,6 +87,25 @@ def main() -> None:
     check(rep.problems() == 0, "content health: " + ("clean" if not rep.problems() else
                                                      "; ".join(rep.lines(limit=5))))
 
+    # The lock check catches a circle: a door that needs a flag set only past the door.
+    from core.content_health import ROOT as _HR, _locked_nodes
+    _circle = {"prologue": {"nodes": {
+        "root": {"options": [
+            {"option_id": "door", "leads_to": "__stay__", "leads_to_node": "vault",
+             "requires": {"flags": ["zz_key_found"]}},
+            {"option_id": "hall", "leads_to": "__stay__", "leads_to_node": "hall"}]},
+        "vault": {"options": [
+            {"option_id": "take", "leads_to": "__stay__", "leads_to_node": "root", "triggers": ["flag:zz_key_found"]}]},
+        "hall": {"options": []}}}}
+    _all = {("prologue", "root"), ("prologue", "vault"), ("prologue", "hall")}
+    _locked = _locked_nodes(_circle, _all, _HR / "data")
+    check(len(_locked) == 1 and _locked[0].startswith("prologue.vault"),
+          f"content health: a door locked by a flag set only behind it is reported ({_locked})")
+    _circle["prologue"]["nodes"]["hall"]["options"].append(
+        {"option_id": "find", "leads_to": "__stay__", "triggers": ["flag:zz_key_found"]})
+    check(_locked_nodes(_circle, _all, _HR / "data") == [],
+          "content health: ... and not once the flag can be found elsewhere")
+
     # ── Quick sim: every class clears a spread of Gates at their rated level ──
     import scripts.balance_sim as bs
     gates = sorted(gr.all(), key=lambda g: g.min_level)

@@ -1415,7 +1415,7 @@ class GameMenusMixin:
     def _save_prompt(self) -> None:
         slot = uip.text(
             "Save slot name:",
-            default=self.state.player.name.lower().replace(" ", "_"),
+            default=self.state.slot_name or self.state.player.name.lower().replace(" ", "_"),
         ).ask()
         if slot:
             import re

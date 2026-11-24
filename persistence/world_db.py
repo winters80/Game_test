@@ -378,6 +378,10 @@ class WorldDatabase:
         self._ensure_meta()
         self._conn.executescript(_INDEXES_SQL)
 
+    @property
+    def is_open(self) -> bool:
+        return self._conn is not None
+
     def close(self) -> None:
         if self._conn:
             self._conn.close()

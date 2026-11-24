@@ -49,10 +49,27 @@ class LairState(BaseModel):
     arrives_turn: int = 0
     held_counts: dict[str, int] = Field(default_factory=dict)   # times each occupant has held the lair
     kills: int = 0
+    player_met_turn: int = 0                  # when the player first faced the first occupant (0 = not yet)
 
     @property
     def occupied(self) -> bool:
         return self.status == "occupied"
+
+
+def bots_may_challenge(state: "LairState", turn: int, *, gate: bool = False) -> bool:
+    """May bots fight this lair's occupant now? The first occupant is the
+    player's to meet first: a Gate's for LAIR_BOT_GRACE_TURNS; a dungeon lair's
+    until the player has faced it and LAIR_GRACE_AFTER_MEETING turns have passed
+    (at least LAIR_BOT_GRACE_TURNS, at most LAIR_GRACE_MAX_TURNS). Bots used to
+    take both dungeon bosses around turn 300, long before a player got there."""
+    from config import LAIR_BOT_GRACE_TURNS, LAIR_GRACE_AFTER_MEETING, LAIR_GRACE_MAX_TURNS
+    if state.generation > 0:
+        return True
+    if turn < LAIR_BOT_GRACE_TURNS:
+        return False
+    if gate or turn >= LAIR_GRACE_MAX_TURNS:
+        return True
+    return bool(state.player_met_turn) and turn >= state.player_met_turn + LAIR_GRACE_AFTER_MEETING
 
 
 @dataclass

@@ -18,7 +18,7 @@ from typing import TYPE_CHECKING
 from ui import prompt as uip
 from config import SAVES_DIR
 from entities.player import Player
-from persistence.save_manager import list_saves, load_game, new_game_state
+from persistence.save_manager import free_slot, list_saves, load_game, new_game_state
 from ui import renderer
 
 if TYPE_CHECKING:
@@ -93,7 +93,7 @@ def new_game(engine: "GameEngine") -> None:
         name = "Wanderer"
 
     player = Player(name=name.strip())
-    slot_name = re.sub(r'[^a-z0-9_]', '', player.name.lower().replace(" ", "_")) or "save"
+    slot_name = free_slot(re.sub(r'[^a-z0-9_]', '', player.name.lower().replace(" ", "_")) or "save", SAVES_DIR)
 
     engine.state = new_game_state(player, SAVES_DIR, slot_name)
     _attach_engine_handles(engine)

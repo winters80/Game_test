@@ -3070,6 +3070,19 @@ def _test_boss_succession(item_reg) -> None:
         from config import LAIR_BOT_GRACE_TURNS
         _lstate.player.turn_count = 1
         assert "dungeon_floor2" not in bot_world(_eng).lairs, "Grace: bots leave the first boss to the player"
+        from config import LAIR_GRACE_AFTER_MEETING, LAIR_GRACE_MAX_TURNS
+        from systems.lair_system import bots_may_challenge
+        _ch = _lf.get_state(_eng, "crystal_heart")
+        _ch.player_met_turn = 0
+        _lstate.player.turn_count = LAIR_BOT_GRACE_TURNS
+        assert "dungeon_floor2" not in bot_world(_eng).lairs, "A dungeon boss waits until the player has met it"
+        _ch.player_met_turn = 300
+        _lstate.player.turn_count = 300 + LAIR_GRACE_AFTER_MEETING - 1
+        assert "dungeon_floor2" not in bot_world(_eng).lairs, "... and a while after"
+        _ch.player_met_turn = 0
+        assert bots_may_challenge(_ch, LAIR_GRACE_MAX_TURNS), "... but never past the cap"
+        assert bots_may_challenge(_ch, LAIR_BOT_GRACE_TURNS, gate=True), "Gate masters: the plain grace"
+        _ch.player_met_turn = 10
         _lstate.player.turn_count = LAIR_BOT_GRACE_TURNS
         _w = bot_world(_eng)
         assert "dungeon_floor2" in _w.lairs

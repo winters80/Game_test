@@ -37,8 +37,15 @@ def save_game(state: GameState, slot_name: str, saves_dir: Path) -> Path:
 
     # ── World DB is already open and auto-persists (WAL mode) ─────────────────
     # The .db file lives at saves/{slot_name}.db and is written to live.
-    # On save: trim logs that only grow, and keep rotating backups.
-    if state.world_db is not None:
+    # On save: trim logs that only grow, and keep rotating backups (not once
+    # the game has closed it, e.g. autoplay saving after the game loop ended).
+    if state.world_db is not None and state.world_db.is_open:
+        if state.slot_name and slot_name != state.slot_name:
+            # "Save as" another slot: that slot needs this world too, or
+            # loading it pairs the character with an empty (or another) world.
+            for f in _db_files(saves_dir / f"{slot_name}.db")[1:]:
+                f.unlink(missing_ok=True)
+            state.world_db.backup_to(saves_dir / f"{slot_name}.db")
         try:
             state.world_db.prune()
         except Exception:
@@ -134,6 +141,7 @@ def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
     world_db = _open_world_db(db_path, slot_name, saves_dir)
 
     state = GameState(player, world_db=world_db)
+    state.slot_name = slot_name
     # Stash AI-generated skill definitions for GameEngine to re-register
     if world_db is not None:
         state._ai_skill_defs = world_db.load_ai_skills()
@@ -144,13 +152,42 @@ def load_game(slot_name: str, saves_dir: Path) -> GameState | None:
     return state
 
 
+def free_slot(base: str, saves_dir: Path) -> str:
+    """``base``, or ``base_2``, ``base_3`` … : a slot no save uses yet.
+
+    A new character named like an old one used to open that save's world DB
+    (inheriting its dead bosses, quests, bots and NPC memory) and overwrite
+    its save on the first save."""
+    def used(slot: str) -> bool:
+        return (saves_dir / f"{slot}.json").exists() or (saves_dir / f"{slot}.db").exists()
+    slot, n = base, 1
+    while used(slot):
+        n += 1
+        slot = f"{base}_{n}"
+    return slot
+
+
+def _db_files(db_path: Path) -> list[Path]:
+    return [db_path, db_path.with_name(db_path.name + "-wal"), db_path.with_name(db_path.name + "-shm")]
+
+
 def new_game_state(player: Player, saves_dir: Path, slot_name: str) -> GameState:
-    """Create a brand-new GameState with a fresh world database."""
+    """Create a brand-new GameState with a fresh world database. Pick the slot
+    with ``free_slot``; a leftover .db under this name is moved to backups/."""
     saves_dir.mkdir(exist_ok=True)
     db_path = saves_dir / f"{slot_name}.db"
+    if db_path.exists():
+        aside = backup_dir(saves_dir)
+        aside.mkdir(parents=True, exist_ok=True)
+        stamp = time.strftime("%Y%m%d_%H%M%S")
+        for f in _db_files(db_path):
+            if f.exists():
+                os.replace(f, aside / f"{slot_name}.orphan_{stamp}{f.name[len(slot_name):]}")
+        logger.warning("New game in slot %s: moved its old world DB to %s", slot_name, aside)
     world_db = WorldDatabase(db_path)
     world_db.open()
     state = GameState(player, world_db=world_db)
+    state.slot_name = slot_name
     return state
 
 

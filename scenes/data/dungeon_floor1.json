@@ -36,6 +36,18 @@
           "leads_to_node": "after_goblins"
         },
         {
+          "option_id": "hunt_tunnel_wolves",
+          "label": "Hunt the dungeon wolves that have moved into the wide tunnel. [Dungeon Wolf x2]",
+          "expected": true,
+          "leads_to": "__stay__",
+          "leads_to_node": "root",
+          "requires": {
+            "flags": ["goblins_defeated"],
+            "lock_reason": "The goblins hold the wide tunnel."
+          },
+          "triggers": ["combat:wolf_pack"]
+        },
+        {
           "option_id": "go_right_unmapped",
           "label": "Take the narrow unmapped passage. See what the System doesn't know about.",
           "expected": false,

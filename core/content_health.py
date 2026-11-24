@@ -6,6 +6,9 @@ Content health: what in data/ and scenes/ a player can never reach or use.
 Findings (none of them crash the game; they are wasted or broken content):
 
 - **unreachable scenes / nodes**: no option chain from the prologue leads there
+- **locked for good**: nodes an option chain reaches, but only through a
+  required flag that is itself only set behind that lock (the Floor 2 boss
+  chamber needed a flag set on the way down to Floor 3, which needed the boss dead)
 - **dead links**: an option leads to a scene or node that doesn't exist
 - **unoffered quests**: no NPC seed, ``start_quest:`` trigger or chain step offers them
 - **orphan items**: defined but never mentioned anywhere else (no drop, shop,
@@ -36,6 +39,7 @@ CODE_ENTERED = {"death_screen", "game_over", "ending", "respawn"}
 class HealthReport:
     unreachable_scenes: list[str] = field(default_factory=list)
     unreachable_nodes: list[str] = field(default_factory=list)
+    locked_nodes: list[str] = field(default_factory=list)
     dead_links: list[str] = field(default_factory=list)
     unoffered_quests: list[str] = field(default_factory=list)
     orphan_items: list[str] = field(default_factory=list)
@@ -46,7 +50,7 @@ class HealthReport:
 
     def problems(self) -> int:
         return sum(len(getattr(self, k)) for k in (
-            "unreachable_scenes", "unreachable_nodes", "dead_links",
+            "unreachable_scenes", "unreachable_nodes", "locked_nodes", "dead_links",
             "unoffered_quests", "orphan_items", "dead_end_materials", "repeatable_gold", "price_mismatches"))
 
     def lines(self, limit: int = 12) -> list[str]:
@@ -54,6 +58,7 @@ class HealthReport:
         for key, title in (("dead_links", "Dead links (broken)"),
                            ("unreachable_scenes", "Scenes nothing leads to"),
                            ("unreachable_nodes", "Scene nodes nothing leads to"),
+                           ("locked_nodes", "Scene nodes behind a lock nothing can open"),
                            ("unoffered_quests", "Quests nobody offers"),
                            ("orphan_items", "Items that never appear"),
                            ("dead_end_materials", "Materials nothing uses"),
@@ -76,6 +81,92 @@ def _load_json_texts(*folders: Path) -> dict[Path, str]:
             except OSError:
                 continue
     return texts
+
+
+# Flags the engine sets by pattern (Gates, lairs, quest chains).
+CODE_FLAG_PREFIXES = ("cleared_", "slew_", "done_", "gate_clears_", "swift_", "studied_", "ai_")
+
+
+def _locked_nodes(raw_scenes: dict, reachable: set, data_dir: Path) -> list[str]:
+    """Nodes reachable when locks are ignored but not when an option's
+    ``requires.flags`` / ``flags_any`` must be met by flags set along the way.
+
+    Only scene-only flags can lock: flags a scene option sets and nothing
+    else does (no ``flag:`` trigger, ``reward_flags`` or ``clear_flags`` in
+    data/, no ``set_flag`` in the code, no CODE_FLAG_PREFIXES pattern). Those
+    must be picked up on the way. Merely *reading* a flag elsewhere (a quest
+    condition) doesn't count. Optimistic otherwise (ignores stats, items, gold
+    and ``flags_absent``)."""
+    scene_flags: set[str] = set()
+    for scene in raw_scenes.values():
+        for node in (scene.get("nodes") or {}).values():
+            for opt in node.get("options", []):
+                scene_flags |= {t[5:] for t in opt.get("triggers") or [] if t.startswith("flag:")}
+    data_text = "\n".join(_load_json_texts(data_dir).values())
+    code = ""
+    for folder in ("core", "systems", "scenes", "entities"):
+        for f in (ROOT / folder).rglob("*.py"):
+            try:
+                code += f.read_text(encoding="utf-8")
+            except OSError:
+                pass
+    set_lists = re.findall(r'"reward_flags"\s*:\s*\[([^\]]*)\]', data_text)
+    # A dungeon lair's clear_flags are earned by entering it (boss_lair:X).
+    lair_flags: dict[str, list[str]] = {}
+    for f in (data_dir / "dungeons").glob("*.json"):
+        try:
+            for lair in json.loads(f.read_text(encoding="utf-8")).get("lairs", []):
+                lair_flags[lair["lair_id"]] = list(lair.get("clear_flags") or [])
+        except (OSError, ValueError, KeyError):
+            continue
+    from_lairs = {fl for flags in lair_flags.values() for fl in flags}
+
+    def set_elsewhere(flag: str) -> bool:
+        q = re.escape(flag)
+        return (flag.startswith(CODE_FLAG_PREFIXES)
+                or re.search(r'flag:' + q + r'"', data_text) is not None
+                or any(f'"{flag}"' in lst for lst in set_lists)
+                or re.search(r'set_flag\(\s*["\']' + q + r'["\']', code) is not None
+                or re.search(r'flags\[\s*["\']' + q + r'["\']\s*\]\s*=', code) is not None)
+
+    scene_only = {f for f in scene_flags if not set_elsewhere(f)} | {
+        f for f in from_lairs if not set_elsewhere(f)}
+
+    have: set[str] = set()
+    seen: set = set()
+    blocked: dict = {}
+    while True:
+        grew = False
+        todo = [(s, "root") for s in ENTRY_SCENES if s in raw_scenes]
+        seen = set()
+        while todo:
+            scene_id, node_id = todo.pop()
+            if (scene_id, node_id) in seen:
+                continue
+            seen.add((scene_id, node_id))
+            node = (raw_scenes.get(scene_id, {}).get("nodes") or {}).get(node_id) or {}
+            for opt in node.get("options", []):
+                req = opt.get("requires") or {}
+                need = [f for f in req.get("flags", []) if f in scene_only and f not in have]
+                anyf = req.get("flags_any") or []
+                tscene = scene_id if (opt.get("leads_to") or "__stay__") == "__stay__" else opt["leads_to"]
+                dest = (tscene, opt.get("leads_to_node") or "root")
+                if need or (anyf and all(f in scene_only and f not in have for f in anyf)):
+                    blocked.setdefault(dest, set()).update(need or anyf)
+                    continue
+                trig = opt.get("triggers") or []
+                new = {t[5:] for t in trig if t.startswith("flag:")}
+                new |= {fl for t in trig if t.startswith("boss_lair:") for fl in lair_flags.get(t[10:], [])}
+                new -= have
+                if new:
+                    have |= new
+                    grew = True
+                if tscene in raw_scenes:
+                    todo.append(dest)
+        if not grew:
+            break
+    return sorted(f"{s}.{n} (needs {', '.join(sorted(blocked.get((s, n), [])) or ['?'])})"
+                  for s, n in reachable - seen if (s, n) in blocked)
 
 
 def check(engine) -> HealthReport:
@@ -117,6 +208,7 @@ def check(engine) -> HealthReport:
         for node_id in (raw_scenes[scene_id].get("nodes") or {}):
             if (scene_id, node_id) not in seen_nodes:
                 rep.unreachable_nodes.append(f"{scene_id}.{node_id}")
+    rep.locked_nodes = _locked_nodes(raw_scenes, seen_nodes, data_dir)
 
     # ── Quests: who offers them ──
     texts = _load_json_texts(data_dir, scenes_dir)

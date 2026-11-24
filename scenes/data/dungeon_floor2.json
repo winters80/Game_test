@@ -31,7 +31,8 @@
           "leads_to": "dungeon_floor2",
           "leads_to_node": "boss_chamber",
           "requires": {
-            "flags": ["dungeon_floor2_cleared"]
+            "flags_any": ["explored_unmapped_passage", "boss_golem_defeated"],
+            "lock_reason": "The door is sealed from the other side. The unmapped passage in the north tunnels might lead round to it."
           }
         },
         {
@@ -106,7 +107,7 @@
         },
         {
           "option_id": "find_passage",
-          "label": "Explore the unmapped passage.",
+          "label": "Explore the unmapped passage. (It winds round behind the sealed boss chamber.)",
           "expected": false,
           "leads_to": "dungeon_floor2",
           "leads_to_node": "north_tunnels",

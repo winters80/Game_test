@@ -161,7 +161,25 @@ try:
     _row = _st2.world_db._conn.execute("SELECT flag_key FROM world_flags WHERE flag_key='marker'").fetchone()
     check("a damaged world DB is restored from the newest backup", _row is not None)
     check("the damaged file is kept aside", bool(list(_dir.glob("bak.damaged-*.db"))))
+
+    # Save as another slot carries the world with it.
+    _sm.save_game(_st2, "bak_copy", _dir)
     _sm.close_game(_st2)
+    _st3 = _sm.load_game("bak_copy", _dir)
+    _row = _st3.world_db._conn.execute("SELECT flag_key FROM world_flags WHERE flag_key='marker'").fetchone()
+    check("save as another slot copies the world DB too", _row is not None)
+    check("the loaded state remembers its slot", _st3.slot_name == "bak_copy")
+    _sm.close_game(_st3)
+
+    # A new character named like an old save gets its own slot and a fresh world.
+    check("free_slot skips used slots", _sm.free_slot("bak", _dir) == "bak_2"
+          and _sm.free_slot("newcomer", _dir) == "newcomer")
+    (_dir / "orphan.db").write_bytes(b"left over")
+    _st4 = _sm.new_game_state(_P(name="Orphan"), _dir, "orphan")
+    _rows = _st4.world_db._conn.execute("SELECT COUNT(*) FROM world_flags").fetchone()[0]
+    check("a leftover .db under a new game's slot is moved aside, not reused",
+          _rows == 0 and bool(list((_dir / "backups").glob("orphan.orphan_*.db"))))
+    _sm.close_game(_st4)
 except Exception:
     print(f"  {FAIL} Run 3 crashed:\n{traceback.format_exc()}")
     results.append(("Run 3", False, "crashed"))

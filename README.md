@@ -27,6 +27,10 @@ SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System han
 - **Bots make plans.** Every six in-game hours one quick AI decision sends each of the 24 adventurers somewhere that suits them: a fighter to a deeper floor, a trader to the market, a hurt explorer to camp. The rules still run them in between, and offline they plan by rules alone.
 - **Sell at auction.** Consign gear, potions or materials at the Verath auction house. Other adventurers bid on what they actually want and can afford; you're paid (minus the house's 10%) when it ends, or it comes back to you.
 - **Classes feel like classes.** Every 4 levels your class adds its own growth (a warrior hardens, a mage sharpens), rogues learn Evasion first, and Gates were rebalanced with every class's real skills: warriors end an average Gate run with 58% HP, mages 49%, rogues 54%, every class clears every Gate at its level, and none of the 32 Gates is a walkover for any class (the big group Gates field more enemies, so companions don't carry you). The first Gates (Lv 2-4) open at their own level, not one early: at that stage one level made the difference between winning and losing nearly every run. The journal tells you when a quest's Gate opens ("Gate opens at Lv 17") instead of leaving you at a locked door.
+- **The dungeon bosses wait for you.** Bots used to kill the Crystal Golem and the Archmage around turn 300, before most players reached Floor 2. Now the first boss of each dungeon lair is yours until you've faced it, and a while after (two in-game weeks at most). Gate masters still change hands from day 1.
+- **Fixed: the Crystal Heart could never be reached.** Its door needed a flag you only got on the way down to Floor 3, and the way down needed the Golem dead. Exploring the unmapped passage in the north tunnels of Floor 2 now opens it. The content check now catches locks like this.
+- **Wolves on Floor 1.** Once the goblins are gone, dungeon wolves move into the wide tunnel, and you can hunt them again and again. Before, Floor 1 had two one-time fights worth 95 XP, five short of level 2, and the first Gates open at level 2.
+- **Fixed: a new character could inherit an old save's world.** Starting a new game with the same name as an existing save opened that save's world (its dead bosses, quests, adventurers and NPC memories) and overwrote the old save. New characters now get their own slot (`ash_2` …). Saving under another slot name now takes the world with it; before, loading that slot gave you your character in an empty world.
 - **A clickable sidebar** in the panel and browser versions: click something in your bag to use or equip it, or a skill to read it.
 - **Save slots with details**: name, level, class, where you are, play time and when you saved.
 - **Torven sells gear** (nine pieces from a rusty dagger to mage robes), Wren sells resistance potions, and Mira at the inn serves a meal to take with you. The guard captain's checkpoint can be reached from the city gate.
@@ -365,7 +369,7 @@ You're not alone. **24 other adventurers** (bots, like playerbots in an MMO) liv
 - **Talking to them:** they chat like other players. Ask what they've been up to (they sum it up in their own voice), for tips (real ones, plus Gates that suit your level), about their build or their guild, or to **team up**: fighters, explorers and gatherers who can keep up will wait in town for your next Gate run and appear first in the companion list. Traders and crafters will tell you they'd rather not. You can also **buy their spare loot** or **sell them** materials and consumables.
 - **`[W]`** shows who's around: everyone's level, class, location and what they're up to.
 - **Guilds and the auction house:** bots join guilds that suit them (and your own guild, if you've founded one), rise through the ranks as they level, and consign their best loot to the Verath auction. Their listings show who consigned them, and they're paid when they sell.
-- **They change the world without you:** come back from Verath and Ryn may have killed the Golem. The World Log (`[L]`) shows who holds every lair. Bots leave each lair's first boss alone for 250 turns, so you get the first shot.
+- **They change the world without you:** come back from Verath and Ryn may have killed the Golem. The World Log (`[L]`) shows who holds every lair. Bots leave the Golem and the Archmage alone until you've faced them, then for 200 more turns (two weeks at most), so you get the first shot. Gate masters get 250 turns.
 
 Their decisions are rules-based, so they keep living even with Ollama off. The AI only writes what they say.
 
@@ -588,8 +592,10 @@ python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstra
 # quest rewards / skill generation / save round-trip end-to-end. Requires Ollama.
 python -X utf8 playthrough_smoke.py                #  23 checks
 
-# Let a scripted player play the real game (offline) to find crashes and dead ends;
-# it saves autoplay_<seed> slots and writes the playtest report
+# Let a scripted player play the real game (offline): it follows quests, rests,
+# runs the Gates it can open and fights the bosses, so the report shows real pacing
+# (--mode random clicks about instead: better for finding crashes).
+# It saves autoplay_<seed> slots and writes the playtest report
 python -X utf8 scripts/autoplay.py --runs 5 --steps 1500
 
 # What happened across every save: deaths, boss kills, Gate clears, world growth, AI failures

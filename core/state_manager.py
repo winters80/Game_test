@@ -24,6 +24,7 @@ class GameState:
         self._dynamic_options: dict[str, list] = {}
         # key = "scene_id:node_id", value = list of SceneOption objects
         self.skill_registry = None  # Set by GameEngine after construction
+        self.slot_name: str = ""     # the save slot whose world DB is open (save_manager)
 
     # ── Dirty tracking ────────────────────────────────────────────────────────
 

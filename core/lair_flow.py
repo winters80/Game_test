@@ -155,6 +155,9 @@ def enter_lair(engine: "GameEngine", lair_id: str) -> str:
         return "vacant"
 
     occ = lair.occupants[state.occupant_id]
+    if state.generation == 0 and not state.player_met_turn:
+        state.player_met_turn = max(1, _turn(engine))   # starts the bots' countdown (bots_may_challenge)
+        _save(engine, state)
     name = state.lineage_name
     title = lair_system.occupant_title(lair, state)
     gen = f" · GENERATION {state.generation + 1}" if state.generation else ""
@@ -288,7 +291,7 @@ def bot_killed_boss(engine: "GameEngine", lair_id: str, bot, killed_by: str) -> 
 
 def bot_lair_view(engine: "GameEngine") -> dict[str, list[dict]]:
     """zone → occupied lairs bots could challenge: id, title, min level, enemies."""
-    from config import LAIR_BOT_GRACE_TURNS
+    from entities.gate import GATE_ZONE_PREFIX
 
     view: dict[str, list[dict]] = {}
     if not feature("boss_succession") or engine.lair_registry is None:
@@ -297,7 +300,8 @@ def bot_lair_view(engine: "GameEngine") -> dict[str, list[dict]]:
         state = get_state(engine, lair.lair_id)
         if state is None or not state.occupied:
             continue
-        if state.generation == 0 and _turn(engine) < LAIR_BOT_GRACE_TURNS:
+        if not lair_system.bots_may_challenge(state, _turn(engine),
+                                              gate=lair.zone_id.startswith(GATE_ZONE_PREFIX)):
             continue      # the player gets the first shot at the original boss
         view.setdefault(lair.zone_id, []).append({
             "lair_id": lair.lair_id, "lair_name": lair.name, "zone_id": lair.zone_id,
