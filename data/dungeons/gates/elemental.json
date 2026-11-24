@@ -1721,6 +1721,7 @@
      "text": "Crabs the size of shields scuttle out of the tide pools.",
      "enemies": [
       "tidecall_grotto_crab",
+      "tidecall_grotto_crab",
       "tidecall_grotto_crab"
      ]
     },
@@ -1745,6 +1746,7 @@
      "kind": "fight",
      "text": "Nixies laugh in the shallows, then drag at your ankles.",
      "enemies": [
+      "tidecall_grotto_nixie",
       "tidecall_grotto_nixie",
       "tidecall_grotto_nixie"
      ]
@@ -2201,6 +2203,7 @@
      "text": "Wisps of darkness drift towards you, drinking the light from your torch.",
      "enemies": [
       "hollow_of_unmaking_void_wisp",
+      "hollow_of_unmaking_void_wisp",
       "hollow_of_unmaking_void_wisp"
      ]
     },
@@ -2227,6 +2230,7 @@
      "enemies": [
       "hollow_of_unmaking_unmade",
       "hollow_of_unmaking_void_wisp",
+      "hollow_of_unmaking_unmade",
       "hollow_of_unmaking_unmade"
      ]
     }

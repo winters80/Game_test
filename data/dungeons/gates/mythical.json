@@ -2614,6 +2614,7 @@
      "enemies": [
       "wyrm_hoard_kobold",
       "wyrm_hoard_kobold",
+      "wyrm_hoard_kobold",
       "wyrm_hoard_kobold"
      ]
     },
@@ -2643,7 +2644,8 @@
      "text": "A young drake has been sleeping in the tunnel. It wakes up cross.",
      "enemies": [
       "wyrm_hoard_drake",
-      "wyrm_hoard_kobold"
+      "wyrm_hoard_kobold",
+      "wyrm_hoard_drake"
      ]
     }
    ],

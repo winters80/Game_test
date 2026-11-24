@@ -2441,6 +2441,7 @@
      "text": "Small winged figures of fire fly at you, singing.",
      "enemies": [
       "dawnspire_observatory_cherub",
+      "dawnspire_observatory_cherub",
       "dawnspire_observatory_cherub"
      ]
     },
@@ -2467,7 +2468,8 @@
      "enemies": [
       "dawnspire_observatory_sentinel",
       "dawnspire_observatory_sentinel",
-      "dawnspire_observatory_cherub"
+      "dawnspire_observatory_cherub",
+      "dawnspire_observatory_sentinel"
      ]
     }
    ],
@@ -2593,7 +2595,8 @@
      "enemies": [
       "dreamers_abyss_nightmare",
       "dreamers_abyss_nightmare",
-      "dreamers_abyss_thought"
+      "dreamers_abyss_thought",
+      "dreamers_abyss_nightmare"
      ]
     },
     {
@@ -2619,7 +2622,8 @@
      "enemies": [
       "dreamers_abyss_thought",
       "dreamers_abyss_thought",
-      "dreamers_abyss_nightmare"
+      "dreamers_abyss_nightmare",
+      "dreamers_abyss_thought"
      ]
     }
    ],

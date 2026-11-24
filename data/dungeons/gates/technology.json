@@ -1532,6 +1532,7 @@
      "text": "Half-built golems climb off the belt, one arm each, to see what you are.",
      "enemies": [
       "golem_assembly_worker",
+      "golem_assembly_worker",
       "golem_assembly_worker"
      ]
     },
@@ -1561,7 +1562,8 @@
      "text": "An inspector drone flags you as a defective product.",
      "enemies": [
       "golem_assembly_inspector",
-      "golem_assembly_worker"
+      "golem_assembly_worker",
+      "golem_assembly_inspector"
      ]
     }
    ],
@@ -2193,6 +2195,7 @@
      "text": "Workers in torn uniforms shamble towards you, their skin glowing green.",
      "enemies": [
       "thaumic_reactor_mutant",
+      "thaumic_reactor_mutant",
       "thaumic_reactor_mutant"
      ]
     },
@@ -2219,7 +2222,8 @@
      "enemies": [
       "thaumic_reactor_hazmat",
       "thaumic_reactor_hazmat",
-      "thaumic_reactor_mutant"
+      "thaumic_reactor_mutant",
+      "thaumic_reactor_hazmat"
      ]
     }
    ],
