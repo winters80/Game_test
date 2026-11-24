@@ -493,13 +493,97 @@ def music(tmp: Path) -> None:
         check(ok, f"{mood}: finite, peaks under -3 dBFS, and the loop joins (seam {seam:.4f} vs step {step:.4f})")
 
 
+def music_room(tmp: Path) -> None:
+    """Admin → Art & audio → Music room: every mood listed with where it plays and
+    where its file came from; composing another version and keeping it replaces
+    the track in assets/ and records the version."""
+    import contextlib
+    import json
+    from ui import media, renderer
+    from ui import prompt as uip
+    from core.menus import GameMenusMixin
+    moods = set(media.MUSIC_FOR_SCENE.values()) | set(media.MUSIC_FOR_NODE.values()) | {"combat", "boss", "explore"}
+    check(set(media.MUSIC_PLACES) == moods, f"the Music room lists every mood the game plays ({sorted(moods ^ set(media.MUSIC_PLACES))})")
+    music = tmp / "a" / "audio" / "music"
+    _wav(music / "dungeon.wav"); _wav(music / "combat.wav"); _wav(tmp / "l" / "audio" / "music" / "camp.wav")
+    _wav(music / "camp.wav")
+    (music / "composed.json").write_text(json.dumps({"dungeon": 2}), encoding="utf-8")
+    with mock.patch.object(media, "ASSETS_DIR", tmp / "a"), mock.patch.object(media, "LOCAL_ASSETS_DIR", tmp / "l"),             mock.patch.object(media, "SETTINGS_FILE", tmp / "m.json"):
+        media._settings = None
+        rows = {r["mood"]: r for r in media.music_catalog()}
+        check(rows["dungeon"]["composed"] and rows["dungeon"]["source"] == "composed in code, version 2",
+              f"a composed track says so, with its version ({rows['dungeon']['source']})")
+        check(rows["combat"]["source"] == "recorded" and not rows["combat"]["composed"], "a recorded track says recorded")
+        check(rows["camp"]["source"] == "yours (assets_local)", "your own file in assets_local/ wins and says so")
+        check(rows["dungeon_deep"]["path"] is None and "borrows dungeon" in rows["dungeon_deep"]["source"],
+              f"a mood without a track says which it borrows ({rows['dungeon_deep']['source']})")
+        media.set_muted("music/dungeon", True)
+        check(media.music_file("dungeon") is not None and next(r for r in media.music_catalog() if r["mood"] == "dungeon")["muted"],
+              "a muted track is still listed (and playable) in the room")
+        media.set_muted("music/dungeon", False)
+
+        made = []
+
+        def fake_compose(mood, variant, path):
+            made.append((mood, variant))
+            _wav(Path(path))
+            Path(path).write_bytes(Path(path).read_bytes() + bytes([variant]))
+            return Path(path)
+
+        answers = iter(["dungeon", "compose", "again", "keep", "", ""])
+        asked = []
+
+        class Backend:
+            def select(self, message, choices, default=None):
+                asked.append((message, [c.title for c in choices]))
+                return next(answers)
+
+            def any_key(self, message):
+                pass
+
+        played = []
+        uip.set_backend(Backend())
+        try:
+            with mock.patch.object(GameMenusMixin, "_composer", staticmethod(lambda: fake_compose)),                     mock.patch.object(media, "play_music_file", lambda p: played.append(p)),                     mock.patch.object(media, "release_music", lambda: None),                     mock.patch.object(renderer, "prompt_any_key", lambda: None),                     mock.patch.object(renderer, "show_ai_thinking_spinner", lambda m: contextlib.nullcontext()),                     mock.patch.object(renderer.console, "print", lambda *a, **k: None):
+                GameMenusMixin._music_room(GameMenusMixin())
+        finally:
+            uip.set_backend(None)
+        listing = asked[0][1]
+        check(any("Dungeon — dungeon Floors 1 and 2" in x and "version 2" in x for x in listing),
+              "the list shows each track, where it plays and its source")
+        check(made == [("dungeon", 3), ("dungeon", 4)], f"each new version is the next number ({made})")
+        check(any("Compose another version" in x for x in asked[1][1]), "a composed track offers another version")
+        check(json.loads((music / "composed.json").read_text(encoding="utf-8"))["dungeon"] == 4 and
+              (music / "dungeon.ogg").read_bytes()[-1] == 4, "keeping version 4 writes the file into assets/ and records it")
+        check(played and played[-1] is None, "leaving the room stops its music")
+        asked.clear()
+        answers = iter(["combat", ""])
+        uip.set_backend(Backend())
+        try:
+            with mock.patch.object(media, "play_music_file", lambda p: None),                     mock.patch.object(renderer.console, "print", lambda *a, **k: None):
+                GameMenusMixin._music_track(GameMenusMixin(), "combat")
+        finally:
+            uip.set_backend(None)
+        check(not any("Compose" in x for x in asked[0][1]), "a recorded track is never recomposed")
+    # The composer runs as its own process (numpy deadlocks when it loads inside
+    # the browser version): the game process never imports numpy for it.
+    import subprocess
+    import sys as _sys
+    code = ("import sys; from core.menus import GameMenusMixin as G; c = G._composer(); "
+            "print(callable(c) or c); print('numpy' in sys.modules)")
+    out = subprocess.run([_sys.executable, "-c", code], cwd=str(ROOT), capture_output=True, text=True).stdout.split()
+    check(out[-1:] == ["False"], f"checking the composer doesn't load numpy into the game ({out})")
+    media._settings = None
+
+
 if __name__ == "__main__":
     from utils.logging_setup import setup_logging
     setup_logging()
     from ui import media
     for name, fn in (("files, art, sound", lookups), ("asset list", asset_list), ("panel UI", tui), ("browser", web),
                      ("sound pack", sound_pack), ("sound status", status),
-                     ("sound hooks", hooks), ("muting", muting), ("boss cues and takes", cues), ("music", music)):
+                     ("sound hooks", hooks), ("muting", muting), ("boss cues and takes", cues), ("music", music),
+                     ("music room", music_room)):
         print(f"\n  {name}")
         with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
             # The real assets_local/ (yours, git-ignored) must not leak into the checks.

@@ -1108,6 +1108,7 @@ class GameMenusMixin:
             choices = [uip.Choice(f"Pictures: {onoff('images')}", "images"),
                        uip.Choice(f"Menu clicks: {onoff('ui_sounds')}", "ui_sounds"),
                        uip.Choice(f"Ticks while moving between choices: {onoff('ui_hover')}", "ui_hover"),
+                       uip.Choice("Music room (hear every track, see where it plays, compose new versions)", "music_room"),
                        uip.Choice(f"Listen to each sound and mute the bad ones ({len(s['muted'])} muted)", "listen"),
                        uip.Choice(f"Sound effects: {onoff('sfx')}  (volume {s['volume_sfx']:.0%})", "sfx"),
                        uip.Choice(f"Music: {onoff('music')}  (volume {s['volume_music']:.0%})", "music"),
@@ -1122,6 +1123,9 @@ class GameMenusMixin:
                 return
             if pick == "listen":
                 self._sound_listen_menu()
+                continue
+            if pick == "music_room":
+                self._music_room()
                 continue
             if pick == "test":
                 renderer.print_system_message(media.test_sound())
@@ -1150,6 +1154,148 @@ class GameMenusMixin:
                         pass
             else:
                 media.set_setting(pick, not s[pick])
+
+    # ── Music room ────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _composer():
+        """A function ``compose(mood, version, out_path)``, or a sentence saying why
+        composing can't run here. It runs scripts/compose_music.py as its own
+        process: numpy's maths library deadlocks if it loads inside the browser
+        version (whose input thread holds the console), and the game never needs
+        numpy otherwise."""
+        import importlib.util
+        import shutil
+        import subprocess
+        import sys
+        from pathlib import Path as _P
+        root = _P(__file__).resolve().parent.parent
+        script = root / "scripts" / "compose_music.py"
+        if not script.exists():
+            return "scripts/compose_music.py is missing."
+        if importlib.util.find_spec("numpy") is None:
+            return "Composing needs numpy: pip install numpy"
+        if not shutil.which("ffmpeg"):
+            return "Composing needs ffmpeg (winget install ffmpeg / brew install ffmpeg)."
+
+        def compose(mood: str, version: int, out) -> _P:
+            out = _P(out)
+            r = subprocess.run([sys.executable, "-X", "utf8", str(script), mood, "--variant", str(version),
+                                "--out", str(out.parent)], cwd=str(root), stdin=subprocess.DEVNULL,
+                               capture_output=True, text=True, timeout=600,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            made = out.parent / f"{mood}.ogg"
+            if r.returncode or not made.exists():
+                lines = (r.stderr or r.stdout or "").strip().splitlines()
+                raise RuntimeError(lines[-1] if lines else f"exit code {r.returncode}")
+            if made != out:
+                made.replace(out)
+            return out
+        return compose
+
+    def _music_room(self) -> None:
+        """Every music track: where it plays and where it came from. Play it,
+        mute it, and compose another version of the ones the game composed."""
+        from ui import media
+        last = None
+        try:
+            while True:
+                s = media.settings()
+                off = "" if s["music"] else "  (music is switched off in the game; it still plays here)"
+                renderer.console.print(f"\n  [system_msg][ MUSIC ROOM ][/system_msg]  "
+                                       f"[dim_text]music volume {s['volume_music']:.0%}{off}[/dim_text]")
+                rows = media.music_catalog()
+                choices = []
+                for r in rows:
+                    mark = "🔇" if r["muted"] else ("♪ " if r["path"] else "· ")
+                    choices.append(uip.Choice(f"{mark} {r['title']} — {r['where']}  ({r['source']})", r["mood"]))
+                choices.append(uip.Choice("← Back", ""))
+                mood = uip.select("Pick a track to hear it:", choices=choices, default=last).ask()
+                if not mood:
+                    return
+                last = mood
+                self._music_track(mood)
+        finally:
+            media.play_music_file(None)
+
+    def _music_track(self, mood: str) -> None:
+        from ui import media
+        playing = False
+        while True:
+            row = next(r for r in media.music_catalog() if r["mood"] == mood)
+            if row["path"] is None:
+                renderer.print_system_message(f"{row['title']} has no track of its own ({row['source']}).")
+                renderer.prompt_any_key()
+                return
+            if not playing:
+                media.play_music_file(row["path"])
+                playing = True
+            renderer.console.print(f"\n  [system_msg]♪ {row['title']}[/system_msg]  [dim_text]plays in {row['where']} · "
+                                   f"{row['source']}{' · muted: the game skips it' if row['muted'] else ''}[/dim_text]")
+            acts = [uip.Choice("Stop", "stop") if playing else uip.Choice("Play it", "play"),
+                    uip.Choice("Unmute it" if row["muted"] else "Mute it (the game skips it)", "mute")]
+            if row["composed"]:
+                acts.append(uip.Choice("Compose another version (hear it, then keep it or not)", "compose"))
+            acts.append(uip.Choice("← Back to the list", ""))
+            act = uip.select(f"{row['title']}:", choices=acts).ask()
+            if not act:
+                media.play_music_file(None)
+                return
+            if act == "stop":
+                media.play_music_file(None)
+                playing = False
+            elif act == "play":
+                playing = False
+            elif act == "mute":
+                media.set_muted(f"music/{mood}", not row["muted"])
+                playing = row["muted"]                 # unmuting keeps it playing; muting stopped it
+            elif act == "compose":
+                self._compose_version(row)
+                playing = False
+
+    def _compose_version(self, row: dict) -> None:
+        """Compose version N+1, N+2 … of a composed track, play each, and keep one or none."""
+        import shutil
+        import tempfile
+        from pathlib import Path as _P
+        from ui import media
+        compose = self._composer()
+        if isinstance(compose, str):
+            renderer.print_system_message(compose, style="system_warning")
+            renderer.prompt_any_key()
+            return
+        tmp = _P(tempfile.mkdtemp(prefix="sb_music_"))
+        version = row["version"]
+        try:
+            while True:
+                version += 1
+                out = tmp / f"{row['mood']}_v{version}.ogg"
+                try:
+                    with renderer.show_ai_thinking_spinner(f"COMPOSING {row['title'].upper()}, VERSION {version}..."):
+                        compose(row["mood"], version, out)
+                except Exception as exc:                # ffmpeg failed, disk full …
+                    renderer.print_error(f"Couldn't compose it: {exc}")
+                    renderer.prompt_any_key()
+                    return
+                media.play_music_file(out)
+                pick = uip.select(f"Version {version} of {row['title']} is playing (now version {row['version']}). Keep it?",
+                                  choices=[uip.Choice("Keep this version (it replaces the track in assets/)", "keep"),
+                                           uip.Choice("Try another version", "again"),
+                                           uip.Choice("Keep the old one", "")]).ask()
+                if pick == "again":
+                    continue
+                if pick == "keep":
+                    media.release_music()
+                    dest = media.ASSETS_DIR / "audio" / "music" / f"{row['mood']}.ogg"
+                    shutil.copyfile(out, dest)
+                    media.set_composed_version(row["mood"], version)
+                    renderer.print_success(f"Version {version} is now the {row['title']} music. It's a normal file in "
+                                           f"assets/, so it goes to GitHub with your next commit.")
+                    renderer.prompt_any_key()
+                return
+        finally:
+            media.release_music()
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def _sound_listen_menu(self) -> None:
         """Play any sound file; mute the ones you don't want (saved in media settings)."""

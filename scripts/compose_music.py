@@ -34,6 +34,8 @@ TABLE = 4096
 OUT_DIR = ROOT / "assets" / "audio" / "music"
 TARGET_RMS_DB = -24.0
 PEAK_CEILING_DB = -3.0
+VARIANT_STEP = 1009                    # version N of a mood = its seed + N * this
+MANIFEST = "composed.json"             # in the music folder: {mood: version}
 
 NOTE = {n: i for i, n in enumerate(["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"])}
 NOTE.update({"Db": 1, "Eb": 3, "Gb": 6, "Ab": 8, "Bb": 10})
@@ -311,9 +313,9 @@ def _per_bar(prog: list[str], bars_each: int) -> list[tuple[int, ...]]:
     return [chord(c) for c in prog for _ in range(bars_each)]
 
 
-def explore(bars=24):
+def explore(bars=24, variant=0):
     """The village, the road: melancholy cello, soft strings, sparse piano, a hopeful lift."""
-    s = Synth(11)
+    s = Synth(11 + VARIANT_STEP * variant)
     bpm, beat = 66, 60 / 66
     bar = 4 * beat
     prog = ["Dm", "Bb", "F", "C", "Dm", "Bb", "Gm", "A", "Bb", "F", "Gm", "A"]
@@ -342,9 +344,9 @@ def explore(bars=24):
     return L.render(3.2, 3500)
 
 
-def dungeon(bars=18):
+def dungeon(bars=18, variant=0):
     """The descent: low drones, slow metal strikes, drips, a bell that shouldn't be there."""
-    s = Synth(23)
+    s = Synth(23 + VARIANT_STEP * variant)
     beat = 60 / 52
     bar = 4 * beat
     L = Loop(bars * bar, s)
@@ -371,9 +373,9 @@ def dungeon(bars=18):
     return L.render(5.0, 2500)
 
 
-def dungeon_deep(bars=16):
+def dungeon_deep(bars=16, variant=0):
     """Floor 3: subterranean drones, whispering choir, cracking crystal, dread."""
-    s = Synth(37)
+    s = Synth(37 + VARIANT_STEP * variant)
     beat = 60 / 44
     bar = 4 * beat
     L = Loop(bars * bar, s)
@@ -396,9 +398,9 @@ def dungeon_deep(bars=16):
     return L.render(7.0, 2200)
 
 
-def verath(bars=28):
+def verath(bars=28, variant=0):
     """The capital: stately strings, harp, a distant bell, quietly watchful."""
-    s = Synth(41)
+    s = Synth(41 + VARIANT_STEP * variant)
     beat = 60 / 76
     bar = 4 * beat
     prog = ["Em", "C", "G", "D", "Em", "Am", "C", "B7", "C", "G", "Am", "Em", "C", "B7"]
@@ -427,9 +429,9 @@ def verath(bars=28):
     return L.render(3.0, 3800)
 
 
-def undermarket(bars=24):
+def undermarket(bars=24, variant=0):
     """The Undermarket: plucked bass, hand drum, a muted clarinet up to something."""
-    s = Synth(53)
+    s = Synth(53 + VARIANT_STEP * variant)
     beat = 60 / 96
     bar = 4 * beat
     L = Loop(bars * bar, s)
@@ -457,9 +459,9 @@ def undermarket(bars=24):
     return L.render(1.6, 3000)
 
 
-def prologue(bars=16):
+def prologue(bars=16, variant=0):
     """The opening: a lone piano, then strings rising under it, fateful."""
-    s = Synth(67)
+    s = Synth(67 + VARIANT_STEP * variant)
     beat = 1.0
     bar = 4 * beat
     prog = ["Am", "F", "C", "G", "Am", "F", "Dm", "E", "Am", "F", "C", "G", "F", "Dm", "E", "E"]
@@ -485,9 +487,9 @@ def prologue(bars=16):
     return L.render(3.5, 3500)
 
 
-def fracture_core(bars=15):
+def fracture_core(bars=15, variant=0):
     """Where the Fracture began: a vast hum, glass crackling, voices high above."""
-    s = Synth(79)
+    s = Synth(79 + VARIANT_STEP * variant)
     bar = 4.0
     L = Loop(bars * bar, s)
     L.drone(26, [(k, 1 / k) for k in range(1, 12)], 0.1, swells=3, depth=0.5)
@@ -506,9 +508,9 @@ def fracture_core(bars=15):
     return L.render(6.0, 2600)
 
 
-def ending(bars=20):
+def ending(bars=20, variant=0):
     """The close: bittersweet strings and choir, resolving slowly."""
-    s = Synth(83)
+    s = Synth(83 + VARIANT_STEP * variant)
     beat = 60 / 56
     bar = 4 * beat
     prog = ["Bb", "F", "Gm", "Eb", "Bb", "F", "Eb", "F", "Gm", "Eb", "Bb", "F",
@@ -549,9 +551,40 @@ def master(x: np.ndarray) -> np.ndarray:
     return x * gain
 
 
-def render(mood: str, bars: int | None = None) -> np.ndarray:
+def render(mood: str, bars: int | None = None, variant: int = 0) -> np.ndarray:
+    """A mood's track; ``variant`` > 0 is another version (same chords, new
+    melody, voicing and texture), the same every time."""
     fn = MOODS[mood]
-    return master(fn(bars) if bars else fn())
+    return master(fn(bars, variant) if bars else fn(variant=variant))
+
+
+def available() -> tuple[bool, str]:
+    """Can this machine compose? (numpy is imported above, so only ffmpeg is left.)"""
+    if not shutil.which("ffmpeg"):
+        return False, "Composing needs ffmpeg (winget install ffmpeg / brew install ffmpeg)."
+    return True, "ok"
+
+
+def read_manifest(folder: Path = OUT_DIR) -> dict[str, int]:
+    import json
+    try:
+        return {k: int(v) for k, v in json.loads((Path(folder) / MANIFEST).read_text(encoding="utf-8")).items()}
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def record_version(mood: str, variant: int, folder: Path = OUT_DIR) -> None:
+    import json
+    m = read_manifest(folder)
+    m[mood] = int(variant)
+    (Path(folder) / MANIFEST).write_text(json.dumps(dict(sorted(m.items())), indent=1) + "\n", encoding="utf-8")
+
+
+def compose_to(mood: str, variant: int, path: Path) -> Path:
+    """Render one version of a mood straight to an .ogg (the game's Music room uses this)."""
+    from master_audio import encode
+    encode(render(mood, variant=variant), Path(path))
+    return Path(path)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -559,6 +592,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("moods", nargs="*", help=f"any of: {', '.join(MOODS)}")
     ap.add_argument("--all", action="store_true", help="every mood, overwriting")
     ap.add_argument("--out", default=str(OUT_DIR))
+    ap.add_argument("--variant", type=int, default=None,
+                    help="which version to write (default: the one recorded in composed.json, else 0)")
     args = ap.parse_args(argv)
     if not shutil.which("ffmpeg"):
         print("ffmpeg is needed: winget install ffmpeg / brew install ffmpeg")
@@ -571,9 +606,12 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     todo = args.moods or [m for m in MOODS if args.all or not any((out / f"{m}{e}").exists()
                                                                    for e in (".ogg", ".wav", ".mp3", ".flac"))]
+    versions = read_manifest(out)
     for mood in todo:
-        y = render(mood)
+        v = args.variant if args.variant is not None else versions.get(mood, 0)
+        y = render(mood, variant=v)
         encode(y, out / f"{mood}.ogg")
+        record_version(mood, v, out)
         from master_audio import db, rms
         print(f"  {mood:14} {len(y) / RATE:5.1f}s  rms {db(rms(y)):6.1f}  peak {20 * np.log10(np.max(np.abs(y))):5.1f}")
     print(f"{len(todo)} track(s) written to {out}" if todo else "Every mood already has a track (--all to redo).")

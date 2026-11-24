@@ -487,6 +487,94 @@ def all_sounds() -> list[tuple[str, Path]]:
     return sorted(seen.items(), key=lambda kv: (order.get(kv[0].split("/")[0], 9), kv[0]))
 
 
+# Where each music mood plays (Admin → Art & audio → Music room).
+MUSIC_PLACES = {
+    "explore": "the village, the road, and anywhere without its own",
+    "combat": "fights",
+    "boss": "boss fights",
+    "camp": "the camp and the inn",
+    "verath": "Verath",
+    "ledger": "the Ledger House",
+    "undermarket": "the Undermarket",
+    "dungeon": "dungeon Floors 1 and 2",
+    "dungeon_deep": "Floor 3",
+    "fracture_core": "the Fracture Core",
+    "prologue": "the prologue and the Rite",
+    "ending": "the endings",
+}
+COMPOSED_MANIFEST = "composed.json"        # written by scripts/compose_music.py: {mood: version}
+
+
+def music_file(mood: str) -> Path | None:
+    """The file a mood would play, muted or not (assets_local/ first)."""
+    for base in asset_dirs():
+        hit = _find(base / "audio" / "music", [mood], AUDIO_EXT)
+        if hit:
+            return hit
+    return None
+
+
+def composed_versions() -> dict[str, int]:
+    """Moods whose track in assets/ was composed by scripts/compose_music.py, and which version."""
+    try:
+        raw = json.loads((ASSETS_DIR / "audio" / "music" / COMPOSED_MANIFEST).read_text(encoding="utf-8"))
+        return {str(k): int(v) for k, v in raw.items()}
+    except (OSError, ValueError, AttributeError):
+        return {}
+
+
+def set_composed_version(mood: str, version: int) -> None:
+    """Record which composed version of a mood is now its track in assets/."""
+    path = ASSETS_DIR / "audio" / "music" / COMPOSED_MANIFEST
+    versions = composed_versions()
+    versions[mood] = int(version)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(dict(sorted(versions.items())), indent=1) + "\n", encoding="utf-8")
+
+
+def music_catalog() -> list[dict]:
+    """One row per mood: where it plays, its file, where the file came from, muted or not."""
+    versions = composed_versions()
+    rows = []
+    for mood, where in MUSIC_PLACES.items():
+        path = music_file(mood)
+        if path is None:
+            seen, other = {mood}, MUSIC_FALLBACK.get(mood, "explore")
+            while other not in seen and music_file(other) is None:
+                seen.add(other)
+                other = MUSIC_FALLBACK.get(other, "explore")
+            source = f"no track of its own: borrows {other.replace('_', ' ')}" if music_file(other) else "no track yet"
+        elif LOCAL_ASSETS_DIR in path.parents:
+            source = "yours (assets_local)"
+        elif mood in versions:
+            source = f"composed in code, version {versions[mood]}"
+        else:
+            source = "recorded"
+        rows.append({"mood": mood, "title": mood.replace("_", " ").capitalize(), "where": where, "path": path,
+                     "source": source, "muted": is_muted(f"music/{mood}"),
+                     "composed": path is not None and mood in versions and LOCAL_ASSETS_DIR not in path.parents,
+                     "version": versions.get(mood, 0)})
+    return rows
+
+
+def play_music_file(path: Path | None) -> None:
+    """Play one music file on the music channel, looping (the Music room); None fades it out."""
+    _player.music(path)
+
+
+def release_music() -> None:
+    """Stop the music at once and let go of its file, so it can be replaced (Windows locks it)."""
+    if not _player._init():
+        return
+    with _player._lock:
+        try:
+            _player._pg.mixer.music.stop()
+            _player._pg.mixer.music.unload()
+        except Exception:
+            pass
+        _player._music = ""
+
+
 def preview(path: Path | None) -> bool:
     """Play one file now on the voice channel (stops the previous preview); None stops it."""
     if not _player._init():
