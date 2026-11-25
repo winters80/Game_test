@@ -153,6 +153,9 @@ class CombatHandlerMixin:
             return "none"
         _number_duplicates(enemies)
         self._scale_for_companions(encounter_id, enemies)
+        from systems import difficulty
+        if difficulty.is_hard(self.state.player) and difficulty.applies_to(encounter_id):
+            difficulty.harden(enemies)
 
         renderer.print_divider()
         count = len(enemies)
@@ -454,6 +457,10 @@ class CombatHandlerMixin:
         rated = self._content_level(encounter_id)
         total_xp = level_system.scaled_xp(full_xp, player.level, rated)
         total_gold = sum(e.gold_reward for e in enemies)
+        from systems import difficulty
+        hard = difficulty.is_hard(player) and difficulty.applies_to(encounter_id)
+        if hard:
+            total_gold = difficulty.hard_gold(total_gold)
         # The registries let add_experience auto-grant the class's next skill on level-up.
         leveled_up = level_system.add_experience(player, total_xp, class_registry=self.class_registry,
                                                  skill_registry=self.skill_registry)
@@ -475,7 +482,7 @@ class CombatHandlerMixin:
         xp_line = f"XP gained: {total_xp}"
         if total_xp < full_xp:
             xp_line += f" (of {full_xp}: this is level {rated} work, and you're level {player.level})"
-        victory_lines = [xp_line, f"Gold gained: {format_currency(total_gold)}"]
+        victory_lines = [xp_line, f"Gold gained: {format_currency(total_gold)}" + (" (Hard mode +25%)" if hard else "")]
         if names:
             victory_lines.append(f"Loot: {', '.join(names)}")
         renderer.print_scene_text(victory_lines)

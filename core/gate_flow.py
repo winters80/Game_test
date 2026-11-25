@@ -102,16 +102,47 @@ def open_gate_registry(engine: "GameEngine") -> None:
             else:
                 choices.append(uip.Choice(label, value=gate.gate_id,
                                                   disabled=f"rated for level {gate.min_level}"))
+        from systems import difficulty
+        hard = difficulty.is_hard(engine.state.player)
+        choices.append(uip.Choice(
+            "Difficulty: HARD · ask to be rated as Normal again" if hard else
+            "Difficulty: Normal · ask the registrar to rate you as Hard", value="__difficulty__"))
         choices.append(uip.Choice("← Leave the registry", value="__leave__"))
         pick = uip.select("Which Gate?", choices=choices).ask()
         if pick in (None, "__leave__"):
             return
+        if pick == "__difficulty__":
+            _toggle_difficulty(engine)
+            continue
         gate = engine.gate_registry.get(pick)
         renderer.print_scene_text([gate.description])
         go = uip.select("Enter it?", choices=["Enter the Gate.", "Not yet."]).ask()
         if go == "Enter the Gate.":
             run_gate(engine, pick)
             return
+
+
+def _toggle_difficulty(engine: "GameEngine") -> None:
+    """Hard mode (systems/difficulty.py): explain it, then switch on a yes."""
+    from config import HARD_ENEMY_ATK, HARD_ENEMY_HP, HARD_GOLD_BONUS
+    from systems import difficulty
+    from ui import prompt as uip
+    player = engine.state.player
+    hard = difficulty.is_hard(player)
+    if hard:
+        text = ("The registrar taps your line in the ledger. 'Back to the standard rating? "
+                "The rifts will meet you as they meet everyone else.'")
+        yes = "Yes, rate me as Normal."
+    else:
+        text = (f"The registrar looks you over. 'Hard rating: every Gate and boss lair meets you with "
+                f"{round((HARD_ENEMY_HP - 1) * 100)}% more blood and {round((HARD_ENEMY_ATK - 1) * 100)}% "
+                f"heavier blows, and the bounty pays {round(HARD_GOLD_BONUS * 100)}% more gold. No more "
+                f"experience: you'll learn as much as anyone. You can ask to change it back any time.'")
+        yes = "Yes, rate me as Hard."
+    renderer.print_scene_text([text])
+    if uip.select("Change your rating?", choices=[yes, "Leave it as it is."]).ask() == yes:
+        difficulty.set_hard(player, not hard)
+        renderer.print_system_message("RATING CHANGED · " + ("NORMAL" if hard else "HARD"), style="system_msg")
 
 
 def _roll(loot, rng: random.Random) -> list[str]:

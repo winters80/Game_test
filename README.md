@@ -28,6 +28,7 @@ SYSTEM BREAKER is a Python text RPG set in a world where a mysterious System han
 - **Sell at auction.** Consign gear, potions or materials at the Verath auction house. Other adventurers bid on what they actually want and can afford; you're paid (minus the house's 10%) when it ends, or it comes back to you.
 - **Classes feel like classes.** Every 4 levels your class adds its own growth (a warrior hardens, a mage sharpens), rogues learn Evasion first, and Gates were rebalanced with every class's real skills: a careless build of any class ends an average Gate run with about 45% HP and clears every Gate at its level, and none of the 32 Gates is a walkover for any class (the big group Gates field more enemies, so companions don't carry you). The first Gates (Lv 2-4) open at their own level, not one early: at that stage one level made the difference between winning and losing nearly every run. The journal tells you when a quest's Gate opens ("Gate opens at Lv 17") instead of leaving you at a locked door.
 - **The dungeon bosses wait for you.** Bots used to kill the Crystal Golem and the Archmage around turn 300, before most players reached Floor 2. Now the first boss of each dungeon lair is yours until you've faced it, and a while after (two in-game weeks at most). Gate masters still change hands from day 1.
+- **Hard mode.** Want Gates to bite? Ask the registrar at the Gate Registry to rate you as Hard: every Gate and boss lair meets you with 15% more HP and 10% heavier blows, and pays 25% more gold (no extra XP). A well-built character still clears every Gate on Hard but ends a run with about a third (warriors) to a half (mages, rogues) of its HP. You can switch back any time; it's saved with your character.
 - **Gates stay a challenge.** Playtests showed careful players running every Gate 4-6 levels above its rating and never dropping below ~80% HP. Now a Gate pays about half a level of XP at its rated level (the early ones paid two), fights well below your level give less XP (20% less per level past the first, never under 10%; the victory screen says so), skills level more slowly the higher they get (level 10 takes 225 casts, not 45) and add 6% per level instead of 10%, dodge tops out at 45%, a solo Gate's enemies get 25% more HP for each companion you bring (help still helps, but no longer carries you), Gate enemies hit a little harder, and the rogue's Backstab trades scaling for a bigger base hit. A careless build still clears its Gates with about 45% HP left; a focused one keeps 55-75%. In playtests careful players now run Gates about 2 levels above their rating instead of 4-6.
 - **Fixed: the Crystal Heart could never be reached.** Its door needed a flag you only got on the way down to Floor 3, and the way down needed the Golem dead. Exploring the unmapped passage in the north tunnels of Floor 2 now opens it. The content check now catches locks like this.
 - **Wolves on Floor 1.** Once the goblins are gone, dungeon wolves move into the wide tunnel, and you can hunt them again and again. Before, Floor 1 had two one-time fights worth 95 XP, five short of level 2, and the first Gates open at level 2.
@@ -534,6 +535,8 @@ XP_FALLOFF_PER_LEVEL = 0.2        # 20% less XP per level you are past content (
 DODGE_CAP = 0.45                  # most a player can dodge, whatever their AGI and passives
 GATE_XP_SHARE = 0.5               # a Gate's first clear at its rated level pays about half a level
 GATE_COMPANION_HP = 0.25          # a solo Gate's enemies get +25% HP per companion you bring
+HARD_ENEMY_HP = 1.15              # Hard mode (chosen at the Gate Registry): Gate and lair enemies' HP ...
+HARD_ENEMY_ATK = 1.10             # ... and attack, on top of Normal; those fights pay HARD_GOLD_BONUS (25%) more gold
 
 # What AI-generated options may do (everything else is dropped)
 AI_GRANTABLE_FLAGS = frozenset({"verath_access"})
@@ -588,7 +591,7 @@ python -X utf8 tests/test_law.py                   #  33 checks (crimes, heat, w
 python -X utf8 tests/test_media.py                 #  19 checks (asset lookup, art in the panels, sound that never breaks, the asset list)
 
 # Balance: can each build clear every Gate at its rated level? (real combat rules)
-python -X utf8 scripts/balance_sim.py 20 --class mage --build focused
+python -X utf8 scripts/balance_sim.py 20 --class mage --build focused   # add --hard for Hard mode
 
 # Headless smoke test — bootstrap the engine without launching the UI
 python -c "from core.game_engine import GameEngine; e = GameEngine(); e.bootstrap(); print('OK')"
@@ -599,7 +602,8 @@ python -X utf8 playthrough_smoke.py                #  23 checks
 
 # Let a scripted player play the real game (offline): it follows quests, rests,
 # runs the Gates it can open and fights the bosses, so the report shows real pacing
-# (--mode random clicks about instead: better for finding crashes).
+# (--mode random clicks about instead: better for finding crashes; --hard plays on Hard mode).
+# It prints each run's Gate runs: levels above the rating and the lowest HP reached.
 # It saves autoplay_<seed> slots and writes the playtest report
 python -X utf8 scripts/autoplay.py --runs 5 --steps 1500
 

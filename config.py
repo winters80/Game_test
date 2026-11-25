@@ -137,6 +137,9 @@ DODGE_CAP = 0.45                       # total dodge (AGI x 0.8% + passives + sy
                                        # level-18 rogue dodged ~3 hits in 4 and Gates cost it ~20% HP
 GATE_XP_SHARE = 0.5                    # a first clear at a Gate's rated level pays about half that level
                                        # (gate_flow.gate_xp_scale; only ever lowers a Gate's XP)
+HARD_ENEMY_HP = 1.15                   # Hard mode (systems/difficulty.py, per save, switched at the Gate Registry):
+HARD_ENEMY_ATK = 1.10                  # Gate and boss-lair enemies get this much more HP / attack on top of Normal,
+HARD_GOLD_BONUS = 0.25                 # and those fights pay 25% more gold (no extra XP)
 GATE_COMPANION_HP = 0.25               # a solo Gate's enemies get +25% HP per companion you bring
 GATE_BREATHER = 0.15                   # HP and MP recovered between Gate rooms (catch your breath)
 BOT_GATE_CHANCE = 0.12                 # chance a fighter/explorer in town runs a gate this act

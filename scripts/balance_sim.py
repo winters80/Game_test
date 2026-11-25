@@ -12,6 +12,7 @@ Each round it casts its best affordable damage skill, else a basic attack.
     python scripts/balance_sim.py            # 20 runs per Gate
     python scripts/balance_sim.py 50 --class mage
     python scripts/balance_sim.py --build focused   # how play actually builds
+    python scripts/balance_sim.py --build focused --hard   # Hard mode
 
 Builds: ``even`` spreads stat points over the class's three stats and keeps
 skills at level 1 (a careless player). ``focused`` puts three points in four
@@ -75,7 +76,8 @@ def make_player(level: int, cls: str, class_registry, skill_registry=None, build
     return p
 
 
-def run_gate(gate, level: int, cls: str, regs, rng: random.Random, build: str = "even") -> tuple[bool, float]:
+def run_gate(gate, level: int, cls: str, regs, rng: random.Random, build: str = "even",
+             hard: bool = False) -> tuple[bool, float]:
     from systems.combat_system import resolve_combat_auto, spawn_enemy
     from systems.lair_system import initial_state, spawn_occupant
 
@@ -91,6 +93,10 @@ def run_gate(gate, level: int, cls: str, regs, rng: random.Random, build: str = 
         companions.append(b)
     fights = [[spawn_enemy(e) for e in r.enemies] for r in gate.rooms if r.kind == "fight"]
     fights.append(spawn_occupant(gate.lair, initial_state(gate.lair)))
+    if hard:                                            # Hard mode (systems/difficulty.py)
+        from systems.difficulty import harden
+        for enemies in fights:
+            harden(enemies)
     from core.gate_flow import breather
     for i, enemies in enumerate(fights):
         if i:
@@ -115,6 +121,7 @@ def main() -> None:
     ap.add_argument("--class", dest="cls", default="warrior", choices=sorted(BUILDS))
     ap.add_argument("--offset", type=int, default=0, help="player level relative to the Gate's")
     ap.add_argument("--build", default="even", choices=("even", "focused"))
+    ap.add_argument("--hard", action="store_true", help="Hard mode enemies")
     args = ap.parse_args()
 
     with mock.patch.object(renderer.console, "print", lambda *a, **k: None):
@@ -133,7 +140,7 @@ def main() -> None:
         wins, left = 0, 0.0
         for _ in range(args.runs):
             random.seed(rng.random())
-            ok, hp = run_gate(gate, level, args.cls, regs, rng, args.build)
+            ok, hp = run_gate(gate, level, args.cls, regs, rng, args.build, args.hard)
             wins += ok
             left += hp
         rate = wins / args.runs
@@ -141,7 +148,7 @@ def main() -> None:
         note = "  << too hard" if rate < 0.4 else ("  << trivial" if rate == 1.0 and avg > 0.75 else "")
         flagged += bool(note)
         print(f"{gate.name[:42]:<42} {level:>3} {gate.party_size:>5} {rate * 100:>4.0f}% {avg * 100:>6.0f}%{note}")
-    print(f"\n{flagged} Gate(s) flagged for a level-{args.offset:+d} {args.cls}.")
+    print(f"\n{flagged} Gate(s) flagged for a level-{args.offset:+d} {args.cls} ({args.build} build{', Hard' if args.hard else ''}).")
 
 
 if __name__ == "__main__":

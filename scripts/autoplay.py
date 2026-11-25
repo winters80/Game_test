@@ -217,6 +217,7 @@ class GoalBackend(AutoBackend):
         self.gate_tries: Counter = Counter()
         self.lair_tries: Counter = Counter()
         self.goals: Counter = Counter()   # what it spent its scene choices on
+        self.hard = False                  # --hard
         self.gate_run: dict | None = None  # the Gate run in progress (lowest HP seen)
         self.gate_log: list = []           # (gate, rated level, player level, result, HP after, lowest HP)
         self.walking = ("", 0)            # (goal, choices spent walking to it in a row)
@@ -296,6 +297,10 @@ class GoalBackend(AutoBackend):
         st = getattr(self.engine, "state", None)
         if (self._player is None or getattr(st, "current_scene_id", None) in (None, *RANDOM_SCENES)):
             return super().select(message, choices, default)
+        if self.hard:                       # --hard: play this character on Hard mode
+            from systems import difficulty
+            if not difficulty.is_hard(self._player):
+                difficulty.set_hard(self._player, True)
         if self.gate_run is not None:
             self.gate_run["low"] = min(self.gate_run["low"], self._hp())
         live = [c for c in choices if not c.disabled]
@@ -540,7 +545,7 @@ def _skip_screen_pauses() -> list:
     return swapped
 
 
-def play(seed: int, steps: int, mode: str = "goal") -> dict:
+def play(seed: int, steps: int, mode: str = "goal", hard: bool = False) -> dict:
     from config import SAVES_DIR
     from ui import prompt as uip
     from ui import renderer
@@ -552,6 +557,7 @@ def play(seed: int, steps: int, mode: str = "goal") -> dict:
     for f in (f"{slot}.json", f"{slot}.db", f"{slot}.db-wal", f"{slot}.db-shm"):
         (SAVES_DIR / f).unlink(missing_ok=True)     # our own last run: start in a fresh world
     backend = (GoalBackend if mode == "goal" else AutoBackend)(rng, steps, name)
+    backend.hard = hard
     uip.set_backend(backend)
     real_file = renderer.console.file
     renderer.console.file = io.StringIO()                       # silence the screen
@@ -626,6 +632,7 @@ def main() -> int:
     ap.add_argument("--steps", type=int, default=600)
     ap.add_argument("--seed", type=int, default=1)
     ap.add_argument("--mode", choices=("goal", "random"), default="goal")
+    ap.add_argument("--hard", action="store_true", help="goal mode: play on Hard (systems/difficulty.py)")
     args = ap.parse_args()
 
     import os
@@ -641,7 +648,7 @@ def main() -> int:
 
     crashes = 0
     for i in range(args.runs):
-        r = play(args.seed + i, args.steps, args.mode)
+        r = play(args.seed + i, args.steps, args.mode, args.hard)
         if r.get("crash"):
             crashes += 1
             print(f"run {r['seed']}: CRASH after {r['prompts']} prompts\n{r['crash']}")

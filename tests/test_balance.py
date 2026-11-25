@@ -120,6 +120,38 @@ def main() -> None:
     eng._scale_for_companions(f"gate:{solo.gate_id}:0", e3)
     check(e1[0].max_hp == round(base * (1 + config.GATE_COMPANION_HP)) and e2[0].max_hp == base == e3[0].max_hp,
           f"a companion makes a solo Gate's enemies {config.GATE_COMPANION_HP:.0%} tougher (not a group Gate's, not alone)")
+    # ── Hard mode: tougher Gate / lair enemies, more gold, switched at the Registry ──
+    from systems import difficulty
+    from systems.combat_system import Enemy as _E
+    foe = _E(enemy_id="x", name="X", max_hp=100, current_hp=100, attack=20)
+    difficulty.harden([foe])
+    check(foe.max_hp == round(100 * config.HARD_ENEMY_HP) and foe.attack == round(20 * config.HARD_ENEMY_ATK),
+          f"Hard: enemies get +{config.HARD_ENEMY_HP - 1:.0%} HP and +{config.HARD_ENEMY_ATK - 1:.0%} attack")
+    check(difficulty.applies_to("gate:x:0") and difficulty.applies_to("lair:crystal_heart")
+          and not difficulty.applies_to("wolf_pack"), "Hard applies to Gates and boss lairs only")
+    check(difficulty.hard_gold(100) == round(100 * (1 + config.HARD_GOLD_BONUS)), "Hard pays more gold")
+    from ui import prompt as uip
+    from core.gate_flow import _toggle_difficulty
+
+    class _Yes:                               # answers every prompt with its first choice
+        def select(self, message, choices, default=None):
+            return choices[0].value
+        def text(self, *a, **k): return ""
+        def confirm(self, *a, **k): return True
+        def any_key(self, *a, **k): return None
+
+    from core.state_manager import GameState
+    eng.state = GameState(Player(name="Brave"))
+    uip.set_backend(_Yes())
+    try:
+        _toggle_difficulty(eng)
+        on = difficulty.is_hard(eng.state.player)
+        _toggle_difficulty(eng)
+        off = not difficulty.is_hard(eng.state.player)
+    finally:
+        uip.set_backend(None)
+    check(on and off, "the Gate Registry switches Hard mode on and back off")
+
     rep = health(eng)
     check(rep.problems() == 0, "content health: " + ("clean" if not rep.problems() else
                                                      "; ".join(rep.lines(limit=5))))
@@ -163,6 +195,16 @@ def main() -> None:
             # a focused build (how play builds) still pays for it
             cap = 0.6 if build == "even" else 0.8
             check(hp / max(1, wins) <= cap, f"{cls} ({build}): ends with {hp / max(1, wins):.0%} HP on average (≤ {cap:.0%})")
+        # Hard mode: a focused build still clears its Gates, and pays for it
+        wins, hp, runs = 0, 0.0, 0
+        for g in sample:
+            for i in range(6):
+                ok, left = bs.run_gate(g, g.min_level, cls, (cr, sr), random.Random(i), "focused", hard=True)
+                runs += 1
+                wins += ok
+                hp += left
+        check(wins / runs >= 0.85 and hp / max(1, wins) <= 0.65,
+              f"{cls} (focused, Hard): wins {wins / runs:.0%}, ends with {hp / max(1, wins):.0%} HP (≤ 65%)")
 
 
 if __name__ == "__main__":
