@@ -12,14 +12,17 @@ if TYPE_CHECKING:
 
 logger = logging.getLogger(__name__)
 
-# Use-count threshold for a skill to level up. Every USES_PER_LEVEL casts in
-# combat the skill grows by +1 level (capped at Skill.max_level).
+# Casts for a skill to level up: level L -> L+1 takes USES_PER_LEVEL x L more
+# casts in combat (level 2 at 5, level 5 at 50, level 10 at 225), capped at
+# Skill.max_level. A flat 5 per level put favourite skills at level 10 after
+# 45 casts, so autoplay characters hit about three times as hard as the
+# balance sim's.
 USES_PER_LEVEL = 5
 
 # How much each skill level boosts the skill's effective output.
 # damage = base + (lvl-1) * LEVEL_BONUS_FLAT + stat × coeff × (1 + (lvl-1)*LEVEL_BONUS_COEFF)
 LEVEL_BONUS_FLAT  = 1.0      # +1 base damage per level
-LEVEL_BONUS_COEFF = 0.10     # +10% stat scaling per level
+LEVEL_BONUS_COEFF = 0.06     # +6% stat scaling per level (+54% at level 10)
 
 
 def learn_skill(player: "Player", skill_id: str, skill_registry: "SkillRegistry") -> tuple[bool, str]:
@@ -46,6 +49,11 @@ def get_available_skills(player: "Player", class_registry: object, skill_registr
     learnable = set(active_class.learnable_skills) - set(player.skills)
     skills = [skill_registry.get(sid) for sid in learnable]
     return [s for s in skills if s is not None]
+
+
+def uses_for_level(level: int) -> int:
+    """Total casts a skill needs to reach ``level``."""
+    return USES_PER_LEVEL * (level - 1) * level // 2
 
 
 def calculate_skill_damage(skill: "Skill", player: "Player") -> int:
@@ -93,8 +101,7 @@ def record_skill_use(
     if cur_level >= skill.max_level:
         return None
 
-    # Level up every USES_PER_LEVEL casts.
-    if uses % USES_PER_LEVEL == 0:
+    if uses >= uses_for_level(cur_level + 1):
         new_level = cur_level + 1
         player.skill_levels[skill_id] = new_level
         bus.publish(Event("SKILL_LEVELED_UP", {

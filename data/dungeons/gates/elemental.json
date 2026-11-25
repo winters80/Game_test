@@ -46,7 +46,7 @@
   "rootdeep_caverns_earth_elemental_boss": {
    "name": "the Heartstone Elemental",
    "max_hp": 93,
-   "attack": 12,
+   "attack": 10,
    "defense": 4,
    "xp_reward": 150,
    "gold_reward": 1150,

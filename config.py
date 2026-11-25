@@ -132,7 +132,12 @@ GATE_LEVEL_GRACE = 1                   # a gate can be entered from (rated level
 GATE_GRACE_FROM_LEVEL = 5              # ...but only Gates rated this or higher: at Lv 1-3 one level is
                                        # too big a step (balance_sim --offset -1 lost most early runs)
 GATE_ENEMY_HP_SCALE = 1.4              # multiplies HP / attack of every lair and Gate enemy
-GATE_ENEMY_ATK_SCALE = 1.1             # (tuned with scripts/balance_sim.py; see README Balance)
+GATE_ENEMY_ATK_SCALE = 1.2             # (tuned with scripts/balance_sim.py; see README Balance)
+DODGE_CAP = 0.45                       # total dodge (AGI x 0.8% + passives + synergies). Uncapped, a focused
+                                       # level-18 rogue dodged ~3 hits in 4 and Gates cost it ~20% HP
+GATE_XP_SHARE = 0.5                    # a first clear at a Gate's rated level pays about half that level
+                                       # (gate_flow.gate_xp_scale; only ever lowers a Gate's XP)
+GATE_COMPANION_HP = 0.25               # a solo Gate's enemies get +25% HP per companion you bring
 GATE_BREATHER = 0.15                   # HP and MP recovered between Gate rooms (catch your breath)
 BOT_GATE_CHANCE = 0.12                 # chance a fighter/explorer in town runs a gate this act
 RIFT_SURGE_EVERY_TURNS = 288           # a new rift opens every 2 in-game days (AI-made, or an echo offline)
@@ -149,6 +154,9 @@ BASE_XP_PER_LEVEL = 100
 XP_SCALING_FACTOR = 1.5               # each level needs x1.5 more XP, up to XP_SOFT_CAP_LEVEL
 XP_SOFT_CAP_LEVEL = 8                 # past this level the curve flattens ...
 XP_LATE_SCALING = 1.12                # ... to x1.12 per level, so level-18 Gates are reachable
+XP_FALLOFF_GRACE = 1                  # full XP from content up to this many levels below you ...
+XP_FALLOFF_PER_LEVEL = 0.2            # ... then 20% less per further level ...
+XP_FALLOFF_MIN = 0.1                  # ... never below 10%. Autoplay showed players 4-6 levels above every Gate
 STAT_POINTS_PER_LEVEL = 3
 CLASS_MILESTONE_EVERY = 4             # every N levels the class adds its stat_growth (identity)
 STARTING_GOLD    = 5000             # copper pieces (50 gold)

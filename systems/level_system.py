@@ -4,8 +4,8 @@ import math
 from typing import TYPE_CHECKING
 
 from config import (
-    BASE_XP_PER_LEVEL, CLASS_MILESTONE_EVERY, STAT_POINTS_PER_LEVEL, XP_LATE_SCALING, XP_SCALING_FACTOR,
-    XP_SOFT_CAP_LEVEL,
+    BASE_XP_PER_LEVEL, CLASS_MILESTONE_EVERY, STAT_POINTS_PER_LEVEL, XP_FALLOFF_GRACE, XP_FALLOFF_MIN,
+    XP_FALLOFF_PER_LEVEL, XP_LATE_SCALING, XP_SCALING_FACTOR, XP_SOFT_CAP_LEVEL,
 )
 from core.event_bus import Event, bus
 
@@ -21,6 +21,23 @@ def xp_for_level(level: int) -> int:
     early = min(level, XP_SOFT_CAP_LEVEL) - 1
     late = max(0, level - XP_SOFT_CAP_LEVEL)
     return int(BASE_XP_PER_LEVEL * (XP_SCALING_FACTOR ** early) * (XP_LATE_SCALING ** late))
+
+
+def xp_falloff(player_level: int, content_level: int) -> float:
+    """Share of XP earned from content rated ``content_level`` (0 = unrated: full).
+    Full up to XP_FALLOFF_GRACE levels below the player, then XP_FALLOFF_PER_LEVEL
+    less per level, never below XP_FALLOFF_MIN."""
+    gap = player_level - content_level - XP_FALLOFF_GRACE
+    if content_level <= 0 or gap <= 0:
+        return 1.0
+    return max(XP_FALLOFF_MIN, 1.0 - XP_FALLOFF_PER_LEVEL * gap)
+
+
+def scaled_xp(xp: int, player_level: int, content_level: int) -> int:
+    """``xp`` after the falloff for out-levelled content (at least 1 if xp > 0)."""
+    if xp <= 0:
+        return 0
+    return max(1, round(xp * xp_falloff(player_level, content_level)))
 
 
 def add_experience(

@@ -217,6 +217,8 @@ class GoalBackend(AutoBackend):
         self.gate_tries: Counter = Counter()
         self.lair_tries: Counter = Counter()
         self.goals: Counter = Counter()   # what it spent its scene choices on
+        self.gate_run: dict | None = None  # the Gate run in progress (lowest HP seen)
+        self.gate_log: list = []           # (gate, rated level, player level, result, HP after, lowest HP)
         self.walking = ("", 0)            # (goal, choices spent walking to it in a row)
         self.said: Counter = Counter()    # dialogue lines already picked
 
@@ -294,6 +296,8 @@ class GoalBackend(AutoBackend):
         st = getattr(self.engine, "state", None)
         if (self._player is None or getattr(st, "current_scene_id", None) in (None, *RANDOM_SCENES)):
             return super().select(message, choices, default)
+        if self.gate_run is not None:
+            self.gate_run["low"] = min(self.gate_run["low"], self._hp())
         live = [c for c in choices if not c.disabled]
         titles = [str(c.title) for c in live]
         try:
@@ -517,6 +521,25 @@ class GoalBackend(AutoBackend):
         return bye
 
 
+def _skip_screen_pauses() -> list:
+    """Point the screen code's ``time`` at a copy whose sleep does nothing.
+    Item and level-up notices pause 0.5-2 s each, which made a long goal run
+    take most of an hour. Background threads keep the real ``time``."""
+    import importlib
+    import time
+    import types
+    shim = types.SimpleNamespace(**{k: getattr(time, k) for k in dir(time) if not k.startswith("__")})
+    shim.sleep = lambda *_a, **_k: None
+    swapped = []
+    for modname in ("ui.notifications", "ui.renderer", "core.combat_handler", "core.menus", "core.menu_flow"):
+        mod = importlib.import_module(modname)
+        for name in ("time", "_time"):
+            if getattr(mod, name, None) is time:
+                swapped.append((mod, name, time))
+                setattr(mod, name, shim)
+    return swapped
+
+
 def play(seed: int, steps: int, mode: str = "goal") -> dict:
     from config import SAVES_DIR
     from ui import prompt as uip
@@ -534,6 +557,25 @@ def play(seed: int, steps: int, mode: str = "goal") -> dict:
     renderer.console.file = io.StringIO()                       # silence the screen
     engine = None
     crash = ""
+    from core import gate_flow
+    real_run_gate = gate_flow.run_gate
+    paused = _skip_screen_pauses()
+
+    def logged_run_gate(eng, gate_id, rng=None):        # note how each Gate run went
+        p = eng.state.player
+        gate = eng.gate_registry.get(gate_id) if eng.gate_registry else None
+        if not hasattr(backend, "gate_log") or gate is None:
+            return real_run_gate(eng, gate_id, rng)
+        level, backend.gate_run = p.level, {"low": p.current_hp / max(1, p.max_hp)}
+        try:
+            result = real_run_gate(eng, gate_id, rng)
+        finally:
+            low, backend.gate_run = backend.gate_run["low"], None
+        backend.gate_log.append((gate_id, gate.min_level, level, result,
+                                 round(p.current_hp / max(1, p.max_hp), 2), round(low, 2)))
+        return result
+
+    gate_flow.run_gate = logged_run_gate
     try:
         from core.game_engine import GameEngine
         engine = GameEngine()
@@ -546,9 +588,13 @@ def play(seed: int, steps: int, mode: str = "goal") -> dict:
     finally:
         renderer.console.file = real_file
         uip.set_backend(None)
+        gate_flow.run_gate = real_run_gate
+        for mod, name, real in paused:
+            setattr(mod, name, real)
 
     out = {"seed": seed, "prompts": backend.prompts, "crash": crash,
-           "goals": dict(getattr(backend, "goals", {}))}
+           "goals": dict(getattr(backend, "goals", {})),
+           "gate_log": list(getattr(backend, "gate_log", []))}
     if backend.seen:
         (msg, titles), n = backend.seen.most_common(1)[0]
         out["stuck"] = (n, msg, list(titles)[:6])
@@ -608,6 +654,13 @@ def main() -> int:
         if r.get("goals"):
             top = sorted(r["goals"].items(), key=lambda kv: -kv[1])[:6]
             print("   spent choices on: " + ", ".join(f"{k} {v}" for k, v in top))
+        log = r.get("gate_log") or []
+        if log:
+            ok = [g for g in log if g[3] == "cleared"]
+            gap = sum(g[2] - g[1] for g in log) / len(log)
+            low = sum(g[5] for g in ok) / max(1, len(ok))
+            print(f"   gate runs: {len(log)} ({len(ok)} cleared) · player {gap:+.1f} levels vs rating · "
+                  f"lowest HP in a cleared run {low:.0%} on average")
         if r.get("stuck") and r["stuck"][0] > max(25, r["prompts"] // 10):
             n, msg, titles = r["stuck"]
             print(f"   most repeated prompt ({n}×): {msg!r} {titles}")

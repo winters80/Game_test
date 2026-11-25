@@ -237,7 +237,11 @@ def _recruit(engine: "GameEngine", gate: "GateDefinition") -> list | None:
     party: list = []
     max_party = 1 if gate.party_size <= 1 else gate.party_size - 1
     while cands and len(party) < max_party:
-        labels = [f"Bring {bot_label(engine, b)} (takes {int(COMPANION_SHARE * 100)}% of the gold)" for b in cands]
+        cost = f"takes {int(COMPANION_SHARE * 100)}% of the gold"
+        if gate.party_size <= 1:
+            from config import GATE_COMPANION_HP
+            cost += f"; the Gate's enemies grow {int(GATE_COMPANION_HP * 100)}% tougher"
+        labels = [f"Bring {bot_label(engine, b)} ({cost})" for b in cands]
         if len(party) < need:
             prompt = f"Group Gate (party of {gate.party_size}): choose {need - len(party)} more companion(s)."
             tail = ["Back out."]
@@ -335,6 +339,28 @@ def breather(player) -> tuple[int, int]:
     return hp, mp
 
 
+def gate_xp_scale(gate: "GateDefinition") -> float:
+    """Multiplier on a Gate's XP (room fights, master, clear bonuses) so a first
+    clear at its rated level pays about GATE_XP_SHARE of that level. Never above 1.
+    Early Gates paid up to 2.2 levels a clear, so players ran 4-6 levels ahead
+    of every Gate; there are 2-3 Gates per level."""
+    from config import GATE_XP_SHARE
+    from systems.combat_system import ENEMY_TEMPLATES
+    from systems.economy import recommended_quest_reward
+    from systems.level_system import xp_for_level
+
+    def xp(ids) -> int:
+        return sum(int(ENEMY_TEMPLATES.get(e, {}).get("xp_reward", 0) or 0) for e in ids or [])
+
+    first = gate.lair.occupants.get(gate.lair.first_occupant)
+    natural = (sum(xp(r.enemies) for r in gate.rooms if r.kind == "fight")
+               + xp(first.enemies if first else [])
+               + recommended_quest_reward(gate.min_level, "standard")[1])
+    if natural <= 0:
+        return 1.0
+    return min(1.0, GATE_XP_SHARE * xp_for_level(gate.min_level) / natural)
+
+
 def swift_par(gate: "GateDefinition") -> int:
     """Combat rounds a swift clear may take: 3 per fight room, 6 for the master."""
     return 3 * sum(1 for r in gate.rooms if r.kind == "fight") + 6
@@ -351,6 +377,7 @@ def _clear_bonuses(engine: "GameEngine", gate: "GateDefinition", first: bool, ro
 
     player = engine.state.player
     gold, xp = recommended_quest_reward(gate.min_level, "standard")
+    xp = max(1, round(xp * gate_xp_scale(gate)))
     lines = []
     total_gold = total_xp = 0
     if first:
@@ -366,6 +393,9 @@ def _clear_bonuses(engine: "GameEngine", gate: "GateDefinition", first: bool, ro
             player.set_flag(best, rounds)
         lines.append(f"✦ SWIFT CLEAR ({rounds} rounds, par {swift_par(gate)}) · "
                      f"+{format_currency(g2 * COPPER_PER_GOLD)}, +{x2} XP")
+    full_xp, total_xp = total_xp, level_system.scaled_xp(total_xp, player.level, gate.min_level)
+    if total_xp < full_xp:
+        lines.append(f"  (bonus XP {total_xp} of {full_xp}: a level {gate.min_level} Gate, and you're level {player.level})")
     if total_gold or total_xp:
         player.gold += total_gold * COPPER_PER_GOLD
         level_system.add_experience(player, total_xp, class_registry=engine.class_registry,

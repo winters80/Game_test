@@ -46,7 +46,7 @@
   "bronze_labyrinth_minotaur_boss": {
    "name": "Asterion the Penned",
    "max_hp": 93,
-   "attack": 12,
+   "attack": 10,
    "defense": 4,
    "xp_reward": 150,
    "gold_reward": 1150,

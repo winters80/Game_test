@@ -1012,7 +1012,10 @@ def main() -> None:
         res5 = skill_system.record_skill_use(pp5, "power_strike", sr)
         assert res5 == 2, f"Use #5 should level up to 2, got {res5}"
         assert pp5.skill_levels["power_strike"] == 2
-        ok(f"Skills level up every {skill_system.USES_PER_LEVEL} uses (lvl 1→2 at 5 uses)")
+        for _ in range(9):
+            assert skill_system.record_skill_use(pp5, "power_strike", sr) is None, "2 -> 3 takes 10 more uses"
+        assert skill_system.record_skill_use(pp5, "power_strike", sr) == 3
+        ok("Skills level up with use: lvl 2 at 5 uses, lvl 3 at 15 (each level takes longer)")
 
         # Damage scales with skill level
         from systems.skill_system import calculate_skill_damage

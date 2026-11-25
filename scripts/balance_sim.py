@@ -11,6 +11,14 @@ Each round it casts its best affordable damage skill, else a basic attack.
 
     python scripts/balance_sim.py            # 20 runs per Gate
     python scripts/balance_sim.py 50 --class mage
+    python scripts/balance_sim.py --build focused   # how play actually builds
+
+Builds: ``even`` spreads stat points over the class's three stats and keeps
+skills at level 1 (a careless player). ``focused`` puts three points in four
+into the main stat and the fourth into VIT, and gives each skill the level
+CASTS_PER_LEVEL casts per character level would reach (what autoplay's
+characters look like). A Gate should be winnable for ``even`` and still cost
+``focused`` a real share of HP.
 
 Prints a win-rate table, flagging Gates that are too hard (<40%) or trivial
 (100% with HP to spare). Use it after changing Gate stats or player curves.
@@ -31,32 +39,48 @@ BUILDS = {
 }
 
 
-def make_player(level: int, cls: str, class_registry, skill_registry=None):
+CASTS_PER_LEVEL = 8      # focused build: skill casts per character level
+
+
+def make_player(level: int, cls: str, class_registry, skill_registry=None, build: str = "even"):
     from entities.player import Player
     from systems import class_system, level_system
 
     p = Player(name="Sim", base_class=cls)
     if class_registry.get(cls):
         class_system.assign_base_class(p, cls, class_registry, skill_registry)
-    build = BUILDS.get(cls, BUILDS["warrior"])
+    style, stats = build, BUILDS.get(cls, BUILDS["warrior"])
+    i = 0                       # counts every point spent, across levels
     while p.level < level:
         # With the registries, like real play: class skills are learned on
         # level-up and class milestones apply.
         level_system.add_experience(p, level_system.xp_for_level(p.level), class_registry, skill_registry)
-        i = 0
         while p.stat_points > 0:
-            level_system.spend_stat_point(p, build[i % len(build)])
+            if style == "focused":
+                level_system.spend_stat_point(p, stats[0] if i % 4 != 3 else "VIT")
+            else:
+                level_system.spend_stat_point(p, stats[i % len(stats)])
             i += 1
+    if style == "focused" and skill_registry is not None:
+        from systems.skill_system import uses_for_level
+        casts = CASTS_PER_LEVEL * level
+        for sid in p.skills:
+            sk = skill_registry.get(sid)
+            top = getattr(sk, "max_level", 10) if sk else 10
+            lv = 1
+            while lv < top and uses_for_level(lv + 1) <= casts:
+                lv += 1
+            p.skill_levels[sid] = lv
     p.current_hp, p.current_mp = p.max_hp, p.max_mp
     return p
 
 
-def run_gate(gate, level: int, cls: str, regs, rng: random.Random) -> tuple[bool, float]:
+def run_gate(gate, level: int, cls: str, regs, rng: random.Random, build: str = "even") -> tuple[bool, float]:
     from systems.combat_system import resolve_combat_auto, spawn_enemy
     from systems.lair_system import initial_state, spawn_occupant
 
     class_registry, skill_registry = regs
-    p = make_player(level, cls, class_registry, skill_registry)
+    p = make_player(level, cls, class_registry, skill_registry, build)
     potions = 2
     from systems.bot_system import BotAgent, bot_max_hp
     companions = []
@@ -90,6 +114,7 @@ def main() -> None:
     ap.add_argument("runs", nargs="?", type=int, default=20)
     ap.add_argument("--class", dest="cls", default="warrior", choices=sorted(BUILDS))
     ap.add_argument("--offset", type=int, default=0, help="player level relative to the Gate's")
+    ap.add_argument("--build", default="even", choices=("even", "focused"))
     args = ap.parse_args()
 
     with mock.patch.object(renderer.console, "print", lambda *a, **k: None):
@@ -108,7 +133,7 @@ def main() -> None:
         wins, left = 0, 0.0
         for _ in range(args.runs):
             random.seed(rng.random())
-            ok, hp = run_gate(gate, level, args.cls, regs, rng)
+            ok, hp = run_gate(gate, level, args.cls, regs, rng, args.build)
             wins += ok
             left += hp
         rate = wins / args.runs

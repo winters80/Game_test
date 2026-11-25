@@ -226,6 +226,14 @@ ENCOUNTERS: dict[str, list[str]] = {
 }
 
 
+# Rated level of each dungeon encounter, for the XP falloff (level_system.xp_falloff).
+ENCOUNTER_LEVELS: dict[str, int] = {
+    "goblin_patrol": 1, "single_slime": 1, "wolf_pack": 1, "crystal_spider_den": 2,
+    "street_thugs": 2, "troll_patrol": 3, "unknown_creature": 3, "corrupted_golem": 4,
+    "crystal_golem": 4, "fracture_wraith": 5,
+}
+
+
 def spawn_encounter(encounter_id: str) -> list[Enemy]:
     ids = ENCOUNTERS.get(encounter_id, [])
     enemies = [spawn_enemy(eid) for eid in ids]
@@ -366,6 +374,8 @@ def enemy_attack(
     dodge_chance = player.stats.AGI * 0.008 + _extra_dodge
     if mods:
         dodge_chance += mods.dodge_chance
+    from config import DODGE_CAP
+    dodge_chance = min(DODGE_CAP, dodge_chance)
     if player_statuses and player_statuses.get("frozen"):
         from systems.combat_effects import FROZEN_DODGE_PENALTY
         dodge_chance = max(0.0, dodge_chance - FROZEN_DODGE_PENALTY)

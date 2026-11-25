@@ -152,6 +152,7 @@ class CombatHandlerMixin:
         if not enemies:
             return "none"
         _number_duplicates(enemies)
+        self._scale_for_companions(encounter_id, enemies)
 
         renderer.print_divider()
         count = len(enemies)
@@ -449,7 +450,9 @@ class CombatHandlerMixin:
         from utils import session_log as _slog
         from ui import media as _media
         player = self.state.player
-        total_xp = sum(e.xp_reward for e in enemies)
+        full_xp = round(sum(e.xp_reward for e in enemies) * self._gate_xp_scale(encounter_id))
+        rated = self._content_level(encounter_id)
+        total_xp = level_system.scaled_xp(full_xp, player.level, rated)
         total_gold = sum(e.gold_reward for e in enemies)
         # The registries let add_experience auto-grant the class's next skill on level-up.
         leveled_up = level_system.add_experience(player, total_xp, class_registry=self.class_registry,
@@ -469,7 +472,10 @@ class CombatHandlerMixin:
 
         renderer.print_divider()
         renderer.print_system_message("VICTORY", style="system_msg")
-        victory_lines = [f"XP gained: {total_xp}", f"Gold gained: {format_currency(total_gold)}"]
+        xp_line = f"XP gained: {total_xp}"
+        if total_xp < full_xp:
+            xp_line += f" (of {full_xp}: this is level {rated} work, and you're level {player.level})"
+        victory_lines = [xp_line, f"Gold gained: {format_currency(total_gold)}"]
         if names:
             victory_lines.append(f"Loot: {', '.join(names)}")
         renderer.print_scene_text(victory_lines)
@@ -483,6 +489,46 @@ class CombatHandlerMixin:
         _media.on_combat_end("victory")
         _slog.event("combat_end", encounter=encounter_id, result="victory", hp=player.current_hp)
         return "victory"
+
+    def _scale_for_companions(self, encounter_id: str, enemies: list) -> None:
+        """In a solo Gate, each companion the player brought gives every enemy
+        GATE_COMPANION_HP more HP. A companion draws up to 60% of attacks: without
+        this a duo run left the player ~75% HP where alone it left ~50%. Group
+        Gates already field more enemies for their party."""
+        from config import GATE_COMPANION_HP
+        party = getattr(self, "_companions", None) or []
+        kind, _, rest = (encounter_id or "").partition(":")
+        gate = (self.gate_registry.get(rest.split(":")[0])
+                if party and kind in ("gate", "lair") and getattr(self, "gate_registry", None) else None)
+        if gate is None or gate.party_size > 1:
+            return
+        factor = 1 + GATE_COMPANION_HP * len(party)
+        for e in enemies:
+            e.max_hp = max(1, round(e.max_hp * factor))
+            e.current_hp = max(1, round(e.current_hp * factor))
+
+    def _gate_xp_scale(self, encounter_id: str) -> float:
+        """gate_flow.gate_xp_scale for a Gate's rooms and master, else 1."""
+        kind, _, rest = (encounter_id or "").partition(":")
+        gate = (self.gate_registry.get(rest.split(":")[0])
+                if kind in ("gate", "lair") and getattr(self, "gate_registry", None) else None)
+        if gate is None:
+            return 1.0
+        from core.gate_flow import gate_xp_scale
+        return gate_xp_scale(gate)
+
+    def _content_level(self, encounter_id: str) -> int:
+        """Rated level of a fight, for the XP falloff: a Gate's level for its rooms
+        and master, a dungeon lair's level, a dungeon encounter's ENCOUNTER_LEVELS (0 = unrated)."""
+        kind, _, rest = (encounter_id or "").partition(":")
+        if kind in ("gate", "lair"):
+            ref = rest.split(":")[0]
+            gate = self.gate_registry.get(ref) if getattr(self, "gate_registry", None) else None
+            if gate is not None:
+                return gate.min_level
+            lair = self.lair_registry.get(ref) if getattr(self, "lair_registry", None) else None
+            return int(getattr(lair, "min_level", 0) or 0) if lair is not None else 0
+        return combat_system.ENCOUNTER_LEVELS.get(encounter_id, 0)
 
     def _stat_allocation_prompt(self) -> None:
         player = self.state.player

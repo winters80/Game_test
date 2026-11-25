@@ -77,12 +77,49 @@ def main() -> None:
     check(ENEMY_TEMPLATES[eid]["max_hp"] == max(1, round(tmpl.max_hp * config.GATE_ENEMY_HP_SCALE)),
           f"Gate enemy HP is scaled by GATE_ENEMY_HP_SCALE ({config.GATE_ENEMY_HP_SCALE})")
 
+    # ── Out-levelled content pays less XP; skills grow slower the higher they get ──
+    fo = level_system.xp_falloff
+    check(fo(5, 5) == 1.0 and fo(6, 5) == 1.0 and fo(5, 0) == 1.0, "full XP at or 1 level above the content, and for unrated fights")
+    check(abs(fo(7, 5) - 0.8) < 1e-9 and fo(20, 2) == config.XP_FALLOFF_MIN, "20% less per further level, down to the floor")
+    check(level_system.scaled_xp(100, 10, 2) >= 1 and level_system.scaled_xp(0, 10, 2) == 0, "scaled XP keeps at least 1")
+    from systems.skill_system import uses_for_level
+    check([uses_for_level(n) for n in (1, 2, 3, 10)] == [0, 5, 15, 225], "skill levels need 5, 15 … 225 casts")
+    from systems.combat_system import Enemy, enemy_attack
+    agile = Player(name="Dodger")
+    agile.stats.AGI = 200
+    agile.max_hp = agile.current_hp = 10_000
+    random.seed(3)
+    hits = sum(enemy_attack(Enemy(enemy_id="x", name="X", max_hp=10, current_hp=10, attack=20, defense=0), agile) > 0
+               for _ in range(400))
+    check(hits / 400 >= 1 - config.DODGE_CAP - 0.07, f"dodge is capped at {config.DODGE_CAP:.0%} ({1 - hits / 400:.0%} dodged)")
+
+    from core.gate_flow import gate_xp_scale
+    scales = {g.gate_id: gate_xp_scale(g) for g in gr.all()}
+    check(all(0 < v <= 1 for v in scales.values()), "every Gate's XP scale is in (0, 1]")
+    check(scales["ashgrove_manor"] < 0.5, f"early Gates pay far less than they did (Ashgrove x{scales['ashgrove_manor']:.2f})")
+
     # ── Content health: nothing unreachable, unoffered or unused ──
     from core.bootstrap import load_registries
     from core.content_health import check as health
     from core.game_engine import GameEngine
     eng = GameEngine()
     load_registries(eng)
+    # A companion in a solo Gate makes its enemies tougher; group Gates already count the party.
+    from systems.combat_system import spawn_enemy
+    solo = next(g for g in eng.gate_registry.all() if g.party_size <= 1)
+    group = next(g for g in eng.gate_registry.all() if g.party_size > 1)
+    eid = next(r.enemies[0] for r in solo.rooms if r.kind == "fight")
+    base = spawn_enemy(eid).max_hp
+    eng._companions = [object()]
+    e1 = [spawn_enemy(eid)]
+    eng._scale_for_companions(f"gate:{solo.gate_id}:0", e1)
+    e2 = [spawn_enemy(eid)]
+    eng._scale_for_companions(f"gate:{group.gate_id}:0", e2)
+    eng._companions = []
+    e3 = [spawn_enemy(eid)]
+    eng._scale_for_companions(f"gate:{solo.gate_id}:0", e3)
+    check(e1[0].max_hp == round(base * (1 + config.GATE_COMPANION_HP)) and e2[0].max_hp == base == e3[0].max_hp,
+          f"a companion makes a solo Gate's enemies {config.GATE_COMPANION_HP:.0%} tougher (not a group Gate's, not alone)")
     rep = health(eng)
     check(rep.problems() == 0, "content health: " + ("clean" if not rep.problems() else
                                                      "; ".join(rep.lines(limit=5))))
@@ -111,17 +148,21 @@ def main() -> None:
     gates = sorted(gr.all(), key=lambda g: g.min_level)
     sample = [g for g in gates if g.party_size <= 1][::5][:6]
     for cls in ("warrior", "mage", "rogue"):
-        wins, hp = 0, 0.0
-        runs = 0
-        for g in sample:
-            for i in range(6):
-                ok, left = bs.run_gate(g, g.min_level, cls, (cr, sr), random.Random(i))
-                runs += 1
-                wins += ok
-                hp += left
-        rate = wins / runs
-        check(rate >= 0.85, f"{cls}: wins {rate:.0%} of sampled Gates at their level")
-        check(hp / runs <= 0.85, f"{cls}: ends with {hp / runs:.0%} HP on average (not trivial)")
+        for build in ("even", "focused"):
+            wins, hp = 0, 0.0
+            runs = 0
+            for g in sample:
+                for i in range(6):
+                    ok, left = bs.run_gate(g, g.min_level, cls, (cr, sr), random.Random(i), build)
+                    runs += 1
+                    wins += ok
+                    hp += left
+            rate = wins / runs
+            if build == "even":     # a careless build still clears its Gates
+                check(rate >= 0.85, f"{cls} ({build}): wins {rate:.0%} of sampled Gates at their level")
+            # a focused build (how play builds) still pays for it
+            cap = 0.6 if build == "even" else 0.8
+            check(hp / max(1, wins) <= cap, f"{cls} ({build}): ends with {hp / max(1, wins):.0%} HP on average (≤ {cap:.0%})")
 
 
 if __name__ == "__main__":
